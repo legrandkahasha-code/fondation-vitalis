@@ -1,103 +1,536 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { EtablissementsService } from '../../../core/services/etablissements.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { MainLayoutComponent } from '../../../shared/layout/main-layout.component';
 import { Etablissement } from '../../../core/models';
 
 @Component({
   selector: 'app-etablissements',
   standalone: true,
-  imports: [FormsModule, MainLayoutComponent],
+  imports: [CommonModule, FormsModule, MainLayoutComponent],
   template: `
     <app-main-layout>
-      <div class="p-8 max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-          <h1 class="text-3xl font-bold text-vc-primary font-heading">Établissements</h1>
-          <button class="btn btn-primary" (click)="showForm = !showForm">{{ showForm ? 'Annuler' : '+ Nouvel établissement' }}</button>
+      <div class="max-w-7xl mx-auto pb-16 font-['Public_Sans',sans-serif] px-4 sm:px-6">
+
+        <!-- En-tête Institutionnel -->
+        <div class="mb-8 bg-white border border-[#D7DBDE] p-6 rounded-[2px] shadow-2xs">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <div class="text-[12px] uppercase font-semibold tracking-[0.06em] text-[#4B5157]">
+                04 · Administration Centrale · Réseau National
+              </div>
+              <h1 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 tracking-tight">
+                Gouvernance des Établissements & Antennes
+              </h1>
+              <div class="w-12 h-1 bg-[#005B94] mt-2 mb-3"></div>
+              <p class="text-[14px] text-[#4B5157] max-w-3xl leading-relaxed">
+                Pilotage des antennes territoriales, paramétrage des campus satellites, gestion du cycle de vie et intégrité des raccordements.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                (click)="ouvrirFormulaireCreation()"
+                class="btn btn-primary text-xs py-2.5 px-4 font-semibold inline-flex items-center gap-2 shadow-2xs bg-[#005B94] hover:bg-[#004A78] text-white"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Nouvelle Antenne
+              </button>
+              <button
+                type="button"
+                (click)="load(true)"
+                [disabled]="loading || refreshing"
+                class="btn btn-ghost text-xs py-2.5 px-3.5 inline-flex items-center gap-1.5"
+              >
+                <svg class="w-4 h-4" [class.animate-spin]="loading || refreshing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Actualiser
+              </button>
+            </div>
+          </div>
         </div>
 
+        <!-- Formulaire création / édition -->
         @if (showForm) {
-          <div class="card mb-6">
-            <h3 class="font-bold mb-4">{{ editing ? 'Modifier' : 'Créer' }} un établissement</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label class="form-label">Nom</label><input class="form-input" [(ngModel)]="form.nom" /></div>
-              <div><label class="form-label">Code antenne</label><input class="form-input" [(ngModel)]="form.codeAntenne" placeholder="Auto si vide" /></div>
-              <div class="md:col-span-2"><label class="form-label">Adresse</label><input class="form-input" [(ngModel)]="form.adresse" /></div>
+          <div class="bg-white border border-[#D7DBDE] p-6 rounded-[2px] shadow-2xs mb-8 animate-in fade-in duration-200">
+            <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+              <h3 class="text-base font-bold text-[#1B1D1F]">
+                {{ editing ? ('Modifier : ' + editing.nom) : 'Création d’une Nouvelle Antenne Réseau' }}
+              </h3>
+              <button (click)="annulerFormulaire()" class="text-xs text-gray-400 hover:text-gray-600">✕ Annuler</button>
             </div>
-            <div class="mt-4 flex gap-2">
-              <button class="btn btn-primary" (click)="save()">{{ editing ? 'Mettre à jour' : 'Créer' }}</button>
-            </div>
-            @if (message) { <p class="text-sm mt-2 text-vc-success">{{ message }}</p> }
+
+            <form (ngSubmit)="save()" class="space-y-4 text-xs">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                  <label class="block font-semibold text-[#1B1D1F] mb-1">Dénomination de l'établissement *</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="form.nom"
+                    name="nom"
+                    required
+                    placeholder="Ex: Campus Lubumbashi - Antenne Katanga"
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                  />
+                </div>
+                <div>
+                  <label class="block font-semibold text-[#1B1D1F] mb-1">Code Antenne</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="form.codeAntenne"
+                    name="codeAntenne"
+                    placeholder="Ex: LSH-01 (Auto si vide)"
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] uppercase font-mono"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                  <label class="block font-semibold text-[#1B1D1F] mb-1">Adresse physique / Siège</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="form.adresse"
+                    name="adresse"
+                    placeholder="Numéro, avenue, commune, ville"
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                  />
+                </div>
+                <div>
+                  <label class="block font-semibold text-[#1B1D1F] mb-1">Pays</label>
+                  <select
+                    [(ngModel)]="form.pays"
+                    name="pays"
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white"
+                  >
+                    <option value="RDC">RDC (République Démocratique du Congo)</option>
+                    <option value="COG">Congo Brazzaville</option>
+                    <option value="FRA">France</option>
+                    <option value="BEL">Belgique</option>
+                    <option value="CAN">Canada</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-gray-100 flex justify-end gap-3">
+                <button type="button" (click)="annulerFormulaire()" class="btn btn-ghost py-2 px-4">
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  [disabled]="sauvegardeEnCours"
+                  class="btn btn-primary py-2 px-6 bg-[#005B94] hover:bg-[#004A78] text-white font-semibold"
+                >
+                  {{ sauvegardeEnCours ? 'Enregistrement...' : (editing ? 'Mettre à jour' : 'Créer l’antenne') }}
+                </button>
+              </div>
+            </form>
           </div>
         }
 
-        @if (loading) { <p>Chargement...</p> }
-        @else {
-          <div class="card overflow-hidden p-0">
-            <table class="w-full">
-              <thead><tr class="text-white text-left" style="background: var(--color-vc-primary);">
-                <th class="px-4 py-3">Nom</th><th class="px-4 py-3">Code</th><th class="px-4 py-3">Adresse</th>
-                <th class="px-4 py-3">Users</th><th class="px-4 py-3">Formations</th><th class="px-4 py-3">Actions</th>
-              </tr></thead>
-              <tbody>
-                @for (e of etablissements; track e.id) {
-                  <tr class="border-b hover:bg-slate-50">
-                    <td class="px-4 py-3 font-medium">{{ e.nom }}</td>
-                    <td class="px-4 py-3 text-sm">{{ e.codeAntenne }}</td>
-                    <td class="px-4 py-3 text-sm text-slate-500">{{ e.adresse }}</td>
-                    <td class="px-4 py-3">{{ e._count?.utilisateurs ?? 0 }}</td>
-                    <td class="px-4 py-3">{{ e._count?.formations ?? 0 }}</td>
-                    <td class="px-4 py-3 space-x-2">
-                      <button class="btn btn-outline text-xs py-1 px-2" (click)="edit(e)">Modifier</button>
-                      <button class="btn btn-outline text-xs py-1 px-2 text-vc-danger" (click)="remove(e.id)">Supprimer</button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+        <!-- Filtres et Recherche -->
+        <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-[#4B5157] mb-1">Recherche</label>
+              <input
+                type="text"
+                [(ngModel)]="recherche"
+                placeholder="Nom, code, adresse..."
+                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-[#4B5157] mb-1">Statut d'exploitation</label>
+              <select
+                [(ngModel)]="filtreStatut"
+                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white"
+              >
+                <option value="">Tous les statuts</option>
+                <option value="ACTIF">Actif</option>
+                <option value="SUSPENDU">Suspendu</option>
+                <option value="FERME">Fermé</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-[#4B5157] mb-1">Pays</label>
+              <select
+                [(ngModel)]="filtrePays"
+                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white"
+              >
+                <option value="">Tous les pays</option>
+                <option value="RDC">RDC</option>
+                <option value="COG">Congo Brazzaville</option>
+                <option value="FRA">France</option>
+                <option value="BEL">Belgique</option>
+              </select>
+            </div>
           </div>
-        }
+        </div>
+
+        <!-- Tableau des Établissements -->
+        <div class="bg-white border border-[#D7DBDE] rounded-[2px] shadow-2xs overflow-hidden">
+          @if (loading) {
+            <div class="p-12 text-center">
+              <div class="inline-block w-8 h-8 border-3 border-[#005B94] border-t-transparent rounded-full animate-spin"></div>
+              <p class="mt-4 text-sm text-[#4B5157]">Chargement des antennes du réseau...</p>
+            </div>
+          } @else {
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-[#D7DBDE] text-[#4B5157] font-semibold uppercase text-[11px] tracking-wider">
+                    <th class="py-3 px-4">Établissement / Antenne</th>
+                    <th class="py-3 px-4">Code</th>
+                    <th class="py-3 px-4">Localisation</th>
+                    <th class="py-3 px-4 text-center">Effectifs</th>
+                    <th class="py-3 px-4 text-center">Formations</th>
+                    <th class="py-3 px-4">Statut</th>
+                    <th class="py-3 px-4 text-right">Cycle de Vie & Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  @for (e of etablissementsFiltres; track e.id) {
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                      <!-- Nom -->
+                      <td class="py-3 px-4">
+                        <div class="font-bold text-[#1B1D1F]">{{ e.nom }}</div>
+                        <div class="text-[10px] text-gray-400">{{ e.typeEtablissement || 'SATELLITE_NATIONAL' }}</div>
+                      </td>
+
+                      <!-- Code -->
+                      <td class="py-3 px-4 font-mono font-semibold text-[#005B94]">
+                        {{ e.codeAntenne || '—' }}
+                      </td>
+
+                      <!-- Localisation -->
+                      <td class="py-3 px-4 text-gray-600">
+                        <div>{{ e.adresse || 'Adresse non renseignée' }}</div>
+                        <span class="text-[10px] text-gray-400 font-semibold uppercase">{{ e.pays || 'RDC' }}</span>
+                      </td>
+
+                      <!-- Effectifs -->
+                      <td class="py-3 px-4 text-center">
+                        <span class="font-bold text-[#1B1D1F]">{{ e._count?.utilisateurs ?? 0 }}</span>
+                        <span class="text-[10px] text-gray-400 block">usagers</span>
+                      </td>
+
+                      <!-- Formations -->
+                      <td class="py-3 px-4 text-center">
+                        <span class="font-bold text-[#005B94]">{{ e._count?.formations ?? 0 }}</span>
+                        <span class="text-[10px] text-gray-400 block">cours</span>
+                      </td>
+
+                      <!-- Statut -->
+                      <td class="py-3 px-4">
+                        @if (e.statut === 'ACTIF' || !e.statut) {
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            ACTIF
+                          </span>
+                        } @else if (e.statut === 'SUSPENDU') {
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            SUSPENDU
+                          </span>
+                        } @else {
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            FERMÉ
+                          </span>
+                        }
+                      </td>
+
+                      <!-- Actions sécurisées -->
+                      <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            (click)="edit(e)"
+                            class="px-2.5 py-1 text-xs font-semibold rounded border border-gray-200 text-gray-700 hover:bg-gray-50"
+                          >
+                            Éditer
+                          </button>
+
+                          <!-- Bascule statut sécurisée (pas de delete destructif) -->
+                          @if (e.statut === 'ACTIF' || !e.statut) {
+                            <button
+                              type="button"
+                              (click)="changerStatut(e, 'SUSPENDU')"
+                              [disabled]="actionEnCours === e.id"
+                              class="px-2.5 py-1 text-xs font-semibold rounded border border-amber-200 text-amber-700 hover:bg-amber-50"
+                              title="Suspendre temporairement l'antenne"
+                            >
+                              Suspendre
+                            </button>
+                          } @else if (e.statut === 'SUSPENDU') {
+                            <button
+                              type="button"
+                              (click)="changerStatut(e, 'ACTIF')"
+                              [disabled]="actionEnCours === e.id"
+                              class="px-2.5 py-1 text-xs font-semibold rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                              title="Réactiver l'antenne"
+                            >
+                              Réactiver
+                            </button>
+                          } @else {
+                            <button
+                              type="button"
+                              (click)="changerStatut(e, 'ACTIF')"
+                              [disabled]="actionEnCours === e.id"
+                              class="px-2.5 py-1 text-xs font-semibold rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                            >
+                              Rouvrir
+                            </button>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                  @if (etablissementsFiltres.length === 0) {
+                    <tr>
+                      <td colspan="7" class="py-8 text-center text-gray-400 italic">
+                        Aucun établissement ne correspond aux critères.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <div class="px-4 py-3 bg-slate-50 border-t border-[#D7DBDE] text-xs text-[#4B5157] flex justify-between items-center">
+              <span>Total : {{ etablissementsFiltres.length }} sur {{ etablissements.length }} antennes</span>
+            </div>
+          }
+        </div>
+
       </div>
     </app-main-layout>
   `,
 })
 export class EtablissementsComponent implements OnInit {
   etablissements: Etablissement[] = [];
-  loading = true;
+  loading = false;
+  refreshing = false;
   showForm = false;
   editing: Etablissement | null = null;
-  message = '';
-  form = { nom: '', adresse: '', codeAntenne: '' };
+  sauvegardeEnCours = false;
+  actionEnCours: string | null = null;
+  private streamSub?: Subscription;
 
-  constructor(private service: EtablissementsService) {}
+  // Filtres
+  recherche = '';
+  filtreStatut = '';
+  filtrePays = '';
 
-  ngOnInit() { this.load(); }
+  form = {
+    nom: '',
+    codeAntenne: '',
+    adresse: '',
+    pays: 'RDC',
+  };
 
-  load() {
-    this.service.getAll().subscribe({
-      next: (d) => { this.etablissements = d; this.loading = false; },
-      error: () => { this.loading = false; },
+  constructor(
+    private service: EtablissementsService,
+    private toast: ToastService
+  ) {}
+
+  ngOnInit() {
+    const cached = this.service.getCached();
+    if (cached && cached.length > 0) {
+      this.etablissements = [...cached];
+      this.loading = false;
+    } else {
+      this.loading = true;
+    }
+
+    // Réception réactive continue (0ms)
+    this.streamSub = this.service.etablissements$.subscribe((list) => {
+      if (list) {
+        this.etablissements = list;
+        this.loading = false;
+        this.refreshing = false;
+      }
     });
+
+    this.load(false);
+  }
+
+  ngOnDestroy() {
+    this.streamSub?.unsubscribe();
+  }
+
+  load(forceRefresh = false) {
+    if (this.etablissements.length === 0) {
+      this.loading = true;
+    } else {
+      this.refreshing = true;
+    }
+
+    this.service.getAll(forceRefresh).subscribe({
+      next: (d) => {
+        this.etablissements = d;
+        this.loading = false;
+        this.refreshing = false;
+      },
+      error: () => {
+        if (this.etablissements.length === 0) {
+          this.toast.error('Erreur lors du chargement des établissements');
+        }
+        this.loading = false;
+        this.refreshing = false;
+      },
+    });
+  }
+
+  get etablissementsFiltres(): Etablissement[] {
+    return this.etablissements.filter((e) => {
+      if (this.recherche.trim()) {
+        const query = this.recherche.toLowerCase().trim();
+        const matchNom = e.nom?.toLowerCase().includes(query);
+        const matchCode = e.codeAntenne?.toLowerCase().includes(query);
+        const matchAdresse = e.adresse?.toLowerCase().includes(query);
+        if (!matchNom && !matchCode && !matchAdresse) return false;
+      }
+
+      if (this.filtreStatut && (e.statut || 'ACTIF') !== this.filtreStatut) {
+        return false;
+      }
+
+      if (this.filtrePays && (e.pays || 'RDC') !== this.filtrePays) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  ouvrirFormulaireCreation() {
+    this.editing = null;
+    this.form = { nom: '', codeAntenne: '', adresse: '', pays: 'RDC' };
+    this.showForm = true;
   }
 
   edit(e: Etablissement) {
     this.editing = e;
-    this.form = { nom: e.nom, adresse: e.adresse ?? '', codeAntenne: e.codeAntenne ?? '' };
+    this.form = {
+      nom: e.nom,
+      codeAntenne: e.codeAntenne || '',
+      adresse: e.adresse || '',
+      pays: e.pays || 'RDC',
+    };
     this.showForm = true;
   }
 
+  annulerFormulaire() {
+    this.showForm = false;
+    this.editing = null;
+    this.form = { nom: '', codeAntenne: '', adresse: '', pays: 'RDC' };
+  }
+
   save() {
+    if (!this.form.nom.trim()) {
+      this.toast.error("Le nom de l'établissement est requis.");
+      return;
+    }
+
+    this.sauvegardeEnCours = true;
     const obs = this.editing
-      ? this.service.update(this.editing.id, { nom: this.form.nom, adresse: this.form.adresse })
-      : this.service.create(this.form);
+      ? this.service.update(this.editing.id, {
+          nom: this.form.nom,
+          codeAntenne: this.form.codeAntenne || undefined,
+          adresse: this.form.adresse,
+          pays: this.form.pays,
+        })
+      : this.service.create({
+          nom: this.form.nom,
+          codeAntenne: this.form.codeAntenne || undefined,
+          adresse: this.form.adresse,
+          pays: this.form.pays,
+        });
+
     obs.subscribe({
-      next: () => { this.message = 'Enregistré avec succès'; this.showForm = false; this.editing = null; this.form = { nom: '', adresse: '', codeAntenne: '' }; this.load(); },
+      next: (saved: any) => {
+        this.toast.success(
+          this.editing
+            ? 'Établissement mis à jour avec succès'
+            : 'Nouvel établissement créé avec succès'
+        );
+        this.sauvegardeEnCours = false;
+
+        // Mise à jour immédiate et synchrone en mémoire (0 ms pour l'utilisateur)
+        if (this.editing) {
+          const idx = this.etablissements.findIndex((item) => item.id === this.editing!.id);
+          if (idx !== -1) {
+            this.etablissements[idx] = {
+              ...this.etablissements[idx],
+              nom: this.form.nom,
+              codeAntenne: this.form.codeAntenne || this.etablissements[idx].codeAntenne,
+              adresse: this.form.adresse,
+              pays: this.form.pays,
+              ...(saved || {}),
+            };
+            this.etablissements = [...this.etablissements];
+          }
+        } else if (saved) {
+          const newEtab: Etablissement = {
+            id: saved.id || 'etab-' + Date.now(),
+            nom: this.form.nom,
+            codeAntenne: this.form.codeAntenne || saved.codeAntenne,
+            adresse: this.form.adresse,
+            pays: this.form.pays,
+            statut: 'ACTIF',
+            _count: { utilisateurs: 0, formations: 0, satellites: 0 },
+            ...(saved || {}),
+          };
+          this.etablissements = [newEtab, ...this.etablissements];
+          this.etablissements = [...this.etablissements];
+        }
+
+        this.annulerFormulaire();
+      },
+      error: (err) => {
+        const msg = err?.error?.message || "Erreur lors de l'enregistrement";
+        this.toast.error(msg);
+        this.sauvegardeEnCours = false;
+      },
     });
   }
 
-  remove(id: string) {
-    if (confirm('Supprimer cet établissement ?')) {
-      this.service.delete(id).subscribe({ next: () => this.load() });
+  changerStatut(e: Etablissement, nouveauStatut: string) {
+    const actionLabel = nouveauStatut === 'SUSPENDU' ? 'suspendre' : 'activer';
+    if (!confirm(`Confirmez-vous vouloir ${actionLabel} l'établissement "${e.nom}" ?`)) {
+      return;
     }
+
+    this.actionEnCours = e.id;
+    this.service.updateStatut(e.id, nouveauStatut).subscribe({
+      next: (saved: any) => {
+        e.statut = nouveauStatut;
+        const idx = this.etablissements.findIndex((item) => item.id === e.id);
+        if (idx !== -1) {
+          this.etablissements[idx] = {
+            ...this.etablissements[idx],
+            statut: nouveauStatut,
+            ...(saved || {}),
+          };
+          this.etablissements = [...this.etablissements];
+        }
+        this.actionEnCours = null;
+        this.toast.success(`Statut mis à jour : ${nouveauStatut}`);
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Erreur lors du changement de statut';
+        this.toast.error(msg);
+        this.actionEnCours = null;
+      },
+    });
   }
 }

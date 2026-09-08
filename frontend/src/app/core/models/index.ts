@@ -5,6 +5,11 @@ export interface Etablissement {
   nom: string;
   codeAntenne?: string;
   adresse?: string;
+  pays?: string;
+  statut?: 'ACTIF' | 'SUSPENDU' | 'FERME' | string;
+  typeEtablissement?: string;
+  parentEtablissementId?: string | null;
+  parent?: { id: string; nom: string } | null;
   createdAt?: string;
   _count?: { utilisateurs: number; formations: number };
 }

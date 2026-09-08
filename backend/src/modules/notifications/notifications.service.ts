@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Subject, Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -16,10 +16,18 @@ export type NotificationEventType =
   // ─── Module Landing / Actualités ────────────────────────────────────────────
   | 'ACTUALITE_UPDATE'
   | 'DEMANDE_ORIENTATION'
-  // ─── Auth / Utilisateurs ────────────────────────────────────────────────────
+  // ─── Auth / Utilisateurs & Dossiers ─────────────────────────────────────────
   | 'auth'
+  | 'UTILISATEUR_UPDATE'
+  | 'UTILISATEUR_ENROLE'
+  | 'DOSSIER_DOCUMENT_AJOUTE'
+  | 'DOSSIER_DOCUMENT_SUPPRIME'
+  | 'DEMANDE_REGULARISATION'
+  | 'REGULARISATION_DECISION'
+  | 'DOCUMENT_REGULARISATION_SOUMIS'
   // ─── Générique ───────────────────────────────────────────────────────────────
-  | 'BROADCAST';
+  | 'BROADCAST'
+  | 'HEARTBEAT';
 
 export interface NotificationPayload {
   type: NotificationEventType;
@@ -36,8 +44,30 @@ export interface NotificationPayload {
 }
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   private subject = new Subject<NotificationPayload>();
+  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+
+  /**
+   * Heartbeat Keep-Alive : envoie un signal toutes les 20s pour maintenir
+   * les connexions SSE ouvertes sur les reverse proxies cloud (Render, etc.)
+   */
+  onModuleInit() {
+    this.heartbeatInterval = setInterval(() => {
+      this.subject.next({
+        type: 'HEARTBEAT',
+        message: 'heartbeat',
+        timestamp: new Date().toISOString(),
+      } as NotificationPayload);
+    }, 20_000);
+  }
+
+  onModuleDestroy() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
 
   /**
    * Émet un événement structuré vers le flux SSE global.
@@ -48,16 +78,24 @@ export class NotificationsService {
 
   /**
    * Retourne un Observable filtré pour un utilisateur précis.
+   * - ADMIN_CENTRE : reçoit TOUS les événements du réseau (bypass complet)
+   * - HEARTBEAT / BROADCAST : reçus par tous pour maintenir la connexion
    * - Correspond si recipientUserId = userId (événement ciblé)
    * - Ou si recipientEtablissementId = etablissementId (broadcast établissement)
-   * - Ou si le type est 'BROADCAST' sans restriction
+   * - Fallback : vérifie la clé legacy `etablissementId` non normalisée
    */
-  streamForUser(user: { id: string; etablissementId: string }): Observable<NotificationPayload> {
+  streamForUser(user: { id: string; etablissementId: string; role?: string }): Observable<NotificationPayload> {
     return this.subject.asObservable().pipe(
       filter((payload) => {
+        // Heartbeat keepalive reçu par tous pour maintenir la connexion SSE
+        if (payload.type === 'HEARTBEAT') return true;
+        // L'Admin Central voit l'intégralité du réseau en temps réel
+        if (user.role === 'ADMIN_CENTRE') return true;
         if (payload.type === 'BROADCAST') return true;
         if (payload.recipientUserId && payload.recipientUserId === user.id) return true;
         if (payload.recipientEtablissementId && payload.recipientEtablissementId === user.etablissementId) return true;
+        // Fallback : clés non normalisées émises par les services legacy
+        if ((payload as any).etablissementId && (payload as any).etablissementId === user.etablissementId) return true;
         return false;
       }),
     );

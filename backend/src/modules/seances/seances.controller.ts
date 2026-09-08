@@ -38,6 +38,12 @@ export class SeancesController {
     return this.service.getAssiduite(apprenantId, req.user);
   }
 
+  @Get('assiduite/synthese/:etablissementId')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.PERSONNEL_ADMINISTRATIF, Role.FORMATEUR)
+  getAssiduiteSynthese(@Param('etablissementId', ParseUUIDPipe) etablissementId: string, @Req() req: any) {
+    return this.service.getAssiduiteSynthese(etablissementId, req.user);
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR, Role.PERSONNEL_ADMINISTRATIF, Role.APPRENANT)
   findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {

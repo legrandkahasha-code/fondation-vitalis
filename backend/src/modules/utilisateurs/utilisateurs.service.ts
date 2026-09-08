@@ -1,12 +1,14 @@
-import { Injectable, UnauthorizedException, ConflictException, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, ForbiddenException, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RegisterDto, LoginDto, ChangePasswordDto, UpdateProfileDto } from './dto/utilisateurs.dto';
+import { RegisterDto, LoginDto, ChangePasswordDto, UpdateProfileDto, AdminUpdateUserDto, CreerDemandeRegularisationDto, DecisionRegularisationDto } from './dto/utilisateurs.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { IdentityService } from '../admission/identity.service';
 import { Role } from '../../common/enums/role.enum';
 import { addDays } from 'date-fns';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { StorageService } from '../../common/services/storage.service';
 
 @Injectable()
 export class UtilisateursService {
@@ -18,6 +20,7 @@ export class UtilisateursService {
     private jwtService: JwtService,
     private notificationsService: NotificationsService,
     private identity: IdentityService,
+    private storage: StorageService,
   ) {}
 
   async register(dto: RegisterDto, ipAdresse: string = '0.0.0.0', auteurId?: string) {
@@ -49,10 +52,12 @@ export class UtilisateursService {
         password: hashedPassword,
         nom: dto.nom.trim(),
         prenom: dto.prenom.trim(),
-        role: Role.APPRENANT,
+        role: dto.role || Role.APPRENANT,
         etablissementId: dto.etablissementId,
       },
     });
+
+    UtilisateursService.clearFindAllCache();
 
     // Journaliser dans AuditLog
     try {
@@ -84,6 +89,12 @@ export class UtilisateursService {
     // Emit notification (real-time) to subscribers
     try {
       this.notificationsService.emit({ type: 'auth', event: 'register', user: { id: user.id, nom: user.nom, prenom: user.prenom }, message: 'Inscription réussie.' });
+      this.notificationsService.emit({
+        type: 'UTILISATEUR_ENROLE',
+        title: 'Nouvel utilisateur enrôlé',
+        message: `${user.prenom} ${user.nom} (${user.role}) a été enrôlé sur le réseau.`,
+        data: { userId: user.id, role: user.role, nom: user.nom, prenom: user.prenom, etablissementId: user.etablissementId },
+      });
     } catch {
       // Non-fatal — continue
     }
@@ -110,7 +121,7 @@ export class UtilisateursService {
     }
 
     const user = await this.prisma.utilisateur.findUnique({
-      where: { email: dto.email },
+      where: { email: emailNorm },
       include: { etablissement: true },
     });
 
@@ -284,7 +295,19 @@ export class UtilisateursService {
     return result;
   }
 
+  private static findAllCache: { data: any; expiry: number } | null = null;
+  private static readonly FIND_ALL_CACHE_TTL_MS = 120_000; // 2 minutes
+
+  static clearFindAllCache() {
+    UtilisateursService.findAllCache = null;
+    AnalyticsService.clearCache();
+  }
+
   async findAll() {
+    const now = Date.now();
+    if (UtilisateursService.findAllCache && now < UtilisateursService.findAllCache.expiry) {
+      return UtilisateursService.findAllCache.data;
+    }
     const users = await this.prisma.utilisateur.findMany({
       select: {
         id: true, email: true, nom: true, prenom: true, role: true,
@@ -293,6 +316,7 @@ export class UtilisateursService {
       },
       orderBy: [{ etablissementId: 'asc' }, { nom: 'asc' }],
     });
+    UtilisateursService.findAllCache = { data: users, expiry: now + UtilisateursService.FIND_ALL_CACHE_TTL_MS };
     return users;
   }
 
@@ -323,6 +347,7 @@ export class UtilisateursService {
     });
 
     this.invalidateUserValidateCache(userId);
+    UtilisateursService.clearFindAllCache();
 
     // Journaliser dans AuditLog
     await this.prisma.auditLog.create({
@@ -333,6 +358,17 @@ export class UtilisateursService {
         ipAdresse,
       },
     });
+
+    // Émettre notification temps réel
+    try {
+      this.notificationsService.emit({
+        type: 'UTILISATEUR_UPDATE',
+        title: 'Statut utilisateur mis à jour',
+        message: `L'utilisateur a été ${actif ? 'activé' : 'suspendu'}.`,
+        data: { userId, actif },
+      });
+    } catch {}
+
     return { success: true, message: `Utilisateur ${actif ? 'activé' : 'désactivé'}.` };
   }
 
@@ -424,6 +460,538 @@ export class UtilisateursService {
 
     return { success: true, message: 'Profil mis à jour.', utilisateur: updated };
   }
+
+  /**
+   * Modification d'un utilisateur par l'Administration Centrale
+   */
+  async adminUpdateUser(id: string, dto: AdminUpdateUserDto, auteurId: string, ipAdresse: string) {
+    UtilisateursService.clearFindAllCache();
+    const user = await this.prisma.utilisateur.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable.');
+    }
+
+    if (dto.etablissementId) {
+      const etablissement = await this.prisma.etablissement.findUnique({
+        where: { id: dto.etablissementId },
+      });
+      if (!etablissement) {
+        throw new NotFoundException('Établissement introuvable.');
+      }
+    }
+
+    const updated = await this.prisma.utilisateur.update({
+      where: { id },
+      data: {
+        nom: dto.nom !== undefined ? dto.nom.trim() : undefined,
+        prenom: dto.prenom !== undefined ? dto.prenom.trim() : undefined,
+        role: dto.role ?? undefined,
+        etablissementId: dto.etablissementId ?? undefined,
+      },
+      include: {
+        etablissement: {
+          select: { id: true, nom: true, codeAntenne: true },
+        },
+      },
+    });
+
+    this.invalidateUserValidateCache(id);
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          auteurId,
+          action: 'MODIFICATION_UTILISATEUR_ADMIN',
+          details: { cibleId: id, modifications: { ...dto } } as any,
+          ipAdresse,
+        },
+      });
+    } catch {}
+
+    UtilisateursService.clearFindAllCache();
+
+    // Émettre notification temps réel
+    try {
+      this.notificationsService.emit({
+        type: 'UTILISATEUR_UPDATE',
+        title: 'Habilitations modifiées',
+        message: `Les habilitations de ${updated.prenom} ${updated.nom} ont été mises à jour.`,
+        data: { userId: id, role: updated.role, etablissementId: updated.etablissementId },
+      });
+    } catch {}
+
+    return updated;
+  }
+
+  /**
+   * Récupère le dossier complet d'un utilisateur selon son profil :
+   * - Apprenant : profil, matricule, candidatures, pièces justificatives, inscriptions, certificats
+   * - Personnel Technique / Formateur : modules dispensés, séances, notes
+   * - Personnel Administratif : établissement rattaché, habilitations, logs d'audit
+   */
+  async getDossierUtilisateur(id: string) {
+    const user = await this.prisma.utilisateur.findUnique({
+      where: { id },
+      include: {
+        etablissement: {
+          select: { id: true, nom: true, codeAntenne: true, pays: true, statut: true },
+        },
+        apprenantProfile: {
+          include: {
+            candidatures: {
+              include: {
+                session: {
+                  select: { id: true, libelle: true, filiere: { select: { libelle: true } }, niveau: { select: { libelle: true } } },
+                },
+                pieces: {
+                  select: { id: true, type: true, nomFichier: true, fileUrl: true, valide: true, uploadedAt: true },
+                },
+              },
+              orderBy: { createdAt: 'desc' },
+            },
+            inscriptions: {
+              include: {
+                formation: { select: { id: true, titre: true } },
+                session: { select: { id: true, libelle: true } },
+              },
+              orderBy: { dateDebut: 'desc' },
+            },
+            validationsNiveau: {
+              include: {
+                niveau: { select: { libelle: true } },
+                filiere: { select: { libelle: true } },
+              },
+            },
+          },
+        },
+        certificats: {
+          include: {
+            formation: { select: { id: true, titre: true } },
+          },
+          orderBy: { dateEmission: 'desc' },
+        },
+        seances: {
+          include: {
+            module: { select: { id: true, titre: true } },
+          },
+          orderBy: { dateHeureDebut: 'desc' },
+          take: 15,
+        },
+        notesFormateur: {
+          include: {
+            evaluation: { select: { id: true, titre: true } },
+            utilisateur: { select: { id: true, nom: true, prenom: true } },
+          },
+          orderBy: { dateNotation: 'desc' },
+          take: 15,
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Dossier utilisateur introuvable.');
+    }
+
+    const { password, ...safeUser } = user;
+
+    // Statut de sécurité ANSSI
+    const emailNorm = user.email.toLowerCase().trim();
+    const attempts = UtilisateursService.failedAttempts.get(emailNorm);
+    const estVerrouille = !!(attempts?.lockedUntil && attempts.lockedUntil > new Date());
+
+    return {
+      ...safeUser,
+      securite: {
+        estVerrouille,
+        tentativesEchouees: attempts?.count || 0,
+        verrouilleJusquA: attempts?.lockedUntil || null,
+      },
+    };
+  }
+
+  /**
+   * Réinitialisation administrative du mot de passe
+   */
+  async adminResetPassword(userId: string, nouveauMotDePasse?: string, auteurId?: string, ipAdresse: string = '0.0.0.0') {
+    const user = await this.prisma.utilisateur.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable.');
+    }
+
+    const passwordToSet = nouveauMotDePasse && nouveauMotDePasse.length >= 8 ? nouveauMotDePasse : 'Vitalis2026!';
+    const hashedPassword = await bcrypt.hash(passwordToSet, 12);
+
+    await this.prisma.utilisateur.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    // Déverrouiller le compte si verrouillé
+    const emailNorm = user.email.toLowerCase().trim();
+    UtilisateursService.failedAttempts.delete(emailNorm);
+    this.invalidateUserValidateCache(userId);
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          auteurId,
+          action: 'REINITIALISATION_MOT_DE_PASSE_ADMIN',
+          tableCible: 'utilisateurs',
+          details: { userId, email: user.email },
+          ipAdresse,
+        },
+      });
+    } catch {}
+
+    try {
+      this.notificationsService.emit({
+        type: 'UTILISATEUR_UPDATE',
+        title: 'Accès réinitialisé',
+        message: `Le mot de passe de ${user.prenom} ${user.nom} a été réinitialisé.`,
+        data: { userId, reinitialise: true },
+      });
+    } catch {}
+
+    return {
+      success: true,
+      message: `Mot de passe réinitialisé avec succès. Nouveau mot de passe temporaire : ${passwordToSet}`,
+      motDePasseTemporaire: passwordToSet,
+    };
+  }
+
+  /**
+   * Déverrouillage administratif immédiat d'un compte utilisateur (Norme ANSSI)
+   */
+  async adminUnlockAccount(userId: string, auteurId?: string, ipAdresse: string = '0.0.0.0') {
+    const user = await this.prisma.utilisateur.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable.');
+    }
+
+    const emailNorm = user.email.toLowerCase().trim();
+    UtilisateursService.failedAttempts.delete(emailNorm);
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          auteurId,
+          action: 'DEVERROUILLAGE_COMPTE_ADMIN',
+          tableCible: 'utilisateurs',
+          details: { userId, email: user.email },
+          ipAdresse,
+        },
+      });
+    } catch {}
+
+    try {
+      this.notificationsService.emit({
+        type: 'UTILISATEUR_UPDATE',
+        title: 'Compte déverrouillé',
+        message: `Le compte de ${user.prenom} ${user.nom} a été déverrouillé.`,
+        data: { userId, estVerrouille: false },
+      });
+    } catch {}
+
+    return {
+      success: true,
+      message: `Le compte ${user.email} a été déverrouillé avec succès.`,
+    };
+  }
+
+  // =====================================================================
+  // GESTION DES DOCUMENTS DOSSIER
+  // =====================================================================
+
+  /**
+   * Lister les documents du dossier d'un utilisateur
+   */
+  async getDocumentsDossier(userId: string) {
+    const user = await this.prisma.utilisateur.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+    return this.prisma.documentDossier.findMany({
+      where: { utilisateurId: userId },
+      include: { ajoutePar: { select: { id: true, nom: true, prenom: true, role: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Ajouter un document dans le dossier d'un utilisateur (par l'admin)
+   */
+  async adminAjouterDocumentDossier(
+    userId: string,
+    file: Express.Multer.File,
+    titre: string,
+    typeDocument: string,
+    commentaire: string | undefined,
+    auteurId: string,
+    ipAdresse: string = '0.0.0.0',
+  ) {
+    if (!file) throw new BadRequestException('Aucun fichier fourni.');
+    const user = await this.prisma.utilisateur.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const fileUrl = await this.storage.uploadFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      `dossiers/${userId}`,
+    );
+
+    const doc = await this.prisma.documentDossier.create({
+      data: {
+        utilisateurId: userId,
+        titre,
+        typeDocument,
+        fileUrl,
+        nomFichier: file.originalname,
+        statut: 'VALIDE',
+        commentaire,
+        ajouteParId: auteurId,
+      },
+    });
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          auteurId,
+          action: 'AJOUT_DOCUMENT_DOSSIER',
+          tableCible: 'documents_dossier',
+          details: { userId, docId: doc.id, titre, typeDocument },
+          ipAdresse,
+        },
+      });
+    } catch {}
+
+    // Notifier l'utilisateur
+    this.notificationsService.emit({
+      type: 'DOSSIER_DOCUMENT_AJOUTE',
+      recipientUserId: userId,
+      title: 'Document ajouté à votre dossier',
+      message: `Un document « ${titre} » a été ajouté à votre dossier personnel.`,
+      data: { docId: doc.id, titre, typeDocument },
+    });
+
+    return { success: true, document: doc };
+  }
+
+  /**
+   * Supprimer un document du dossier
+   */
+  async adminSupprimerDocumentDossier(docId: string, auteurId: string) {
+    const doc = await this.prisma.documentDossier.findUnique({ where: { id: docId } });
+    if (!doc) throw new NotFoundException('Document introuvable.');
+    await this.prisma.documentDossier.delete({ where: { id: docId } });
+
+    // Notifier suppression temps réel
+    try {
+      this.notificationsService.emit({
+        type: 'DOSSIER_DOCUMENT_SUPPRIME',
+        recipientUserId: doc.utilisateurId,
+        title: 'Document supprimé du dossier',
+        message: `Le document « ${doc.titre} » a été retiré du dossier.`,
+        data: { userId: doc.utilisateurId, docId, titre: doc.titre },
+      });
+    } catch {}
+
+    return { success: true, message: 'Document supprimé avec succès.' };
+  }
+
+  // =====================================================================
+  // GESTION DES DEMANDES DE RÉGULARISATION
+  // =====================================================================
+
+  /**
+   * Créer une demande de régularisation (admin → utilisateur)
+   */
+  async creerDemandeRegularisation(
+    userId: string,
+    dto: CreerDemandeRegularisationDto,
+    auteurId: string,
+    ipAdresse: string = '0.0.0.0',
+  ) {
+    const user = await this.prisma.utilisateur.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const dateLimite = new Date(dto.dateLimite);
+    if (isNaN(dateLimite.getTime())) {
+      throw new BadRequestException('Date limite invalide.');
+    }
+
+    const demande = await this.prisma.demandeRegularisation.create({
+      data: {
+        utilisateurId: userId,
+        auteurId,
+        motif: dto.motif,
+        description: dto.description,
+        piecesDemandees: dto.piecesDemandees || [],
+        dateLimite,
+        statut: 'EN_ATTENTE',
+      },
+      include: {
+        auteur: { select: { id: true, nom: true, prenom: true } },
+      },
+    });
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          auteurId,
+          action: 'DEMANDE_REGULARISATION_CREEE',
+          tableCible: 'demandes_regularisation',
+          details: { userId, demandeId: demande.id, motif: dto.motif },
+          ipAdresse,
+        },
+      });
+    } catch {}
+
+    // Notifier l'utilisateur concerné
+    this.notificationsService.emit({
+      type: 'DEMANDE_REGULARISATION',
+      recipientUserId: userId,
+      title: '⚠️ Régularisation de dossier requise',
+      message: `L'administration vous demande de régulariser votre dossier avant le ${dateLimite.toLocaleDateString('fr-FR')}. Motif : ${dto.motif}`,
+      data: { demandeId: demande.id, motif: dto.motif, dateLimite: dateLimite.toISOString() },
+    });
+
+    return { success: true, demande };
+  }
+
+
+  /**
+   * Lister les demandes de régularisation d'un utilisateur
+   */
+  async getDemandesRegularisation(userId: string) {
+    const user = await this.prisma.utilisateur.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+    return this.prisma.demandeRegularisation.findMany({
+      where: { utilisateurId: userId },
+      include: { auteur: { select: { id: true, nom: true, prenom: true, role: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Valider / clôturer / rejeter une demande de régularisation (admin)
+   */
+  async prendreDecisionRegularisation(
+    demandeId: string,
+    dto: DecisionRegularisationDto,
+    auteurId: string,
+    ipAdresse: string = '0.0.0.0',
+  ) {
+    const demande = await this.prisma.demandeRegularisation.findUnique({
+      where: { id: demandeId },
+    });
+    if (!demande) throw new NotFoundException('Demande de régularisation introuvable.');
+
+    const updated = await this.prisma.demandeRegularisation.update({
+      where: { id: demandeId },
+      data: {
+        statut: dto.statut,
+        decisionDate: new Date(),
+        decisionCommentaire: dto.commentaire,
+      },
+    });
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          auteurId,
+          action: 'DECISION_REGULARISATION',
+          tableCible: 'demandes_regularisation',
+          details: { demandeId, statut: dto.statut, commentaire: dto.commentaire },
+          ipAdresse,
+        },
+      });
+    } catch {}
+
+    // Notifier l'utilisateur
+    const msg =
+      dto.statut === 'REGULARISE'
+        ? 'Votre dossier a été validé et déclaré conforme.'
+        : dto.statut === 'REJETE'
+        ? 'Votre demande de régularisation a été rejetée. Veuillez contacter l\'administration.'
+        : 'La demande de régularisation a été clôturée.';
+    this.notificationsService.emit({
+      type: 'REGULARISATION_DECISION',
+      recipientUserId: demande.utilisateurId,
+      title: 'Décision sur votre dossier',
+      message: msg,
+      data: { demandeId, statut: dto.statut },
+    });
+
+    return { success: true, demande: updated };
+  }
+
+  /**
+   * Obtenir les demandes de régularisation actives (EN_ATTENTE) pour l'utilisateur connecté
+   */
+  async getMesDemandesRegularisation(userId: string) {
+    return this.prisma.demandeRegularisation.findMany({
+      where: { utilisateurId: userId, statut: 'EN_ATTENTE' },
+      include: { auteur: { select: { id: true, nom: true, prenom: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Soumettre un document en réponse à une demande de régularisation (utilisateur)
+   */
+  async soumettreDocumentRegularisation(
+    userId: string,
+    demandeId: string,
+    file: Express.Multer.File,
+    titre: string,
+    typeDocument: string,
+  ) {
+    if (!file) throw new BadRequestException('Aucun fichier fourni.');
+    const demande = await this.prisma.demandeRegularisation.findUnique({ where: { id: demandeId } });
+    if (!demande) throw new NotFoundException('Demande introuvable.');
+    if (demande.utilisateurId !== userId) throw new ForbiddenException('Accès refusé.');
+    if (demande.statut !== 'EN_ATTENTE') throw new BadRequestException('Cette demande n\'est plus en attente.');
+
+    const fileUrl = await this.storage.uploadFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      `dossiers/${userId}/regularisation`,
+    );
+
+    const doc = await this.prisma.documentDossier.create({
+      data: {
+        utilisateurId: userId,
+        titre,
+        typeDocument,
+        fileUrl,
+        nomFichier: file.originalname,
+        statut: 'EN_ATTENTE_VALIDATION',
+        commentaire: `Soumis en réponse à la demande de régularisation #${demandeId}`,
+        ajouteParId: userId,
+      },
+    });
+
+    // Mettre à jour le statut de la demande de régularisation en "DOCUMENTS_FOURNIS"
+    try {
+      await this.prisma.demandeRegularisation.update({
+        where: { id: demandeId },
+        data: { statut: 'DOCUMENTS_FOURNIS' },
+      });
+    } catch {}
+
+    // Notifier en temps réel les administrateurs
+    try {
+      this.notificationsService.emit({
+        type: 'DOCUMENT_REGULARISATION_SOUMIS',
+        title: 'Pièce justificative transmise',
+        message: `L'utilisateur a transmis une pièce « ${titre} » en réponse à la demande de régularisation.`,
+        data: { userId, demandeId, docId: doc.id, titre, document: doc },
+      });
+    } catch {}
+
+    return { success: true, document: doc, message: 'Document soumis avec succès, en attente de validation.' };
+  }
 }
+
 
 

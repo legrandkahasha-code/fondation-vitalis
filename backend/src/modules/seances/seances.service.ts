@@ -170,4 +170,55 @@ export class SeancesService {
       orderBy: { nom: 'asc' },
     });
   }
+
+  async getAssiduiteSynthese(etablissementId: string, user: any) {
+    if (user.role !== Role.ADMIN_CENTRE && user.etablissementId !== etablissementId) {
+      throw new ForbiddenException('Accès interdit à cet établissement.');
+    }
+
+    const apprenants = await this.prisma.utilisateur.findMany({
+      where: {
+        etablissementId,
+        role: Role.APPRENANT,
+        actif: true,
+      },
+      select: { id: true, nom: true, prenom: true, email: true },
+      orderBy: { nom: 'asc' },
+    });
+
+    if (apprenants.length === 0) {
+      return [];
+    }
+
+    const apprenantIds = apprenants.map((a) => a.id);
+    const presenceGroups = await this.prisma.presenceSeance.groupBy({
+      by: ['utilisateurId', 'statut'],
+      where: {
+        utilisateurId: { in: apprenantIds },
+      },
+      _count: true,
+    });
+
+    const presencesMap = new Map<string, { total: number; present: number }>();
+    for (const g of presenceGroups) {
+      const entry = presencesMap.get(g.utilisateurId) || { total: 0, present: 0 };
+      entry.total += g._count;
+      if (g.statut === 'PRESENT' || g.statut === 'RETARD') {
+        entry.present += g._count;
+      }
+      presencesMap.set(g.utilisateurId, entry);
+    }
+
+    return apprenants.map((a) => {
+      const stats = presencesMap.get(a.id) || { total: 0, present: 0 };
+      const taux = stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 100;
+      return {
+        apprenant: a,
+        total: stats.total,
+        present: stats.present,
+        absent: stats.total - stats.present,
+        taux,
+      };
+    });
+  }
 }

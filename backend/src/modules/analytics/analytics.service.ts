@@ -28,6 +28,174 @@ export class AnalyticsService {
     };
   }
 
+  private static globalDetailedCache: { data: any; expiry: number } | null = null;
+  private static readonly DETAILED_CACHE_TTL_MS = 120_000; // 2 minutes (instantané, invalidé sur mutation)
+
+  static clearCache() {
+    AnalyticsService.globalDetailedCache = null;
+  }
+
+  /**
+   * Cockpit exécutif détaillé — optimisé sans requêtes redondantes,
+   * avec calcul groupé en base et cache mémoire pour affichage instantané (0-5ms).
+   */
+  async getGlobalDetailed() {
+    const now = Date.now();
+    if (AnalyticsService.globalDetailedCache && now < AnalyticsService.globalDetailedCache.expiry) {
+      return AnalyticsService.globalDetailedCache.data;
+    }
+
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+    // Exécution groupée en parallèle des requêtes strictement nécessaires (sans requêtes redondantes)
+    const [
+      countsGlobal,
+      parEtablissement,
+      userRoleCounts,
+      formationCerts,
+      admissionStats,
+      recentUsers,
+      topFormations,
+    ] = await Promise.all([
+      Promise.all([
+        this.prisma.formation.count(),
+        this.prisma.certificat.count(),
+        this.prisma.seanceFormation.count(),
+      ]),
+      this.prisma.etablissement.findMany({
+        select: {
+          id: true,
+          nom: true,
+          codeAntenne: true,
+          pays: true,
+          statut: true,
+          _count: { select: { utilisateurs: true, formations: true } },
+        },
+        orderBy: { nom: 'asc' },
+      }),
+      this.prisma.utilisateur.groupBy({
+        by: ['etablissementId', 'role'],
+        _count: true,
+      }),
+      this.prisma.formation.findMany({
+        select: {
+          etablissementId: true,
+          _count: { select: { certificats: true } },
+        },
+      }),
+      this.prisma.candidature.groupBy({
+        by: ['statut'],
+        _count: true,
+      }),
+      this.prisma.utilisateur.findMany({
+        where: {
+          role: 'APPRENANT',
+          createdAt: { gte: twelveMonthsAgo },
+        },
+        select: { createdAt: true },
+      }),
+      this.prisma.formation.findMany({
+        select: {
+          id: true,
+          titre: true,
+          etablissement: { select: { nom: true } },
+          _count: { select: { modules: true, certificats: true } },
+        },
+        orderBy: { certificats: { _count: 'desc' } },
+        take: 10,
+      }),
+    ]);
+
+    const [totalFormations, totalCertificats, totalSeances] = countsGlobal;
+    let totalApprenants = 0;
+    let totalFormateurs = 0;
+    for (const r of userRoleCounts) {
+      if (r.role === 'APPRENANT') totalApprenants += r._count;
+      else if (r.role === 'FORMATEUR') totalFormateurs += r._count;
+    }
+
+    const kpi = {
+      etablissements: parEtablissement.length,
+      apprenants: totalApprenants,
+      formateurs: totalFormateurs,
+      formations: totalFormations,
+      certificatsEmis: totalCertificats,
+      seancesPlanifiees: totalSeances,
+    };
+
+    // ── Indexation en mémoire des effectifs par établissement ──
+    const countsByEtab = new Map<string, { apprenants: number; formateurs: number }>();
+    for (const row of userRoleCounts) {
+      if (!row.etablissementId) continue;
+      const entry = countsByEtab.get(row.etablissementId) || { apprenants: 0, formateurs: 0 };
+      if (row.role === 'APPRENANT') entry.apprenants += row._count;
+      else if (row.role === 'FORMATEUR') entry.formateurs += row._count;
+      countsByEtab.set(row.etablissementId, entry);
+    }
+
+    // ── Indexation des certificats par établissement ──
+    const certsByEtab = new Map<string, number>();
+    for (const f of formationCerts) {
+      certsByEtab.set(
+        f.etablissementId,
+        (certsByEtab.get(f.etablissementId) || 0) + f._count.certificats,
+      );
+    }
+
+    // ── Construction des détails d'antenne en O(1) ──
+    const etablissementsDetails = parEtablissement.map((e) => {
+      const uc = countsByEtab.get(e.id) || { apprenants: 0, formateurs: 0 };
+      return {
+        id: e.id,
+        nom: e.nom,
+        codeAntenne: e.codeAntenne,
+        pays: e.pays,
+        statut: e.statut,
+        apprenants: uc.apprenants,
+        formateurs: uc.formateurs,
+        formations: e._count.formations,
+        certificats: certsByEtab.get(e.id) || 0,
+        totalUtilisateurs: e._count.utilisateurs,
+      };
+    });
+
+    // ── Statistiques d'admission par statut ──
+    const admissionParStatut = Object.fromEntries(
+      admissionStats.map((g) => [g.statut, g._count]),
+    );
+
+    // ── Tendances mensuelles ──
+    const tendancesMensuelles: Record<string, number> = {};
+    for (const u of recentUsers) {
+      if (!u.createdAt) continue;
+      const key = `${u.createdAt.getFullYear()}-${String(u.createdAt.getMonth() + 1).padStart(2, '0')}`;
+      tendancesMensuelles[key] = (tendancesMensuelles[key] || 0) + 1;
+    }
+
+    const result = {
+      kpi,
+      etablissements: etablissementsDetails,
+      admissionParStatut,
+      tendancesMensuelles,
+      topFormations: topFormations.map((f) => ({
+        id: f.id,
+        titre: f.titre,
+        etablissement: f.etablissement.nom,
+        modules: f._count.modules,
+        certificats: f._count.certificats,
+      })),
+    };
+
+    // Stockage dans le cache mémoire rapide
+    AnalyticsService.globalDetailedCache = {
+      data: result,
+      expiry: now + AnalyticsService.DETAILED_CACHE_TTL_MS,
+    };
+
+    return result;
+  }
+
   async exportGlobalCsv() {
     const data = await this.getGlobalKpi();
     const rows = [

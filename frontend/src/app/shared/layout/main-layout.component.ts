@@ -1,15 +1,19 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AnalyticsService } from '../../core/services/analytics.service';
+import { EtablissementsService } from '../../core/services/etablissements.service';
+import { UtilisateursService } from '../../core/services/utilisateurs.service';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
   template: `
     <div class="flex min-h-screen bg-vc-bg font-sans text-[#1B1D1F] relative">
       <!-- MOBILE BACKDROP OVERLAY -->
@@ -449,9 +453,93 @@ import { ToastService } from '../../core/services/toast.service';
           </div>
         }
 
+        <!-- Bannière d'alerte injonction de régularisation pour l'utilisateur connecté -->
+        @if (demandeActive) {
+          <div class="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md border-b border-amber-600 z-20 animate-fade-in">
+            <div class="flex items-center gap-2.5 text-xs">
+              <span class="text-base animate-pulse">⚠️</span>
+              <div>
+                <strong class="font-bold uppercase tracking-wide text-[11px] bg-white/20 px-1.5 py-0.5 rounded">Régularisation administrative requise</strong>
+                <span class="ml-2 font-medium">{{ demandeActive.motif }}</span>
+                <span class="ml-1 opacity-90">— Transmettez vos pièces justificatives avant le <strong>{{ demandeActive.dateLimite | date:'dd/MM/yyyy' }}</strong>.</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="ouvrirModalSoumission()"
+              class="bg-white text-amber-900 font-bold px-3 py-1 rounded-[2px] text-xs hover:bg-amber-50 shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
+            >
+              <span>📄</span> Déposer les pièces demandées
+            </button>
+          </div>
+        }
+
         <main class="flex-1 overflow-auto">
           <ng-content />
         </main>
+
+        <!-- MODAL DE SOUMISSION DE PIÈCE DE RÉGULARISATION PAR L'UTILISATEUR -->
+        @if (modalSoumissionOuvert && demandeActive) {
+          <div class="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 animate-fade-in">
+            <div class="bg-white max-w-md w-full rounded-[2px] shadow-2xl border border-[#D7DBDE] animate-scale-up">
+              <div class="flex items-center justify-between border-b px-5 py-4 bg-amber-50">
+                <h3 class="text-sm font-bold text-amber-950 flex items-center gap-2">
+                  <span>⚠️</span> Régularisation de votre dossier
+                </h3>
+                <button (click)="fermerModalSoumission()" class="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
+              </div>
+              <div class="p-5 space-y-4 text-xs">
+                <div class="p-3 bg-amber-50/50 border border-amber-200 rounded text-amber-900">
+                  <div class="font-bold mb-1">Motif : {{ demandeActive.motif }}</div>
+                  <p class="text-gray-700 leading-relaxed">{{ demandeActive.description }}</p>
+                  <div class="text-[11px] text-amber-800 mt-2 font-semibold">
+                    📅 Échéance impérative : {{ demandeActive.dateLimite | date:'dd/MM/yyyy' }}
+                  </div>
+                </div>
+
+                <form (ngSubmit)="envoyerDocumentSoumission()" class="space-y-4">
+                  <div>
+                    <label class="block font-semibold text-[#1B1D1F] mb-1">Intitulé de la pièce transmise *</label>
+                    <input type="text" [(ngModel)]="titreSoumission" name="titre" required
+                      placeholder="Ex: Carte d'identité recto-verso, Copie certifiée du diplôme..."
+                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"/>
+                  </div>
+
+                  <div>
+                    <label class="block font-semibold text-[#1B1D1F] mb-1">Type de document *</label>
+                    <select [(ngModel)]="typeDocumentSoumission" name="typeDocument"
+                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white cursor-pointer">
+                      <option value="CNI">Carte Nationale d'Identité</option>
+                      <option value="PASSEPORT">Passeport</option>
+                      <option value="DIPLOME">Diplôme / Certificat</option>
+                      <option value="CONTRAT">Contrat / Convention</option>
+                      <option value="CURRICULUM_VITAE">Curriculum Vitae</option>
+                      <option value="AUTRE">Autre justificatif</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-semibold text-[#1B1D1F] mb-1">Fichier justificatif *</label>
+                    <input type="file" (change)="onFichierSoumissionChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required
+                      class="w-full p-2 border border-[#D7DBDE] rounded-[2px] text-xs bg-gray-50 cursor-pointer"/>
+                    @if (fichierSoumission) {
+                      <div class="mt-1 text-[10px] text-emerald-700 font-medium">✓ {{ fichierSoumission.name }}</div>
+                    }
+                  </div>
+
+                  <div class="flex items-center justify-end gap-3 pt-3 border-t">
+                    <button type="button" (click)="fermerModalSoumission()" class="btn btn-ghost text-xs py-2 px-3 text-gray-600 cursor-pointer">
+                      Annuler
+                    </button>
+                    <button type="submit" [disabled]="submittingSoumission" class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#005B94] hover:bg-[#004A78] text-white cursor-pointer">
+                      {{ submittingSoumission ? 'Envoi en cours...' : '📤 Transmettre la pièce' }}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        }
       </div>
     </div>
   `,
@@ -461,22 +549,106 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   isMobileMenuOpen = false;
   private sub: Subscription | null = null;
 
+  demandeActive: any = null;
+  modalSoumissionOuvert = false;
+  fichierSoumission: File | null = null;
+  titreSoumission = '';
+  typeDocumentSoumission = 'CNI';
+  submittingSoumission = false;
+
   constructor(
     public auth: AuthService,
     private notifications: NotificationsService,
     private toast: ToastService,
+    private analyticsService: AnalyticsService,
+    private etablissementsService: EtablissementsService,
+    private utilisateursService: UtilisateursService,
   ) {}
 
   ngOnInit(): void {
+    // Pré-chargement proactif en tâche de fond pour l'Admin Central (affichage instantané 0ms sans attente)
+    if (this.auth.hasRole('ADMIN_CENTRE')) {
+      this.analyticsService.getGlobalDetailed().subscribe({ error: () => {} });
+      this.etablissementsService.getAll().subscribe({ error: () => {} });
+      this.utilisateursService.getAll().subscribe({ error: () => {} });
+    }
+
+    // Vérifier si l'utilisateur connecté fait l'objet d'une demande de régularisation active
+    this.verifierRegularisations();
+
     this.sub = this.notifications.messages().subscribe({
       next: (msg) => {
-        if (msg && typeof msg === 'object' && msg.type?.startsWith('ADMISSION_')) {
-          if (this.auth.hasAnyRole(['ADMIN_CENTRE', 'ADMIN_ETABLISSEMENT', 'PERSONNEL_ADMINISTRATIF'])) {
-            const icon = msg.type === 'ADMISSION_NEW_CANDIDATURE' ? '📋 ' : msg.type === 'ADMISSION_CONFIRMED' ? '🎉 ' : '📢 ';
-            this.toast.info(`${icon}${msg.message || 'Activité sur les admissions réseau'}`);
+        if (msg && typeof msg === 'object') {
+          if (msg.type?.startsWith('ADMISSION_')) {
+            if (this.auth.hasAnyRole(['ADMIN_CENTRE', 'ADMIN_ETABLISSEMENT', 'PERSONNEL_ADMINISTRATIF'])) {
+              const icon = msg.type === 'ADMISSION_NEW_CANDIDATURE' ? '📋 ' : msg.type === 'ADMISSION_CONFIRMED' ? '🎉 ' : '📢 ';
+              this.toast.info(`${icon}${msg.message || 'Activité sur les admissions réseau'}`);
+            }
+          } else if (msg.type === 'DEMANDE_REGULARISATION') {
+            this.toast.info('⚠️ ' + (msg.message || 'L\'administration demande la régularisation de votre dossier.'));
+            this.verifierRegularisations();
           }
         }
       },
+    });
+  }
+
+  verifierRegularisations() {
+    if (this.auth.currentUser) {
+      this.utilisateursService.getMesDemandesRegularisation().subscribe({
+        next: (demandes) => {
+          if (Array.isArray(demandes)) {
+            this.demandeActive = demandes.find(d => d.statut === 'EN_ATTENTE' || d.statut === 'REJETEE') || null;
+          }
+        },
+        error: () => {
+          this.demandeActive = null;
+        }
+      });
+    }
+  }
+
+  ouvrirModalSoumission() {
+    this.modalSoumissionOuvert = true;
+    this.titreSoumission = '';
+    this.fichierSoumission = null;
+    this.typeDocumentSoumission = 'CNI';
+  }
+
+  fermerModalSoumission() {
+    this.modalSoumissionOuvert = false;
+    this.fichierSoumission = null;
+    this.titreSoumission = '';
+  }
+
+  onFichierSoumissionChange(e: any) {
+    if (e.target.files && e.target.files.length > 0) {
+      this.fichierSoumission = e.target.files[0];
+    }
+  }
+
+  envoyerDocumentSoumission() {
+    if (!this.demandeActive || !this.fichierSoumission || !this.titreSoumission) {
+      this.toast.error('Veuillez renseigner le titre et sélectionner le fichier à transmettre.');
+      return;
+    }
+    this.submittingSoumission = true;
+    this.utilisateursService.soumettreDocumentRegularisation(
+      this.demandeActive.id,
+      this.fichierSoumission,
+      this.titreSoumission,
+      this.typeDocumentSoumission,
+    ).subscribe({
+      next: () => {
+        this.submittingSoumission = false;
+        this.toast.success('Document transmis avec succès à l\'Administration. Votre dossier est en cours de révision.');
+        this.fermerModalSoumission();
+        this.verifierRegularisations();
+      },
+      error: () => {
+        this.submittingSoumission = false;
+        this.toast.error('Échec lors de la transmission du document. Veuillez réessayer.');
+      }
     });
   }
 

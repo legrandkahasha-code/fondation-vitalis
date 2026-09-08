@@ -17,8 +17,15 @@ export type NotificationEventType =
   // ─── Module Landing / Actualités ────────────────────────────────────────────
   | 'ACTUALITE_UPDATE'
   | 'LANDING_UPDATE'
-  // ─── Auth / Utilisateurs ────────────────────────────────────────────────────
+  // ─── Auth / Utilisateurs & Dossiers ─────────────────────────────────────────
   | 'auth'
+  | 'UTILISATEUR_UPDATE'
+  | 'UTILISATEUR_ENROLE'
+  | 'DOSSIER_DOCUMENT_AJOUTE'
+  | 'DOSSIER_DOCUMENT_SUPPRIME'
+  | 'DEMANDE_REGULARISATION'
+  | 'REGULARISATION_DECISION'
+  | 'DOCUMENT_REGULARISATION_SOUMIS'
   // ─── Générique ───────────────────────────────────────────────────────────────
   | 'BROADCAST'
   | (string & {});

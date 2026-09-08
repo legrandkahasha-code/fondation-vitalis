@@ -195,6 +195,7 @@ export class CandidatureService implements OnModuleInit {
       try {
         this.notifications.emit({
           type: 'ADMISSION_NEW_CANDIDATURE',
+          recipientEtablissementId: session.etablissementId,
           candidatureId: created.id,
           apprenant: {
             id: profile.id,
@@ -314,6 +315,7 @@ export class CandidatureService implements OnModuleInit {
     try {
       this.notifications.emit({
         type: 'ADMISSION_CONFIRMED',
+        recipientEtablissementId: c.session?.etablissementId,
         candidatureId: c.id,
         apprenantId: c.apprenantId,
         apprenant: {
@@ -577,9 +579,11 @@ export class CandidatureService implements OnModuleInit {
       try {
         this.notifications.emit({
           type: 'ADMISSION_INSCRIBED',
+          recipientEtablissementId: c.session?.etablissementId,
           candidatureId: c.id,
           apprenantId: c.apprenantId,
           sessionId: c.sessionId,
+          etablissementId: c.session?.etablissementId,
           statut: statut_candidature.INSCRITE,
         });
       } catch {}
@@ -626,6 +630,8 @@ export class CandidatureService implements OnModuleInit {
     try {
       this.notifications.emit({
         type: 'ADMISSION_STATUS_CHANGE',
+        recipientEtablissementId: updated.session?.etablissementId,
+        recipientUserId: updated.apprenantId,
         candidatureId: id,
         statutAvant: from,
         statutApres: to,

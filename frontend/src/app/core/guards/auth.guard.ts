@@ -7,7 +7,7 @@ import { filter, map, take } from 'rxjs';
 export function getHomeRouteForRole(role: string | undefined): string {
   switch (role) {
     case 'APPRENANT':               return '/apprenant/dashboard';
-    case 'ADMIN_CENTRE':            return '/admin/accueil';
+    case 'ADMIN_CENTRE':            return '/admin/analytics';
     case 'ADMIN_ETABLISSEMENT':     return '/admin-etab/dashboard';
     case 'FORMATEUR':               return '/dashboard';
     case 'PERSONNEL_ADMINISTRATIF': return '/dashboard';

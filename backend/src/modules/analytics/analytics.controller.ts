@@ -18,6 +18,12 @@ export class AnalyticsController {
     return this.service.getGlobalKpi();
   }
 
+  @Get('global/detailed')
+  @Roles(Role.ADMIN_CENTRE)
+  getGlobalDetailed() {
+    return this.service.getGlobalDetailed();
+  }
+
   @Get('global/export')
   @Roles(Role.ADMIN_CENTRE)
   async exportGlobal(@Req() req: any, @Res() res: Response) {

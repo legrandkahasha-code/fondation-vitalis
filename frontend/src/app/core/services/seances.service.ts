@@ -53,4 +53,14 @@ export class SeancesService {
   getAssiduite(apprenantId: string): Observable<{ tauxAssiduite: number; total: number; present: number }> {
     return this.http.get<{ tauxAssiduite: number; total: number; present: number }>(`${this.url}/apprenant/${apprenantId}/assiduite`);
   }
+
+  getAssiduiteSynthese(etablissementId: string): Observable<{
+    apprenant: Utilisateur;
+    total: number;
+    present: number;
+    absent: number;
+    taux: number;
+  }[]> {
+    return this.http.get<any[]>(`${this.url}/assiduite/synthese/${etablissementId}`);
+  }
 }

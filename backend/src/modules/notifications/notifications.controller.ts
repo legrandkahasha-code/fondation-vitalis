@@ -18,7 +18,11 @@ export class NotificationsController {
   @UseGuards(JwtAuthGuard)
   @Sse('sse')
   sse(@Req() req: any): Observable<MessageEvent> {
-    return this.notifications.streamForUser(req.user).pipe(
+    return this.notifications.streamForUser({
+      id: req.user.id,
+      etablissementId: req.user.etablissementId,
+      role: req.user.role,
+    }).pipe(
       map((payload: NotificationPayload) => ({ data: payload } as unknown as MessageEvent)),
     );
   }

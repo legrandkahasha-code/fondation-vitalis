@@ -44,6 +44,10 @@ export class UpdateEtablissementDto {
 
   @IsOptional()
   @IsString()
+  codeAntenne?: string;
+
+  @IsOptional()
+  @IsString()
   pays?: string;
 
   @IsOptional()
