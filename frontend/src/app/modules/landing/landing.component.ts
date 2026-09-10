@@ -16,6 +16,7 @@ import {
   LandingPageActualite,
   PublicLandingData,
 } from '../../core/models';
+import { buildWhatsappUrl, DEFAULT_WHATSAPP_MESSAGE } from '../../core/utils/whatsapp.util';
 
 export interface FormationDisplayItem {
   id: string;
@@ -89,6 +90,9 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     contactEmail: 'contact@vitalis-center.cd',
     contactHoraires: 'Lundi – Vendredi : 08h00 – 16h30 | Samedi : 08h30 – 12h30',
     contactTelephone: '+243 ...',
+    contactWhatsapp: '+243843010337',
+    whatsappMessage: DEFAULT_WHATSAPP_MESSAGE,
+    whatsappActif: true,
     footerDescription: 'Vitalis Center EUP (Établissement d\'Utilité Publique) · Centre de formation professionnelle et technique agréé par le Ministère de la Formation Professionnelle de la RDC.',
     footerTutelleTexte: 'Supervision institutionnelle et contrôle de conformité des attestations et certifications nationales.',
     footerCopyright: '© 2026 Vitalis Center EUP. Tous droits réservés.',
@@ -664,10 +668,11 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get whatsappUrl(): string {
-    const rawTel = (this.settings.contactTelephone || '+243810000000').replace(/[^0-9]/g, '');
-    const defaultTel = rawTel.length >= 9 ? rawTel : '243810000000';
-    const message = encodeURIComponent('Bonjour Vitalis Center EUP, je souhaite obtenir des informations sur vos formations professionnelles certifiées.');
-    return `https://wa.me/${defaultTel}?text=${message}`;
+    return buildWhatsappUrl(this.settings.contactWhatsapp, this.settings.whatsappMessage) || '';
+  }
+
+  get whatsappVisible(): boolean {
+    return this.settings.whatsappActif !== false && !!this.whatsappUrl;
   }
 
   @HostListener('window:scroll')

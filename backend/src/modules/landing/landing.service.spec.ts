@@ -115,4 +115,22 @@ describe('LandingService', () => {
     const settings = await service.getSettings();
     expect(settings.statsLaureats).toBe(1200);
   });
+
+  it('normalise le numéro WhatsApp à l\'enregistrement', async () => {
+    mockPrismaService.landingPageSettings.update.mockResolvedValue({
+      contactWhatsapp: '+243843010337',
+    });
+    await service.updateSettings({ contactWhatsapp: '0843 010 337' });
+    expect(mockPrismaService.landingPageSettings.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ contactWhatsapp: '+243843010337' }),
+      }),
+    );
+  });
+
+  it('rejette un numéro WhatsApp factice', async () => {
+    await expect(
+      service.updateSettings({ contactWhatsapp: '+243 81 000 0000' }),
+    ).rejects.toThrow('Numéro WhatsApp invalide');
+  });
 });

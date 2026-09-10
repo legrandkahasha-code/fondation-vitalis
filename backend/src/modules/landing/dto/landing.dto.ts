@@ -174,6 +174,20 @@ export class UpdateLandingSettingsDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
+  contactWhatsapp?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  whatsappMessage?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  whatsappActif?: boolean;
+
+  @IsOptional()
+  @IsString()
   footerDescription?: string;
 
   @IsOptional()

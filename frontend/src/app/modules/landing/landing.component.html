@@ -1563,6 +1563,7 @@
       }
 
         <!-- Bouton WhatsApp Business Flottant avec Tooltip & Indicateur Actif -->
+        @if (whatsappVisible) {
         <div class="relative group">
           <a 
             [href]="whatsappUrl" 
@@ -1586,6 +1587,7 @@
             <div class="w-2 h-2 bg-[#1B1D1F] rotate-45 absolute -right-1 top-2.5"></div>
           </div>
         </div>
+        }
       </div>
 
     </div>

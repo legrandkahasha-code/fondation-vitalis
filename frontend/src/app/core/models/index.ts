@@ -148,6 +148,9 @@ export interface LandingPageSettings {
   contactEmail: string;
   contactHoraires: string;
   contactTelephone: string;
+  contactWhatsapp?: string;
+  whatsappMessage?: string;
+  whatsappActif?: boolean;
   footerDescription?: string;
   footerTutelleTexte?: string;
   footerCopyright?: string;

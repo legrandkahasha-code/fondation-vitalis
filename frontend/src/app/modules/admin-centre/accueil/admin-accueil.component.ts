@@ -15,6 +15,7 @@ import {
   LandingPageActualite,
   ContactMessageItem,
 } from '../../../core/models';
+import { buildWhatsappUrl } from '../../../core/utils/whatsapp.util';
 
 @Component({
   selector: 'app-admin-accueil',
@@ -250,7 +251,7 @@ import {
                 </div>
 
                 <div class="field">
-                  <label>Téléphone Officiel / WhatsApp</label>
+                  <label>Téléphone Officiel</label>
                   <input type="text" [(ngModel)]="settings.contactTelephone" name="contactTelephone" placeholder="+243 ..." />
                 </div>
 
@@ -258,6 +259,60 @@ import {
                   <label>Horaires d'Ouverture du Secrétariat</label>
                   <input type="text" [(ngModel)]="settings.contactHoraires" name="contactHoraires" placeholder="Lundi – Vendredi : 08h00 – 16h30 | Samedi : 08h30 – 12h30" />
                 </div>
+              </div>
+            </div>
+
+            <!-- Bouton WhatsApp Flottant -->
+            <div class="card border-t-[5px] border-t-[#25D366]">
+              <div class="label">
+                <svg class="inline w-5 h-5 mr-1.5 -mt-0.5" fill="#25D366" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.07-2.148-.528-1.74-.716-2.859-2.483-2.946-2.599-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.42-.099.825z"/></svg>
+                Bouton WhatsApp Flottant — Configuration
+              </div>
+              <p class="text-xs text-[#4B5157] mb-4">Ce bouton apparaît sur la page d'accueil publique et permet aux visiteurs de contacter un conseiller. Le numéro d'appel du secrétariat n'est pas utilisé ici.</p>
+              
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="field">
+                  <label>Numéro WhatsApp officiel</label>
+                  <input type="text" [(ngModel)]="settings.contactWhatsapp" name="contactWhatsapp" maxlength="50" placeholder="+243 843 010 337" />
+                  <small class="text-[10px] text-[#4B5157] mt-1 block">Formats acceptés : +243…, 0843…, 9 chiffres locaux. Le lien wa.me est calculé automatiquement.</small>
+                </div>
+
+                <div class="field">
+                  <label>Activer le Bouton WhatsApp</label>
+                  <div class="flex items-center gap-3 mt-1">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" [(ngModel)]="settings.whatsappActif" name="whatsappActif" class="sr-only peer" />
+                      <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#25D366]"></div>
+                    </label>
+                    <span class="text-sm font-medium" [class.text-[#25D366]]="settings.whatsappActif !== false" [class.text-[#4B5157]]="settings.whatsappActif === false">
+                      {{ settings.whatsappActif !== false ? 'Actif — Visible sur le site' : 'Désactivé — Masqué du site' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="field mt-4">
+                <label>Message pré-rempli à l'ouverture de la conversation</label>
+                <textarea rows="2" [(ngModel)]="settings.whatsappMessage" name="whatsappMessage" maxlength="500" placeholder="Bonjour Vitalis Center EUP, je souhaite obtenir des informations sur vos formations professionnelles certifiées."></textarea>
+              </div>
+
+              <div class="mt-4 p-3 rounded-lg border" [class.bg-[#f0fdf4]]="!!whatsappPreviewUrl" [class.border-[#bbf7d0]]="!!whatsappPreviewUrl" [class.bg-[#fff7ed]]="!whatsappPreviewUrl" [class.border-[#fed7aa]]="!whatsappPreviewUrl">
+                <div class="text-xs font-semibold mb-1" [class.text-[#166534]]="!!whatsappPreviewUrl" [class.text-[#9a3412]]="!whatsappPreviewUrl">
+                  {{ whatsappPreviewUrl ? 'Aperçu du lien WhatsApp généré' : 'Numéro incomplet ou invalide — le bouton public restera masqué' }}
+                </div>
+                @if (whatsappPreviewUrl) {
+                  <code class="text-xs text-[#15803d] break-all">{{ whatsappPreviewUrl }}</code>
+                  <div class="mt-3">
+                    <a
+                      [href]="whatsappPreviewUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-2 text-xs font-semibold py-2 px-3 rounded-[2px] bg-[#25D366] text-white hover:bg-[#20ba59] no-underline"
+                    >
+                      Tester le lien WhatsApp
+                    </a>
+                  </div>
+                }
               </div>
             </div>
 
@@ -1105,6 +1160,10 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     return this.allSections.filter((s) => s.typeSection === this.activeTab);
   }
 
+  get whatsappPreviewUrl(): string | null {
+    return buildWhatsappUrl(this.settings.contactWhatsapp, this.settings.whatsappMessage);
+  }
+
   getNomSectionActive(): string {
     const t = this.tabs.find((tab) => tab.id === this.activeTab);
     return t ? t.label : '';
@@ -1132,6 +1191,9 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       contactEmail: this.settings.contactEmail || '',
       contactHoraires: this.settings.contactHoraires || '',
       contactTelephone: this.settings.contactTelephone || '',
+      contactWhatsapp: this.settings.contactWhatsapp || '',
+      whatsappMessage: this.settings.whatsappMessage || '',
+      whatsappActif: this.settings.whatsappActif !== false,
       footerDescription: this.settings.footerDescription || '',
       footerTutelleTexte: this.settings.footerTutelleTexte || '',
       footerCopyright: this.settings.footerCopyright || '',

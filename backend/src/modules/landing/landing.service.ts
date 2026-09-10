@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -12,6 +12,7 @@ import {
   UpdateLandingActualiteDto,
   ContactMessageDto,
 } from './dto/landing.dto';
+import { DEFAULT_WHATSAPP_MESSAGE, toWhatsappE164 } from '../../common/utils/whatsapp.util';
 
 interface CachedLandingEntry {
   data: any;
@@ -219,6 +220,27 @@ export class LandingService {
     if (cleanData.statsTauxReussite !== undefined) cleanData.statsTauxReussite = Number(cleanData.statsTauxReussite);
     if (cleanData.statsFilieres !== undefined) cleanData.statsFilieres = Number(cleanData.statsFilieres);
     if (cleanData.statsTitresVerif !== undefined) cleanData.statsTitresVerif = Number(cleanData.statsTitresVerif);
+    if (cleanData.whatsappActif !== undefined) cleanData.whatsappActif = Boolean(cleanData.whatsappActif);
+
+    if (cleanData.whatsappMessage !== undefined) {
+      const message = String(cleanData.whatsappMessage ?? '').trim();
+      cleanData.whatsappMessage = message || DEFAULT_WHATSAPP_MESSAGE;
+    }
+
+    if (cleanData.contactWhatsapp !== undefined) {
+      const raw = String(cleanData.contactWhatsapp ?? '').trim();
+      if (!raw) {
+        cleanData.contactWhatsapp = null;
+      } else {
+        const e164 = toWhatsappE164(raw);
+        if (!e164) {
+          throw new BadRequestException(
+            'Numéro WhatsApp invalide. Saisissez un numéro RDC au format international (ex. +243 843 010 337).',
+          );
+        }
+        cleanData.contactWhatsapp = e164;
+      }
+    }
 
     return this.db.landingPageSettings.update({
       where: { id: existing.id },
@@ -477,6 +499,9 @@ export class LandingService {
         contactEmail: 'contact@vitalis-center.cd',
         contactHoraires: 'Lundi – Vendredi : 08h00 – 16h30 | Samedi : 08h30 – 12h30',
         contactTelephone: '+243 ...',
+        contactWhatsapp: '+243843010337',
+        whatsappMessage: DEFAULT_WHATSAPP_MESSAGE,
+        whatsappActif: true,
         footerDescription: 'Vitalis Center EUP (Établissement d\'Utilité Publique) · Centre de formation professionnelle et technique agréé par le Ministère de la Formation Professionnelle de la RDC.',
         footerTutelleTexte: 'Supervision institutionnelle et contrôle de conformité des attestations et certifications nationales.',
         footerCopyright: '© 2026 Vitalis Center EUP. Tous droits réservés.',
