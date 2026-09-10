@@ -708,8 +708,10 @@ model ContactMessage {
   id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   nom       String   @db.VarChar(150)
   telephone String   @db.VarChar(40)
+  email     String?  @db.VarChar(255)
   filiere   String?  @db.VarChar(255)
   message   String?
+  statut    String?  @default("NOUVEAU") @db.VarChar(50)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("contact_messages")

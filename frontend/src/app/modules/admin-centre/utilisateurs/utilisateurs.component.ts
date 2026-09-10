@@ -20,36 +20,36 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
       <div class="max-w-7xl mx-auto pb-16 font-['Public_Sans',sans-serif] px-4 sm:px-6">
 
         <!-- En-tête Institutionnel Cockpit -->
-        <div class="mb-6 bg-white border border-[#D7DBDE] p-6 rounded-[2px] shadow-2xs">
+        <div class="mb-6 bg-white border border-[#D7DBDE] p-6 rounded-xs shadow-2xs">
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <div class="flex items-center gap-2">
                 <span class="text-[12px] uppercase font-semibold tracking-[0.06em] text-[#4B5157]">
                   03 · Administration Centrale · Gouvernance du Capital Humain & RBAC
                 </span>
-                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-[#005B94] border border-blue-200">
-                  <span class="w-1.5 h-1.5 rounded-full bg-[#005B94] animate-pulse"></span>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-xs text-xs font-medium bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC]/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#1C75BC] animate-pulse"></span>
                   Gouvernance Nationale
                 </span>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xs text-xs font-semibold bg-[#E7F1EA] text-[#276B44] border border-[#276B44]/20">
+                  <span class="w-2 h-2 rounded-full bg-[#276B44] animate-pulse"></span>
                   Dossiers en Direct (SSE)
                 </span>
               </div>
               <h1 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 tracking-tight">
                 Gestion du Personnel, des Formateurs & des Apprenants
               </h1>
-              <div class="w-12 h-1 bg-[#005B94] mt-2 mb-3"></div>
-              <p class="text-[14px] text-[#4B5157] max-w-3xl leading-relaxed">
+              <div class="barre"></div>
+              <p class="text-[14px] text-[#4B5157] max-w-3xl leading-relaxed mt-3">
                 Supervision centralisée des dossiers individuels, attribution des rôles et habilitations d'accès, contrôle du corps professoral, des équipes de gestion et des apprenants du réseau national.
               </p>
             </div>
 
-            <div class="flex items-center gap-3 shrink-0">
+            <div class="flex items-center gap-3 shrink-0 flex-wrap">
               <button
                 type="button"
                 (click)="ouvrirModalEnrolement()"
-                class="btn btn-primary text-xs py-2.5 px-4 font-semibold inline-flex items-center gap-2 shadow-2xs bg-[#005B94] hover:bg-[#004A78] text-white cursor-pointer"
+                class="btn btn-primary text-xs py-2.5 px-4 font-semibold inline-flex items-center gap-2 shadow-2xs cursor-pointer"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
@@ -65,7 +65,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                 <svg class="w-4 h-4" [class.animate-spin]="loading || refreshing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                Actualiser
+                <span>Actualiser</span>
               </button>
             </div>
           </div>
@@ -74,19 +74,21 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
         <!-- ========================================================================= -->
         <!-- NAVIGATION SOUS-MODULES (ONGLETS THÉMATIQUES MÉTIER)                      -->
         <!-- ========================================================================= -->
-        <div class="flex flex-wrap items-center gap-2 mb-6 border-b border-[#D7DBDE] pb-2">
+        <div class="flex items-center gap-2 mb-6 border-b border-[#D7DBDE] pb-1 overflow-x-auto">
           <button
             type="button"
             (click)="changerSousModule('ADMINISTRATIF')"
-            class="px-4 py-2.5 text-xs font-semibold rounded-t-[2px] transition-all flex items-center gap-2 cursor-pointer border-b-2"
+            class="px-4 py-2.5 text-xs font-semibold rounded-t-xs transition-all flex items-center gap-2 cursor-pointer border-b-2 whitespace-nowrap shrink-0"
             [ngClass]="ongletActif === 'ADMINISTRATIF' 
-              ? 'border-[#005B94] text-[#005B94] bg-white font-bold shadow-xs' 
-              : 'border-transparent text-[#4B5157] hover:text-[#1B1D1F] hover:bg-gray-100'"
+              ? 'border-[#1C75BC] text-[#1C75BC] bg-white font-bold shadow-xs' 
+              : 'border-transparent text-[#4B5157] hover:text-[#1B1D1F] hover:bg-[#F5F6F7]'"
           >
-            <span class="text-base">🏢</span>
+            <svg class="w-4 h-4 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
             <span>Personnel Administratif</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-              [ngClass]="ongletActif === 'ADMINISTRATIF' ? 'bg-blue-100 text-[#005B94]' : 'bg-gray-200 text-gray-700'">
+              [ngClass]="ongletActif === 'ADMINISTRATIF' ? 'bg-[#E7F1FA] text-[#1C75BC]' : 'bg-[#F5F6F7] text-[#4B5157]'">
               {{ countAdministratifs() }}
             </span>
           </button>
@@ -94,15 +96,17 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
           <button
             type="button"
             (click)="changerSousModule('TECHNIQUE')"
-            class="px-4 py-2.5 text-xs font-semibold rounded-t-[2px] transition-all flex items-center gap-2 cursor-pointer border-b-2"
+            class="px-4 py-2.5 text-xs font-semibold rounded-t-xs transition-all flex items-center gap-2 cursor-pointer border-b-2 whitespace-nowrap shrink-0"
             [ngClass]="ongletActif === 'TECHNIQUE' 
-              ? 'border-[#005B94] text-[#005B94] bg-white font-bold shadow-xs' 
-              : 'border-transparent text-[#4B5157] hover:text-[#1B1D1F] hover:bg-gray-100'"
+              ? 'border-[#1C75BC] text-[#1C75BC] bg-white font-bold shadow-xs' 
+              : 'border-transparent text-[#4B5157] hover:text-[#1B1D1F] hover:bg-[#F5F6F7]'"
           >
-            <span class="text-base">🛠️</span>
+            <svg class="w-4 h-4 text-[#F0791E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
             <span>Personnel Technique & Formateurs</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-              [ngClass]="ongletActif === 'TECHNIQUE' ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-700'">
+              [ngClass]="ongletActif === 'TECHNIQUE' ? 'bg-[#FDECDD] text-[#F0791E]' : 'bg-[#F5F6F7] text-[#4B5157]'">
               {{ countTechniques() }}
             </span>
           </button>
@@ -110,15 +114,17 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
           <button
             type="button"
             (click)="changerSousModule('APPRENANTS')"
-            class="px-4 py-2.5 text-xs font-semibold rounded-t-[2px] transition-all flex items-center gap-2 cursor-pointer border-b-2"
+            class="px-4 py-2.5 text-xs font-semibold rounded-t-xs transition-all flex items-center gap-2 cursor-pointer border-b-2 whitespace-nowrap shrink-0"
             [ngClass]="ongletActif === 'APPRENANTS' 
-              ? 'border-[#005B94] text-[#005B94] bg-white font-bold shadow-xs' 
-              : 'border-transparent text-[#4B5157] hover:text-[#1B1D1F] hover:bg-gray-100'"
+              ? 'border-[#1C75BC] text-[#1C75BC] bg-white font-bold shadow-xs' 
+              : 'border-transparent text-[#4B5157] hover:text-[#1B1D1F] hover:bg-[#F5F6F7]'"
           >
-            <span class="text-base">🎓</span>
+            <svg class="w-4 h-4 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+            </svg>
             <span>Apprenants & Stagiaires</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-              [ngClass]="ongletActif === 'APPRENANTS' ? 'bg-blue-100 text-[#005B94]' : 'bg-gray-200 text-gray-700'">
+              [ngClass]="ongletActif === 'APPRENANTS' ? 'bg-[#E7F1FA] text-[#1C75BC]' : 'bg-[#F5F6F7] text-[#4B5157]'">
               {{ countApprenants() }}
             </span>
           </button>
@@ -126,14 +132,16 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
           <button
             type="button"
             (click)="changerSousModule('SECURITE')"
-            class="px-4 py-2.5 text-xs font-semibold rounded-t-[2px] transition-all flex items-center gap-2 cursor-pointer border-b-2 ml-auto"
+            class="px-4 py-2.5 text-xs font-semibold rounded-t-xs transition-all flex items-center gap-2 cursor-pointer border-b-2 whitespace-nowrap shrink-0"
             [ngClass]="ongletActif === 'SECURITE' 
               ? 'border-[#F0791E] text-[#F0791E] bg-white font-bold shadow-xs' 
-              : 'border-transparent text-[#4B5157] hover:text-[#1B1D1F] hover:bg-gray-100'"
+              : 'border-transparent text-[#4B5157] hover:text-[#1B1D1F] hover:bg-[#F5F6F7]'"
           >
-            <span class="text-base">🔐</span>
+            <svg class="w-4 h-4 text-[#F0791E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
             <span>Droits d'Accès & Sécurité (RBAC)</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E7F1FA] text-[#124F80]">
               {{ utilisateurs.length }}
             </span>
           </button>
@@ -155,8 +163,8 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
               <span class="text-[11px] text-gray-500">Administrateurs généraux</span>
             </div>
             <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
-              <span class="text-xs text-[#005B94] font-semibold uppercase tracking-wider">Directeurs d'Antennes</span>
-              <div class="text-2xl font-bold text-[#005B94] mt-1">{{ countRole('ADMIN_ETABLISSEMENT') }}</div>
+              <span class="text-xs text-[#1C75BC] font-semibold uppercase tracking-wider">Directeurs d'Antennes</span>
+              <div class="text-2xl font-bold text-[#1C75BC] mt-1">{{ countRole('ADMIN_ETABLISSEMENT') }}</div>
               <span class="text-[11px] text-gray-500">Gestionnaires territoriaux</span>
             </div>
             <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
@@ -178,8 +186,8 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
               <span class="text-[11px] text-gray-500">En activité régulière</span>
             </div>
             <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
-              <span class="text-xs text-[#005B94] font-semibold uppercase tracking-wider">Antennes Couvertes</span>
-              <div class="text-2xl font-bold text-[#005B94] mt-1">{{ countEtablissementsAvecFormateurs() }}</div>
+              <span class="text-xs text-[#1C75BC] font-semibold uppercase tracking-wider">Antennes Couvertes</span>
+              <div class="text-2xl font-bold text-[#1C75BC] mt-1">{{ countEtablissementsAvecFormateurs() }}</div>
               <span class="text-[11px] text-gray-500">Centres dotés d'encadreurs</span>
             </div>
             <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
@@ -192,7 +200,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
               <span class="text-xs text-[#4B5157] font-semibold uppercase tracking-wider">Total Apprenants</span>
-              <div class="text-2xl font-bold text-[#005B94] mt-1">{{ countApprenants() }}</div>
+              <div class="text-2xl font-bold text-[#1C75BC] mt-1">{{ countApprenants() }}</div>
               <span class="text-[11px] text-gray-500">Inscrits au registre national</span>
             </div>
             <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
@@ -249,7 +257,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   type="text"
                   [(ngModel)]="recherche"
                   placeholder="Rechercher par nom, prénom, email ou matricule..."
-                  class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                  class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC]"
                 />
                 @if (recherche) {
                   <button (click)="recherche = ''" class="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600 text-xs cursor-pointer">✕</button>
@@ -262,7 +270,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
               <label class="block text-xs font-semibold text-[#4B5157] mb-1">Établissement / Antenne</label>
               <select
                 [(ngModel)]="filtreEtablissement"
-                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white cursor-pointer"
+                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer"
               >
                 <option value="">Toutes les antennes (National)</option>
                 @for (e of etablissements; track e.id) {
@@ -276,7 +284,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
               <label class="block text-xs font-semibold text-[#4B5157] mb-1">État du compte</label>
               <select
                 [(ngModel)]="filtreStatut"
-                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white cursor-pointer"
+                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer"
               >
                 <option value="">Tous les états</option>
                 <option value="actif">Comptes Actifs</option>
@@ -292,13 +300,13 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
         <div class="bg-white border border-[#D7DBDE] rounded-[2px] shadow-2xs overflow-hidden">
           <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div class="text-xs text-[#4B5157]">
-              Affichage de <span class="font-bold text-[#1B1D1F]">{{ utilisateursFiltres.length }}</span> compte(s) dans la section <span class="font-bold text-[#005B94]">{{ getTitreSousModule() }}</span>
+              Affichage de <span class="font-bold text-[#1B1D1F]">{{ utilisateursFiltres.length }}</span> compte(s) dans la section <span class="font-bold text-[#1C75BC]">{{ getTitreSousModule() }}</span>
             </div>
           </div>
 
           @if (loading && utilisateurs.length === 0) {
             <div class="p-12 text-center">
-              <div class="inline-block w-8 h-8 border-3 border-[#005B94] border-t-transparent rounded-full animate-spin"></div>
+              <div class="inline-block w-8 h-8 border-3 border-[#1C75BC] border-t-transparent rounded-full animate-spin"></div>
               <p class="mt-4 text-sm text-[#4B5157]">Chargement des comptes utilisateurs en cours...</p>
             </div>
           } @else {
@@ -371,9 +379,9 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                         <button
                           type="button"
                           (click)="ouvrirDossier(u)"
-                          class="btn btn-secondary text-[11px] py-1.5 px-3 font-semibold inline-flex items-center gap-1.5 bg-gray-50 hover:bg-blue-50 hover:text-[#005B94] border border-[#D7DBDE] rounded-[2px] transition-colors cursor-pointer"
+                          class="btn btn-secondary text-[11px] py-1.5 px-3 font-semibold inline-flex items-center gap-1.5 bg-gray-50 hover:bg-blue-50 hover:text-[#1C75BC] border border-[#D7DBDE] rounded-[2px] transition-colors cursor-pointer"
                         >
-                          <svg class="w-3.5 h-3.5 text-[#005B94]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                           </svg>
                           <span>Voir Dossier</span>
@@ -388,7 +396,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                             type="button"
                             (click)="ouvrirModalEdition(u)"
                             title="Modifier les droits d'accès ou l'antenne"
-                            class="p-1.5 text-gray-500 hover:text-[#005B94] hover:bg-gray-100 rounded-[2px] transition-colors cursor-pointer"
+                            class="p-1.5 text-gray-500 hover:text-[#1C75BC] hover:bg-gray-100 rounded-[2px] transition-colors cursor-pointer"
                           >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -438,7 +446,9 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   @if (utilisateursFiltres.length === 0) {
                     <tr>
                       <td colspan="6" class="py-12 text-center text-gray-400">
-                        <div class="text-3xl mb-2">📂</div>
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
                         <p class="font-medium text-gray-500">Aucun utilisateur trouvé dans cette section avec ces critères.</p>
                       </td>
                     </tr>
@@ -473,7 +483,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                     </div>
                     <p class="text-xs text-blue-200 mt-0.5">{{ dossierSelectionne.email }}</p>
                     <div class="flex items-center gap-3 text-[11px] text-white/80 mt-2">
-                      <span>🏛️ {{ dossierSelectionne.etablissement?.nom || 'Administration Centrale' }}</span>
+                      <span class="inline-flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        {{ dossierSelectionne.etablissement?.nom || 'Administration Centrale' }}
+                      </span>
                       <span>•</span>
                       <span>Inscrit le : {{ dossierSelectionne.createdAt | date:'dd/MM/yyyy' }}</span>
                     </div>
@@ -494,22 +509,37 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
               <div class="flex-1 overflow-y-auto text-xs text-[#1B1D1F]">
 
                 <!-- Tabs dossier -->
-                <div class="flex border-b border-[#D7DBDE] bg-gray-50 px-4 pt-2 gap-1">
+                <div class="flex border-b border-[#D7DBDE] bg-gray-50 px-4 pt-2 gap-1 overflow-x-auto">
                   <button type="button"
                     (click)="changerOngletDossier('IDENTITE')"
-                    class="px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer"
-                    [ngClass]="ongletDossier === 'IDENTITE' ? 'border-[#005B94] text-[#005B94] bg-white' : 'border-transparent text-gray-500 hover:text-gray-800'"
-                  >👤 Identité & Activité</button>
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap"
+                    [ngClass]="ongletDossier === 'IDENTITE' ? 'border-[#1C75BC] text-[#1C75BC] bg-white' : 'border-transparent text-gray-500 hover:text-gray-800'"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Identité & Activité
+                  </button>
                   <button type="button"
                     (click)="changerOngletDossier('DOCUMENTS')"
-                    class="px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer"
-                    [ngClass]="ongletDossier === 'DOCUMENTS' ? 'border-[#005B94] text-[#005B94] bg-white' : 'border-transparent text-gray-500 hover:text-gray-800'"
-                  >📂 Documents Dossier <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="ongletDossier === 'DOCUMENTS' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'">{{ documentsDossier.length }}</span></button>
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap"
+                    [ngClass]="ongletDossier === 'DOCUMENTS' ? 'border-[#1C75BC] text-[#1C75BC] bg-white' : 'border-transparent text-gray-500 hover:text-gray-800'"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                    </svg>
+                    Documents Dossier <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="ongletDossier === 'DOCUMENTS' ? 'bg-blue-100 text-[#1C75BC]' : 'bg-gray-200 text-gray-600'">{{ documentsDossier.length }}</span>
+                  </button>
                   <button type="button"
                     (click)="changerOngletDossier('REGULARISATIONS')"
-                    class="px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer"
-                    [ngClass]="ongletDossier === 'REGULARISATIONS' ? 'border-amber-500 text-amber-700 bg-white' : 'border-transparent text-gray-500 hover:text-gray-800'"
-                  >⚠️ Régularisations <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="ongletDossier === 'REGULARISATIONS' ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'">{{ regularisations.length }}</span></button>
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap"
+                    [ngClass]="ongletDossier === 'REGULARISATIONS' ? 'border-[#F0791E] text-[#F0791E] bg-white' : 'border-transparent text-gray-500 hover:text-gray-800'"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    Régularisations <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="ongletDossier === 'REGULARISATIONS' ? 'bg-amber-100 text-[#F0791E]' : 'bg-gray-200 text-gray-600'">{{ regularisations.length }}</span>
+                  </button>
 
                   <div class="ml-auto flex items-center pr-2">
                     <span class="inline-flex items-center gap-1.5 text-[10.5px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -531,8 +561,18 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                 <div class="p-4 rounded-[2px] border" [ngClass]="dossierSelectionne.actif !== false ? 'bg-emerald-50/50 border-emerald-200' : 'bg-red-50/50 border-red-200'">
                   <div class="flex items-center justify-between">
                     <div>
-                      <span class="font-bold text-xs" [ngClass]="dossierSelectionne.actif !== false ? 'text-emerald-800' : 'text-red-800'">
-                        {{ dossierSelectionne.actif !== false ? '✅ Compte Actif & Habilité' : '⚠️ Compte Suspendu' }}
+                      <span class="inline-flex items-center gap-1.5 font-bold text-xs" [ngClass]="dossierSelectionne.actif !== false ? 'text-emerald-800' : 'text-red-800'">
+                        @if (dossierSelectionne.actif !== false) {
+                          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                          </svg>
+                          Compte Actif & Habilité
+                        } @else {
+                          <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                          </svg>
+                          Compte Suspendu
+                        }
                       </span>
                       <p class="text-[11px] text-gray-600 mt-0.5">
                         {{ dossierSelectionne.securite?.estVerrouille ? 'Compte temporairement verrouillé suite à 5 tentatives infructueuses (Norme ANSSI).' : 'Aucune restriction de sécurité active.' }}
@@ -543,7 +583,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                         <button
                           type="button"
                           (click)="deverrouillerCompte(dossierSelectionne.id)"
-                          class="btn btn-secondary text-[10px] py-1.5 px-2.5 font-bold bg-amber-500 text-white border-0 hover:bg-amber-600 cursor-pointer"
+                          class="btn btn-secondary text-[10px] py-1.5 px-2.5 font-bold bg-[#F0791E] text-white border-0 hover:bg-[#d96714] cursor-pointer"
                         >
                           Déverrouiller ANSSI
                         </button>
@@ -551,9 +591,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       <button
                         type="button"
                         (click)="ouvrirModalResetPassword(dossierSelectionne)"
-                        class="btn btn-secondary text-[10px] py-1.5 px-2.5 font-semibold bg-white border border-gray-300 hover:bg-gray-50 cursor-pointer"
+                        class="btn btn-secondary text-[10px] py-1.5 px-2.5 font-semibold bg-white border border-[#D7DBDE] hover:bg-gray-50 text-[#1B1D1F] cursor-pointer inline-flex items-center gap-1.5"
                       >
-                        🔑 Réinitialiser Mot de Passe
+                        <svg class="w-3.5 h-3.5 text-[#F0791E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                        </svg>
+                        Réinitialiser Mot de Passe
                       </button>
                     </div>
                   </div>
@@ -562,10 +605,15 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                 <!-- SECTION APPRENANT : Candidatures, Pièces jointes, Matricule -->
                 @if (dossierSelectionne.role === 'APPRENANT') {
                   <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b pb-2">
-                      <h3 class="font-bold text-sm text-[#124F80] uppercase tracking-wider">🎓 Cursus & Dossier d'Admission</h3>
+                    <div class="flex items-center justify-between border-b border-[#D7DBDE] pb-2">
+                      <h3 class="font-bold text-sm text-[#124F80] uppercase tracking-wider flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#F0791E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/>
+                        </svg>
+                        Cursus & Dossier d'Admission
+                      </h3>
                       @if (dossierSelectionne.apprenantProfile?.matricule) {
-                        <span class="px-2.5 py-1 bg-blue-50 border border-blue-200 text-[#005B94] rounded-[2px] font-mono font-bold text-xs">
+                        <span class="px-2.5 py-1 bg-blue-50 border border-blue-200 text-[#1C75BC] rounded-[2px] font-mono font-bold text-xs">
                           Matricule: {{ dossierSelectionne.apprenantProfile.matricule }}
                         </span>
                       }
@@ -593,7 +641,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
 
                     <!-- Candidatures et Pièces Justificatives déposées -->
                     <div class="mt-4">
-                      <h4 class="font-bold text-xs text-[#1B1D1F] mb-2 uppercase tracking-wide">📂 Pièces Justificatives & Candidatures Déposées</h4>
+                      <h4 class="font-bold text-xs text-[#1B1D1F] mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                        Pièces Justificatives & Candidatures Déposées
+                      </h4>
                       
                       @if (dossierSelectionne.apprenantProfile?.candidatures?.length) {
                         <div class="space-y-3">
@@ -601,7 +654,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                             <div class="border border-[#D7DBDE] rounded-[2px] p-3 bg-white">
                               <div class="flex items-center justify-between mb-2">
                                 <span class="font-bold text-xs text-[#124F80]">{{ c.session?.libelle || 'Session d’admission' }}</span>
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#005B94] border border-blue-200">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#1C75BC] border border-blue-200">
                                   Statut: {{ c.statut }}
                                 </span>
                               </div>
@@ -619,13 +672,13 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                                       <a
                                         [href]="p.fileUrl"
                                         target="_blank"
-                                        class="flex items-center justify-between p-2 rounded-[2px] bg-gray-50 hover:bg-blue-50 border border-gray-200 transition-colors text-xs group"
+                                        class="flex items-center justify-between p-2 rounded-[2px] bg-gray-50 hover:bg-blue-50 border border-[#D7DBDE] transition-colors text-xs group"
                                       >
                                         <div class="truncate mr-2">
-                                          <div class="font-semibold text-[#1B1D1F] group-hover:text-[#005B94] truncate">{{ p.nomFichier }}</div>
+                                          <div class="font-semibold text-[#1B1D1F] group-hover:text-[#1C75BC] truncate">{{ p.nomFichier }}</div>
                                           <div class="text-[10px] text-gray-400">{{ p.type }}</div>
                                         </div>
-                                        <span class="text-[10px] font-bold text-[#005B94] shrink-0">Ouvrir ↗</span>
+                                        <span class="text-[10px] font-bold text-[#1C75BC] shrink-0">Ouvrir ↗</span>
                                       </a>
                                     }
                                   </div>
@@ -645,7 +698,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
 
                     <!-- Inscriptions & Certificats -->
                     <div class="mt-4">
-                      <h4 class="font-bold text-xs text-[#1B1D1F] mb-2 uppercase tracking-wide">🏆 Formations Inscrites & Certifications</h4>
+                      <h4 class="font-bold text-xs text-[#1B1D1F] mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-[#F0791E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                        </svg>
+                        Formations Inscrites & Certifications
+                      </h4>
                       @if (dossierSelectionne.certificats?.length) {
                         <div class="space-y-2 mb-3">
                           @for (cert of dossierSelectionne.certificats; track cert.id) {
@@ -654,7 +712,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                                 <span class="font-bold text-emerald-900">{{ cert.formation?.titre }}</span>
                                 <div class="text-[10px] text-emerald-700 font-mono">Série: {{ cert.numeroSerie }} · Moyenne: {{ cert.moyenneGenerale }}/20</div>
                               </div>
-                              <span class="px-2 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-bold">Certifié ✅</span>
+                              <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-bold">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Certifié
+                              </span>
                             </div>
                           }
                         </div>
@@ -667,7 +730,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                                 <span class="font-semibold">{{ ins.formation?.titre }}</span>
                                 <div class="text-[10px] text-gray-500">Inscrit le : {{ ins.dateDebut | date:'dd/MM/yyyy' }}</div>
                               </div>
-                              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-[#005B94]">{{ ins.statut }}</span>
+                              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-[#1C75BC]">{{ ins.statut }}</span>
                             </div>
                           }
                         </div>
@@ -679,8 +742,13 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                 <!-- SECTION FORMATEUR : Séances, Cours, Notes -->
                 @if (dossierSelectionne.role === 'FORMATEUR') {
                   <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b pb-2">
-                      <h3 class="font-bold text-sm text-[#124F80] uppercase tracking-wider">🛠️ Activité Pédagogique & Enseignement</h3>
+                    <div class="flex items-center justify-between border-b border-[#D7DBDE] pb-2">
+                      <h3 class="font-bold text-sm text-[#124F80] uppercase tracking-wider flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#F0791E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                        Activité Pédagogique & Enseignement
+                      </h3>
                       <span class="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded text-xs font-bold">
                         Corps Professoral
                       </span>
@@ -688,7 +756,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
 
                     <!-- Séances récentes -->
                     <div>
-                      <h4 class="font-bold text-xs text-[#1B1D1F] mb-2 uppercase tracking-wide">📅 Dernières Séances Programmées / Animées</h4>
+                      <h4 class="font-bold text-xs text-[#1B1D1F] mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Dernières Séances Programmées / Animées
+                      </h4>
                       @if (dossierSelectionne.seances?.length) {
                         <div class="space-y-2">
                           @for (s of dossierSelectionne.seances; track s.id) {
@@ -712,7 +785,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
 
                     <!-- Notes attribuées -->
                     <div>
-                      <h4 class="font-bold text-xs text-[#1B1D1F] mb-2 uppercase tracking-wide">📝 Dernières Notations Effectuées</h4>
+                      <h4 class="font-bold text-xs text-[#1B1D1F] mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                        Dernières Notations Effectuées
+                      </h4>
                       @if (dossierSelectionne.notesFormateur?.length) {
                         <div class="space-y-2">
                           @for (n of dossierSelectionne.notesFormateur; track n.id) {
@@ -721,7 +799,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                                 <span class="font-medium">Apprenant : {{ n.utilisateur?.prenom }} {{ n.utilisateur?.nom }}</span>
                                 <div class="text-[10px] text-gray-500">Évaluation : {{ n.evaluation?.titre }}</div>
                               </div>
-                              <span class="font-bold text-[#005B94] font-mono bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                              <span class="font-bold text-[#1C75BC] font-mono bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                                 {{ n.valeur }} / 20
                               </span>
                             </div>
@@ -739,9 +817,14 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                 <!-- SECTION ADMINISTRATIF : Habilitations & Antenne -->
                 @if (dossierSelectionne.role === 'ADMIN_CENTRE' || dossierSelectionne.role === 'ADMIN_ETABLISSEMENT' || dossierSelectionne.role === 'PERSONNEL_ADMINISTRATIF') {
                   <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b pb-2">
-                      <h3 class="font-bold text-sm text-[#124F80] uppercase tracking-wider">🏢 Habilitations Administratives & Périmètre</h3>
-                      <span class="px-2 py-0.5 bg-blue-50 text-[#005B94] border border-blue-200 rounded text-xs font-bold">
+                    <div class="flex items-center justify-between border-b border-[#D7DBDE] pb-2">
+                      <h3 class="font-bold text-sm text-[#124F80] uppercase tracking-wider flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#F0791E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        Habilitations Administratives & Périmètre
+                      </h3>
+                      <span class="px-2 py-0.5 bg-blue-50 text-[#1C75BC] border border-blue-200 rounded text-xs font-bold">
                         Staff Administratif
                       </span>
                     </div>
@@ -772,12 +855,17 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <div class="space-y-4">
                     <div class="flex items-center justify-between">
                       <div>
-                        <h3 class="font-bold text-sm text-[#124F80]">📂 Documents du Dossier Personnel</h3>
+                        <h3 class="font-bold text-sm text-[#124F80] flex items-center gap-2">
+                          <svg class="w-4 h-4 text-[#1C75BC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                          </svg>
+                          Documents du Dossier Personnel
+                        </h3>
                         <p class="text-[11px] text-gray-500 mt-0.5">Pièces administratives, contrats, diplômes et tout document officiel rattaché à ce profil.</p>
                       </div>
                       <button type="button"
                         (click)="ouvrirModalAjoutDocument()"
-                        class="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-2 rounded-[2px] bg-[#005B94] text-white hover:bg-[#004A78] cursor-pointer"
+                        class="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-2 rounded-[2px] bg-[#1C75BC] text-white hover:bg-[#124F80] cursor-pointer"
                       >
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Ajouter un Document
@@ -791,16 +879,22 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       </div>
                     } @else if (documentsDossier.length === 0) {
                       <div class="text-center py-10 border-2 border-dashed border-gray-200 rounded-[2px] bg-gray-50">
-                        <div class="text-3xl mb-2">📁</div>
+                        <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
                         <p class="font-semibold text-gray-700">Aucun document dans le dossier</p>
                         <p class="text-gray-400 text-[11px] mt-1">Ajoutez des pièces administratives, contrats, ou tout autre document officiel.</p>
                       </div>
                     } @else {
                       <div class="space-y-2">
                         @for (doc of documentsDossier; track doc.id) {
-                          <div class="p-3 bg-white border border-[#D7DBDE] rounded-[2px] flex items-center justify-between hover:border-[#005B94]/30 transition-colors">
+                          <div class="p-3 bg-white border border-[#D7DBDE] rounded-[2px] flex items-center justify-between hover:border-[#1C75BC]/40 transition-colors">
                             <div class="flex items-start gap-3">
-                              <div class="w-8 h-8 rounded bg-blue-50 border border-blue-200 flex items-center justify-center text-sm shrink-0">📄</div>
+                              <div class="w-8 h-8 rounded bg-blue-50 border border-blue-200 flex items-center justify-center text-[#1C75BC] shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                              </div>
                               <div>
                                 <div class="font-semibold text-[#1B1D1F]">{{ doc.titre }}</div>
                                 <div class="text-[10px] text-gray-500">{{ doc.typeDocument }} · {{ doc.nomFichier }}</div>
@@ -832,12 +926,17 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <div class="space-y-4">
                     <div class="flex items-center justify-between">
                       <div>
-                        <h3 class="font-bold text-sm text-[#124F80]">⚠️ Demandes de Régularisation</h3>
+                        <h3 class="font-bold text-sm text-[#124F80] flex items-center gap-2">
+                          <svg class="w-4 h-4 text-[#F0791E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                          </svg>
+                          Demandes de Régularisation
+                        </h3>
                         <p class="text-[11px] text-gray-500 mt-0.5">Injonctions administratives émises pour ce profil avec délai de réponse impératif.</p>
                       </div>
                       <button type="button"
                         (click)="ouvrirModalRegularisation()"
-                        class="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-2 rounded-[2px] bg-amber-600 text-white hover:bg-amber-700 cursor-pointer"
+                        class="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-2 rounded-[2px] bg-[#F0791E] text-white hover:bg-[#d96714] cursor-pointer shadow-sm"
                       >
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
                         Exiger une Régularisation
@@ -850,15 +949,17 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                         Chargement...
                       </div>
                     } @else if (regularisations.length === 0) {
-                      <div class="text-center py-10 border-2 border-dashed border-gray-200 rounded-[2px] bg-green-50">
-                        <div class="text-3xl mb-2">✅</div>
-                        <p class="font-semibold text-green-700">Aucune demande de régularisation</p>
+                      <div class="text-center py-10 border-2 border-dashed border-emerald-200 rounded-[2px] bg-emerald-50/40">
+                        <svg class="w-10 h-10 mx-auto mb-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="font-semibold text-emerald-800">Aucune demande de régularisation</p>
                         <p class="text-gray-400 text-[11px] mt-1">Le dossier est conforme. Aucune action requise.</p>
                       </div>
                     } @else {
                       <div class="space-y-3">
                         @for (reg of regularisations; track reg.id) {
-                          <div class="p-4 border rounded-[2px]" [ngClass]="reg.statut === 'EN_ATTENTE' ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white'">
+                          <div class="p-4 border rounded-[2px]" [ngClass]="reg.statut === 'EN_ATTENTE' ? 'border-amber-300 bg-amber-50/60' : 'border-[#D7DBDE] bg-white'">
                             <div class="flex items-start justify-between gap-3">
                               <div class="flex-1">
                                 <div class="flex items-center gap-2 flex-wrap">
@@ -871,26 +972,39 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                                     <span class="font-semibold text-[10px] text-gray-500 uppercase">Pièces demandées :</span>
                                     <ul class="mt-1 space-y-0.5">
                                       @for (piece of reg.piecesDemandees; track piece) {
-                                        <li class="flex items-center gap-1 text-[10px] text-gray-700"><span class="text-amber-500">•</span> {{ piece }}</li>
+                                        <li class="flex items-center gap-1 text-[10px] text-gray-700"><span class="text-[#F0791E] font-bold">•</span> {{ piece }}</li>
                                       }
                                     </ul>
                                   </div>
                                 }
                                 <div class="mt-2 flex items-center gap-4 text-[10px] text-gray-400">
-                                  <span>📅 Date limite : <strong class="text-red-600">{{ reg.dateLimite | date:'dd/MM/yyyy' }}</strong></span>
+                                  <span class="inline-flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-[#ED1C24]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    Date limite : <strong class="text-[#ED1C24]">{{ reg.dateLimite | date:'dd/MM/yyyy' }}</strong>
+                                  </span>
                                   <span>Par : {{ reg.auteur?.prenom }} {{ reg.auteur?.nom }}</span>
                                   <span>Créé le : {{ reg.createdAt | date:'dd/MM/yyyy' }}</span>
                                 </div>
                                 @if (reg.decisionCommentaire) {
-                                  <div class="mt-2 p-2 bg-gray-100 rounded text-[10px] text-gray-600 italic">💬 {{ reg.decisionCommentaire }}</div>
+                                  <div class="mt-2 p-2 bg-gray-100 rounded text-[10px] text-gray-600 italic flex items-start gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-[#4B5157] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                    <span>{{ reg.decisionCommentaire }}</span>
+                                  </div>
                                 }
                               </div>
                               @if (reg.statut === 'EN_ATTENTE') {
                                 <button type="button"
                                   (click)="ouvrirModalDecision(reg)"
-                                  class="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded bg-[#005B94] text-white hover:bg-[#004A78] cursor-pointer"
+                                  class="shrink-0 inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-[2px] bg-[#1C75BC] text-white hover:bg-[#124F80] cursor-pointer"
                                 >
-                                  ✅ Statuer
+                                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                  </svg>
+                                  Statuer
                                 </button>
                               }
                             </div>
@@ -909,14 +1023,17 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                 <button
                   type="button"
                   (click)="ouvrirModalEdition(dossierSelectionne)"
-                  class="btn btn-secondary text-xs py-2 px-4 font-semibold inline-flex items-center gap-2 bg-white border border-[#D7DBDE] hover:bg-gray-100 cursor-pointer"
+                  class="btn btn-secondary text-xs py-2 px-4 font-semibold inline-flex items-center gap-2 bg-white border border-[#D7DBDE] hover:bg-gray-100 text-[#1B1D1F] cursor-pointer"
                 >
-                  ✏️ Modifier Habilitations
+                  <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                  </svg>
+                  Modifier Habilitations
                 </button>
                 <button
                   type="button"
                   (click)="fermerDossier()"
-                  class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#005B94] hover:bg-[#004A78] text-white cursor-pointer"
+                  class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#1C75BC] hover:bg-[#124F80] text-white cursor-pointer"
                 >
                   Fermer la Fiche
                 </button>
@@ -932,9 +1049,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
         @if (modalResetPasswordOuvert && userToReset) {
           <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
             <div class="bg-white max-w-md w-full rounded-[2px] shadow-2xl p-6 border border-[#D7DBDE] animate-scale-up">
-              <div class="flex items-center justify-between border-b pb-3 mb-4">
+              <div class="flex items-center justify-between border-b border-[#D7DBDE] pb-3 mb-4">
                 <h3 class="text-base font-bold text-[#1B1D1F] flex items-center gap-2">
-                  <span>🔑</span> Réinitialiser l'Accès
+                  <svg class="w-5 h-5 text-[#F0791E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                  </svg>
+                  Réinitialiser l'Accès
                 </h3>
                 <button (click)="fermerModalResetPassword()" class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer">✕</button>
               </div>
@@ -950,23 +1070,28 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                     type="text"
                     [(ngModel)]="nouveauMotDePasse"
                     placeholder="Laisser vide pour générer 'Vitalis2026!'"
-                    class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] font-mono"
+                    class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] font-mono"
                   />
                   <p class="text-[10px] text-gray-400 mt-1">Si laissé vide, le mot de passe par défaut <strong>Vitalis2026!</strong> sera attribué.</p>
                 </div>
 
                 @if (motDePasseReinitialiseResult) {
                   <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-[2px] text-emerald-800 space-y-1">
-                    <div class="font-bold">✅ Mot de passe mis à jour !</div>
+                    <div class="font-bold inline-flex items-center gap-1.5">
+                      <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      Mot de passe mis à jour !
+                    </div>
                     <div class="text-xs">Mot de passe temporaire à communiquer à l'utilisateur :</div>
-                    <div class="p-2 bg-white rounded border border-emerald-300 font-mono font-bold text-center text-sm select-all">
+                    <div class="p-2 bg-white rounded border border-emerald-300 font-mono font-bold text-center text-sm select-all text-[#1B1D1F]">
                       {{ motDePasseReinitialiseResult }}
                     </div>
                   </div>
                 }
               </div>
 
-              <div class="mt-6 flex items-center justify-end gap-3 pt-3 border-t">
+              <div class="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-[#D7DBDE]">
                 <button
                   type="button"
                   (click)="fermerModalResetPassword()"
@@ -979,7 +1104,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                     type="button"
                     (click)="confirmerResetPassword()"
                     [disabled]="submittingReset"
-                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
+                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#F0791E] hover:bg-[#d96714] text-white cursor-pointer"
                   >
                     {{ submittingReset ? 'Réinitialisation...' : 'Confirmer la Réinitialisation' }}
                   </button>
@@ -995,9 +1120,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
         @if (modalEditionOuvert && editingUser) {
           <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
             <div class="bg-white max-w-lg w-full rounded-[2px] shadow-2xl p-6 border border-[#D7DBDE] animate-scale-up">
-              <div class="flex items-center justify-between border-b pb-3 mb-4">
+              <div class="flex items-center justify-between border-b border-[#D7DBDE] pb-3 mb-4">
                 <h3 class="text-base font-bold text-[#1B1D1F] flex items-center gap-2">
-                  <span>✏️</span> Modifier Habilitations : {{ editingUser.prenom }} {{ editingUser.nom }}
+                  <svg class="w-5 h-5 text-[#1C75BC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                  </svg>
+                  Modifier Habilitations : {{ editingUser.prenom }} {{ editingUser.nom }}
                 </h3>
                 <button (click)="fermerModalEdition()" class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer">✕</button>
               </div>
@@ -1011,7 +1139,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       [(ngModel)]="formulaireEdition.nom"
                       name="nom"
                       required
-                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC]"
                     />
                   </div>
                   <div>
@@ -1021,7 +1149,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       [(ngModel)]="formulaireEdition.prenom"
                       name="prenom"
                       required
-                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC]"
                     />
                   </div>
                 </div>
@@ -1031,7 +1159,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <select
                     [(ngModel)]="formulaireEdition.role"
                     name="role"
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white cursor-pointer"
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer"
                   >
                     <optgroup label="Personnel Administratif">
                       <option value="ADMIN_CENTRE">Administrateur Central (Direction Nationale)</option>
@@ -1053,7 +1181,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                     [(ngModel)]="formulaireEdition.etablissementId"
                     name="etablissementId"
                     required
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white cursor-pointer"
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer"
                   >
                     @for (e of etablissements; track e.id) {
                       <option [value]="e.id">{{ e.nom }} ({{ e.codeAntenne || 'SANS-CODE' }})</option>
@@ -1061,7 +1189,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   </select>
                 </div>
 
-                <div class="mt-6 flex items-center justify-end gap-3 pt-3 border-t">
+                <div class="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-[#D7DBDE]">
                   <button
                     type="button"
                     (click)="fermerModalEdition()"
@@ -1072,7 +1200,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <button
                     type="submit"
                     [disabled]="submittingEdition"
-                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#005B94] hover:bg-[#004A78] text-white cursor-pointer"
+                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#1C75BC] hover:bg-[#124F80] text-white cursor-pointer"
                   >
                     {{ submittingEdition ? 'Mise à jour...' : 'Sauvegarder les Droits' }}
                   </button>
@@ -1088,9 +1216,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
         @if (modalOuvert) {
           <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
             <div class="bg-white max-w-lg w-full rounded-[2px] shadow-2xl p-6 border border-[#D7DBDE] animate-scale-up">
-              <div class="flex items-center justify-between border-b pb-3 mb-4">
+              <div class="flex items-center justify-between border-b border-[#D7DBDE] pb-3 mb-4">
                 <h3 class="text-base font-bold text-[#1B1D1F] flex items-center gap-2">
-                  <span>👤</span> {{ getTitreEnrolementModal() }}
+                  <svg class="w-5 h-5 text-[#1C75BC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                  </svg>
+                  {{ getTitreEnrolementModal() }}
                 </h3>
                 <button (click)="fermerModalEnrolement()" class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer">✕</button>
               </div>
@@ -1105,7 +1236,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       name="nom"
                       required
                       placeholder="Ex: Dupont"
-                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC]"
                     />
                   </div>
                   <div>
@@ -1116,7 +1247,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       name="prenom"
                       required
                       placeholder="Ex: Jean"
-                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC]"
                     />
                   </div>
                 </div>
@@ -1129,7 +1260,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                     name="email"
                     required
                     placeholder="jean.dupont@vitalis-center.cd"
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC]"
                   />
                 </div>
 
@@ -1141,7 +1272,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                     name="password"
                     required
                     placeholder="••••••••••••"
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC]"
                   />
                 </div>
 
@@ -1151,7 +1282,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                     <select
                       [(ngModel)]="formulaire.role"
                       name="role"
-                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white cursor-pointer"
+                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer"
                     >
                       <option value="ADMIN_ETABLISSEMENT">Directeur d'Antenne</option>
                       <option value="PERSONNEL_ADMINISTRATIF">Personnel Administratif</option>
@@ -1165,7 +1296,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       [(ngModel)]="formulaire.etablissementId"
                       name="etablissementId"
                       required
-                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white cursor-pointer"
+                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer"
                     >
                       @for (e of etablissements; track e.id) {
                         <option [value]="e.id">{{ e.nom }}</option>
@@ -1174,7 +1305,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   </div>
                 </div>
 
-                <div class="mt-6 flex items-center justify-end gap-3 pt-3 border-t">
+                <div class="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-[#D7DBDE]">
                   <button
                     type="button"
                     (click)="fermerModalEnrolement()"
@@ -1185,7 +1316,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <button
                     type="submit"
                     [disabled]="submitting"
-                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#005B94] hover:bg-[#004A78] text-white cursor-pointer"
+                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#1C75BC] hover:bg-[#124F80] text-white cursor-pointer"
                   >
                     {{ submitting ? 'Enrôlement...' : 'Valider l’Enrôlement' }}
                   </button>
@@ -1201,9 +1332,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
         @if (modalAjoutDocumentOuvert && dossierSelectionne) {
           <div class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 animate-fade-in">
             <div class="bg-white max-w-md w-full rounded-[2px] shadow-2xl border border-[#D7DBDE] animate-scale-up">
-              <div class="flex items-center justify-between border-b px-5 py-4">
+              <div class="flex items-center justify-between border-b border-[#D7DBDE] px-5 py-4">
                 <h3 class="text-sm font-bold text-[#1B1D1F] flex items-center gap-2">
-                  📂 Ajouter un Document au Dossier
+                  <svg class="w-4 h-4 text-[#1C75BC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  Ajouter un Document au Dossier
                   <span class="text-xs font-normal text-gray-500">— {{ dossierSelectionne.prenom }} {{ dossierSelectionne.nom }}</span>
                 </h3>
                 <button (click)="fermerModalAjoutDocument()" class="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
@@ -1214,13 +1348,13 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <label class="block font-semibold text-[#1B1D1F] mb-1">Titre du document *</label>
                   <input type="text" [(ngModel)]="ajoutDocumentTitre" name="titre" required
                     placeholder="Ex: Contrat de travail 2026, Diplôme BAC+2..."
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"/>
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC]"/>
                 </div>
 
                 <div>
                   <label class="block font-semibold text-[#1B1D1F] mb-1">Type de document *</label>
                   <select [(ngModel)]="ajoutDocumentType" name="typeDocument"
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white cursor-pointer">
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer">
                     <option value="CONTRAT">Contrat de travail</option>
                     <option value="DIPLOME">Diplôme / Attestation</option>
                     <option value="CNI">Carte Nationale d'Identité</option>
@@ -1239,7 +1373,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                     class="w-full p-2 border border-[#D7DBDE] rounded-[2px] text-xs bg-gray-50 cursor-pointer"/>
                   <p class="text-[10px] text-gray-400 mt-1">PDF, image (JPG/PNG) ou document Word. Max 10 Mo.</p>
                   @if (ajoutDocumentFichier) {
-                    <div class="mt-1 text-[10px] text-[#005B94] font-medium">✓ {{ ajoutDocumentFichier.name }}</div>
+                    <div class="mt-1 text-[10px] text-[#1C75BC] font-medium inline-flex items-center gap-1">
+                      <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      {{ ajoutDocumentFichier.name }}
+                    </div>
                   }
                 </div>
 
@@ -1247,15 +1386,18 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <label class="block font-semibold text-[#1B1D1F] mb-1">Commentaire (optionnel)</label>
                   <textarea [(ngModel)]="ajoutDocumentCommentaire" name="commentaire" rows="2"
                     placeholder="Remarque ou précision sur ce document..."
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] resize-none"></textarea>
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] resize-none"></textarea>
                 </div>
 
-                <div class="flex items-center justify-end gap-3 pt-3 border-t">
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#D7DBDE]">
                   <button type="button" (click)="fermerModalAjoutDocument()"
                     class="btn btn-ghost text-xs py-2 px-3 text-gray-600 cursor-pointer">Annuler</button>
                   <button type="submit" [disabled]="submittingDocument"
-                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#005B94] hover:bg-[#004A78] text-white cursor-pointer">
-                    {{ submittingDocument ? 'Enregistrement...' : '💾 Enregistrer le Document' }}
+                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#1C75BC] hover:bg-[#124F80] text-white cursor-pointer inline-flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                    </svg>
+                    {{ submittingDocument ? 'Enregistrement...' : 'Enregistrer le Document' }}
                   </button>
                 </div>
               </form>
@@ -1271,14 +1413,20 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
             <div class="bg-white max-w-lg w-full rounded-[2px] shadow-2xl border border-amber-200 animate-scale-up">
               <div class="flex items-center justify-between border-b px-5 py-4 bg-amber-50">
                 <h3 class="text-sm font-bold text-amber-900 flex items-center gap-2">
-                  ⚠️ Demande de Régularisation — Injonction Officielle
+                  <svg class="w-4 h-4 text-[#F0791E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                  </svg>
+                  Demande de Régularisation — Injonction Officielle
                   <span class="text-xs font-normal text-amber-700">— {{ dossierSelectionne.prenom }} {{ dossierSelectionne.nom }}</span>
                 </h3>
                 <button (click)="fermerModalRegularisation()" class="text-amber-600 hover:text-amber-800 cursor-pointer">✕</button>
               </div>
 
-              <div class="px-5 py-3 bg-amber-50/50 border-b border-amber-100 text-[11px] text-amber-800">
-                <strong>⚠️ Information :</strong> Cette demande sera immédiatement notifiée à l'utilisateur via son tableau de bord. Il devra soumettre les pièces manquantes avant la date limite indiquée.
+              <div class="px-5 py-3 bg-amber-50/50 border-b border-amber-100 text-[11px] text-amber-800 flex items-start gap-2">
+                <svg class="w-4 h-4 text-[#F0791E] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span><strong>Information :</strong> Cette demande sera immédiatement notifiée à l'utilisateur via son tableau de bord. Il devra soumettre les pièces manquantes avant la date limite indiquée.</span>
               </div>
 
               <form class="p-5 space-y-4 text-xs" (ngSubmit)="soumettreDemandeRegularisation()">
@@ -1286,20 +1434,20 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <label class="block font-semibold text-[#1B1D1F] mb-1">Motif de régularisation *</label>
                   <input type="text" [(ngModel)]="demandeRegularisation.motif" name="motif" required
                     placeholder="Ex: Dossier incomplet – pièce d'identité manquante"
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-amber-500"/>
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#F0791E]"/>
                 </div>
 
                 <div>
                   <label class="block font-semibold text-[#1B1D1F] mb-1">Description détaillée *</label>
                   <textarea [(ngModel)]="demandeRegularisation.description" name="description" rows="3" required
                     placeholder="Expliquer précisément ce qui est demandé, pourquoi et quelles sont les conséquences si non régularisé..."
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-amber-500 resize-none"></textarea>
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#F0791E] resize-none"></textarea>
                 </div>
 
                 <div>
                   <label class="block font-semibold text-[#1B1D1F] mb-1">Date limite impérative *</label>
                   <input type="date" [(ngModel)]="demandeRegularisation.dateLimite" name="dateLimite" required
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-amber-500"/>
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#F0791E]"/>
                   <p class="text-[10px] text-gray-400 mt-1">L'utilisateur sera notifié en urgence si la date approche.</p>
                 </div>
 
@@ -1308,9 +1456,9 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <div class="flex gap-2">
                     <input type="text" [(ngModel)]="nouvellePiece" name="nouvellePiece"
                       placeholder="Ex: Copie de CNI certifiée..."
-                      class="flex-1 p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-amber-500"/>
+                      class="flex-1 p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#F0791E]"/>
                     <button type="button" (click)="ajouterPieceDemandee()"
-                      class="px-3 py-2 bg-amber-500 text-white rounded-[2px] hover:bg-amber-600 cursor-pointer font-bold">+</button>
+                      class="px-3 py-2 bg-[#F0791E] text-white rounded-[2px] hover:bg-[#d96714] cursor-pointer font-bold">+</button>
                   </div>
                   @if (demandeRegularisation.piecesDemandees.length > 0) {
                     <ul class="mt-2 space-y-1">
@@ -1324,12 +1472,15 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   }
                 </div>
 
-                <div class="flex items-center justify-end gap-3 pt-3 border-t">
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#D7DBDE]">
                   <button type="button" (click)="fermerModalRegularisation()"
                     class="btn btn-ghost text-xs py-2 px-3 text-gray-600 cursor-pointer">Annuler</button>
                   <button type="submit" [disabled]="submittingRegularisation"
-                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-amber-600 hover:bg-amber-700 text-white cursor-pointer">
-                    {{ submittingRegularisation ? 'Envoi...' : '⚠️ Émettre l\'Injonction' }}
+                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#F0791E] hover:bg-[#d96714] text-white cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                    {{ submittingRegularisation ? 'Envoi...' : 'Émettre l\'Injonction' }}
                   </button>
                 </div>
               </form>
@@ -1343,9 +1494,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
         @if (modalDecisionRegularisationOuvert && demandeSelectionnee) {
           <div class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 animate-fade-in">
             <div class="bg-white max-w-md w-full rounded-[2px] shadow-2xl border border-[#D7DBDE] animate-scale-up">
-              <div class="flex items-center justify-between border-b px-5 py-4">
+              <div class="flex items-center justify-between border-b border-[#D7DBDE] px-5 py-4">
                 <h3 class="text-sm font-bold text-[#1B1D1F] flex items-center gap-2">
-                  ✅ Statuer sur la Régularisation
+                  <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Statuer sur la Régularisation
                 </h3>
                 <button (click)="fermerModalDecision()" class="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
               </div>
@@ -1354,8 +1508,11 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                 <div class="p-3 bg-gray-50 border border-gray-200 rounded-[2px]">
                   <div class="font-semibold text-[#1B1D1F]">{{ demandeSelectionnee.motif }}</div>
                   <div class="text-gray-500 mt-1">{{ demandeSelectionnee.description }}</div>
-                  <div class="text-[10px] text-red-600 font-medium mt-2">
-                    📅 Date limite : {{ demandeSelectionnee.dateLimite | date:'dd/MM/yyyy' }}
+                  <div class="text-[10px] text-red-600 font-medium mt-2 inline-flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Date limite : {{ demandeSelectionnee.dateLimite | date:'dd/MM/yyyy' }}
                   </div>
                 </div>
 
@@ -1366,7 +1523,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       [ngClass]="decisionRegularisation.statut === 'REGULARISE' ? 'border-green-400 bg-green-50' : 'border-gray-200'">
                       <input type="radio" [(ngModel)]="decisionRegularisation.statut" value="REGULARISE" name="statutDecision" class="cursor-pointer"/>
                       <div>
-                        <div class="font-semibold text-green-700">✅ Valider — Dossier conforme</div>
+                        <div class="font-semibold text-green-700 inline-flex items-center gap-1">
+                          <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                          </svg>
+                          Valider — Dossier conforme
+                        </div>
                         <div class="text-[10px] text-gray-400">Le dossier est complet et conforme aux exigences.</div>
                       </div>
                     </label>
@@ -1374,7 +1536,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       [ngClass]="decisionRegularisation.statut === 'CLOTURE' ? 'border-gray-400 bg-gray-50' : 'border-gray-200'">
                       <input type="radio" [(ngModel)]="decisionRegularisation.statut" value="CLOTURE" name="statutDecision" class="cursor-pointer"/>
                       <div>
-                        <div class="font-semibold text-gray-700">🔒 Clôturer</div>
+                        <div class="font-semibold text-gray-700 inline-flex items-center gap-1">
+                          <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                          </svg>
+                          Clôturer
+                        </div>
                         <div class="text-[10px] text-gray-400">Clôturer la demande sans validation complète.</div>
                       </div>
                     </label>
@@ -1382,7 +1549,12 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                       [ngClass]="decisionRegularisation.statut === 'REJETE' ? 'border-red-400 bg-red-50' : 'border-gray-200'">
                       <input type="radio" [(ngModel)]="decisionRegularisation.statut" value="REJETE" name="statutDecision" class="cursor-pointer"/>
                       <div>
-                        <div class="font-semibold text-red-700">❌ Rejeter</div>
+                        <div class="font-semibold text-red-700 inline-flex items-center gap-1">
+                          <svg class="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                          Rejeter
+                        </div>
                         <div class="text-[10px] text-gray-400">Les documents fournis sont insuffisants ou invalides.</div>
                       </div>
                     </label>
@@ -1393,15 +1565,18 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
                   <label class="block font-semibold text-[#1B1D1F] mb-1">Commentaire (optionnel)</label>
                   <textarea [(ngModel)]="decisionRegularisation.commentaire" name="decisionCommentaire" rows="2"
                     placeholder="Motiver votre décision..."
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] resize-none"></textarea>
+                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#1C75BC] resize-none"></textarea>
                 </div>
 
-                <div class="flex items-center justify-end gap-3 pt-3 border-t">
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#D7DBDE]">
                   <button type="button" (click)="fermerModalDecision()"
                     class="btn btn-ghost text-xs py-2 px-3 text-gray-600 cursor-pointer">Annuler</button>
-                  <button type="button" (click)="soumettreDecision()" [disabled]="submittingDecision"
-                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#005B94] hover:bg-[#004A78] text-white cursor-pointer">
-                    {{ submittingDecision ? 'Enregistrement...' : '💾 Enregistrer la Décision' }}
+                  <button type="submit" [disabled]="submittingDecision"
+                    class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#1C75BC] hover:bg-[#124F80] text-white cursor-pointer inline-flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                    </svg>
+                    {{ submittingDecision ? 'Enregistrement...' : 'Enregistrer la Décision' }}
                   </button>
                 </div>
               </div>

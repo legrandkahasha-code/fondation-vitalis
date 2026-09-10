@@ -1,4 +1,83 @@
-import { IsString, IsOptional, IsInt, IsBoolean, Min, Max, MaxLength, MinLength, Matches } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  IsBoolean,
+  IsEmail,
+  Min,
+  Max,
+  MaxLength,
+  MinLength,
+  Matches,
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
+} from 'class-validator';
+
+/**
+ * Validateur sécurisé pour URLs de médias (Images / Vidéos)
+ * Empêche le SSRF en bloquant localhost, metadata AWS et plages IP privées.
+ * Autorise les chemins relatifs légitimes /uploads/...
+ */
+export function IsSafeMediaUrl(validationOptions?: ValidationOptions) {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      name: 'isSafeMediaUrl',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          if (value === null || value === undefined || value === '') return true;
+          if (typeof value !== 'string') return false;
+          const trimmed = value.trim();
+
+          // 1. Chemin d'upload local légitime (/uploads/...) sans path traversal
+          if (trimmed.startsWith('/uploads/')) {
+            return (
+              !trimmed.includes('..') &&
+              /^\/uploads\/[a-zA-Z0-9_\-\/.]+\.(jpg|jpeg|png|webp|gif|svg|mp4|webm|mov|ogg)$/i.test(trimmed)
+            );
+          }
+
+          // 2. URL absolue HTTP/HTTPS
+          try {
+            const parsed = new URL(trimmed);
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+              return false;
+            }
+
+            const hostname = parsed.hostname.toLowerCase();
+
+            // Bloquer localhost et loopback IPv4/IPv6
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]') {
+              return false;
+            }
+
+            // Bloquer AWS / GCP Cloud Metadata
+            if (hostname === '169.254.169.254') {
+              return false;
+            }
+
+            // Bloquer adresses IP privées (RFC 1918 & CGN RFC 6598)
+            if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) return false;
+            if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)) return false;
+            if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) return false;
+            if (/^100\.(6[4-9]|[7-9]\d|1[0-1]\d|12[0-7])\.\d{1,3}\.\d{1,3}$/.test(hostname)) return false;
+            if (hostname === '0.0.0.0') return false;
+
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        defaultMessage(args: ValidationArguments) {
+          return `${args.property} doit être une URL publique sécurisée (http/https) ou un chemin de téléversement valide (/uploads/...). Les adresses privées et locales sont interdites.`;
+        },
+      },
+    });
+  };
+}
 
 export class UpdateLandingSettingsDto {
   @IsOptional()
@@ -281,6 +360,15 @@ export class ContactMessageDto {
   @IsString()
   @MaxLength(2000, { message: 'Le message ne peut pas dépasser 2000 caractères.' })
   message?: string;
+
+  @IsOptional()
+  @IsEmail({}, { message: 'Adresse email invalide.' })
+  @MaxLength(150)
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  honeypot?: string;
 }
 
 export class CreateLandingActualiteDto {
@@ -300,11 +388,11 @@ export class CreateLandingActualiteDto {
   categorie?: string;
 
   @IsOptional()
-  @IsString()
+  @IsSafeMediaUrl()
   imageUrl?: string;
 
   @IsOptional()
-  @IsString()
+  @IsSafeMediaUrl()
   videoUrl?: string;
 
   @IsOptional()
@@ -360,11 +448,11 @@ export class UpdateLandingActualiteDto {
   categorie?: string;
 
   @IsOptional()
-  @IsString()
+  @IsSafeMediaUrl()
   imageUrl?: string;
 
   @IsOptional()
-  @IsString()
+  @IsSafeMediaUrl()
   videoUrl?: string;
 
   @IsOptional()

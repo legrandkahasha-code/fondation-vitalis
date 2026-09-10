@@ -22,7 +22,7 @@ export class LandingService {
     return this.http.get<PublicLandingData>(`${this.url}/public`);
   }
 
-  submitContact(data: { nom: string; telephone: string; filiere?: string; message?: string }): Observable<any> {
+  submitContact(data: { nom: string; telephone: string; filiere?: string; message?: string; email?: string; honeypot?: string }): Observable<any> {
     return this.http.post<any>(`${this.url}/contact`, data);
   }
 

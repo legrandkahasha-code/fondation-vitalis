@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { NotificationsService } from './core/services/notifications.service';
+import { AuthService } from './core/services/auth.service';
 import { ToastComponent } from './core/components/toast.component';
+import { filter, take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -11,6 +13,7 @@ import { ToastComponent } from './core/components/toast.component';
 export class App implements OnInit {
   constructor(
     private notifications: NotificationsService,
+    private auth: AuthService,
     private router: Router,
   ) {}
 
@@ -26,11 +29,17 @@ export class App implements OnInit {
       // Ignorer si sessionStorage indisponible
     }
 
-    // ensure SSE connection is established early so pages receive events
-    try {
-      this.notifications.connect();
-    } catch (e) {
-      console.error('Failed to connect notifications', e);
-    }
+    // Attendre que l'AuthService soit prêt (loadMe() terminé) avant d'ouvrir le SSE.
+    // Cela garantit que le token en localStorage est frais et valide au moment de connect().
+    this.auth.isReady$.pipe(
+      filter((ready) => ready),
+      take(1),
+    ).subscribe(() => {
+      try {
+        this.notifications.connect();
+      } catch (e) {
+        console.error('[App] Échec connexion SSE notifications:', e);
+      }
+    });
   }
 }

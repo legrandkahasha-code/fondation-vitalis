@@ -16,7 +16,7 @@ import { Etablissement } from '../../../core/models';
       <div class="max-w-7xl mx-auto pb-16 font-['Public_Sans',sans-serif] px-4 sm:px-6">
 
         <!-- En-tête Institutionnel -->
-        <div class="mb-8 bg-white border border-[#D7DBDE] p-6 rounded-[2px] shadow-2xs">
+        <div class="mb-8 bg-white border border-[#D7DBDE] p-6 rounded-xs shadow-2xs">
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <div class="text-[12px] uppercase font-semibold tracking-[0.06em] text-[#4B5157]">
@@ -25,22 +25,22 @@ import { Etablissement } from '../../../core/models';
               <h1 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 tracking-tight">
                 Gouvernance des Établissements & Antennes
               </h1>
-              <div class="w-12 h-1 bg-[#005B94] mt-2 mb-3"></div>
-              <p class="text-[14px] text-[#4B5157] max-w-3xl leading-relaxed">
+              <div class="barre"></div>
+              <p class="text-[14px] text-[#4B5157] max-w-3xl leading-relaxed mt-3">
                 Pilotage des antennes territoriales, paramétrage des campus satellites, gestion du cycle de vie et intégrité des raccordements.
               </p>
             </div>
 
-            <div class="flex items-center gap-3 shrink-0">
+            <div class="flex items-center gap-3 shrink-0 flex-wrap">
               <button
                 type="button"
                 (click)="ouvrirFormulaireCreation()"
-                class="btn btn-primary text-xs py-2.5 px-4 font-semibold inline-flex items-center gap-2 shadow-2xs bg-[#005B94] hover:bg-[#004A78] text-white"
+                class="btn btn-primary text-xs py-2.5 px-4 font-semibold inline-flex items-center gap-2 shadow-2xs"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                Nouvelle Antenne
+                <span>Nouvelle Antenne</span>
               </button>
               <button
                 type="button"
@@ -51,7 +51,7 @@ import { Etablissement } from '../../../core/models';
                 <svg class="w-4 h-4" [class.animate-spin]="loading || refreshing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                Actualiser
+                <span>Actualiser</span>
               </button>
             </div>
           </div>
@@ -59,12 +59,12 @@ import { Etablissement } from '../../../core/models';
 
         <!-- Formulaire création / édition -->
         @if (showForm) {
-          <div class="bg-white border border-[#D7DBDE] p-6 rounded-[2px] shadow-2xs mb-8 animate-in fade-in duration-200">
+          <div class="bg-white border border-[#D7DBDE] p-6 rounded-xs shadow-2xs mb-8 animate-in fade-in duration-200">
             <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
               <h3 class="text-base font-bold text-[#1B1D1F]">
                 {{ editing ? ('Modifier : ' + editing.nom) : 'Création d’une Nouvelle Antenne Réseau' }}
               </h3>
-              <button (click)="annulerFormulaire()" class="text-xs text-gray-400 hover:text-gray-600">✕ Annuler</button>
+              <button (click)="annulerFormulaire()" class="text-xs text-[#4B5157] hover:text-[#1B1D1F] cursor-pointer">✕ Annuler</button>
             </div>
 
             <form (ngSubmit)="save()" class="space-y-4 text-xs">
@@ -77,7 +77,7 @@ import { Etablissement } from '../../../core/models';
                     name="nom"
                     required
                     placeholder="Ex: Campus Lubumbashi - Antenne Katanga"
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                    class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC]"
                   />
                 </div>
                 <div>
@@ -87,7 +87,7 @@ import { Etablissement } from '../../../core/models';
                     [(ngModel)]="form.codeAntenne"
                     name="codeAntenne"
                     placeholder="Ex: LSH-01 (Auto si vide)"
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] uppercase font-mono"
+                    class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC] uppercase font-mono"
                   />
                 </div>
               </div>
@@ -100,7 +100,7 @@ import { Etablissement } from '../../../core/models';
                     [(ngModel)]="form.adresse"
                     name="adresse"
                     placeholder="Numéro, avenue, commune, ville"
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                    class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC]"
                   />
                 </div>
                 <div>
@@ -108,7 +108,7 @@ import { Etablissement } from '../../../core/models';
                   <select
                     [(ngModel)]="form.pays"
                     name="pays"
-                    class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white"
+                    class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer"
                   >
                     <option value="RDC">RDC (République Démocratique du Congo)</option>
                     <option value="COG">Congo Brazzaville</option>
@@ -120,13 +120,13 @@ import { Etablissement } from '../../../core/models';
               </div>
 
               <div class="pt-3 border-t border-gray-100 flex justify-end gap-3">
-                <button type="button" (click)="annulerFormulaire()" class="btn btn-ghost py-2 px-4">
+                <button type="button" (click)="annulerFormulaire()" class="btn btn-ghost py-2 px-4 cursor-pointer">
                   Annuler
                 </button>
                 <button
                   type="submit"
                   [disabled]="sauvegardeEnCours"
-                  class="btn btn-primary py-2 px-6 bg-[#005B94] hover:bg-[#004A78] text-white font-semibold"
+                  class="btn btn-primary py-2 px-6 font-semibold cursor-pointer"
                 >
                   {{ sauvegardeEnCours ? 'Enregistrement...' : (editing ? 'Mettre à jour' : 'Créer l’antenne') }}
                 </button>
@@ -136,22 +136,22 @@ import { Etablissement } from '../../../core/models';
         }
 
         <!-- Filtres et Recherche -->
-        <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs mb-6">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white border border-[#D7DBDE] p-4 rounded-xs shadow-2xs mb-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-xs font-semibold text-[#4B5157] mb-1">Recherche</label>
               <input
                 type="text"
                 [(ngModel)]="recherche"
                 placeholder="Nom, code, adresse..."
-                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"
+                class="w-full text-xs p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC]"
               />
             </div>
             <div>
               <label class="block text-xs font-semibold text-[#4B5157] mb-1">Statut d'exploitation</label>
               <select
                 [(ngModel)]="filtreStatut"
-                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white"
+                class="w-full text-xs p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer"
               >
                 <option value="">Tous les statuts</option>
                 <option value="ACTIF">Actif</option>
@@ -163,7 +163,7 @@ import { Etablissement } from '../../../core/models';
               <label class="block text-xs font-semibold text-[#4B5157] mb-1">Pays</label>
               <select
                 [(ngModel)]="filtrePays"
-                class="w-full text-xs p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white"
+                class="w-full text-xs p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer"
               >
                 <option value="">Tous les pays</option>
                 <option value="RDC">RDC</option>
@@ -176,17 +176,17 @@ import { Etablissement } from '../../../core/models';
         </div>
 
         <!-- Tableau des Établissements -->
-        <div class="bg-white border border-[#D7DBDE] rounded-[2px] shadow-2xs overflow-hidden">
+        <div class="bg-white border border-[#D7DBDE] rounded-xs shadow-2xs overflow-hidden">
           @if (loading) {
             <div class="p-12 text-center">
-              <div class="inline-block w-8 h-8 border-3 border-[#005B94] border-t-transparent rounded-full animate-spin"></div>
+              <div class="inline-block w-8 h-8 border-3 border-[#1C75BC] border-t-transparent rounded-full animate-spin"></div>
               <p class="mt-4 text-sm text-[#4B5157]">Chargement des antennes du réseau...</p>
             </div>
           } @else {
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr class="bg-slate-50 border-b border-[#D7DBDE] text-[#4B5157] font-semibold uppercase text-[11px] tracking-wider">
+                  <tr class="bg-[#F5F6F7] border-b border-[#D7DBDE] text-[#4B5157] font-semibold uppercase text-[11px] tracking-wider">
                     <th class="py-3 px-4">Établissement / Antenne</th>
                     <th class="py-3 px-4">Code</th>
                     <th class="py-3 px-4">Localisation</th>
@@ -198,7 +198,7 @@ import { Etablissement } from '../../../core/models';
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                   @for (e of etablissementsFiltres; track e.id) {
-                    <tr class="hover:bg-slate-50/80 transition-colors">
+                    <tr class="hover:bg-[#F5F6F7]/60 transition-colors">
                       <!-- Nom -->
                       <td class="py-3 px-4">
                         <div class="font-bold text-[#1B1D1F]">{{ e.nom }}</div>
@@ -206,14 +206,14 @@ import { Etablissement } from '../../../core/models';
                       </td>
 
                       <!-- Code -->
-                      <td class="py-3 px-4 font-mono font-semibold text-[#005B94]">
+                      <td class="py-3 px-4 font-mono font-semibold text-[#1C75BC]">
                         {{ e.codeAntenne || '—' }}
                       </td>
 
                       <!-- Localisation -->
-                      <td class="py-3 px-4 text-gray-600">
+                      <td class="py-3 px-4 text-[#4B5157]">
                         <div>{{ e.adresse || 'Adresse non renseignée' }}</div>
-                        <span class="text-[10px] text-gray-400 font-semibold uppercase">{{ e.pays || 'RDC' }}</span>
+                        <span class="text-[10px] text-[#4B5157] font-semibold uppercase">{{ e.pays || 'RDC' }}</span>
                       </td>
 
                       <!-- Effectifs -->
@@ -224,25 +224,25 @@ import { Etablissement } from '../../../core/models';
 
                       <!-- Formations -->
                       <td class="py-3 px-4 text-center">
-                        <span class="font-bold text-[#005B94]">{{ e._count?.formations ?? 0 }}</span>
+                        <span class="font-bold text-[#1C75BC]">{{ e._count?.formations ?? 0 }}</span>
                         <span class="text-[10px] text-gray-400 block">cours</span>
                       </td>
 
                       <!-- Statut -->
                       <td class="py-3 px-4">
                         @if (e.statut === 'ACTIF' || !e.statut) {
-                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E7F1EA] text-[#276B44] border border-[#276B44]/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#276B44]"></span>
                             ACTIF
                           </span>
                         } @else if (e.statut === 'SUSPENDU') {
-                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#F0791E]"></span>
                             SUSPENDU
                           </span>
                         } @else {
-                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FDE6E6] text-[#ED1C24] border border-[#ED1C24]/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#ED1C24]"></span>
                             FERMÉ
                           </span>
                         }
@@ -250,13 +250,16 @@ import { Etablissement } from '../../../core/models';
 
                       <!-- Actions sécurisées -->
                       <td class="py-3 px-4 text-right">
-                        <div class="flex items-center justify-end gap-2">
+                        <div class="flex items-center justify-end gap-2 flex-wrap">
                           <button
                             type="button"
                             (click)="edit(e)"
-                            class="px-2.5 py-1 text-xs font-semibold rounded border border-gray-200 text-gray-700 hover:bg-gray-50"
+                            class="px-2.5 py-1 text-xs font-semibold rounded-xs border border-[#D7DBDE] text-[#4B5157] hover:bg-[#F5F6F7] cursor-pointer inline-flex items-center gap-1"
                           >
-                            Éditer
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            <span>Éditer</span>
                           </button>
 
                           <!-- Bascule statut sécurisée (pas de delete destructif) -->
@@ -265,29 +268,40 @@ import { Etablissement } from '../../../core/models';
                               type="button"
                               (click)="changerStatut(e, 'SUSPENDU')"
                               [disabled]="actionEnCours === e.id"
-                              class="px-2.5 py-1 text-xs font-semibold rounded border border-amber-200 text-amber-700 hover:bg-amber-50"
+                              class="px-2.5 py-1 text-xs font-semibold rounded-xs border border-[#F0791E]/30 text-[#F0791E] hover:bg-[#FDECDD] cursor-pointer inline-flex items-center gap-1"
                               title="Suspendre temporairement l'antenne"
                             >
-                              Suspendre
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>Suspendre</span>
                             </button>
                           } @else if (e.statut === 'SUSPENDU') {
                             <button
                               type="button"
                               (click)="changerStatut(e, 'ACTIF')"
                               [disabled]="actionEnCours === e.id"
-                              class="px-2.5 py-1 text-xs font-semibold rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                              class="px-2.5 py-1 text-xs font-semibold rounded-xs border border-[#276B44]/30 text-[#276B44] hover:bg-[#E7F1EA] cursor-pointer inline-flex items-center gap-1"
                               title="Réactiver l'antenne"
                             >
-                              Réactiver
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>Réactiver</span>
                             </button>
                           } @else {
                             <button
                               type="button"
                               (click)="changerStatut(e, 'ACTIF')"
                               [disabled]="actionEnCours === e.id"
-                              class="px-2.5 py-1 text-xs font-semibold rounded border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                              class="px-2.5 py-1 text-xs font-semibold rounded-xs border border-[#276B44]/30 text-[#276B44] hover:bg-[#E7F1EA] cursor-pointer inline-flex items-center gap-1"
                             >
-                              Rouvrir
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>Rouvrir</span>
                             </button>
                           }
                         </div>
@@ -305,7 +319,7 @@ import { Etablissement } from '../../../core/models';
               </table>
             </div>
 
-            <div class="px-4 py-3 bg-slate-50 border-t border-[#D7DBDE] text-xs text-[#4B5157] flex justify-between items-center">
+            <div class="px-4 py-3 bg-[#F5F6F7] border-t border-[#D7DBDE] text-xs text-[#4B5157] flex justify-between items-center">
               <span>Total : {{ etablissementsFiltres.length }} sur {{ etablissements.length }} antennes</span>
             </div>
           }

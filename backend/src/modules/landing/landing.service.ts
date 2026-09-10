@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
@@ -12,9 +13,15 @@ import {
   ContactMessageDto,
 } from './dto/landing.dto';
 
+interface CachedLandingEntry {
+  data: any;
+  etag: string;
+  expiry: number;
+}
+
 @Injectable()
 export class LandingService {
-  private static cachedLandingData: { data: any; expiry: number } | null = null;
+  private static cachedLandingData: CachedLandingEntry | null = null;
   private static readonly TTL_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor(
@@ -28,6 +35,10 @@ export class LandingService {
 
   public invalidateLandingCache() {
     LandingService.cachedLandingData = null;
+  }
+
+  public getCachedLandingEtag(): string | null {
+    return LandingService.cachedLandingData?.etag || null;
   }
 
   /**
@@ -94,14 +105,21 @@ export class LandingService {
       orderBy: { ordre: 'asc' },
     });
 
-    // 6. Récupérer les formations réelles de la base de données
+    // 6. Récupérer les formations réelles de la base de données avec filière et niveau
     const formationsDb = await this.prisma.formation.findMany({
       include: {
         _count: {
           select: { modules: true },
         },
+        formationReferentiel: {
+          include: {
+            filiere: true,
+            niveau: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
 
     const result = {
@@ -115,21 +133,72 @@ export class LandingService {
       },
       temoignages,
       actualites,
-      formations: formationsDb.map((f) => ({
-        id: f.id,
-        titre: f.titre,
-        description: f.description || '',
-        modulesCount: f._count.modules,
-        createdAt: f.createdAt,
-      })),
+      formations: formationsDb.map((f: any) => {
+        const ref = f.formationReferentiel;
+        const filiere = ref?.filiere;
+        const niveau = ref?.niveau;
+
+        // Catégorisation intelligente : priorité à la filière officielle en BDD
+        let categorieCode: 'tech' | 'gestion' | 'technique' = 'tech';
+        let filiereNom = filiere?.libelle || '';
+        const fCode = (filiere?.code || '').toUpperCase();
+        const fLib = filiereNom.toLowerCase();
+        const titreLower = (f.titre || '').toLowerCase();
+
+        if (
+          fCode.includes('GEST') ||
+          fCode.includes('MGT') ||
+          fLib.includes('gestion') ||
+          fLib.includes('management') ||
+          fLib.includes('finance') ||
+          titreLower.includes('gestion') ||
+          titreLower.includes('marché') ||
+          titreLower.includes('compta') ||
+          titreLower.includes('management')
+        ) {
+          categorieCode = 'gestion';
+        } else if (
+          fCode.includes('TECH') ||
+          fCode.includes('ELEC') ||
+          fCode.includes('BTP') ||
+          fLib.includes('technique') ||
+          fLib.includes('électric') ||
+          titreLower.includes('électric') ||
+          titreLower.includes('btp') ||
+          titreLower.includes('énergie') ||
+          titreLower.includes('mécanique')
+        ) {
+          categorieCode = 'technique';
+        }
+
+        return {
+          id: f.id,
+          titre: f.titre,
+          description: f.description || '',
+          modulesCount: f._count?.modules || 0,
+          filiereId: filiere?.id || null,
+          filiereCode: filiere?.code || null,
+          filiereNom: filiere?.libelle || null,
+          niveauCode: niveau?.code || null,
+          niveauNom: niveau?.libelle || null,
+          categorieOfficielle: categorieCode,
+          createdAt: f.createdAt,
+        };
+      }),
     };
 
+    // Calculer le hash ETag pour validation HTTP conditionnelle
+    const serialized = JSON.stringify(result);
+    const etag = `"${createHash('md5').update(serialized).digest('hex')}"`;
+    const payloadWithEtag = { ...result, _etag: etag };
+
     LandingService.cachedLandingData = {
-      data: result,
+      data: payloadWithEtag,
+      etag,
       expiry: Date.now() + LandingService.TTL_MS,
     };
 
-    return result;
+    return payloadWithEtag;
   }
 
   // --- SETTINGS ---
@@ -336,12 +405,22 @@ export class LandingService {
 
   // --- CONTACT MESSAGE ---
   async submitContact(dto: ContactMessageDto) {
+    // Protection anti-bot Honeypot invisible (OWASP recommendation)
+    if (dto.honeypot && dto.honeypot.trim() !== '') {
+      return {
+        success: true,
+        message: 'Votre demande d\'orientation a été enregistrée avec succès. Notre équipe prendra contact avec vous.',
+        data: { id: 'bot-filtered' },
+      };
+    }
+
     const saved = await this.db.contactMessage.create({
       data: {
         nom: dto.nom?.trim(),
         telephone: dto.telephone?.trim(),
         filiere: dto.filiere?.trim() || null,
         message: dto.message?.trim() || null,
+        email: dto.email?.trim() || null,
       },
     });
 

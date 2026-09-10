@@ -575,3 +575,26 @@ a:hover {
     transition: none !important;
   }
 }
+
+/* =========================================================
+   Utilitaires accessibilité & sécurité — Landing Page
+   ========================================================= */
+
+/* Champ piège anti-spam (Honeypot OWASP) — rendu invisible sans style="display:none" inline */
+.honeypot-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Fond dégradé radial de la section vérification de certificat */
+.verif-bg-radial {
+  background: radial-gradient(ellipse at 50% 0%, rgba(28, 117, 188, 0.25) 0%, transparent 65%);
+}

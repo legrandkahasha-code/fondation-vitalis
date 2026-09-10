@@ -1,0 +1,16 @@
+{
+  "extends": ["development"],
+  "hints": {
+    "axe/text-alternatives": [
+      "default",
+      {
+        "rules": {
+          "image-alt": { "enabled": false },
+          "frame-title": { "enabled": false }
+        }
+      }
+    ],
+    "compat-api/html": "off",
+    "no-inline-styles": "off"
+  }
+}

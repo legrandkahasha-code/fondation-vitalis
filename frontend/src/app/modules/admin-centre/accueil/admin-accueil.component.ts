@@ -1332,7 +1332,14 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   isVideoLocal(url?: string): boolean {
     if (!url) return false;
     const clean = url.toLowerCase();
-    return clean.includes('/uploads/') || clean.endsWith('.mp4') || clean.endsWith('.webm') || clean.endsWith('.mov') || clean.endsWith('.ogg');
+    return (
+      clean.includes('/uploads/') ||
+      clean.includes('/vitalis-media/') ||
+      clean.includes('.mp4') ||
+      clean.includes('.webm') ||
+      clean.includes('.mov') ||
+      clean.includes('.ogg')
+    );
   }
 
   getMediaUrl(url?: string): string {
@@ -1342,6 +1349,13 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       return `${backendBase}${url}`;
     }
     return url;
+  }
+
+  onImageError(event: Event, fallback = 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800&auto=format&fit=crop'): void {
+    const target = event.target as HTMLImageElement;
+    if (target && target.src !== fallback) {
+      target.src = fallback;
+    }
   }
 
   onImageSelected(event: Event): void {

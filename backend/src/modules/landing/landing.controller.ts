@@ -11,8 +11,11 @@ import {
   UseInterceptors,
   UploadedFile,
   Req,
+  Res,
+  HttpStatus,
   ParseUUIDPipe,
   BadRequestException,
+  Header,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Public } from '../../common/decorators/public.decorator';
@@ -71,8 +74,22 @@ export class LandingController {
   // --- PUBLIC ENDPOINTS ---
   @Get('public')
   @Public()
-  getPublicLandingData() {
-    return this.service.getPublicLandingData();
+  @Header('Cache-Control', 'public, max-age=180, stale-while-revalidate=60')
+  async getPublicLandingData(
+    @Req() req: any,
+    @Res({ passthrough: true }) res: any,
+  ) {
+    const data = await this.service.getPublicLandingData();
+    const etag = data?._etag || this.service.getCachedLandingEtag();
+    if (etag) {
+      res.setHeader('ETag', etag);
+      const ifNoneMatch = req?.headers?.['if-none-match'];
+      if (ifNoneMatch && (ifNoneMatch === etag || ifNoneMatch === `W/${etag}`)) {
+        res.status(HttpStatus.NOT_MODIFIED);
+        return;
+      }
+    }
+    return data;
   }
 
   @Post('contact')

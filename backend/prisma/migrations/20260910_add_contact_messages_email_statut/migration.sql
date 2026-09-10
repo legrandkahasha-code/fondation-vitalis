@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "contact_messages" ADD COLUMN IF NOT EXISTS "email" VARCHAR(255);
+ALTER TABLE "contact_messages" ADD COLUMN IF NOT EXISTS "statut" VARCHAR(50) DEFAULT 'NOUVEAU';

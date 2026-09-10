@@ -77,11 +77,15 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
           <nav class="flex-1 p-3 space-y-1 overflow-y-auto font-['Public_Sans',sans-serif]">
             
             <!-- ========================================================================= -->
+            <!-- ========================================================================= -->
             <!-- 1. ESPACE ADMINISTRATEUR CENTRAL (DIRECTION GÉNÉRALE NATIONALE)          -->
             <!-- ========================================================================= -->
             @if (auth.hasRole('ADMIN_CENTRE')) {
-              <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/50">
-                🏛️ Direction & Gouvernance
+              <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/60 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-[#F0791E] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span>Direction & Gouvernance</span>
               </div>
 
               <a 
@@ -144,8 +148,11 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
                 <span>CMS & Portail Public</span>
               </a>
 
-              <div class="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/50">
-                🎓 Supervision Pédagogique
+              <div class="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/60 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-[#F0791E] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                </svg>
+                <span>Supervision Pédagogique</span>
               </div>
 
               <a 
@@ -189,8 +196,11 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
             <!-- 2. ESPACE DIRECTEUR D'ÉTABLISSEMENT SATELLITE (ADMIN_ETABLISSEMENT)       -->
             <!-- ========================================================================= -->
             @if (auth.hasRole('ADMIN_ETABLISSEMENT')) {
-              <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/50">
-                🏢 Administration Établissement
+              <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/60 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-[#F0791E] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span>Administration Établissement</span>
               </div>
 
               <a 
@@ -229,8 +239,11 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
                 <span>Sessions & Candidatures</span>
               </a>
 
-              <div class="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/50">
-                🎓 Pédagogie & Évaluations
+              <div class="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/60 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-[#F0791E] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                </svg>
+                <span>Pédagogie & Évaluations</span>
               </div>
 
               <a 
@@ -298,8 +311,11 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
             <!-- 3. ESPACE FORMATEUR                                                       -->
             <!-- ========================================================================= -->
             @if (auth.hasRole('FORMATEUR')) {
-              <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/50">
-                🎓 Espace Pédagogique
+              <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/60 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-[#F0791E] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                </svg>
+                <span>Espace Pédagogique</span>
               </div>
 
               <a 
@@ -367,8 +383,11 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
             <!-- 4. ESPACE PERSONNEL ADMINISTRATIF                                         -->
             <!-- ========================================================================= -->
             @if (auth.hasRole('PERSONNEL_ADMINISTRATIF')) {
-              <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/50">
-                📋 Scolarité & Secrétariat
+              <div class="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white/60 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-[#F0791E] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                <span>Scolarité & Secrétariat</span>
               </div>
 
               <a 
@@ -455,11 +474,13 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
 
         <!-- Bannière d'alerte injonction de régularisation pour l'utilisateur connecté -->
         @if (demandeActive) {
-          <div class="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md border-b border-amber-600 z-20 animate-fade-in">
+          <div class="bg-[#F0791E] text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md border-b border-[#d86613] z-20 animate-fade-in">
             <div class="flex items-center gap-2.5 text-xs">
-              <span class="text-base animate-pulse">⚠️</span>
+              <svg class="w-4 h-4 shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
               <div>
-                <strong class="font-bold uppercase tracking-wide text-[11px] bg-white/20 px-1.5 py-0.5 rounded">Régularisation administrative requise</strong>
+                <strong class="font-bold uppercase tracking-wide text-[11px] bg-white/20 px-1.5 py-0.5 rounded-xs">Régularisation administrative requise</strong>
                 <span class="ml-2 font-medium">{{ demandeActive.motif }}</span>
                 <span class="ml-1 opacity-90">— Transmettez vos pièces justificatives avant le <strong>{{ demandeActive.dateLimite | date:'dd/MM/yyyy' }}</strong>.</span>
               </div>
@@ -467,9 +488,12 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
             <button
               type="button"
               (click)="ouvrirModalSoumission()"
-              class="bg-white text-amber-900 font-bold px-3 py-1 rounded-[2px] text-xs hover:bg-amber-50 shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
+              class="bg-white text-[#1B1D1F] font-bold px-3 py-1.5 rounded-xs text-xs hover:bg-[#FDECDD] shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
             >
-              <span>📄</span> Déposer les pièces demandées
+              <svg class="w-3.5 h-3.5 text-[#F0791E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <span>Déposer les pièces demandées</span>
             </button>
           </div>
         }
@@ -481,19 +505,25 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
         <!-- MODAL DE SOUMISSION DE PIÈCE DE RÉGULARISATION PAR L'UTILISATEUR -->
         @if (modalSoumissionOuvert && demandeActive) {
           <div class="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 animate-fade-in">
-            <div class="bg-white max-w-md w-full rounded-[2px] shadow-2xl border border-[#D7DBDE] animate-scale-up">
-              <div class="flex items-center justify-between border-b px-5 py-4 bg-amber-50">
-                <h3 class="text-sm font-bold text-amber-950 flex items-center gap-2">
-                  <span>⚠️</span> Régularisation de votre dossier
+            <div class="bg-white max-w-md w-full rounded-xs shadow-2xl border border-[#D7DBDE] animate-scale-up max-h-[90vh] flex flex-col">
+              <div class="flex items-center justify-between border-b border-[#D7DBDE] px-5 py-4 bg-[#FDECDD]">
+                <h3 class="text-sm font-bold text-[#1B1D1F] flex items-center gap-2">
+                  <svg class="w-4 h-4 text-[#F0791E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                  </svg>
+                  <span>Régularisation de votre dossier</span>
                 </h3>
-                <button (click)="fermerModalSoumission()" class="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
+                <button (click)="fermerModalSoumission()" class="text-[#4B5157] hover:text-[#1B1D1F] cursor-pointer">✕</button>
               </div>
-              <div class="p-5 space-y-4 text-xs">
-                <div class="p-3 bg-amber-50/50 border border-amber-200 rounded text-amber-900">
+              <div class="p-5 space-y-4 text-xs overflow-y-auto">
+                <div class="p-3 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs text-[#1B1D1F]">
                   <div class="font-bold mb-1">Motif : {{ demandeActive.motif }}</div>
-                  <p class="text-gray-700 leading-relaxed">{{ demandeActive.description }}</p>
-                  <div class="text-[11px] text-amber-800 mt-2 font-semibold">
-                    📅 Échéance impérative : {{ demandeActive.dateLimite | date:'dd/MM/yyyy' }}
+                  <p class="text-[#4B5157] leading-relaxed">{{ demandeActive.description }}</p>
+                  <div class="text-[11px] text-[#124F80] mt-2 font-semibold flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Échéance impérative : {{ demandeActive.dateLimite | date:'dd/MM/yyyy' }}</span>
                   </div>
                 </div>
 
@@ -502,13 +532,13 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
                     <label class="block font-semibold text-[#1B1D1F] mb-1">Intitulé de la pièce transmise *</label>
                     <input type="text" [(ngModel)]="titreSoumission" name="titre" required
                       placeholder="Ex: Carte d'identité recto-verso, Copie certifiée du diplôme..."
-                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94]"/>
+                      class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC]"/>
                   </div>
 
                   <div>
                     <label class="block font-semibold text-[#1B1D1F] mb-1">Type de document *</label>
                     <select [(ngModel)]="typeDocumentSoumission" name="typeDocument"
-                      class="w-full p-2.5 border border-[#D7DBDE] rounded-[2px] focus:outline-none focus:border-[#005B94] bg-white cursor-pointer">
+                      class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC] bg-white cursor-pointer">
                       <option value="CNI">Carte Nationale d'Identité</option>
                       <option value="PASSEPORT">Passeport</option>
                       <option value="DIPLOME">Diplôme / Certificat</option>
@@ -521,18 +551,26 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
                   <div>
                     <label class="block font-semibold text-[#1B1D1F] mb-1">Fichier justificatif *</label>
                     <input type="file" (change)="onFichierSoumissionChange($event)" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required
-                      class="w-full p-2 border border-[#D7DBDE] rounded-[2px] text-xs bg-gray-50 cursor-pointer"/>
+                      class="w-full p-2 border border-[#9AA1A8] rounded-xs text-xs bg-[#F5F6F7] cursor-pointer"/>
                     @if (fichierSoumission) {
-                      <div class="mt-1 text-[10px] text-emerald-700 font-medium">✓ {{ fichierSoumission.name }}</div>
+                      <div class="mt-1 text-[10px] text-[#276B44] font-medium flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>{{ fichierSoumission.name }}</span>
+                      </div>
                     }
                   </div>
 
-                  <div class="flex items-center justify-end gap-3 pt-3 border-t">
-                    <button type="button" (click)="fermerModalSoumission()" class="btn btn-ghost text-xs py-2 px-3 text-gray-600 cursor-pointer">
+                  <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#D7DBDE]">
+                    <button type="button" (click)="fermerModalSoumission()" class="btn btn-ghost text-xs py-2 px-3 cursor-pointer">
                       Annuler
                     </button>
-                    <button type="submit" [disabled]="submittingSoumission" class="btn btn-primary text-xs py-2 px-4 font-semibold bg-[#005B94] hover:bg-[#004A78] text-white cursor-pointer">
-                      {{ submittingSoumission ? 'Envoi en cours...' : '📤 Transmettre la pièce' }}
+                    <button type="submit" [disabled]="submittingSoumission" class="btn btn-primary text-xs py-2 px-4 font-semibold cursor-pointer inline-flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                      </svg>
+                      <span>{{ submittingSoumission ? 'Envoi en cours...' : 'Transmettre la pièce' }}</span>
                     </button>
                   </div>
                 </form>
@@ -581,11 +619,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         if (msg && typeof msg === 'object') {
           if (msg.type?.startsWith('ADMISSION_')) {
             if (this.auth.hasAnyRole(['ADMIN_CENTRE', 'ADMIN_ETABLISSEMENT', 'PERSONNEL_ADMINISTRATIF'])) {
-              const icon = msg.type === 'ADMISSION_NEW_CANDIDATURE' ? '📋 ' : msg.type === 'ADMISSION_CONFIRMED' ? '🎉 ' : '📢 ';
-              this.toast.info(`${icon}${msg.message || 'Activité sur les admissions réseau'}`);
+              this.toast.info(msg.message || 'Activité sur les admissions réseau');
             }
           } else if (msg.type === 'DEMANDE_REGULARISATION') {
-            this.toast.info('⚠️ ' + (msg.message || 'L\'administration demande la régularisation de votre dossier.'));
+            this.toast.info(msg.message || 'L\'administration demande la régularisation de votre dossier.');
             this.verifierRegularisations();
           }
         }

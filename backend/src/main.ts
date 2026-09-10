@@ -32,7 +32,7 @@ async function bootstrap() {
   app.use(
     rateLimit({
       windowMs: 15 * 60 * 1000,
-      max: 2000,
+      max: 300,
       standardHeaders: true,
       legacyHeaders: false,
       message: 'Trop de requêtes. Réessayez dans quelques instants.',
@@ -117,7 +117,11 @@ async function bootstrap() {
   });
   app.use('/api/landing/contact', contactLimiter);
 
-  const uploadsDir = join(process.cwd(), 'uploads');
+  const candidateUploads = [
+    join(process.cwd(), 'backend', 'uploads'),
+    join(process.cwd(), 'uploads'),
+  ];
+  const uploadsDir = candidateUploads.find((dir) => fs.existsSync(dir)) || candidateUploads[0];
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
@@ -134,6 +138,7 @@ async function bootstrap() {
       }
       res.set('Cross-Origin-Resource-Policy', 'cross-origin');
       res.set('X-Content-Type-Options', 'nosniff');
+      res.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
       res.set('Accept-Ranges', 'bytes');
     },
   });
