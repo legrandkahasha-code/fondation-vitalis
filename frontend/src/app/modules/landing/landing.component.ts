@@ -16,7 +16,7 @@ import {
   LandingPageActualite,
   PublicLandingData,
 } from '../../core/models';
-import { buildWhatsappUrl, DEFAULT_WHATSAPP_MESSAGE } from '../../core/utils/whatsapp.util';
+import { buildWhatsappUrl, buildWhatsappUrlLenient, DEFAULT_WHATSAPP_MESSAGE, subscribeLandingSettingsChanged, isWhatsappEnabled } from '../../core/utils/whatsapp.util';
 
 export interface FormationDisplayItem {
   id: string;
@@ -46,6 +46,9 @@ export interface FaqDisplayItem {
 })
 export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   private pollingTimer: any = null;
+  private publicEvents: EventSource | null = null;
+  private unsubLandingSync: (() => void) | null = null;
+  private whatsappFab: HTMLAnchorElement | null = null;
   @ViewChild('statsSection') statsSection?: ElementRef;
 
   isLoadingLanding: boolean = true;
@@ -59,6 +62,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   isScanning: boolean = false;
   activeStep: number = 1;
   submittingContact: boolean = false;
+  whatsappWidget = { actif: false, url: '' };
 
   contactForm = {
     nom: '',
@@ -92,7 +96,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     contactTelephone: '+243 ...',
     contactWhatsapp: '+243843010337',
     whatsappMessage: DEFAULT_WHATSAPP_MESSAGE,
-    whatsappActif: true,
+    whatsappActif: false,
     footerDescription: 'Vitalis Center EUP (Établissement d\'Utilité Publique) · Centre de formation professionnelle et technique agréé par le Ministère de la Formation Professionnelle de la RDC.',
     footerTutelleTexte: 'Supervision institutionnelle et contrôle de conformité des attestations et certifications nationales.',
     footerCopyright: '© 2026 Vitalis Center EUP. Tous droits réservés.',
@@ -426,29 +430,132 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.notifSub = this.notifications.messages().subscribe({
       next: (msg) => {
-        if (msg && typeof msg === 'object' && (msg.type === 'ACTUALITE_UPDATE' || msg.type === 'LANDING_UPDATE')) {
+        if (!msg || typeof msg !== 'object') return;
+        if (msg.type === 'LANDING_UPDATE') {
+          this.chargerWhatsappWidget();
+        } else if (msg.type === 'ACTUALITE_UPDATE') {
           this.chargerDonneesLanding();
         }
       },
     });
 
-    // Polling de rafraîchissement périodique (5 min) pour visiteurs publics anonymes
+    this.unsubLandingSync = subscribeLandingSettingsChanged(() => this.chargerWhatsappWidget());
+    this.ouvrirFluxPublic();
+
+    // Repli : si le flux temps réel est coupé, revalidation périodique
     if (typeof window !== 'undefined') {
       this.pollingTimer = setInterval(() => {
-        this.chargerDonneesLanding();
-      }, 5 * 60 * 1000);
+        if (document.visibilityState === 'visible') {
+          this.chargerWhatsappWidget();
+        }
+      }, 45 * 1000);
     }
   }
 
-  chargerDonneesLanding(): void {
+  @HostListener('document:visibilitychange')
+  onLandingVisibilityChange(): void {
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+      this.chargerWhatsappWidget();
+    }
+  }
+
+  private ouvrirFluxPublic(): void {
+    if (typeof EventSource === 'undefined' || typeof window === 'undefined') return;
+    this.fermerFluxPublic();
+    try {
+      this.publicEvents = new EventSource(`${environment.apiUrl}/landing/public/events`);
+      this.publicEvents.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload?.type === 'LANDING_UPDATE') {
+            this.chargerWhatsappWidget();
+          } else if (payload?.type === 'ACTUALITE_UPDATE') {
+            this.chargerDonneesLanding();
+          }
+        } catch {
+          /* heartbeat ou payload non JSON */
+        }
+      };
+      this.publicEvents.onerror = () => {
+        /* EventSource se reconnecte tout seul */
+      };
+    } catch {
+      this.publicEvents = null;
+    }
+  }
+
+  private fermerFluxPublic(): void {
+    if (this.publicEvents) {
+      this.publicEvents.close();
+      this.publicEvents = null;
+    }
+  }
+
+  chargerWhatsappWidget(): void {
+    this.landingService.getWhatsappWidget().subscribe({
+      next: (widget) => {
+        const actif = isWhatsappEnabled(widget?.actif);
+        const url =
+          widget?.url ||
+          buildWhatsappUrlLenient(this.settings.contactWhatsapp, this.settings.whatsappMessage) ||
+          '';
+        this.appliquerWhatsappEtat(actif, url);
+      },
+      error: () => {
+        if (this.settings?.id) {
+          this.appliquerWhatsappDepuisSettings(this.settings);
+        }
+      },
+    });
+  }
+
+  private appliquerWhatsappDepuisSettings(settings: { whatsappActif?: boolean; contactWhatsapp?: string; contactTelephone?: string; whatsappMessage?: string }): void {
+    const actif = isWhatsappEnabled(settings?.whatsappActif);
+    const url =
+      buildWhatsappUrlLenient(settings?.contactWhatsapp, settings?.whatsappMessage) ||
+      buildWhatsappUrlLenient(settings?.contactTelephone, settings?.whatsappMessage) ||
+      '';
+    this.appliquerWhatsappEtat(actif, url);
+  }
+
+  private appliquerWhatsappEtat(actif: boolean, url: string): void {
+    this.whatsappWidget = { actif, url };
+    this.settings = { ...this.settings, whatsappActif: actif };
+    this.retirerFabWhatsapp();
+    this.cdr.markForCheck();
+  }
+
+  private retirerFabWhatsapp(): void {
+    if (this.whatsappFab) {
+      this.whatsappFab.remove();
+      this.whatsappFab = null;
+    }
+    const leftover = typeof document !== 'undefined' ? document.getElementById('vitalis-whatsapp-fab') : null;
+    leftover?.remove();
+  }
+
+  chargerDonneesLanding(settingsOnly = false): void {
     this.landingService.getPublicLandingData().subscribe({
       next: (data: PublicLandingData) => {
+        if (!data) return;
+
         if (data.settings) {
-          this.settings = data.settings;
+          this.settings = {
+            ...data.settings,
+            whatsappActif: isWhatsappEnabled(data.settings.whatsappActif),
+          };
+          this.appliquerWhatsappDepuisSettings(this.settings);
           this.laureatsDisplay = this.settings.statsLaureats ?? 1200;
           this.tauxReussiteDisplay = this.settings.statsTauxReussite ?? 94;
           this.filieresDisplay = this.settings.statsFilieres ?? 15;
           this.titresVerifDisplay = this.settings.statsTitresVerif ?? 100;
+        }
+
+        this.chargerWhatsappWidget();
+
+        if (settingsOnly) {
+          this.cdr.markForCheck();
+          return;
         }
 
         if (data.sections) {
@@ -515,6 +622,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (err) => {
+        if (settingsOnly) return;
         console.warn('Fallback aux données statiques pour la landing page', err);
         this.isLoadingLanding = false;
         this.filtrerFormations();
@@ -529,6 +637,9 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.notifSub?.unsubscribe();
+    this.unsubLandingSync?.();
+    this.fermerFluxPublic();
+    this.retirerFabWhatsapp();
     if (this.pollingTimer) {
       clearInterval(this.pollingTimer);
       this.pollingTimer = null;
@@ -668,11 +779,15 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get whatsappUrl(): string {
-    return buildWhatsappUrl(this.settings.contactWhatsapp, this.settings.whatsappMessage) || '';
+    return (
+      this.whatsappWidget.url ||
+      buildWhatsappUrlLenient(this.settings.contactWhatsapp, this.settings.whatsappMessage) ||
+      ''
+    );
   }
 
   get whatsappVisible(): boolean {
-    return this.settings.whatsappActif !== false && !!this.whatsappUrl;
+    return this.settings.whatsappActif === true && !!this.whatsappUrl;
   }
 
   @HostListener('window:scroll')

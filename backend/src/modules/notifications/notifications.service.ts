@@ -15,6 +15,7 @@ export type NotificationEventType =
   | 'ADMISSION_STATUS_CHANGE'
   // ─── Module Landing / Actualités ────────────────────────────────────────────
   | 'ACTUALITE_UPDATE'
+  | 'LANDING_UPDATE'
   | 'DEMANDE_ORIENTATION'
   // ─── Auth / Utilisateurs & Dossiers ─────────────────────────────────────────
   | 'auth'

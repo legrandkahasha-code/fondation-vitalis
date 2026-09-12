@@ -89,8 +89,19 @@ async function bootstrap() {
       'x-tenant-id',
       'x-swagger-token',
       'Range',
+      'Cache-Control',
+      'Pragma',
+      'If-None-Match',
+      'If-Match',
+      'If-Modified-Since',
     ],
-    exposedHeaders: ['Content-Disposition', 'Content-Range', 'Accept-Ranges', 'Content-Length'],
+    exposedHeaders: [
+      'Content-Disposition',
+      'Content-Range',
+      'Accept-Ranges',
+      'Content-Length',
+      'ETag',
+    ],
     credentials: true,
     maxAge: 86400, // 24h cache preflight
   });

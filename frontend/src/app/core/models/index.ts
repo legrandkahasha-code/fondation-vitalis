@@ -158,6 +158,12 @@ export interface LandingPageSettings {
   updatedAt?: string;
 }
 
+export interface WhatsappWidget {
+  actif: boolean;
+  url: string;
+  numero?: string | null;
+}
+
 export interface LandingPageSection {
   id?: string;
   typeSection: 'avantage' | 'pedagogie' | 'admission' | 'secteur' | 'faq' | string;

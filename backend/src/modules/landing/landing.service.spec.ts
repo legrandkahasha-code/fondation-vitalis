@@ -109,6 +109,7 @@ describe('LandingService', () => {
     expect(result.sections.avantages.length).toBeGreaterThan(0);
     expect(result.sections.faq.length).toBeGreaterThan(0);
     expect(result.formations[0].titre).toBe('Formation Sécurité Informatique');
+    expect(result.settings.whatsappActif).toBe(false);
   });
 
   it('should return settings', async () => {
@@ -132,5 +133,29 @@ describe('LandingService', () => {
     await expect(
       service.updateSettings({ contactWhatsapp: '+243 81 000 0000' }),
     ).rejects.toThrow('Numéro WhatsApp invalide');
+  });
+
+  it('persiste la désactivation du bouton WhatsApp', async () => {
+    mockPrismaService.landingPageSettings.update.mockResolvedValue({
+      whatsappActif: false,
+    });
+    await service.updateSettings({ whatsappActif: false });
+    expect(mockPrismaService.landingPageSettings.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ whatsappActif: false }),
+      }),
+    );
+  });
+
+  it('expose le widget public quand l\'admin a activé WhatsApp', async () => {
+    mockPrismaService.landingPageSettings.findFirst.mockResolvedValue({
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      whatsappActif: true,
+      contactWhatsapp: '+243843010337',
+      whatsappMessage: 'Bonjour',
+    });
+    const widget = await service.getWhatsappWidget();
+    expect(widget.actif).toBe(true);
+    expect(widget.url).toContain('wa.me/243843010337');
   });
 });

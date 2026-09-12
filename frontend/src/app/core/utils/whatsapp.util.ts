@@ -2,6 +2,30 @@
 export const DEFAULT_WHATSAPP_MESSAGE =
   'Bonjour Vitalis Center EUP, je souhaite obtenir des informations sur vos formations professionnelles certifiées.';
 
+export const LANDING_SYNC_CHANNEL = 'vitalis-landing-sync';
+
+export function notifyLandingSettingsChanged(): void {
+  if (typeof BroadcastChannel === 'undefined') return;
+  try {
+    const channel = new BroadcastChannel(LANDING_SYNC_CHANNEL);
+    channel.postMessage({ type: 'LANDING_UPDATE', at: Date.now() });
+    channel.close();
+  } catch {
+    /* navigateurs sans BroadcastChannel */
+  }
+}
+
+export function subscribeLandingSettingsChanged(onChange: () => void): () => void {
+  if (typeof BroadcastChannel === 'undefined') return () => undefined;
+  try {
+    const channel = new BroadcastChannel(LANDING_SYNC_CHANNEL);
+    channel.onmessage = () => onChange();
+    return () => channel.close();
+  } catch {
+    return () => undefined;
+  }
+}
+
 const PLACEHOLDER_DIGITS = new Set(['243810000000', '243000000000']);
 
 export function normalizeWhatsappDigits(raw: string | null | undefined): string | null {
@@ -42,4 +66,22 @@ export function buildWhatsappUrl(
   if (!digits) return null;
   const text = (message && String(message).trim()) || DEFAULT_WHATSAPP_MESSAGE;
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+}
+
+export function buildWhatsappUrlLenient(
+  raw: string | null | undefined,
+  message?: string | null,
+): string | null {
+  const strict = buildWhatsappUrl(raw, message);
+  if (strict) return strict;
+  let digits = String(raw || '').replace(/[^0-9]/g, '');
+  if (digits.startsWith('00')) digits = digits.slice(2);
+  if (digits.startsWith('0') && digits.length >= 9) digits = `243${digits.slice(1)}`;
+  if (digits.length < 8) return null;
+  const text = (message && String(message).trim()) || DEFAULT_WHATSAPP_MESSAGE;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+}
+
+export function isWhatsappEnabled(value: unknown): boolean {
+  return value === true || value === 1 || String(value).toLowerCase() === 'true';
 }

@@ -9,6 +9,7 @@ import {
   LandingPageActualite,
   PublicLandingData,
   ContactMessageItem,
+  WhatsappWidget,
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -19,7 +20,15 @@ export class LandingService {
 
   // --- PUBLIC APIS ---
   getPublicLandingData(): Observable<PublicLandingData> {
-    return this.http.get<PublicLandingData>(`${this.url}/public`);
+    return this.http.get<PublicLandingData>(`${this.url}/public`, {
+      params: { _: String(Date.now()) },
+    });
+  }
+
+  getWhatsappWidget(): Observable<WhatsappWidget> {
+    return this.http.get<WhatsappWidget>(`${this.url}/public/whatsapp`, {
+      params: { _: String(Date.now()) },
+    });
   }
 
   submitContact(data: { nom: string; telephone: string; filiere?: string; message?: string; email?: string; honeypot?: string }): Observable<any> {

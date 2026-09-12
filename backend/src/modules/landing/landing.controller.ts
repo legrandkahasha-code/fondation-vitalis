@@ -16,6 +16,7 @@ import {
   ParseUUIDPipe,
   BadRequestException,
   Header,
+  Sse,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Public } from '../../common/decorators/public.decorator';
@@ -74,7 +75,7 @@ export class LandingController {
   // --- PUBLIC ENDPOINTS ---
   @Get('public')
   @Public()
-  @Header('Cache-Control', 'public, max-age=180, stale-while-revalidate=60')
+  @Header('Cache-Control', 'public, no-cache, must-revalidate')
   async getPublicLandingData(
     @Req() req: any,
     @Res({ passthrough: true }) res: any,
@@ -90,6 +91,20 @@ export class LandingController {
       }
     }
     return data;
+  }
+
+  @Get('public/whatsapp')
+  @Public()
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate')
+  getWhatsappWidget() {
+    return this.service.getWhatsappWidget();
+  }
+
+  @Get('public/events')
+  @Public()
+  @Sse()
+  streamPublicLanding() {
+    return this.service.streamPublicUpdates();
   }
 
   @Post('contact')

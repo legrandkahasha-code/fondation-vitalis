@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { createHash } from 'crypto';
+import { Observable } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
@@ -12,7 +14,7 @@ import {
   UpdateLandingActualiteDto,
   ContactMessageDto,
 } from './dto/landing.dto';
-import { DEFAULT_WHATSAPP_MESSAGE, toWhatsappE164 } from '../../common/utils/whatsapp.util';
+import { DEFAULT_WHATSAPP_MESSAGE, toWhatsappE164, buildWhatsappUrlLenient, isWhatsappEnabled } from '../../common/utils/whatsapp.util';
 
 interface CachedLandingEntry {
   data: any;
@@ -40,6 +42,19 @@ export class LandingService {
 
   public getCachedLandingEtag(): string | null {
     return LandingService.cachedLandingData?.etag || null;
+  }
+
+  /** Flux public : les visiteurs reçoivent l'activation/désactivation sans recharger la page. */
+  streamPublicUpdates(): Observable<MessageEvent> {
+    return this.notificationsService.stream().pipe(
+      filter(
+        (payload) =>
+          payload.type === 'LANDING_UPDATE' ||
+          payload.type === 'ACTUALITE_UPDATE' ||
+          payload.type === 'HEARTBEAT',
+      ),
+      map((payload) => ({ data: payload }) as unknown as MessageEvent),
+    );
   }
 
   /**
@@ -124,7 +139,10 @@ export class LandingService {
     });
 
     const result = {
-      settings,
+      settings: {
+        ...settings,
+        whatsappActif: isWhatsappEnabled(settings?.whatsappActif),
+      },
       sections: {
         avantages,
         pedagogie,
@@ -211,8 +229,16 @@ export class LandingService {
     return settings;
   }
 
+  async getWhatsappWidget() {
+    const settings = await this.getSettings();
+    const actif = isWhatsappEnabled(settings?.whatsappActif);
+    const url =
+      buildWhatsappUrlLenient(settings?.contactWhatsapp, settings?.whatsappMessage) ||
+      buildWhatsappUrlLenient(settings?.contactTelephone, settings?.whatsappMessage);
+    return { actif, url: url || '', numero: settings?.contactWhatsapp || null };
+  }
+
   async updateSettings(dto: UpdateLandingSettingsDto | any) {
-    this.invalidateLandingCache();
     const existing = await this.getSettings();
     const { id, createdAt, updatedAt, ...cleanData } = dto || {};
     
@@ -220,7 +246,9 @@ export class LandingService {
     if (cleanData.statsTauxReussite !== undefined) cleanData.statsTauxReussite = Number(cleanData.statsTauxReussite);
     if (cleanData.statsFilieres !== undefined) cleanData.statsFilieres = Number(cleanData.statsFilieres);
     if (cleanData.statsTitresVerif !== undefined) cleanData.statsTitresVerif = Number(cleanData.statsTitresVerif);
-    if (cleanData.whatsappActif !== undefined) cleanData.whatsappActif = Boolean(cleanData.whatsappActif);
+    if (cleanData.whatsappActif !== undefined) {
+      cleanData.whatsappActif = cleanData.whatsappActif === true || cleanData.whatsappActif === 'true';
+    }
 
     if (cleanData.whatsappMessage !== undefined) {
       const message = String(cleanData.whatsappMessage ?? '').trim();
@@ -242,10 +270,23 @@ export class LandingService {
       }
     }
 
-    return this.db.landingPageSettings.update({
+    const updated = await this.db.landingPageSettings.update({
       where: { id: existing.id },
       data: cleanData,
     });
+
+    this.invalidateLandingCache();
+    try {
+      this.notificationsService.emit({
+        type: 'LANDING_UPDATE',
+        message: 'Paramètres de la page d\'accueil mis à jour',
+        data: { whatsappActif: updated.whatsappActif },
+      });
+    } catch {
+      /* le flux SSE n'est pas bloquant */
+    }
+
+    return updated;
   }
 
   // --- SECTIONS ---

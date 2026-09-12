@@ -15,7 +15,7 @@ import {
   LandingPageActualite,
   ContactMessageItem,
 } from '../../../core/models';
-import { buildWhatsappUrl } from '../../../core/utils/whatsapp.util';
+import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } from '../../../core/utils/whatsapp.util';
 
 @Component({
   selector: 'app-admin-accueil',
@@ -280,14 +280,15 @@ import { buildWhatsappUrl } from '../../../core/utils/whatsapp.util';
                 <div class="field">
                   <label>Activer le Bouton WhatsApp</label>
                   <div class="flex items-center gap-3 mt-1">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" [(ngModel)]="settings.whatsappActif" name="whatsappActif" class="sr-only peer" />
+                    <label class="relative inline-flex items-center cursor-pointer" [class.opacity-50]="savingWhatsapp" [class.pointer-events-none]="savingWhatsapp">
+                      <input type="checkbox" [(ngModel)]="settings.whatsappActif" name="whatsappActif" class="sr-only peer" [disabled]="savingWhatsapp" (change)="basculerWhatsapp($any($event.target).checked)" />
                       <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#25D366]"></div>
                     </label>
-                    <span class="text-sm font-medium" [class.text-[#25D366]]="settings.whatsappActif !== false" [class.text-[#4B5157]]="settings.whatsappActif === false">
-                      {{ settings.whatsappActif !== false ? 'Actif — Visible sur le site' : 'Désactivé — Masqué du site' }}
+                    <span class="text-sm font-medium" [class.text-[#25D366]]="settings.whatsappActif === true" [class.text-[#4B5157]]="settings.whatsappActif !== true">
+                      {{ settings.whatsappActif === true ? 'Actif — Visible pour les visiteurs' : 'Désactivé — Masqué pour les visiteurs' }}
                     </span>
                   </div>
+                  <small class="text-[10px] text-[#4B5157] mt-1.5 block">{{ savingWhatsapp ? 'Application automatique en cours…' : 'L’interrupteur s’applique automatiquement aux visiteurs, sans autre enregistrement.' }}</small>
                 </div>
               </div>
 
@@ -1069,6 +1070,7 @@ import { buildWhatsappUrl } from '../../../core/utils/whatsapp.util';
 export class AdminAccueilComponent implements OnInit, OnDestroy {
   loading: boolean = false;
   savingSettings: boolean = false;
+  savingWhatsapp: boolean = false;
   activeTab: string = 'settings';
 
   tabs = [
@@ -1164,6 +1166,33 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     return buildWhatsappUrl(this.settings.contactWhatsapp, this.settings.whatsappMessage);
   }
 
+  basculerWhatsapp(actif: boolean): void {
+    if (this.savingWhatsapp) return;
+    this.savingWhatsapp = true;
+    this.landingService.updateSettings({ whatsappActif: actif === true }).subscribe({
+      next: (res) => {
+        this.settings = { ...this.settings, ...res };
+        this.savingWhatsapp = false;
+        notifyLandingSettingsChanged();
+        this.toast.success(
+          isWhatsappEnabled(res.whatsappActif)
+            ? 'Bouton WhatsApp activé : il est maintenant visible pour les visiteurs.'
+            : 'Bouton WhatsApp désactivé : il n’est plus visible sur la page d’accueil.',
+        );
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.settings.whatsappActif = !actif;
+        this.savingWhatsapp = false;
+        const msg = Array.isArray(err?.error?.message)
+          ? err.error.message.join(', ')
+          : err?.error?.message || 'Impossible d’appliquer le réglage WhatsApp.';
+        this.toast.error(msg);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
   getNomSectionActive(): string {
     const t = this.tabs.find((tab) => tab.id === this.activeTab);
     return t ? t.label : '';
@@ -1193,7 +1222,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       contactTelephone: this.settings.contactTelephone || '',
       contactWhatsapp: this.settings.contactWhatsapp || '',
       whatsappMessage: this.settings.whatsappMessage || '',
-      whatsappActif: this.settings.whatsappActif !== false,
+      whatsappActif: this.settings.whatsappActif === true,
       footerDescription: this.settings.footerDescription || '',
       footerTutelleTexte: this.settings.footerTutelleTexte || '',
       footerCopyright: this.settings.footerCopyright || '',
@@ -1204,7 +1233,17 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.settings = res;
         this.savingSettings = false;
-        this.toast.success('Paramètres enregistrés avec succès !');
+        notifyLandingSettingsChanged();
+        if (this.activeTab === 'verif_contact') {
+          const whatsappOn = res.whatsappActif === true;
+          this.toast.success(
+            whatsappOn
+              ? 'Paramètres enregistrés. Le bouton WhatsApp est maintenant visible pour les visiteurs.'
+              : 'Paramètres enregistrés. Le bouton WhatsApp est maintenant masqué pour les visiteurs.',
+          );
+        } else {
+          this.toast.success('Paramètres enregistrés avec succès !');
+        }
         this.cdr.markForCheck();
       },
       error: (err) => {

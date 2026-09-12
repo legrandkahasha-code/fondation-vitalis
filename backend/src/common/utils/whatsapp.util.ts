@@ -48,3 +48,22 @@ export function buildWhatsappUrl(
   const text = (message && String(message).trim()) || DEFAULT_WHATSAPP_MESSAGE;
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 }
+
+/** Lien wa.me même si le format n'est pas parfaitement E.164 (affichage du widget activé). */
+export function buildWhatsappUrlLenient(
+  raw: string | null | undefined,
+  message?: string | null,
+): string | null {
+  const strict = buildWhatsappUrl(raw, message);
+  if (strict) return strict;
+  let digits = String(raw || '').replace(/[^0-9]/g, '');
+  if (digits.startsWith('00')) digits = digits.slice(2);
+  if (digits.startsWith('0') && digits.length >= 9) digits = `243${digits.slice(1)}`;
+  if (digits.length < 8) return null;
+  const text = (message && String(message).trim()) || DEFAULT_WHATSAPP_MESSAGE;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+}
+
+export function isWhatsappEnabled(value: unknown): boolean {
+  return value === true || value === 1 || String(value).toLowerCase() === 'true';
+}

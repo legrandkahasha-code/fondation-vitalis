@@ -16,7 +16,7 @@ export const errorInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, n
 
       console.log(`[ErrorInterceptor] HTTP ${err.status} on ${req.url}`, isLoginOrRegister ? '(auth endpoint, skip refresh)' : '');
 
-      if (err.status === 401 && !isLoginOrRegister) {
+      if (err.status === 401 && !isLoginOrRegister && !req.url.includes('/landing/public')) {
         const refreshToken = auth.refreshTokenValue;
 
         // If we have a refresh token and are not already refreshing, attempt token refresh

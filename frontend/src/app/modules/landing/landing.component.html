@@ -1,4 +1,5 @@
-<div class="min-h-screen flex flex-col bg-white text-[#1B1D1F] font-['Public_Sans',sans-serif] overflow-x-hidden w-full relative">
+<div class="w-full">
+<div class="min-h-screen flex flex-col bg-white text-[#1B1D1F] font-['Public_Sans',sans-serif] overflow-x-hidden w-full">
       
       <!-- BARRE DE PROGRESSION DE SCROLL (STYLE INSTITUTIONS INTERNATIONALES) -->
       <div 
@@ -1546,9 +1547,25 @@
           {{ settings.footerBarreTexte }}
         </div>
       </footer>
+  </div>
 
-      <!-- WIDGETS FLOTTANTS : RETOUR EN HAUT & ASSISTANCE WHATSAPP OFFICIELLE -->
-      <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3 pointer-events-auto">
+  @if (whatsappVisible) {
+    <a
+      [href]="whatsappUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Discuter avec un conseiller pédagogique sur WhatsApp"
+      aria-label="Discuter avec un conseiller pédagogique sur WhatsApp"
+      class="hover:scale-110 active:scale-95 transition-transform duration-300"
+      style="position:fixed;bottom:24px;right:24px;z-index:2147483647;width:56px;height:56px;border-radius:9999px;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(0,0,0,0.28);text-decoration:none;"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true">
+        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.07-2.148-.528-1.74-.716-2.859-2.483-2.946-2.599-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.42-.099.825z"/>
+      </svg>
+    </a>
+  }
+
+      <div class="fixed bottom-24 right-6 z-[80] flex flex-col items-end gap-3 pointer-events-auto">
         <!-- Bouton Scroll To Top -->
         @if (showScrollTop) {
         <button (click)="scrollToTop()" 
@@ -1561,33 +1578,5 @@
           </svg>
         </button>
       }
-
-        <!-- Bouton WhatsApp Business Flottant avec Tooltip & Indicateur Actif -->
-        @if (whatsappVisible) {
-        <div class="relative group">
-          <a 
-            [href]="whatsappUrl" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            title="Discuter avec un conseiller pédagogique sur WhatsApp"
-            aria-label="Discuter avec un conseiller pédagogique sur WhatsApp"
-            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-[#25D366] hover:bg-[#20ba59] text-white shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer relative"
-          >
-            <span class="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400 border-2 border-white"></span>
-            </span>
-            <svg class="w-6 h-6 sm:w-7 sm:h-7 fill-current" viewBox="0 0 24 24">
-              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.07-2.148-.528-1.74-.716-2.859-2.483-2.946-2.599-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.42-.099.825z"/>
-            </svg>
-          </a>
-          <!-- Infobulle au hover -->
-          <div class="absolute right-14 top-2 hidden sm:group-hover:flex items-center whitespace-nowrap bg-[#1B1D1F] text-white text-xs font-semibold py-1.5 px-3 rounded-xs shadow-lg transition-opacity duration-200">
-            Conseiller WhatsApp en ligne
-            <div class="w-2 h-2 bg-[#1B1D1F] rotate-45 absolute -right-1 top-2.5"></div>
-          </div>
-        </div>
-        }
       </div>
-
-    </div>
+</div>
