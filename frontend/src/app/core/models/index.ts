@@ -132,6 +132,10 @@ export interface LandingPageSettings {
   heroTitre: string;
   heroSousTitre: string;
   heroNumeroAgrement: string;
+  heroImage?: string;
+  heroBadge1Texte?: string;
+  heroBadge2Texte?: string;
+  heroBadge3Texte?: string;
   topbarTexte?: string;
   statsLaureats: number;
   statsTauxReussite: number;

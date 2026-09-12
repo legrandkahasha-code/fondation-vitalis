@@ -104,6 +104,25 @@ export class UpdateLandingSettingsDto {
 
   @IsOptional()
   @IsString()
+  heroImage?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  heroBadge1Texte?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  heroBadge2Texte?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  heroBadge3Texte?: string;
+
+  @IsOptional()
+  @IsString()
   topbarTexte?: string;
 
   @IsOptional()

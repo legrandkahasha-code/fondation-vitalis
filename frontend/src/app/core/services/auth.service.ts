@@ -40,16 +40,7 @@ export class AuthService {
       this.isReadySubject.next(true);
 
       // Refresh / validate profile in background
-      this.loadMe().subscribe({
-        next: (user) => {
-          if (user) {
-            console.log('[AuthService] Profil actualisé avec succès:', user.email);
-          }
-        },
-        error: (err) => {
-          console.warn('[AuthService] Erreur actualisation profil:', err?.status);
-        },
-      });
+      this.loadMe().subscribe();
     } else {
       this.isReadySubject.next(true);
     }
@@ -97,10 +88,12 @@ export class AuthService {
         if (user) {
           localStorage.setItem('vitalis_user', JSON.stringify(user));
           this.currentUserSubject.next(user);
+          console.log('[AuthService] Profil actualisé avec succès depuis l’API:', user.email);
         }
       }),
       catchError((err) => {
-        console.warn('[AuthService] loadMe() non-bloquant:', err?.status);
+        const statusText = err?.status ? `HTTP ${err.status}` : 'serveur injoignable / hors ligne';
+        console.warn(`[AuthService] loadMe() non-bloquant (${statusText}) — session active via cache local`);
         if (err?.status === 401 && !localStorage.getItem('vitalis_refresh')) {
           this.clearSession();
         }

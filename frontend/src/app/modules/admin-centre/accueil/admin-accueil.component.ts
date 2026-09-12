@@ -101,7 +101,10 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
 
             <!-- Section Hero -->
             <div class="card border-t-[5px] border-t-[#1C75BC]">
-              <div class="label">Section Principale (Hero)</div>
+              <div class="label">Section Principale (Hero) — Split Layout International</div>
+              <p class="text-xs text-[#4B5157] mb-4">
+                Conforme aux standards internationaux (Coursera, OpenClassrooms, TAFE NSW) : texte institutionnel à gauche et composition visuelle humaine avec micro-badges à droite.
+              </p>
               
               <div class="space-y-4">
                 <div class="field">
@@ -114,6 +117,101 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   <textarea id="heroSousTitre" rows="3" [(ngModel)]="settings.heroSousTitre" name="heroSousTitre" required></textarea>
                   <div class="hint">Présentation de la mission d'utilité publique, de la tutelle et de l'Approche par Compétences (APC).</div>
                 </div>
+
+                <!-- Image Visuelle du Hero (Split Layout International) -->
+                <div class="p-4 bg-[#F9FAFB] border border-[#D7DBDE] rounded-[4px] space-y-3">
+                  <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <div class="font-bold text-[#124F80] text-xs flex items-center gap-1.5">
+                        <span>📸</span> Photo Principale du Hero (Mise en page Split internationale)
+                      </div>
+                      <div class="text-[11px] text-[#4B5157]">
+                        Recommandé : photo haute définition d'un atelier pratique, salle informatique ou apprenants en formation (ratio 4:3 ou 16:9).
+                      </div>
+                    </div>
+                    @if (settings.heroImage) {
+                      <button 
+                        type="button" 
+                        (click)="supprimerHeroImage()" 
+                        class="text-[11px] text-[#ED1C24] hover:underline font-bold cursor-pointer"
+                      >
+                        ✕ Réinitialiser la photo
+                      </button>
+                    }
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                    <!-- Aperçu Image -->
+                    <div class="md:col-span-4 relative rounded-lg overflow-hidden border border-[#D7DBDE] bg-slate-100 aspect-[4/3] shadow-xs">
+                      <img 
+                        [src]="getHeroImagePreview()" 
+                        (error)="onImageError($event)" 
+                        alt="Aperçu Hero" 
+                        class="w-full h-full object-cover"
+                      />
+                      <div class="absolute bottom-1 right-1 bg-black/65 backdrop-blur-sm text-white text-[9px] px-1.5 py-0.5 rounded font-mono">
+                        {{ settings.heroImage ? 'Personnalisée' : 'Par défaut' }}
+                      </div>
+                    </div>
+
+                    <!-- Contrôles d'upload et URL directe -->
+                    <div class="md:col-span-8 space-y-2.5">
+                      <input 
+                        id="heroImageFileInput" 
+                        type="file" 
+                        accept="image/jpeg,image/png,image/webp,image/gif" 
+                        (change)="onHeroImageSelected($event)" 
+                        class="hidden" 
+                      />
+
+                      <div class="flex flex-wrap items-center gap-2">
+                        <button 
+                          type="button" 
+                          (click)="declencherInputHeroImage()" 
+                          [disabled]="uploadingHeroImage"
+                          class="btn btn-primary text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                          <span>📁</span>
+                          <span>{{ uploadingHeroImage ? 'Téléversement en cours...' : 'Choisir une photo sur votre appareil' }}</span>
+                        </button>
+                      </div>
+
+                      <div class="field">
+                        <label for="heroImageUrlInput" class="text-[11px] text-[#4B5157]">Ou coller une URL d'image web directe (ex: Unsplash, CDN...)</label>
+                        <input 
+                          id="heroImageUrlInput" 
+                          type="url" 
+                          [(ngModel)]="settings.heroImage" 
+                          name="heroImage" 
+                          placeholder="https://images.unsplash.com/..." 
+                          class="text-xs p-2 bg-white border border-[#D7DBDE] rounded-[2px]" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Micro-badges flottants du Hero -->
+                <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[4px] space-y-3">
+                  <div class="font-bold text-[#124F80] text-xs flex items-center gap-1.5">
+                    <span>🏷️</span> Textes des Micro-Badges Flottants du Hero
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="field">
+                      <label class="text-[11px] text-[#124F80]">Badge 1 (Insertion)</label>
+                      <input type="text" [(ngModel)]="settings.heroBadge1Texte" name="heroBadge1Texte" placeholder="94% Insertion Professionnelle" class="text-xs" />
+                    </div>
+                    <div class="field">
+                      <label class="text-[11px] text-[#276B44]">Badge 2 (Agrément)</label>
+                      <input type="text" [(ngModel)]="settings.heroBadge2Texte" name="heroBadge2Texte" placeholder="Agrément Officiel RDC" class="text-xs" />
+                    </div>
+                    <div class="field">
+                      <label class="text-[11px] text-[#F0791E]">Badge 3 (Sécurité)</label>
+                      <input type="text" [(ngModel)]="settings.heroBadge3Texte" name="heroBadge3Texte" placeholder="Certificats Infalsifiables" class="text-xs" />
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -1204,6 +1302,10 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       heroTitre: this.settings.heroTitre || '',
       heroSousTitre: this.settings.heroSousTitre || '',
       heroNumeroAgrement: this.settings.heroNumeroAgrement || '',
+      heroImage: this.settings.heroImage || '',
+      heroBadge1Texte: this.settings.heroBadge1Texte || '',
+      heroBadge2Texte: this.settings.heroBadge2Texte || '',
+      heroBadge3Texte: this.settings.heroBadge3Texte || '',
       topbarTexte: this.settings.topbarTexte || '',
       statsLaureats: Number(this.settings.statsLaureats) || 0,
       statsTauxReussite: Number(this.settings.statsTauxReussite) || 0,
@@ -1407,7 +1509,52 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Media Upload State
+  // Hero Photo State & Upload
+  uploadingHeroImage: boolean = false;
+
+  declencherInputHeroImage(): void {
+    const el = document.getElementById('heroImageFileInput') as HTMLInputElement;
+    el?.click();
+  }
+
+  onHeroImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.televerserHeroImage(input.files[0]);
+    }
+  }
+
+  private televerserHeroImage(file: File): void {
+    this.uploadingHeroImage = true;
+    this.landingService.uploadActualiteMedia(file).subscribe({
+      next: (res) => {
+        this.uploadingHeroImage = false;
+        this.settings.heroImage = res.url;
+        this.toast.success(`Photo du Hero « ${file.name} » téléversée avec succès.`);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.uploadingHeroImage = false;
+        this.toast.error(err?.error?.message || 'Erreur lors du téléversement de la photo.');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  supprimerHeroImage(): void {
+    this.settings.heroImage = '';
+    this.toast.info('Photo personnalisée retirée. L\'image par défaut sera affichée.');
+  }
+
+  getHeroImagePreview(): string {
+    const url = this.settings.heroImage;
+    if (!url) {
+      return 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80';
+    }
+    return this.getMediaUrl(url);
+  }
+
+  // Media Upload State (Actualités)
   uploadingImage: boolean = false;
   uploadingVideo: boolean = false;
   videoSourceType: 'upload' | 'url' = 'upload';

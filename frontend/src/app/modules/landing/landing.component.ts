@@ -79,6 +79,10 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     heroTitre: 'Vitalis Center, la formation professionnelle reconnue par l\'État',
     heroSousTitre: 'Vitalis Center EUP forme les professionnels, cadres et jeunes talents aux métiers d\'avenir sous la tutelle du Ministère de la Formation Professionnelle. Validation par compétences pratiques, encadrement expert et délivrance de certificats officiels infalsifiables.',
     heroNumeroAgrement: 'N°CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026',
+    heroImage: '',
+    heroBadge1Texte: '94% Insertion Professionnelle',
+    heroBadge2Texte: 'Agrément Officiel RDC',
+    heroBadge3Texte: 'Certificats Infalsifiables',
     statsLaureats: 1200,
     statsTauxReussite: 94,
     statsFilieres: 15,
@@ -714,6 +718,50 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.heroWidgetTransform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
   }
 
+  showCredentialsModal: boolean = false;
+  copiedAgrement: boolean = false;
+  activeHeroTab: 'photo' | 'certificat' = 'photo';
+
+  getHeroImageUrl(): string {
+    const url = this.settings.heroImage;
+    if (!url || url.trim() === '') {
+      // Photo professionnelle haute qualité : formation pratique et excellence africaine
+      return 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80';
+    }
+    if (url.startsWith('/uploads/')) {
+      const backendBase = environment.apiUrl.replace(/\/api\/?$/, '');
+      return `${backendBase}${url}`;
+    }
+    return url;
+  }
+
+  onHeroImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    const fallback = 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80';
+    if (target && target.src !== fallback) {
+      target.src = fallback;
+    }
+  }
+
+  openCredentialsModal(): void {
+    this.showCredentialsModal = true;
+  }
+
+  closeCredentialsModal(): void {
+    this.showCredentialsModal = false;
+  }
+
+  copyAgrement(): void {
+    const text = this.settings.heroNumeroAgrement || 'N°CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026';
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.copiedAgrement = true;
+        this.toast.success('Numéro d\'agrément copié dans le presse-papier.');
+        setTimeout(() => (this.copiedAgrement = false), 2500);
+      });
+    }
+  }
+
   setActiveStep(step: number): void {
     this.activeStep = step;
   }
@@ -790,6 +838,8 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.settings.whatsappActif === true && !!this.whatsappUrl;
   }
 
+  isScrolled: boolean = false;
+
   @HostListener('window:scroll')
   onWindowScroll(): void {
     if (typeof window === 'undefined') return;
@@ -797,6 +847,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
     this.scrollProgress = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
     this.showScrollTop = scrollTop > 350;
+    this.isScrolled = scrollTop > 20;
     this.cdr.markForCheck();
   }
 

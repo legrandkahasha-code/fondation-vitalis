@@ -524,6 +524,10 @@ export class LandingService {
         heroSousTitre:
           'Vitalis Center EUP forme les professionnels, cadres et jeunes talents aux métiers d\'avenir sous la tutelle du Ministère de la Formation Professionnelle. Validation par compétences pratiques, encadrement expert et délivrance de certificats officiels infalsifiables.',
         heroNumeroAgrement: 'N°CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026',
+        heroImage: null,
+        heroBadge1Texte: '94% Insertion Professionnelle',
+        heroBadge2Texte: 'Agrément Officiel RDC',
+        heroBadge3Texte: 'Certificats Infalsifiables',
         topbarTexte: 'République Démocratique du Congo · Ministère de la Formation Professionnelle',
         statsLaureats: 1200,
         statsTauxReussite: 94,
