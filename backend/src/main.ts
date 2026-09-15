@@ -23,10 +23,27 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.set('trust proxy', 1);
+  app.disable('x-powered-by');
   app.use(
     helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+          connectSrc: ["'self'", 'https:', 'wss:'],
+          frameAncestors: ["'none'"], // Protection anti-Clickjacking totale
+        },
+      },
       crossOriginResourcePolicy: { policy: 'cross-origin' },
       crossOriginEmbedderPolicy: false,
+      hidePoweredBy: true,
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
     }),
   );
   app.use(
@@ -41,6 +58,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  const isProd = process.env.NODE_ENV === 'production';
   const rawCorsOrigin = process.env.CORS_ORIGIN || '';
   const allowedOrigins = rawCorsOrigin
     .split(',')
@@ -56,8 +74,8 @@ async function bootstrap() {
 
       const cleanOrigin = origin.replace(/\/$/, '');
 
-      // Mode wildcard explicite ou liste vide en mode dev/cloud
-      if (rawCorsOrigin === '*' || allowedOrigins.includes('*')) {
+      // Mode wildcard explicite (interdit en production)
+      if (!isProd && (rawCorsOrigin === '*' || allowedOrigins.includes('*'))) {
         return callback(null, true);
       }
 
@@ -66,14 +84,16 @@ async function bootstrap() {
         return callback(null, true);
       }
 
-      // Tolérance pour localhost, 127.0.0.1, sous-domaines cloud courants (Render, Vercel, Netlify)
-      const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin);
-      const isRender = /^https:\/\/[\w-]+(\.[\w-]+)*\.onrender\.com$/.test(cleanOrigin);
-      const isVercel = /^https:\/\/[\w-]+(\.[\w-]+)*\.vercel\.app$/.test(cleanOrigin);
-      const isNetlify = /^https:\/\/[\w-]+(\.[\w-]+)*\.netlify\.app$/.test(cleanOrigin);
+      // En mode développement uniquement : tolérance pour localhost, 127.0.0.1, et previews cloud
+      if (!isProd) {
+        const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin);
+        const isRender = /^https:\/\/[\w-]+(\.[\w-]+)*\.onrender\.com$/.test(cleanOrigin);
+        const isVercel = /^https:\/\/[\w-]+(\.[\w-]+)*\.vercel\.app$/.test(cleanOrigin);
+        const isNetlify = /^https:\/\/[\w-]+(\.[\w-]+)*\.netlify\.app$/.test(cleanOrigin);
 
-      if (isLocalhost || isRender || isVercel || isNetlify) {
-        return callback(null, true);
+        if (isLocalhost || isRender || isVercel || isNetlify) {
+          return callback(null, true);
+        }
       }
 
       // Rejet propre sans lever d'exception 500

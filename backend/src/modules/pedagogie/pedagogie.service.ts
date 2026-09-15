@@ -41,15 +41,32 @@ export class PedagogieService {
     return formation;
   }
 
-  async createFormation(data: { titre: string; description?: string; formationReferentielId?: string }, user: any) {
-    return this.prisma.formation.create({
+  async createFormation(data: { titre: string; description?: string; formationReferentielId?: string; etablissementId?: string }, user: any) {
+    const etablissementId = (user.role === Role.ADMIN_CENTRE && data.etablissementId)
+      ? data.etablissementId
+      : user.etablissementId;
+
+    const formation = await this.prisma.formation.create({
       data: {
         titre: data.titre,
         description: data.description,
-        etablissementId: user.etablissementId,
+        etablissementId,
         formationReferentielId: data.formationReferentielId,
       },
+      include: {
+        etablissement: { select: { nom: true } },
+      },
     });
+
+    this.notifications.emit({
+      type: 'FILIERE_UPDATE',
+      recipientEtablissementId: etablissementId,
+      title: 'Nouvelle Filière / Classe',
+      message: `La filière "${formation.titre}" a été attribuée / créée pour ${formation.etablissement?.nom || 'l\'établissement'}.`,
+      data: { formationId: formation.id, etablissementId },
+    });
+
+    return formation;
   }
 
   async updateFormation(id: string, data: { titre?: string; description?: string }, user: any) {
@@ -58,14 +75,24 @@ export class PedagogieService {
     if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Modification interdite pour un établissement tiers.');
     }
-    return this.prisma.formation.update({ where: { id }, data });
+    const updated = await this.prisma.formation.update({ where: { id }, data });
+
+    this.notifications.emit({
+      type: 'FILIERE_UPDATE',
+      recipientEtablissementId: formation.etablissementId,
+      title: 'Filière mise à jour',
+      message: `La filière "${updated.titre}" a été modifiée.`,
+      data: { formationId: updated.id, etablissementId: formation.etablissementId },
+    });
+
+    return updated;
   }
 
   // ====================================
   // MODULES
   // ====================================
   async createModule(formationId: string, data: { titre: string; coefficient?: number; ordre?: number }, user: any) {
-    await this.getFormation(formationId, user); // Vérifie BR-02
+    const formation = await this.getFormation(formationId, user); // Vérifie BR-02
     let ordre = data.ordre;
     if (ordre === undefined) {
       const maxOrdre = await this.prisma.module.aggregate({
@@ -74,7 +101,7 @@ export class PedagogieService {
       });
       ordre = (maxOrdre._max.ordre ?? 0) + 1;
     }
-    return this.prisma.module.create({
+    const mod = await this.prisma.module.create({
       data: {
         titre: data.titre,
         coefficient: data.coefficient ?? 1.0,
@@ -82,6 +109,16 @@ export class PedagogieService {
         formationId,
       },
     });
+
+    this.notifications.emit({
+      type: 'FILIERE_UPDATE',
+      recipientEtablissementId: formation.etablissementId,
+      title: 'Nouveau Module',
+      message: `Le module "${mod.titre}" a été ajouté à la classe "${formation.titre}".`,
+      data: { formationId, moduleId: mod.id, etablissementId: formation.etablissementId },
+    });
+
+    return mod;
   }
 
   // ====================================
@@ -434,4 +471,407 @@ export class PedagogieService {
     await this.prisma.note.deleteMany({ where: { evaluationId: id } });
     return this.prisma.evaluation.delete({ where: { id } });
   }
+
+  // ====================================
+  // SUIVI TRANSVERSAL DES FILIÈRES ("CLASSES")
+  // ====================================
+  async getFilieresSuivi(
+    user: any,
+    filters?: { etablissementId?: string; statut?: string; search?: string },
+  ) {
+    const where: any = {};
+
+    if (user.role === Role.ADMIN_CENTRE) {
+      if (filters?.etablissementId && filters.etablissementId !== 'ALL') {
+        where.etablissementId = filters.etablissementId;
+      }
+    } else {
+      // Souveraineté stricte par établissement
+      where.etablissementId = user.etablissementId;
+    }
+
+    if (filters?.search && filters.search.trim()) {
+      const q = filters.search.trim();
+      where.OR = [
+        { titre: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+        { etablissement: { nom: { contains: q, mode: 'insensitive' } } },
+      ];
+    }
+
+    // Récupérer les formations avec l'ensemble des relations nécessaires
+    const formations = await this.prisma.formation.findMany({
+      where,
+      include: {
+        etablissement: {
+          select: { id: true, nom: true, codeAntenne: true, pays: true },
+        },
+        formationReferentiel: {
+          include: {
+            filiere: { select: { id: true, code: true, libelle: true } },
+            niveau: { select: { id: true, code: true, libelle: true } },
+          },
+        },
+        inscriptions: {
+          include: {
+            apprenant: {
+              select: {
+                id: true,
+                matricule: true,
+                nom: true,
+                prenom: true,
+                email: true,
+                utilisateurId: true,
+              },
+            },
+          },
+          orderBy: { dateDebut: 'desc' },
+        },
+        modules: {
+          orderBy: { ordre: 'asc' },
+          include: {
+            cours: { select: { id: true, titre: true } },
+            evaluations: {
+              include: {
+                notes: { select: { valeur: true, utilisateurId: true } },
+              },
+            },
+            quiz: {
+              include: {
+                tentatives: { select: { id: true, score: true } },
+              },
+            },
+            devoirs: {
+              include: {
+                soumissions: { select: { id: true, note: true } },
+              },
+            },
+            seances: {
+              include: {
+                formateur: {
+                  select: { id: true, nom: true, prenom: true, email: true },
+                },
+              },
+            },
+          },
+        },
+        certificats: {
+          select: { id: true, numeroSerie: true, moyenneGenerale: true, dateEmission: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Formateurs disponibles par établissement pour enrichissement
+    const etabIds = Array.from(new Set(formations.map((f) => f.etablissementId)));
+    const formateursEtab = await this.prisma.utilisateur.findMany({
+      where: {
+        etablissementId: { in: etabIds },
+        role: Role.FORMATEUR,
+        actif: true,
+      },
+      select: { id: true, nom: true, prenom: true, email: true, etablissementId: true },
+    });
+
+    // Cours total ids
+    const allCoursIds = formations.flatMap((f) =>
+      f.modules.flatMap((m) => m.cours.map((c) => c.id)),
+    );
+
+    const progressRecords = allCoursIds.length > 0
+      ? await this.prisma.userProgress.findMany({
+          where: {
+            coursId: { in: allCoursIds },
+            complete: true,
+          },
+          select: { coursId: true, utilisateurId: true },
+        })
+      : [];
+
+    const completedUserCoursMap = new Map<string, Set<string>>();
+    for (const p of progressRecords) {
+      if (!completedUserCoursMap.has(p.utilisateurId)) {
+        completedUserCoursMap.set(p.utilisateurId, new Set<string>());
+      }
+      completedUserCoursMap.get(p.utilisateurId)!.add(p.coursId);
+    }
+
+    const items = formations.map((f) => {
+      const fCoursIds = f.modules.flatMap((m) => m.cours.map((c) => c.id));
+      const fTotalCours = fCoursIds.length;
+
+      // Inscriptions actives et roster
+      const inscriptionsActives = f.inscriptions.filter(
+        (i) => i.statut === 'ACTIVE' || i.statut === 'RESERVEE',
+      );
+      const effectifApprenants = f.inscriptions.length;
+
+      // Calcul du statut de cycle de vie de la filière ("classe")
+      let statut: 'EN_PREPARATION' | 'OUVERTE' | 'EN_COURS' | 'CLOTUREE' = 'OUVERTE';
+      if (f.modules.length === 0) {
+        statut = 'EN_PREPARATION';
+      } else if (f.inscriptions.length > 0 && f.inscriptions.every((i) => i.statut === 'TERMINEE')) {
+        statut = 'CLOTUREE';
+      } else if (f.inscriptions.length > 0) {
+        statut = 'EN_COURS';
+      }
+
+      // Formateurs assignés
+      const formateursMap = new Map<string, { id: string; nom: string; prenom: string; email: string }>();
+      for (const m of f.modules) {
+        for (const s of m.seances) {
+          if (s.formateur) {
+            formateursMap.set(s.formateur.id, s.formateur);
+          }
+        }
+      }
+      // Si aucun formateur n'a encore animé de séance, proposer les formateurs rattachés à l'établissement
+      if (formateursMap.size === 0) {
+        const dispo = formateursEtab.filter((fe) => fe.etablissementId === f.etablissementId);
+        for (const fe of dispo) {
+          formateursMap.set(fe.id, { id: fe.id, nom: fe.nom, prenom: fe.prenom, email: fe.email });
+        }
+      }
+      const formateursList = Array.from(formateursMap.values());
+
+      // Progression moyenne des apprenants inscrits
+      let avancementMoyen = 0;
+      if (fTotalCours > 0 && f.inscriptions.length > 0) {
+        let sommeProgression = 0;
+        let apprenantsComptes = 0;
+        for (const ins of f.inscriptions) {
+          const uId = ins.apprenant?.utilisateurId;
+          if (uId && completedUserCoursMap.has(uId)) {
+            const userSet = completedUserCoursMap.get(uId)!;
+            const userDone = fCoursIds.filter((cid) => userSet.has(cid)).length;
+            sommeProgression += Math.round((userDone / fTotalCours) * 100);
+          }
+          apprenantsComptes++;
+        }
+        avancementMoyen = apprenantsComptes > 0 ? Math.round(sommeProgression / apprenantsComptes) : 0;
+      }
+
+      // Évaluations, notes et moyenne
+      const allNotes = f.modules.flatMap((m) =>
+        m.evaluations.flatMap((e) => e.notes.map((n) => Number(n.valeur))),
+      );
+      const allDevoirsNotes = f.modules.flatMap((m) =>
+        m.devoirs.flatMap((d) =>
+          d.soumissions
+            .filter((s) => s.note !== null)
+            .map((s) => Number(s.note)),
+        ),
+      );
+      const combinedNotes = [...allNotes, ...allDevoirsNotes];
+      const moyenneGenerale =
+        combinedNotes.length > 0
+          ? Math.round((combinedNotes.reduce((acc, v) => acc + v, 0) / combinedNotes.length) * 100) / 100
+          : 0;
+
+      const evaluationsCount =
+        f.modules.reduce((acc, m) => acc + m.evaluations.length + m.quiz.length + m.devoirs.length, 0);
+
+      const inscriptionsSummary = f.inscriptions.map((i) => ({
+        id: i.id,
+        apprenantId: i.apprenantId,
+        matricule: i.apprenant?.matricule || 'N/A',
+        nom: i.apprenant?.nom || '',
+        prenom: i.apprenant?.prenom || '',
+        email: i.apprenant?.email || '',
+        statut: i.statut,
+        dateDebut: i.dateDebut,
+      }));
+
+      return {
+        id: f.id,
+        titre: f.titre,
+        description: f.description,
+        createdAt: f.createdAt,
+        etablissementId: f.etablissementId,
+        etablissement: f.etablissement,
+        formationReferentiel: f.formationReferentiel,
+        statut,
+        effectifApprenants,
+        inscriptionsActivesCount: inscriptionsActives.length,
+        inscriptions: inscriptionsSummary,
+        formateurs: formateursList,
+        modulesCount: f.modules.length,
+        coursCount: fTotalCours,
+        avancementMoyen,
+        evaluationsCount,
+        moyenneGenerale,
+        certificatsCount: f.certificats.length,
+      };
+    });
+
+    // Filtrage statut si demandé
+    if (filters?.statut && filters.statut !== 'ALL') {
+      return items.filter((it) => it.statut === filters.statut);
+    }
+
+    return items;
+  }
+
+  async getFiliereSuiviDetail(formationId: string, user: any) {
+    const formation = await this.prisma.formation.findUnique({
+      where: { id: formationId },
+      include: {
+        etablissement: {
+          select: { id: true, nom: true, codeAntenne: true, pays: true, adresse: true },
+        },
+        formationReferentiel: {
+          include: {
+            filiere: true,
+            niveau: true,
+          },
+        },
+        inscriptions: {
+          include: {
+            apprenant: {
+              select: {
+                id: true,
+                matricule: true,
+                nom: true,
+                prenom: true,
+                email: true,
+                telephone: true,
+                utilisateurId: true,
+              },
+            },
+          },
+          orderBy: { dateDebut: 'desc' },
+        },
+        modules: {
+          orderBy: { ordre: 'asc' },
+          include: {
+            cours: {
+              select: { id: true, titre: true, createdAt: true, fileUrl: true },
+              orderBy: { createdAt: 'asc' },
+            },
+            evaluations: {
+              include: {
+                notes: {
+                  include: {
+                    utilisateur: { select: { id: true, nom: true, prenom: true } },
+                    formateur: { select: { id: true, nom: true, prenom: true } },
+                  },
+                },
+              },
+            },
+            quiz: {
+              include: {
+                tentatives: {
+                  include: {
+                    apprenant: { select: { id: true, nom: true, prenom: true } },
+                  },
+                },
+              },
+            },
+            devoirs: {
+              include: {
+                soumissions: {
+                  include: {
+                    apprenant: { select: { id: true, nom: true, prenom: true } },
+                  },
+                },
+              },
+            },
+            seances: {
+              include: {
+                formateur: { select: { id: true, nom: true, prenom: true, email: true } },
+              },
+              orderBy: { dateHeureDebut: 'desc' },
+            },
+          },
+        },
+        certificats: {
+          include: {
+            utilisateur: { select: { id: true, nom: true, prenom: true, email: true } },
+          },
+          orderBy: { dateEmission: 'desc' },
+        },
+      },
+    });
+
+    if (!formation) throw new NotFoundException('Filière / Formation introuvable.');
+
+    // BR-02 : Souveraineté
+    if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
+      throw new ForbiddenException('BR-02 : Accès interdit aux données d\'un autre établissement.');
+    }
+
+    const fCoursIds = formation.modules.flatMap((m) => m.cours.map((c) => c.id));
+    const totalCours = fCoursIds.length;
+
+    // Progression individuelle de chaque apprenant
+    const progressRecords = fCoursIds.length > 0
+      ? await this.prisma.userProgress.findMany({
+          where: { coursId: { in: fCoursIds }, complete: true },
+          select: { coursId: true, utilisateurId: true },
+        })
+      : [];
+
+    const userCompletedMap = new Map<string, Set<string>>();
+    for (const p of progressRecords) {
+      if (!userCompletedMap.has(p.utilisateurId)) {
+        userCompletedMap.set(p.utilisateurId, new Set<string>());
+      }
+      userCompletedMap.get(p.utilisateurId)!.add(p.coursId);
+    }
+
+    const apprenantsDetails = await Promise.all(
+      formation.inscriptions.map(async (ins) => {
+        const uId = ins.apprenant?.utilisateurId;
+        const completedCount = uId && userCompletedMap.has(uId)
+          ? fCoursIds.filter((cid) => userCompletedMap.get(uId)!.has(cid)).length
+          : 0;
+        const progressionPct = totalCours > 0 ? Math.round((completedCount / totalCours) * 100) : 0;
+
+        let moyenne = 0;
+        if (uId) {
+          try {
+            moyenne = await this.getMoyennePonderee(formationId, uId);
+          } catch (e) {
+            moyenne = 0;
+          }
+        }
+
+        const certif = formation.certificats.find((c) => c.utilisateur?.id === uId);
+
+        return {
+          inscriptionId: ins.id,
+          apprenantId: ins.apprenantId,
+          matricule: ins.apprenant?.matricule || 'N/A',
+          nom: ins.apprenant?.nom || '',
+          prenom: ins.apprenant?.prenom || '',
+          email: ins.apprenant?.email || '',
+          telephone: ins.apprenant?.telephone || '',
+          statut: ins.statut,
+          dateDebut: ins.dateDebut,
+          coursCompletes: completedCount,
+          totalCours,
+          progressionPct,
+          moyenne,
+          certificatEmis: !!certif,
+          certificatNumero: certif?.numeroSerie ?? null,
+        };
+      }),
+    );
+
+    // Formateurs distincts
+    const formateursMap = new Map<string, any>();
+    for (const m of formation.modules) {
+      for (const s of m.seances) {
+        if (s.formateur) formateursMap.set(s.formateur.id, s.formateur);
+      }
+    }
+    const formateurs = Array.from(formateursMap.values());
+
+    return {
+      ...formation,
+      formateurs,
+      apprenantsDetails,
+    };
+  }
 }
+

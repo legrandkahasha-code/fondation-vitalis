@@ -4,11 +4,13 @@ import { takeUntil } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export type NotificationEventType =
-  // ─── Module Apprenant ───────────────────────────────────────────────────────
+  // ─── Module Apprenant & Pédagogie ──────────────────────────────────────────
   | 'DEVOIR_NOTE'
   | 'NOTE_PUBLIEE'
   | 'COURS_PUBLIE'
   | 'CERTIFICAT_EMIS'
+  | 'FILIERE_UPDATE'
+  | 'FORMATION_UPDATE'
   // ─── Module Admission ───────────────────────────────────────────────────────
   | 'ADMISSION_NEW_CANDIDATURE'
   | 'ADMISSION_CONFIRMED'

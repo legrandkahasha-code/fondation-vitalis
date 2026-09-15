@@ -18,6 +18,7 @@ export const routes: Routes = [
   { path: 'dashboard', canActivate: [staffGuard], loadComponent: () => import('./modules/dashboard/dashboard.component').then(m => m.DashboardComponent) },
 
   { path: 'admin/accueil', canActivate: [adminCentreGuard], loadComponent: () => import('./modules/admin-centre/accueil/admin-accueil.component').then(m => m.AdminAccueilComponent) },
+  { path: 'admin/filieres', canActivate: [adminCentreGuard], loadComponent: () => import('./modules/admin-centre/filieres/filieres-central.component').then(m => m.FilieresCentralComponent) },
   { path: 'admin/etablissements', canActivate: [adminCentreGuard], loadComponent: () => import('./modules/admin-centre/etablissements/etablissements.component').then(m => m.EtablissementsComponent) },
   { path: 'admin/utilisateurs', canActivate: [adminCentreGuard], loadComponent: () => import('./modules/admin-centre/utilisateurs/utilisateurs.component').then(m => m.UtilisateursComponent) },
   { path: 'admin/analytics', canActivate: [adminCentreGuard], loadComponent: () => import('./modules/admin-centre/analytics/analytics.component').then(m => m.AnalyticsComponent) },

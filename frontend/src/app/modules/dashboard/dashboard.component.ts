@@ -53,6 +53,10 @@ import { KpiGlobal, KpiEtablissement } from '../../core/models';
                 <h3 class="font-bold text-[#1C75BC]">📊 Indicateurs & Analytics</h3>
                 <p class="text-xs text-slate-500 mt-1">Cockpit des indicateurs nationaux consolidés</p>
               </a>
+              <a routerLink="/admin/filieres" class="card block no-underline cursor-pointer hover:border-[#1C75BC] transition">
+                <h3 class="font-bold text-[#1C75BC]">📚 Pilotage des Filières (Classes)</h3>
+                <p class="text-xs text-slate-500 mt-1">Supervision temps réel de toutes les filières et attributions</p>
+              </a>
               <a routerLink="/admin/etablissements" class="card block no-underline cursor-pointer hover:border-[#1C75BC] transition">
                 <h3 class="font-bold text-[#1C75BC]">🏢 Réseau des Établissements</h3>
                 <p class="text-xs text-slate-500 mt-1">Superviser les centres et antennes agréées</p>
@@ -70,8 +74,8 @@ import { KpiGlobal, KpiEtablissement } from '../../core/models';
                 <p class="text-xs text-slate-500 mt-1">Configuration des contenus et sections d'accueil</p>
               </a>
               <a routerLink="/formations" class="card block no-underline cursor-pointer hover:border-[#1C75BC] transition">
-                <h3 class="font-bold text-[#1C75BC]">📚 Programmes de Formation</h3>
-                <p class="text-xs text-slate-500 mt-1">Supervision du catalogue des formations nationales</p>
+                <h3 class="font-bold text-[#1C75BC]">📖 Catalogue des Formations</h3>
+                <p class="text-xs text-slate-500 mt-1">Gestion du catalogue pédagogique et cours</p>
               </a>
             }
             @if (isAdminEtab) {

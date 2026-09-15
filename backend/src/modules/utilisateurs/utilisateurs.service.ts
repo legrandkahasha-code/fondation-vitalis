@@ -346,6 +346,16 @@ export class UtilisateursService {
       data: { actif },
     });
 
+    // Durcissement : Si désactivé, révoquer immédiatement toutes les sessions actives
+    if (!actif) {
+      try {
+        await (this.prisma as any).refreshToken.updateMany({
+          where: { utilisateurId: userId, revoked: false },
+          data: { revoked: true },
+        });
+      } catch {}
+    }
+
     this.invalidateUserValidateCache(userId);
     UtilisateursService.clearFindAllCache();
 
@@ -397,6 +407,14 @@ export class UtilisateursService {
       data: { password: newHashedPassword },
     });
 
+    // Durcissement : Révoquer tous les refresh tokens existants pour forcer la reconnexion
+    try {
+      await (this.prisma as any).refreshToken.updateMany({
+        where: { utilisateurId: userId, revoked: false },
+        data: { revoked: true },
+      });
+    } catch {}
+
     this.invalidateUserValidateCache(userId);
 
     // Journaliser dans AuditLog
@@ -405,7 +423,7 @@ export class UtilisateursService {
         data: {
           auteurId: userId,
           action: 'CHANGEMENT_MOT_DE_PASSE',
-          details: { userId, message: 'Mot de passe modifié avec succès' },
+          details: { userId, message: 'Mot de passe modifié avec succès. Sessions révoquées.' },
           ipAdresse,
         },
       });

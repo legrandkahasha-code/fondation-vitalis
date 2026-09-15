@@ -13,6 +13,10 @@ export class CreateFormationDto {
   @IsOptional()
   @IsUUID()
   formationReferentielId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  etablissementId?: string;
 }
 
 export class UpdateFormationDto {

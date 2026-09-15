@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete, Param, Body, Req, UseGuards, UseInterceptors, UploadedFile, ParseUUIDPipe,
+  Controller, Get, Post, Put, Delete, Param, Body, Req, Query, UseGuards, UseInterceptors, UploadedFile, ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -32,6 +32,23 @@ export class PedagogieController {
     private service: PedagogieService,
     private storage: StorageService,
   ) {}
+
+  @Get('filieres-suivi')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR, Role.PERSONNEL_ADMINISTRATIF)
+  getFilieresSuivi(
+    @Req() req: any,
+    @Query('etablissementId') etablissementId?: string,
+    @Query('statut') statut?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.service.getFilieresSuivi(req.user, { etablissementId, statut, search });
+  }
+
+  @Get('filieres-suivi/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR, Role.PERSONNEL_ADMINISTRATIF)
+  getFiliereSuiviDetail(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.getFiliereSuiviDetail(id, req.user);
+  }
 
   @Get('formations')
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR, Role.APPRENANT, Role.PERSONNEL_ADMINISTRATIF)

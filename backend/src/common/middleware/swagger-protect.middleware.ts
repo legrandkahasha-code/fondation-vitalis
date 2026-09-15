@@ -1,21 +1,20 @@
 import { NextFunction, Request, Response } from 'express';
 
 export function swaggerProtect(req: Request, res: Response, next: NextFunction) {
+  // En production, interdire formellement l'accès à Swagger sauf token secret explicite
+  const isProd = process.env.NODE_ENV === 'production';
   const swaggerToken = process.env.SWAGGER_TOKEN;
-  if (!swaggerToken) return next(); // no token configured, leave public (fallback)
 
-  const provided = req.headers['x-swagger-token'];
-  if (!provided) {
-    res.status(403).send('Forbidden - Swagger protected. Header x-swagger-token requis.');
+  if (isProd && !swaggerToken) {
+    res.status(403).json({ statusCode: 403, message: 'Documentation API non accessible en environnement de production.' });
     return;
   }
-  if (Array.isArray(provided)) {
-    if (provided[0] !== swaggerToken) {
-      res.status(403).send('Forbidden - Swagger protected');
-      return;
-    }
-  } else if (provided !== swaggerToken) {
-    res.status(403).send('Forbidden - Swagger protected');
+
+  if (!swaggerToken) return next();
+
+  const provided = req.headers['x-swagger-token'] || req.query['swagger_token'];
+  if (!provided || provided !== swaggerToken) {
+    res.status(403).json({ statusCode: 403, message: 'Accès restreint. Jeton x-swagger-token valide obligatoire.' });
     return;
   }
   next();

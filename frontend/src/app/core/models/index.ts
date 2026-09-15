@@ -243,3 +243,77 @@ export interface ContactMessageItem {
   createdAt: string;
 }
 
+export interface FiliereInscriptionItem {
+  id: string;
+  apprenantId: string;
+  matricule: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  statut: string;
+  dateDebut: string | Date;
+}
+
+export interface FiliereFormateurItem {
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+}
+
+export interface FiliereSuiviItem {
+  id: string;
+  titre: string;
+  description: string | null;
+  createdAt: string | Date | null;
+  etablissementId: string;
+  etablissement: {
+    id: string;
+    nom: string;
+    codeAntenne: string;
+    pays: string | null;
+  };
+  formationReferentiel?: {
+    id: string;
+    libelle: string;
+    filiere?: { id: string; code: string; libelle: string };
+    niveau?: { id: string; code: string; libelle: string };
+  } | null;
+  statut: 'EN_PREPARATION' | 'OUVERTE' | 'EN_COURS' | 'CLOTUREE';
+  effectifApprenants: number;
+  inscriptionsActivesCount: number;
+  inscriptions: FiliereInscriptionItem[];
+  formateurs: FiliereFormateurItem[];
+  modulesCount: number;
+  coursCount: number;
+  avancementMoyen: number;
+  evaluationsCount: number;
+  moyenneGenerale: number;
+  certificatsCount: number;
+}
+
+export interface FiliereApprenantDetailItem {
+  inscriptionId: string;
+  apprenantId: string;
+  matricule: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  statut: string;
+  dateDebut: string | Date;
+  coursCompletes: number;
+  totalCours: number;
+  progressionPct: number;
+  moyenne: number;
+  certificatEmis: boolean;
+  certificatNumero: string | null;
+}
+
+export interface FiliereSuiviDetail extends FiliereSuiviItem {
+  modules: any[];
+  certificats: any[];
+  apprenantsDetails: FiliereApprenantDetailItem[];
+}
+
+

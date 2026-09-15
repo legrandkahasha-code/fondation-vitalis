@@ -9,6 +9,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { EtablissementsService } from '../../core/services/etablissements.service';
 import { UtilisateursService } from '../../core/services/utilisateurs.service';
+import { PedagogieService } from '../../core/services/pedagogie.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -33,7 +34,8 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
         >
           <!-- Logo & Brand Header -->
           <div class="p-5 border-b border-white/10 bg-black/10">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justif
+            y-between">
               <div class="flex items-center gap-3">
                 <img 
                   src="assets/logo-vitalis.png" 
@@ -98,6 +100,18 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 <span>Indicateurs & Stats Nationales</span>
+              </a>
+
+              <a 
+                routerLink="/admin/filieres" 
+                (click)="toggleMobileMenu(false)"
+                routerLinkActive="bg-white/15 text-white font-bold border-l-4 border-[#F0791E] shadow-xs" 
+                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xs text-xs font-medium text-[#E7F1FA] hover:bg-white/10 hover:text-white transition-all group"
+              >
+                <svg class="w-4 h-4 shrink-0 text-[#93C5FD] group-hover:text-[#F0791E] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span>Pilotage des Filières (Classes)</span>
               </a>
 
               <a 
@@ -213,6 +227,18 @@ import { UtilisateursService } from '../../core/services/utilisateurs.service';
                   <path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
                 </svg>
                 <span>Tableau de bord Antenne</span>
+              </a>
+
+              <a 
+                routerLink="/admin-etab/dashboard"
+                fragment="filieres"
+                (click)="toggleMobileMenu(false)"
+                class="flex items-center gap-3 px-3.5 py-2.5 rounded-xs text-xs font-medium text-[#E7F1FA] hover:bg-white/10 hover:text-white transition-all group"
+              >
+                <svg class="w-4 h-4 shrink-0 text-[#93C5FD] group-hover:text-[#F0791E] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span>Filières de l'Antenne (Classes)</span>
               </a>
 
               <a 
@@ -601,14 +627,18 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private analyticsService: AnalyticsService,
     private etablissementsService: EtablissementsService,
     private utilisateursService: UtilisateursService,
-  ) {}
+    private pedagogieService: PedagogieService,
+  ) { }
 
   ngOnInit(): void {
-    // Pré-chargement proactif en tâche de fond pour l'Admin Central (affichage instantané 0ms sans attente)
+    // Pré-chargement proactif en tâche de fond (affichage instantané 0ms sans attente)
     if (this.auth.hasRole('ADMIN_CENTRE')) {
-      this.analyticsService.getGlobalDetailed().subscribe({ error: () => {} });
-      this.etablissementsService.getAll().subscribe({ error: () => {} });
-      this.utilisateursService.getAll().subscribe({ error: () => {} });
+      this.analyticsService.getGlobalDetailed().subscribe({ error: () => { } });
+      this.etablissementsService.getAll().subscribe({ error: () => { } });
+      this.utilisateursService.getAll().subscribe({ error: () => { } });
+      this.pedagogieService.getFilieresSuivi().subscribe({ error: () => { } });
+    } else if (this.auth.hasRole('ADMIN_ETABLISSEMENT') && this.auth.currentUser?.etablissementId) {
+      this.pedagogieService.getFilieresSuivi({ etablissementId: this.auth.currentUser.etablissementId }).subscribe({ error: () => { } });
     }
 
     // Vérifier si l'utilisateur connecté fait l'objet d'une demande de régularisation active
@@ -624,6 +654,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
           } else if (msg.type === 'DEMANDE_REGULARISATION') {
             this.toast.info(msg.message || 'L\'administration demande la régularisation de votre dossier.');
             this.verifierRegularisations();
+          } else if (msg.type === 'FILIERE_UPDATE' || msg.type === 'FORMATION_UPDATE') {
+            this.pedagogieService.invalidateCache();
+            if (this.auth.hasAnyRole(['ADMIN_CENTRE', 'ADMIN_ETABLISSEMENT', 'FORMATEUR'])) {
+              this.toast.info(msg.message || 'Mise à jour d\'une filière de formation');
+            }
           }
         }
       },

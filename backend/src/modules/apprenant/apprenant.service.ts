@@ -52,30 +52,36 @@ export class ApprenantService {
     }
   }
 
-  private async formationFilterForUser(user: any): Promise<any> {
+  private async getEnrolledFormationIds(user: any): Promise<string[]> {
     const profile = await this.prisma.apprenant.findUnique({ where: { utilisateurId: user.id } });
-    if (!profile) {
-      return { etablissementId: user.etablissementId };
-    }
+    if (!profile) return [];
     const inscriptions = await this.prisma.inscription.findMany({
-      where: { apprenantId: profile.id, statut: { in: ['ACTIVE', 'RESERVEE', 'TERMINEE'] } },
+      where: {
+        apprenantId: profile.id,
+        statut: { in: ['ACTIVE', 'RESERVEE', 'TERMINEE'] },
+        formation: { etablissementId: user.etablissementId },
+      },
       select: { formationId: true },
     });
     const certifs = await this.prisma.certificat.findMany({
-      where: { utilisateurId: user.id },
+      where: {
+        utilisateurId: user.id,
+        formation: { etablissementId: user.etablissementId },
+      },
       select: { formationId: true },
     });
-    const ids = Array.from(new Set([
+    return Array.from(new Set([
       ...inscriptions.map((i) => i.formationId),
       ...certifs.map((c) => c.formationId),
     ]));
+  }
 
+  private async formationFilterForUser(user: any): Promise<any> {
+    const ids = await this.getEnrolledFormationIds(user);
     if (ids.length > 0) {
       return {
-        OR: [
-          { id: { in: ids } },
-          { etablissementId: user.etablissementId },
-        ],
+        id: { in: ids },
+        etablissementId: user.etablissementId,
       };
     }
     return { etablissementId: user.etablissementId };
@@ -171,12 +177,13 @@ export class ApprenantService {
     }
 
     const now = new Date();
+    const formationFilter = await this.formationFilterForUser(user);
 
     // 1. Exécution en parallèle des requêtes principales indépendantes
     const [formations, devoirsSoumis, prochaineSeance, nbQuizPasses, nbCertificats] =
       await Promise.all([
         this.prisma.formation.findMany({
-          where: await this.formationFilterForUser(user),
+          where: formationFilter,
           include: {
             modules: {
               include: {
@@ -196,7 +203,7 @@ export class ApprenantService {
         this.prisma.seanceFormation.findFirst({
           where: {
             dateHeureDebut: { gte: now },
-            module: { formation: { etablissementId: user.etablissementId } },
+            module: { formation: formationFilter },
           },
           include: {
             module: { include: { formation: { select: { titre: true } } } },
@@ -978,12 +985,16 @@ export class ApprenantService {
     const cached = this.getFromCache<any>(cacheKey);
     if (cached) return cached;
 
+    const enrolledIds = await this.getEnrolledFormationIds(user);
+    if (enrolledIds.length === 0) {
+      return this.setCache(cacheKey, [], 60_000);
+    }
+    const formationWhere = { id: { in: enrolledIds }, etablissementId: user.etablissementId };
+
     const devoirs = await this.prisma.devoir.findMany({
       where: {
         module: {
-          formation: {
-            etablissementId: user.etablissementId,
-          },
+          formation: formationWhere,
         },
       },
       include: {
@@ -1044,12 +1055,16 @@ export class ApprenantService {
     const cached = this.getFromCache<any>(cacheKey);
     if (cached) return cached;
 
+    const enrolledIds = await this.getEnrolledFormationIds(user);
+    if (enrolledIds.length === 0) {
+      return this.setCache(cacheKey, [], 60_000);
+    }
+    const formationWhere = { id: { in: enrolledIds }, etablissementId: user.etablissementId };
+
     const quizList = await this.prisma.quiz.findMany({
       where: {
         module: {
-          formation: {
-            etablissementId: user.etablissementId,
-          },
+          formation: formationWhere,
         },
       },
       include: {

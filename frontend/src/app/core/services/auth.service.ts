@@ -165,6 +165,12 @@ export class AuthService {
   }
 
   logout(): void {
+    const refresh = localStorage.getItem('vitalis_refresh');
+    if (refresh) {
+      this.http.post(`${this.apiUrl}/logout`, { refreshToken: refresh }).subscribe({
+        error: () => {}, // silencieux si hors ligne
+      });
+    }
     this.clearSession();
     this.router.navigate(['/login']);
   }

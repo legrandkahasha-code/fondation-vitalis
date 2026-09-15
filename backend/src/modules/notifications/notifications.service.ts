@@ -3,11 +3,13 @@ import { Subject, Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 export type NotificationEventType =
-  // ─── Module Apprenant ───────────────────────────────────────────────────────
+  // ─── Module Apprenant & Pédagogie ──────────────────────────────────────────
   | 'DEVOIR_NOTE'
   | 'NOTE_PUBLIEE'
   | 'COURS_PUBLIE'
   | 'CERTIFICAT_EMIS'
+  | 'FILIERE_UPDATE'
+  | 'FORMATION_UPDATE'
   // ─── Module Admission ───────────────────────────────────────────────────────
   | 'ADMISSION_NEW_CANDIDATURE'
   | 'ADMISSION_CONFIRMED'
