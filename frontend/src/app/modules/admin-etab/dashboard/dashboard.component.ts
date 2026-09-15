@@ -259,13 +259,13 @@ import { KpiEtablissement, Utilisateur, FiliereSuiviItem, FiliereSuiviDetail } f
               </div>
 
               <!-- Onglets du modal -->
-              <div class="flex border-b border-[#D7DBDE] px-6 bg-white gap-4 text-xs font-semibold">
+              <div class="flex overflow-x-auto border-b border-[#D7DBDE] px-4 md:px-6 bg-white gap-4 text-xs font-semibold scrollbar-thin">
                 <button
                   (click)="modalTab = 'apprenants'"
                   [class.text-[#1C75BC]]="modalTab === 'apprenants'"
                   [class.border-b-2]="modalTab === 'apprenants'"
                   [class.border-b-[#F0791E]]="modalTab === 'apprenants'"
-                  class="py-3 cursor-pointer hover:text-[#1C75BC] transition-all"
+                  class="py-3 shrink-0 cursor-pointer hover:text-[#1C75BC] transition-all"
                 >
                   👥 Inscriptions & Roster ({{ selectedFiliere.apprenantsDetails.length }})
                 </button>
@@ -274,7 +274,7 @@ import { KpiEtablissement, Utilisateur, FiliereSuiviItem, FiliereSuiviDetail } f
                   [class.text-[#1C75BC]]="modalTab === 'modules'"
                   [class.border-b-2]="modalTab === 'modules'"
                   [class.border-b-[#F0791E]]="modalTab === 'modules'"
-                  class="py-3 cursor-pointer hover:text-[#1C75BC] transition-all"
+                  class="py-3 shrink-0 cursor-pointer hover:text-[#1C75BC] transition-all"
                 >
                   📚 Modules en cours ({{ selectedFiliere.modules.length }})
                 </button>
@@ -283,24 +283,24 @@ import { KpiEtablissement, Utilisateur, FiliereSuiviItem, FiliereSuiviDetail } f
                   [class.text-[#1C75BC]]="modalTab === 'evaluations'"
                   [class.border-b-2]="modalTab === 'evaluations'"
                   [class.border-b-[#F0791E]]="modalTab === 'evaluations'"
-                  class="py-3 cursor-pointer hover:text-[#1C75BC] transition-all"
+                  class="py-3 shrink-0 cursor-pointer hover:text-[#1C75BC] transition-all"
                 >
                   📝 Évaluations & Notes
                 </button>
               </div>
 
               <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto flex-1 space-y-6 text-xs">
+              <div class="p-4 md:p-6 overflow-y-auto flex-1 space-y-6 text-xs">
 
                 <!-- 1. ROSTER DES APPRENANTS -->
                 @if (modalTab === 'apprenants') {
                   <div class="space-y-4">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                       <span class="font-bold text-[#1B1D1F]">Roster des apprenants de la filière</span>
                       <span class="text-[11px] text-[#4B5157]">Suivi individuel de complétion et notes</span>
                     </div>
 
-                    <div class="border border-[#D7DBDE] rounded-xs overflow-hidden">
+                    <div class="border border-[#D7DBDE] rounded-xs overflow-x-auto">
                       <table class="w-full text-left">
                         <thead class="bg-[#F5F6F7] text-[#4B5157] font-bold border-b border-[#D7DBDE]">
                           <tr>

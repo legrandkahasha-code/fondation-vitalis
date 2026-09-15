@@ -398,13 +398,13 @@ import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement } from '../../../co
               </div>
 
               <!-- Onglets Modal -->
-              <div class="flex border-b border-[#D7DBDE] px-6 bg-white gap-4 font-semibold">
+              <div class="flex overflow-x-auto border-b border-[#D7DBDE] px-4 md:px-6 bg-white gap-4 font-semibold scrollbar-thin">
                 <button
                   (click)="detailTab = 'inscriptions'"
                   [class.text-[#1C75BC]]="detailTab === 'inscriptions'"
                   [class.border-b-2]="detailTab === 'inscriptions'"
                   [class.border-b-[#F0791E]]="detailTab === 'inscriptions'"
-                  class="py-3 cursor-pointer hover:text-[#1C75BC] transition-all"
+                  class="py-3 shrink-0 cursor-pointer hover:text-[#1C75BC] transition-all"
                 >
                   👥 Inscriptions & Progression ({{ selectedDetail.apprenantsDetails.length }})
                 </button>
@@ -413,7 +413,7 @@ import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement } from '../../../co
                   [class.text-[#1C75BC]]="detailTab === 'pedagogie'"
                   [class.border-b-2]="detailTab === 'pedagogie'"
                   [class.border-b-[#F0791E]]="detailTab === 'pedagogie'"
-                  class="py-3 cursor-pointer hover:text-[#1C75BC] transition-all"
+                  class="py-3 shrink-0 cursor-pointer hover:text-[#1C75BC] transition-all"
                 >
                   📚 Modules & Évolution des Cours
                 </button>
@@ -422,7 +422,7 @@ import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement } from '../../../co
                   [class.text-[#1C75BC]]="detailTab === 'evaluations'"
                   [class.border-b-2]="detailTab === 'evaluations'"
                   [class.border-b-[#F0791E]]="detailTab === 'evaluations'"
-                  class="py-3 cursor-pointer hover:text-[#1C75BC] transition-all"
+                  class="py-3 shrink-0 cursor-pointer hover:text-[#1C75BC] transition-all"
                 >
                   📝 Contrôles, Devoirs & Examens
                 </button>
@@ -431,24 +431,24 @@ import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement } from '../../../co
                   [class.text-[#1C75BC]]="detailTab === 'certificats'"
                   [class.border-b-2]="detailTab === 'certificats'"
                   [class.border-b-[#F0791E]]="detailTab === 'certificats'"
-                  class="py-3 cursor-pointer hover:text-[#1C75BC] transition-all"
+                  class="py-3 shrink-0 cursor-pointer hover:text-[#1C75BC] transition-all"
                 >
                   🎓 Certifications Délivrées ({{ selectedDetail.certificats.length }})
                 </button>
               </div>
 
               <!-- Corps Modal -->
-              <div class="p-6 overflow-y-auto flex-1 space-y-6">
+              <div class="p-4 md:p-6 overflow-y-auto flex-1 space-y-6">
 
                 <!-- 1. INSCRIPTIONS DES APPRENANTS -->
                 @if (detailTab === 'inscriptions') {
                   <div class="space-y-4">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                       <span class="font-bold text-[#1B1D1F]">Effectif et avancement des apprenants inscrits :</span>
                       <span class="text-[#4B5157]">Calculé en temps réel</span>
                     </div>
 
-                    <div class="border border-[#D7DBDE] rounded-xs overflow-hidden">
+                    <div class="border border-[#D7DBDE] rounded-xs overflow-x-auto">
                       <table class="w-full text-left">
                         <thead class="bg-[#F5F6F7] text-[#4B5157] font-bold border-b border-[#D7DBDE]">
                           <tr>
