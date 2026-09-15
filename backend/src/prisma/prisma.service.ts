@@ -25,10 +25,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       PrismaService.pool = new Pool({
         connectionString,
         connectionTimeoutMillis: 20000,
-        idleTimeoutMillis: 60000,
+        idleTimeoutMillis: 30000,
         max: 20,
         keepAlive: true,
         ssl: { rejectUnauthorized: false },
+      });
+      // Éviter que les déconnexions transitoires du pooler Supabase (idle timeout) ne fassent planter l'application
+      PrismaService.pool.on('error', (err) => {
+        this.logger.warn(`Déconnexion transitoire du pool PostgreSQL (reconnexion automatique) : ${err.message}`);
       });
       PrismaService.adapter = new PrismaPg(PrismaService.pool);
     }
