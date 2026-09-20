@@ -27,7 +27,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        value: "*"
+        value: "https://vitalis-center.onrender.com,https://www.vitalis-center.onrender.com"
       - key: SWAGGER_ENABLED
         value: "false"
       - key: STORAGE_MODE
