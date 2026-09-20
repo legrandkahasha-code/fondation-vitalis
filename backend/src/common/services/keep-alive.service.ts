@@ -11,11 +11,10 @@ export class KeepAliveService implements OnModuleInit, OnModuleDestroy {
   onModuleInit() {
     const rawUrl =
       this.configService.get<string>('KEEP_ALIVE_URL') ||
-      this.configService.get<string>('RENDER_EXTERNAL_URL') ||
-      (process.env.NODE_ENV === 'production' || process.env.RENDER ? 'https://cfpvitalis.onrender.com/api/health' : null);
+      this.configService.get<string>('RENDER_EXTERNAL_URL');
 
     if (!rawUrl) {
-      this.logger.log('KeepAlive: No RENDER_EXTERNAL_URL or KEEP_ALIVE_URL found. Auto-ping idle in local environment.');
+      this.logger.log('KeepAlive: No RENDER_EXTERNAL_URL or KEEP_ALIVE_URL found. Anti-hibernation idle.');
       return;
     }
 
@@ -24,16 +23,14 @@ export class KeepAliveService implements OnModuleInit, OnModuleDestroy {
       ? cleanBase
       : `${cleanBase}/api/health`;
 
-    // Render free tier dort après 15 minutes. Un ping toutes les 9 minutes garantit un réveil permanent.
     const intervalMinutes = 9;
     const intervalMs = intervalMinutes * 60 * 1000;
 
     this.logger.log(`KeepAlive: Initialized anti-hibernation for ${targetUrl} (every ${intervalMinutes} min)`);
 
-    // Initial ping after 15s
     setTimeout(() => {
       this.ping(targetUrl);
-    }, 15_000);
+    }, 90_000);
 
     // Periodic ping
     this.timer = setInterval(() => {

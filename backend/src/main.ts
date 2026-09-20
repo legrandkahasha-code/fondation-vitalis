@@ -24,6 +24,31 @@ async function bootstrap() {
 
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
+
+  const healthPayload = () =>
+    JSON.stringify({
+      status: 'ok',
+      service: 'Vitalis Center API',
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  const sendHealth = (res: any) => {
+    res.status(200).type('application/json').send(healthPayload());
+  };
+  app.use('/health', (req, res) => {
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      return sendHealth(res);
+    }
+    res.status(405).end();
+  });
+  app.use('/', (req, res, next) => {
+    if ((req.method === 'GET' || req.method === 'HEAD') && (req.path === '/' || req.path === '')) {
+      return sendHealth(res);
+    }
+    next();
+  });
+
   app.use(
     helmet({
       contentSecurityPolicy: {
