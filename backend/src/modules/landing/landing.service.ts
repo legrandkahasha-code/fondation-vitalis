@@ -121,8 +121,18 @@ export class LandingService {
       orderBy: { ordre: 'asc' },
     });
 
-    // 6. Récupérer les formations réelles de la base de données avec filière et niveau
+    // 5.5 Récupérer les catégories de formations officielles actives
+    const categories = await this.prisma.categorieFormation.findMany({
+      where: { actif: true },
+      orderBy: [{ ordre: 'asc' }, { libelle: 'asc' }],
+    });
+
+    // 6. Récupérer les formations publiées de la base de données avec filière et niveau
     const formationsDb = await this.prisma.formation.findMany({
+      where: {
+        actif: true,
+        publieSurLanding: true,
+      },
       include: {
         _count: {
           select: { modules: true },
@@ -134,7 +144,11 @@ export class LandingService {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { aLaUne: 'desc' },
+        { ordre: 'asc' },
+        { createdAt: 'desc' },
+      ],
       take: 50,
     });
 
@@ -152,48 +166,63 @@ export class LandingService {
       },
       temoignages,
       actualites,
+      categories,
       formations: formationsDb.map((f: any) => {
         const ref = f.formationReferentiel;
         const filiere = ref?.filiere;
         const niveau = ref?.niveau;
 
-        // Catégorisation intelligente : priorité à la filière officielle en BDD
-        let categorieCode: 'tech' | 'gestion' | 'technique' = 'tech';
+        // Catégorisation avec priorité à la catégorie explicite
+        let categorieCode: string = f.categorie || 'tech';
         let filiereNom = filiere?.libelle || '';
         const fCode = (filiere?.code || '').toUpperCase();
         const fLib = filiereNom.toLowerCase();
         const titreLower = (f.titre || '').toLowerCase();
 
-        if (
-          fCode.includes('GEST') ||
-          fCode.includes('MGT') ||
-          fLib.includes('gestion') ||
-          fLib.includes('management') ||
-          fLib.includes('finance') ||
-          titreLower.includes('gestion') ||
-          titreLower.includes('marché') ||
-          titreLower.includes('compta') ||
-          titreLower.includes('management')
-        ) {
-          categorieCode = 'gestion';
-        } else if (
-          fCode.includes('TECH') ||
-          fCode.includes('ELEC') ||
-          fCode.includes('BTP') ||
-          fLib.includes('technique') ||
-          fLib.includes('électric') ||
-          titreLower.includes('électric') ||
-          titreLower.includes('btp') ||
-          titreLower.includes('énergie') ||
-          titreLower.includes('mécanique')
-        ) {
-          categorieCode = 'technique';
+        if (!f.categorie) {
+          if (
+            fCode.includes('GEST') ||
+            fCode.includes('MGT') ||
+            fLib.includes('gestion') ||
+            fLib.includes('management') ||
+            fLib.includes('finance') ||
+            titreLower.includes('gestion') ||
+            titreLower.includes('marché') ||
+            titreLower.includes('compta') ||
+            titreLower.includes('management')
+          ) {
+            categorieCode = 'gestion';
+          } else if (
+            fCode.includes('TECH') ||
+            fCode.includes('ELEC') ||
+            fCode.includes('BTP') ||
+            fLib.includes('technique') ||
+            fLib.includes('électric') ||
+            titreLower.includes('électric') ||
+            titreLower.includes('btp') ||
+            titreLower.includes('énergie') ||
+            titreLower.includes('mécanique')
+          ) {
+            categorieCode = 'technique';
+          }
         }
+
+        const debouchesDefaut = categorieCode === 'gestion'
+          ? 'Manager, Gestionnaire de projets, Auditeur, Responsable Administratif'
+          : categorieCode === 'technique'
+          ? 'Technicien Supérieur, Superviseur Technique, Installateur Spécialisé'
+          : 'Développeur d\'Applications, Spécialiste Systèmes & Réseaux, Consultant IT';
 
         return {
           id: f.id,
           titre: f.titre,
+          code: f.code,
           description: f.description || '',
+          duree: f.duree || '40 Heures',
+          debouches: f.debouches || debouchesDefaut,
+          prerequis: f.prerequis || (niveau?.libelle ? `Niveau ${niveau.libelle} ou expérience équivalente` : 'Niveau secondaire ou test de positionnement'),
+          badgeTexte: f.badgeTexte || (f.aLaUne ? '⭐ Formation Vedette' : 'Session ouverte'),
+          aLaUne: Boolean(f.aLaUne),
           modulesCount: f._count?.modules || 0,
           filiereId: filiere?.id || null,
           filiereCode: filiere?.code || null,

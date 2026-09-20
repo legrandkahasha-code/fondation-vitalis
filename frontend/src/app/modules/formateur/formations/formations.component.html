@@ -1,0 +1,1573 @@
+<app-main-layout>
+  <div class="p-6 md:p-8 max-w-7xl mx-auto font-['Public_Sans',sans-serif] space-y-6 pb-20">
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 1. EN-TÊTE INSTITUTIONNEL DIRECTION GÉNÉRALE NATIONALE         -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="bg-white border border-[#D7DBDE] p-6 rounded-xs shadow-xs">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div class="text-[11px] uppercase font-bold tracking-[0.08em] text-[#1C75BC] flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-[#1C75BC] animate-pulse"></span>
+            <span>🏛️ Administration Centrale · Supervision Pédagogique & Vitrine Publique</span>
+          </div>
+          <h1 class="text-2xl md:text-3xl font-extrabold text-[#1B1D1F] mt-1 font-heading tracking-tight">
+            Programmes & Formations Certifiantes
+          </h1>
+          <div class="w-16 h-1 bg-[#F0791E] mt-2 mb-2 rounded-xs"></div>
+          <p class="text-xs text-[#4B5157] max-w-3xl leading-relaxed">
+            Pilotage national des programmes certifiants, référentiels de compétences (APC), volumes horaires, débouchés métiers et contrôle en temps réel de la publication sur la vitrine publique du portail (Landing Page <code class="bg-slate-100 text-[#124F80] px-1 py-0.5 rounded font-mono font-bold">/#formations</code>).
+          </p>
+        </div>
+
+        <!-- Boutons d'actions rapides -->
+        <div class="flex items-center gap-2.5 shrink-0 flex-wrap">
+          <button
+            type="button"
+            (click)="openCreateModal()"
+            class="bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold py-2.5 px-4 rounded-xs shadow-xs flex items-center gap-2 transition-all cursor-pointer hover:scale-102"
+          >
+            <span class="text-sm">➕</span>
+            <span>Nouvelle Formation</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="openCategoryModal()"
+            class="bg-white hover:bg-slate-50 text-[#124F80] border border-[#1C75BC]/40 text-xs font-bold py-2.5 px-3.5 rounded-xs shadow-2xs flex items-center gap-2 transition-all cursor-pointer hover:scale-102"
+            title="Gérer les catégories officielles des formations (Créer, éditer, ordonner)"
+          >
+            <span class="text-sm">🏷️</span>
+            <span>Gérer les Catégories</span>
+            <span class="bg-[#1C75BC] text-white text-[10px] font-mono px-1.5 py-0.5 rounded-full font-bold">
+              {{ categories.length }}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            (click)="loadData(true)"
+            [disabled]="loading"
+            class="bg-white hover:bg-slate-50 text-[#1B1D1F] border border-[#D7DBDE] text-xs font-semibold py-2.5 px-3 rounded-xs shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Actualiser la liste"
+          >
+            <span [class.animate-spin]="loading">🔄</span>
+            <span>Actualiser</span>
+          </button>
+
+          <a
+            routerLink="/"
+            fragment="formations"
+            target="_blank"
+            class="bg-[#F5F6F7] hover:bg-[#E7F1FA] text-[#124F80] border border-[#1C75BC]/30 text-xs font-semibold py-2.5 px-3 rounded-xs flex items-center gap-1.5 transition-all"
+            title="Ouvrir la section vitrine du portail public dans un nouvel onglet"
+          >
+            <span>🌐</span>
+            <span>Voir Vitrine (#formations)</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 2. KPIS GLOBAUX RÉSEAU PÉDAGOGIQUE                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+      
+      <!-- Total Formations -->
+      <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#124F80] hover:shadow-md transition-shadow">
+        <p class="text-2xl md:text-3xl font-black text-[#124F80] font-mono leading-tight">{{ totalFormationsCount }}</p>
+        <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Formations</p>
+        <p class="text-[10px] text-[#4B5157] mt-0.5">au répertoire national</p>
+      </div>
+
+      <!-- En Vitrine Landing Page -->
+      <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#1C75BC] hover:shadow-md transition-shadow relative overflow-hidden">
+        <div class="flex items-center justify-center gap-1.5">
+          <p class="text-2xl md:text-3xl font-black text-[#1C75BC] font-mono leading-tight">{{ formationsPublieesCount }}</p>
+          <span class="text-[10px] font-bold bg-[#E7F1FA] text-[#1C75BC] px-1.5 py-0.5 rounded-full">
+            {{ totalFormationsCount > 0 ? ((formationsPublieesCount / totalFormationsCount) * 100 | number:'1.0-0') : 0 }}%
+          </span>
+        </div>
+        <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">En Vitrine Public</p>
+        <p class="text-[10px] text-[#276B44] font-semibold mt-0.5 flex items-center justify-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#276B44] animate-pulse"></span>
+          visible sur /#formations
+        </p>
+      </div>
+
+      <!-- À la Une / Vedettes -->
+      <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#F0791E] hover:shadow-md transition-shadow">
+        <p class="text-2xl md:text-3xl font-black text-[#F0791E] font-mono leading-tight">{{ formationsALaUneCount }}</p>
+        <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">À la Une ⭐</p>
+        <p class="text-[10px] text-[#4B5157] mt-0.5">mises en avant en vedette</p>
+      </div>
+
+      <!-- Filières Couvertes -->
+      <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#276B44] hover:shadow-md transition-shadow">
+        <p class="text-2xl md:text-3xl font-black text-[#276B44] font-mono leading-tight">{{ filieresCouvertesCount }}</p>
+        <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Filières Métiers</p>
+        <p class="text-[10px] text-[#4B5157] mt-0.5">branches professionnelles</p>
+      </div>
+
+      <!-- Total Modules & Cours -->
+      <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#124F80] hover:shadow-md transition-shadow">
+        <p class="text-2xl md:text-3xl font-black text-[#124F80] font-mono leading-tight">{{ totalModulesCount }}</p>
+        <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Modules Dispensés</p>
+        <p class="text-[10px] text-[#4B5157] mt-0.5">unités d'enseignement</p>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 3. BARRE DE CONTRÔLE, RECHERCHE & FILTRES DYNAMIQUES           -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="bg-white border border-[#D7DBDE] rounded-xs shadow-xs p-4 space-y-3">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        
+        <!-- Recherche textuelle -->
+        <div class="relative flex-1 max-w-md">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Rechercher par titre, code officiel, débouchés..."
+            aria-label="Rechercher une formation"
+            title="Rechercher une formation"
+            class="w-full pl-8 pr-8 py-2 text-xs bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs focus:bg-white focus:border-[#1C75BC] focus:outline-none transition-colors"
+          />
+          @if (searchTerm) {
+            <button
+              (click)="searchTerm = ''"
+              class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-xs text-slate-400 hover:text-[#ED1C24] cursor-pointer"
+            >
+              ✕
+            </button>
+          }
+        </div>
+
+        <!-- Filtres rapides par Catégorie Dynamique -->
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="text-[11px] font-semibold text-[#4B5157] mr-1 hidden sm:inline">Catégorie :</span>
+          <button
+            type="button"
+            (click)="selectedCategorie = 'toutes'"
+            [class.bg-[#124F80]]="selectedCategorie === 'toutes'"
+            [class.text-white]="selectedCategorie === 'toutes'"
+            [class.bg-[#F5F6F7]]="selectedCategorie !== 'toutes'"
+            [class.text-[#4B5157]]="selectedCategorie !== 'toutes'"
+            class="px-3 py-1.5 text-xs font-semibold rounded-xs border border-[#D7DBDE] hover:border-[#1C75BC] transition-all cursor-pointer"
+          >
+            Toutes ({{ formations.length }})
+          </button>
+          @for (cat of categories; track cat.id) {
+            <button
+              type="button"
+              (click)="selectedCategorie = cat.code"
+              [style.background-color]="selectedCategorie === cat.code ? (cat.couleur || '#1C75BC') : ''"
+              [class.text-white]="selectedCategorie === cat.code"
+              [class.bg-[#F5F6F7]]="selectedCategorie !== cat.code"
+              [class.text-[#4B5157]]="selectedCategorie !== cat.code"
+              class="px-3 py-1.5 text-xs font-semibold rounded-xs border border-[#D7DBDE] hover:border-[#1C75BC] transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              @if (selectedCategorie !== cat.code && cat.couleur) {
+                <span class="w-2 h-2 rounded-full shrink-0" [style.background-color]="cat.couleur"></span>
+              }
+              <span>{{ cat.libelle }}</span>
+              <span class="text-[10px] opacity-80 font-mono">({{ countFormationsForCategory(cat.code) }})</span>
+            </button>
+          }
+        </div>
+
+        <!-- Bascule d'affichage Cartes / Tableau -->
+        <div class="flex items-center gap-1 border border-[#D7DBDE] p-0.5 rounded-xs bg-[#F5F6F7] shrink-0 self-end lg:self-auto">
+          <button
+            type="button"
+            (click)="viewMode = 'cards'"
+            [class.bg-white]="viewMode === 'cards'"
+            [class.text-[#124F80]]="viewMode === 'cards'"
+            [class.shadow-2xs]="viewMode === 'cards'"
+            [class.text-[#4B5157]]="viewMode !== 'cards'"
+            class="px-2.5 py-1 text-xs font-bold rounded-xs flex items-center gap-1 transition-all cursor-pointer"
+            title="Affichage en Grille de Cartes"
+          >
+            <span>🔲</span>
+            <span>Cartes</span>
+          </button>
+          <button
+            type="button"
+            (click)="viewMode = 'table'"
+            [class.bg-white]="viewMode === 'table'"
+            [class.text-[#124F80]]="viewMode === 'table'"
+            [class.shadow-2xs]="viewMode === 'table'"
+            [class.text-[#4B5157]]="viewMode !== 'table'"
+            class="px-2.5 py-1 text-xs font-bold rounded-xs flex items-center gap-1 transition-all cursor-pointer"
+            title="Affichage en Tableau Dense"
+          >
+            <span>📑</span>
+            <span>Tableau</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Ligne secondaire de filtres (Vitrine Landing & Établissement) -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Filtre Statut Vitrine -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-[#4B5157] font-medium">Vitrine Landing :</span>
+            <select
+              [(ngModel)]="selectedLandingFilter"
+              aria-label="Filtre par statut vitrine landing"
+              title="Filtre par statut vitrine landing"
+              class="px-2 py-1 bg-white border border-[#D7DBDE] rounded-xs text-xs font-semibold text-[#1B1D1F] focus:border-[#1C75BC] focus:outline-none"
+            >
+              <option value="toutes">Toutes les formations</option>
+              <option value="publie">🌐 Publiées en vitrine (actives sur /#formations)</option>
+              <option value="masque">🔒 Masquées de la vitrine</option>
+            </select>
+          </div>
+
+          <!-- Filtre Établissement -->
+          @if (etablissements.length > 1) {
+            <div class="flex items-center gap-1.5">
+              <span class="text-[#4B5157] font-medium">Établissement :</span>
+              <select
+                [(ngModel)]="selectedEtablissementId"
+                aria-label="Filtre par établissement"
+                title="Filtre par établissement"
+                class="px-2 py-1 bg-white border border-[#D7DBDE] rounded-xs text-xs font-semibold text-[#1B1D1F] focus:border-[#1C75BC] focus:outline-none max-w-[220px] truncate"
+              >
+                <option value="ALL">Tous les établissements</option>
+                @for (etab of etablissements; track etab.id) {
+                  <option [value]="etab.id">{{ etab.nom }} ({{ etab.codeAntenne }})</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+
+        <!-- Compteur de résultats filtrés -->
+        <div class="text-[11px] text-[#4B5157]">
+          Affichage de <strong class="text-[#1B1D1F]">{{ filteredFormations.length }}</strong> sur {{ totalFormationsCount }} formations
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 4. ÉTAT DE CHARGEMENT & ÉCRAN VIDE                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    @if (loading) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <div class="bg-white border border-[#D7DBDE] p-5 rounded-xs space-y-3">
+            <div class="h-4 bg-slate-200 rounded w-1/3"></div>
+            <div class="h-6 bg-slate-200 rounded w-3/4"></div>
+            <div class="h-3 bg-slate-100 rounded w-full"></div>
+            <div class="h-3 bg-slate-100 rounded w-5/6"></div>
+            <div class="h-10 bg-slate-100 rounded mt-4"></div>
+          </div>
+        }
+      </div>
+    } @else if (filteredFormations.length === 0) {
+      <div class="bg-white border border-[#D7DBDE] rounded-xs p-12 text-center shadow-xs">
+        <div class="text-4xl mb-3">🎓</div>
+        <h3 class="text-base font-bold text-[#1B1D1F]">Aucune formation trouvée</h3>
+        <p class="text-xs text-[#4B5157] max-w-md mx-auto mt-1">
+          Aucun programme certifiant ne correspond à vos critères de recherche actuels ou aucune formation n'a encore été créée.
+        </p>
+        <div class="mt-4 flex items-center justify-center gap-3">
+          @if (searchTerm || selectedCategorie !== 'toutes' || selectedLandingFilter !== 'toutes' || selectedEtablissementId !== 'ALL') {
+            <button
+              type="button"
+              (click)="searchTerm = ''; selectedCategorie = 'toutes'; selectedLandingFilter = 'toutes'; selectedEtablissementId = 'ALL'"
+              class="btn btn-ghost text-xs py-2 px-3 cursor-pointer"
+            >
+              Réinitialiser les filtres
+            </button>
+          }
+          <button
+            type="button"
+            (click)="openCreateModal()"
+            class="btn btn-primary text-xs py-2 px-4 shadow-xs cursor-pointer flex items-center gap-1.5"
+          >
+            <span>➕</span>
+            <span>Créer une Formation</span>
+          </button>
+        </div>
+      </div>
+    } @else {
+
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <!-- 5. VUE 1 : GRILLE DE CARTES INTERACTIVES                       -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      @if (viewMode === 'cards') {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (f of filteredFormations; track f.id) {
+            <div 
+              class="bg-white border border-[#D7DBDE] rounded-xs overflow-hidden shadow-xs hover:shadow-md hover:border-[#1C75BC] transition-all flex flex-col justify-between group relative"
+            >
+              <!-- Barre supérieure de catégorie -->
+              <div 
+                class="h-1.5 w-full transition-all"
+                [style.background-color]="getCategorieColor(f.categorie)"
+              ></div>
+
+              <div class="p-5 flex-1 flex flex-col">
+                <!-- Ligne supérieure : Catégorie, Étoile "À la une", Toggle Vitrine -->
+                <div class="flex items-center justify-between gap-2 mb-2.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded" [ngClass]="getCategorieBadgeClass(f.categorie)">
+                      {{ getCategorieLabel(f.categorie) }}
+                    </span>
+
+                    @if (f.aLaUne) {
+                      <span class="text-[10px] font-extrabold bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]/40 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                        <span>⭐</span> Vedette
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Bouton Étoile Rapide "À la une" -->
+                  <button
+                    type="button"
+                    (click)="toggleUne(f, $event)"
+                    class="text-xs p-1 rounded hover:bg-slate-100 transition-colors cursor-pointer"
+                    [title]="f.aLaUne ? 'Retirer des formations à la une' : 'Mettre en vedette à la une'"
+                  >
+                    <span [class.text-[#F0791E]]="f.aLaUne" [class.text-slate-300]="!f.aLaUne" class="text-sm font-bold">
+                      {{ f.aLaUne ? '★' : '☆' }}
+                    </span>
+                  </button>
+                </div>
+
+                <!-- Code et Titre officiel -->
+                <div>
+                  <div class="text-[10px] font-mono text-[#4B5157] font-semibold flex items-center gap-1">
+                    <span class="bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">{{ f.code || 'FORM-OFFICIELLE' }}</span>
+                    @if (f.badgeTexte) {
+                      <span class="text-[#276B44] bg-[#E7F1EA] px-1.5 py-0.2 rounded font-sans font-bold text-[9px]">
+                        {{ f.badgeTexte }}
+                      </span>
+                    }
+                  </div>
+                  <h3 class="text-base font-extrabold text-[#1B1D1F] mt-1 leading-snug group-hover:text-[#1C75BC] transition-colors">
+                    {{ f.titre }}
+                  </h3>
+                </div>
+
+                <!-- Description sommaire -->
+                <p class="text-xs text-[#4B5157] mt-2 line-clamp-2 leading-relaxed">
+                  {{ f.description || 'Formation certifiante d\'excellence validée sous la tutelle du Ministère de la Formation Professionnelle.' }}
+                </p>
+
+                <!-- Grille des métadonnées clés -->
+                <div class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                  <div class="flex items-center gap-1.5 text-[#1B1D1F]">
+                    <span class="text-slate-400">⏱️</span>
+                    <span class="font-bold">{{ f.duree || '40 Heures' }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-[#1B1D1F]">
+                    <span class="text-slate-400">📚</span>
+                    <span class="font-bold">{{ f._count?.modules ?? f.modules?.length ?? 0 }} Modules</span>
+                  </div>
+                  <div class="col-span-2 flex items-center gap-1.5 text-[11px] text-[#4B5157] truncate">
+                    <span class="text-slate-400 shrink-0">🏛️</span>
+                    <span class="truncate" [title]="f.etablissement?.nom || 'Établissement Siège'">
+                      {{ f.etablissement?.nom || 'Établissement Siège' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Débouchés professionnels -->
+                @if (f.debouches) {
+                  <div class="mt-3 p-2 bg-[#F5F6F7] rounded text-[11px] text-[#124F80] flex items-start gap-1.5">
+                    <span class="shrink-0 mt-0.5">💼</span>
+                    <span class="line-clamp-1 italic font-medium" [title]="f.debouches">{{ f.debouches }}</span>
+                  </div>
+                }
+
+                <!-- Interrupteur de publication sur la vitrine publique -->
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[11px] font-semibold" [class.text-[#276B44]]="f.publieSurLanding !== false" [class.text-slate-400]="f.publieSurLanding === false">
+                      {{ f.publieSurLanding !== false ? '🌐 En Vitrine Landing' : '🔒 Masquée (Hors-ligne)' }}
+                    </span>
+                  </div>
+
+                  <!-- Switch interactif 1-clic -->
+                  <label class="relative inline-flex items-center cursor-pointer" [title]="f.publieSurLanding !== false ? 'Cliquer pour masquer du site public' : 'Cliquer pour publier sur /#formations'">
+                    <input 
+                      type="checkbox" 
+                      [checked]="f.publieSurLanding !== false" 
+                      (change)="toggleLanding(f, $event)" 
+                      aria-label="Publier la formation sur la vitrine landing page"
+                      title="Publier la formation sur la vitrine landing page"
+                      class="sr-only peer"
+                    />
+                    <div class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#276B44]"></div>
+                  </label>
+                </div>
+
+              </div>
+
+              <!-- Pied de carte : Actions -->
+              <div class="p-3 bg-[#F5F6F7] border-t border-[#D7DBDE] flex items-center justify-between gap-2">
+                <a
+                  [routerLink]="getFormationDetailLink(f.id)"
+                  class="text-xs font-bold text-[#1C75BC] hover:text-[#124F80] flex items-center gap-1 py-1 px-2 rounded hover:bg-white transition-colors"
+                  title="Gérer les modules, cours, devoirs et évaluations"
+                >
+                  <span>📚</span>
+                  <span>Gérer Modules</span>
+                  <span class="text-[10px] bg-[#E7F1FA] text-[#1C75BC] px-1.5 py-0.2 rounded-full font-bold ml-0.5">
+                    {{ f._count?.modules ?? f.modules?.length ?? 0 }}
+                  </span>
+                </a>
+
+                <div class="flex items-center gap-1">
+                  @if (auth.hasRole('ADMIN_CENTRE')) {
+                    <button
+                      type="button"
+                      (click)="openDeployModal(f, $event)"
+                      class="p-1.5 text-xs text-[#1C75BC] hover:bg-white rounded border border-transparent hover:border-[#1C75BC]/40 transition-all cursor-pointer"
+                      title="Déployer vers d'autres établissements satellites"
+                    >
+                      🚀 Déployer
+                    </button>
+                  }
+
+                  <button
+                    type="button"
+                    (click)="openEditModal(f, $event)"
+                    class="p-1.5 text-xs text-[#124F80] hover:bg-white rounded border border-transparent hover:border-[#D7DBDE] transition-all cursor-pointer"
+                    title="Modifier la formation & paramètres vitrine"
+                  >
+                    ✏️ Modifier
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="openDeleteModal(f, $event)"
+                    class="p-1.5 text-xs text-[#ED1C24] hover:bg-red-50 rounded transition-all cursor-pointer"
+                    title="Supprimer la formation"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      <!-- 6. VUE 2 : TABLEAU DENSE INSTITUTIONNEL                        -->
+      <!-- ═══════════════════════════════════════════════════════════════ -->
+      @if (viewMode === 'table') {
+        <div class="bg-white border border-[#D7DBDE] rounded-xs shadow-xs overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-[#124F80] text-white uppercase text-[10px] tracking-wider font-bold">
+              <tr>
+                <th class="py-3 px-4">Formation & Code</th>
+                <th class="py-3 px-3">Catégorie & Filière</th>
+                <th class="py-3 px-3">Établissement</th>
+                <th class="py-3 px-3 text-center">Volume & Modules</th>
+                <th class="py-3 px-3 text-center">En Vitrine Landing</th>
+                <th class="py-3 px-3 text-center">À la Une</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#D7DBDE] text-[#1B1D1F]">
+              @for (f of filteredFormations; track f.id) {
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <!-- Code & Titre -->
+                  <td class="py-3 px-4">
+                    <div class="font-bold text-[#1B1D1F] hover:text-[#1C75BC] transition-colors cursor-pointer" (click)="openEditModal(f)">
+                      {{ f.titre }}
+                    </div>
+                    <div class="font-mono text-[10px] text-[#4B5157] mt-0.5">
+                      {{ f.code || 'FORM-OFFICIELLE' }}
+                    </div>
+                  </td>
+
+                  <!-- Catégorie & Filière -->
+                  <td class="py-3 px-3">
+                    <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded inline-block" [ngClass]="getCategorieBadgeClass(f.categorie)">
+                      {{ getCategorieLabel(f.categorie) }}
+                    </span>
+                    <div class="text-[11px] text-[#4B5157] mt-0.5 truncate max-w-[160px]">
+                      {{ f.formationReferentiel?.filiere?.libelle || 'Filière générale' }}
+                    </div>
+                  </td>
+
+                  <!-- Établissement -->
+                  <td class="py-3 px-3 text-[11px] text-[#4B5157] truncate max-w-[150px]">
+                    {{ f.etablissement?.nom || 'Siège National' }}
+                  </td>
+
+                  <!-- Volume & Modules -->
+                  <td class="py-3 px-3 text-center">
+                    <span class="font-semibold text-[#1B1D1F]">{{ f.duree || '40 Heures' }}</span>
+                    <div class="text-[10px] text-slate-400">
+                      {{ f._count?.modules ?? f.modules?.length ?? 0 }} modules
+                    </div>
+                  </td>
+
+                  <!-- Toggle Vitrine -->
+                  <td class="py-3 px-3 text-center">
+                    <label class="relative inline-flex items-center cursor-pointer" [title]="f.publieSurLanding !== false ? 'Cliquer pour masquer de la vitrine' : 'Cliquer pour publier sur /#formations'">
+                      <input 
+                        type="checkbox" 
+                        [checked]="f.publieSurLanding !== false" 
+                        (change)="toggleLanding(f, $event)" 
+                        aria-label="Publier la formation sur la vitrine landing page"
+                        title="Publier la formation sur la vitrine landing page"
+                        class="sr-only peer"
+                      />
+                      <div class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#276B44]"></div>
+                    </label>
+                  </td>
+
+                  <!-- Toggle À la Une -->
+                  <td class="py-3 px-3 text-center">
+                    <button
+                      type="button"
+                      (click)="toggleUne(f, $event)"
+                      class="cursor-pointer text-sm"
+                      [title]="f.aLaUne ? 'En vedette' : 'Standard'"
+                    >
+                      <span [class.text-[#F0791E]]="f.aLaUne" [class.text-slate-300]="!f.aLaUne">
+                        {{ f.aLaUne ? '★' : '☆' }}
+                      </span>
+                    </button>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                    <a
+                      [routerLink]="getFormationDetailLink(f.id)"
+                      class="btn btn-ghost text-xs py-1 px-2 border border-[#D7DBDE] text-[#1C75BC]"
+                      title="Gérer les modules"
+                    >
+                      Modules ({{ f._count?.modules ?? f.modules?.length ?? 0 }})
+                    </a>
+                    <button
+                      type="button"
+                      (click)="openEditModal(f)"
+                      class="btn btn-ghost text-xs py-1 px-2 border border-[#D7DBDE] text-[#124F80] cursor-pointer"
+                      title="Modifier"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      type="button"
+                      (click)="openDeleteModal(f)"
+                      class="btn btn-ghost text-xs py-1 px-2 border border-red-200 text-[#ED1C24] cursor-pointer hover:bg-red-50"
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+    }
+
+  </div>
+</app-main-layout>
+
+<!-- ═════════════════════════════════════════════════════════════════ -->
+<!-- MODALE CRÉATION & ÉDITION AVEC LIVE PREVIEW LANDING EN TEMPS RÉEL -->
+<!-- ═════════════════════════════════════════════════════════════════ -->
+@if (showModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-fade-in">
+    <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-scale-up">
+      
+      <!-- En-tête Modale -->
+      <div class="p-4 sm:p-5 border-b border-[#D7DBDE] bg-[#124F80] text-white flex items-center justify-between shrink-0">
+        <div>
+          <div class="text-[10px] uppercase font-bold text-[#F0791E] tracking-wider">
+            {{ isEditing ? 'Modification d\'un programme certifiant' : 'Création d\'un nouveau programme' }}
+          </div>
+          <h2 class="text-base sm:text-lg font-bold">
+            {{ isEditing ? formData.titre || 'Modifier la formation' : 'Nouvelle Formation Certifiante' }}
+          </h2>
+        </div>
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Corps Modale en 2 Colonnes (Formulaire à gauche, Live Preview Landing à droite) -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-[#F5F6F7]/50">
+        
+        <!-- COLONNE GAUCHE (7/12) : FORMULAIRE PAR ONGLETS -->
+        <div class="lg:col-span-7 bg-white p-5 border border-[#D7DBDE] rounded-xs shadow-xs flex flex-col justify-between">
+          
+          <div>
+            <!-- Navigation Onglets -->
+            <div class="flex border-b border-[#D7DBDE] mb-5 gap-2 text-xs font-bold">
+              <button
+                type="button"
+                (click)="modalActiveTab = 'identite'"
+                [class.border-[#1C75BC]]="modalActiveTab === 'identite'"
+                [class.text-[#1C75BC]]="modalActiveTab === 'identite'"
+                [class.border-transparent]="modalActiveTab !== 'identite'"
+                [class.text-[#4B5157]]="modalActiveTab !== 'identite'"
+                class="pb-2.5 px-3 border-b-2 hover:text-[#1C75BC] transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <span>🏛️</span>
+                <span>1. Identité</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="modalActiveTab = 'pedagogie'"
+                [class.border-[#1C75BC]]="modalActiveTab === 'pedagogie'"
+                [class.text-[#1C75BC]]="modalActiveTab === 'pedagogie'"
+                [class.border-transparent]="modalActiveTab !== 'pedagogie'"
+                [class.text-[#4B5157]]="modalActiveTab !== 'pedagogie'"
+                class="pb-2.5 px-3 border-b-2 hover:text-[#1C75BC] transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <span>📚</span>
+                <span>2. Pédagogie & Insertion</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="modalActiveTab = 'vitrine'"
+                [class.border-[#1C75BC]]="modalActiveTab === 'vitrine'"
+                [class.text-[#1C75BC]]="modalActiveTab === 'vitrine'"
+                [class.border-transparent]="modalActiveTab !== 'vitrine'"
+                [class.text-[#4B5157]]="modalActiveTab !== 'vitrine'"
+                class="pb-2.5 px-3 border-b-2 hover:text-[#1C75BC] transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <span>🌐</span>
+                <span>3. Vitrine Landing</span>
+              </button>
+            </div>
+
+            <!-- CONTENU ONGLET 1 : IDENTITÉ -->
+            @if (modalActiveTab === 'identite') {
+              <div class="space-y-4 animate-fade-in text-xs">
+                <div>
+                  <label class="block font-bold text-[#1B1D1F] mb-1">
+                    Titre Officiel de la Formation <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="formData.titre"
+                    placeholder="Ex: Développeur Web & Mobile Fullstack"
+                    aria-label="Titre officiel de la formation"
+                    title="Titre officiel de la formation"
+                    class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+                  />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-bold text-[#1B1D1F] mb-1">
+                      Code Officiel
+                    </label>
+                    <input
+                      type="text"
+                      [(ngModel)]="formData.code"
+                      placeholder="Ex: FORM-DEV-01 (auto-généré si vide)"
+                      aria-label="Code officiel de la formation"
+                      title="Code officiel de la formation"
+                      class="w-full px-3 py-2 font-mono border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="block font-bold text-[#1B1D1F]">
+                        Catégorie Métier <span class="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        (click)="openCategoryModal()"
+                        class="text-[11px] text-[#1C75BC] hover:text-[#124F80] font-bold flex items-center gap-1 cursor-pointer hover:underline"
+                        title="Créer une nouvelle catégorie ou gérer les catégories"
+                      >
+                        <span>➕ Gérer / Créer</span>
+                      </button>
+                    </div>
+                    <select
+                      [(ngModel)]="formData.categorie"
+                      aria-label="Catégorie métier"
+                      title="Catégorie métier"
+                      class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none font-semibold"
+                    >
+                      @for (cat of categories; track cat.id) {
+                        <option [value]="cat.code">{{ cat.libelle }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  @if (etablissements.length > 0) {
+                    <div>
+                      <label class="block font-bold text-[#1B1D1F] mb-1">
+                        Établissement d'Affectation <span class="text-red-500">*</span>
+                      </label>
+                      <select
+                        [(ngModel)]="formData.etablissementId"
+                        aria-label="Établissement d'affectation"
+                        title="Établissement d'affectation"
+                        class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+                      >
+                        @for (e of etablissements; track e.id) {
+                          <option [value]="e.id">{{ e.nom }} ({{ e.codeAntenne }})</option>
+                        }
+                      </select>
+                    </div>
+                  }
+
+                  <div>
+                    <label class="block font-bold text-[#1B1D1F] mb-1">
+                      Filière de Rattachement (Référentiel National)
+                    </label>
+                    <select
+                      [(ngModel)]="formData.formationReferentielId"
+                      aria-label="Filière de rattachement"
+                      title="Filière de rattachement"
+                      class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none bg-white"
+                    >
+                      <option value="">-- Sans rattachement direct (Générale) --</option>
+                      @for (fil of referentielFilieres; track fil.id) {
+                        <option [value]="fil.id">{{ fil.libelle }} ({{ fil.code }})</option>
+                      }
+                    </select>
+                    <p class="text-[10px] text-slate-500 mt-1">
+                      Associe cette formation et ses modules au référentiel officiel pour la diplomation.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-[#1B1D1F] mb-1">
+                    Description & Présentation
+                  </label>
+                  <textarea
+                    [(ngModel)]="formData.description"
+                    rows="3"
+                    placeholder="Présentation générale du programme de formation, contexte et valeur ajoutée..."
+                    class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+                  ></textarea>
+                </div>
+              </div>
+            }
+
+            <!-- CONTENU ONGLET 2 : PÉDAGOGIE & INSERTION -->
+            @if (modalActiveTab === 'pedagogie') {
+              <div class="space-y-4 animate-fade-in text-xs">
+                <div>
+                  <label class="block font-bold text-[#1B1D1F] mb-1">
+                    Volume Horaire / Durée
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="text"
+                      [(ngModel)]="formData.duree"
+                      placeholder="Ex: 120 Heures (3 mois)"
+                      aria-label="Volume horaire ou durée"
+                      title="Volume horaire ou durée"
+                      class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none font-semibold"
+                    />
+                  </div>
+                  <!-- Presets rapides -->
+                  <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    <span class="text-[10px] text-[#4B5157]">Suggestions :</span>
+                    <button type="button" (click)="applyDureePreset('40 Heures')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] cursor-pointer">40 Heures</button>
+                    <button type="button" (click)="applyDureePreset('80 Heures')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] cursor-pointer">80 Heures</button>
+                    <button type="button" (click)="applyDureePreset('120 Heures (3 mois)')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] cursor-pointer">120 Heures (3 mois)</button>
+                    <button type="button" (click)="applyDureePreset('6 Mois intensif')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] cursor-pointer">6 Mois intensif</button>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-[#1B1D1F] mb-1">
+                    Débouchés Métiers & Insertion Professionnelle
+                  </label>
+                  <textarea
+                    [(ngModel)]="formData.debouches"
+                    rows="2"
+                    placeholder="Ex: Développeur Fullstack, Développeur Mobile, Intégrateur Web, Chef de Projet Junior..."
+                    class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+                  ></textarea>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Ces débouchés s'affichent directement sur la carte de la Landing Page.</p>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-[#1B1D1F] mb-1">
+                    Prérequis d'Admission
+                  </label>
+                  <textarea
+                    [(ngModel)]="formData.prerequis"
+                    rows="2"
+                    placeholder="Ex: Diplôme d'État (Bac) ou expérience équivalente, test d'aptitude logique..."
+                    class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+                  ></textarea>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-[#1B1D1F] mb-1">
+                    Objectifs de Compétences (APC)
+                  </label>
+                  <textarea
+                    [(ngModel)]="formData.objectifs"
+                    rows="2"
+                    placeholder="Ex: Maîtriser le développement complet d'applications web selon les normes internationales..."
+                    class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+                  ></textarea>
+                </div>
+              </div>
+            }
+
+            <!-- CONTENU ONGLET 3 : VITRINE & LANDING PAGE -->
+            @if (modalActiveTab === 'vitrine') {
+              <div class="space-y-4 animate-fade-in text-xs">
+                
+                <!-- Toggle Publication Landing -->
+                <div class="p-3 bg-[#E7F1FA] border border-[#1C75BC]/30 rounded-xs flex items-center justify-between">
+                  <div>
+                    <div class="font-bold text-[#124F80] flex items-center gap-1.5">
+                      <span>🌐</span> Publier sur le Portail Public (Landing Page)
+                    </div>
+                    <div class="text-[11px] text-[#4B5157] mt-0.5">
+                      Si activé, la formation apparaît instantanément sur la vitrine <code class="font-mono font-bold">http://localhost:4200/#formations</code>.
+                    </div>
+                  </div>
+
+                  <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-3" title="Publier sur la landing page">
+                    <input 
+                      type="checkbox" 
+                      [(ngModel)]="formData.publieSurLanding"
+                      aria-label="Publier sur le portail public landing page"
+                      title="Publier sur le portail public landing page"
+                      class="sr-only peer"
+                    />
+                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#276B44]"></div>
+                  </label>
+                </div>
+
+                <!-- Toggle À la Une -->
+                <div class="p-3 bg-[#FDECDD] border border-[#F0791E]/30 rounded-xs flex items-center justify-between">
+                  <div>
+                    <div class="font-bold text-[#F0791E] flex items-center gap-1.5">
+                      <span>⭐</span> Mettre en Vedette ("À la une")
+                    </div>
+                    <div class="text-[11px] text-[#4B5157] mt-0.5">
+                      La formation apparaîtra en tête de liste avec le badge doré officiel sur la Landing Page.
+                    </div>
+                  </div>
+
+                  <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-3" title="Mettre en vedette à la une">
+                    <input 
+                      type="checkbox" 
+                      [(ngModel)]="formData.aLaUne"
+                      aria-label="Mettre la formation en vedette à la une"
+                      title="Mettre la formation en vedette à la une"
+                      class="sr-only peer"
+                    />
+                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#F0791E]"></div>
+                  </label>
+                </div>
+
+                <!-- Badge personnalisé -->
+                <div>
+                  <label class="block font-bold text-[#1B1D1F] mb-1">
+                    Badge de Statut Public
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="formData.badgeTexte"
+                    placeholder="Ex: Session ouverte"
+                    aria-label="Badge de statut public"
+                    title="Badge de statut public"
+                    class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+                  />
+                  <!-- Suggestions de badges -->
+                  <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    <span class="text-[10px] text-[#4B5157]">Suggestions :</span>
+                    <button type="button" (click)="applyBadgePreset('Session ouverte')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] cursor-pointer">Session ouverte</button>
+                    <button type="button" (click)="applyBadgePreset('Inscriptions 2026')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] cursor-pointer">Inscriptions 2026</button>
+                    <button type="button" (click)="applyBadgePreset('Places limitées')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] cursor-pointer">Places limitées</button>
+                    <button type="button" (click)="applyBadgePreset('94% Insertion')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] cursor-pointer">94% Insertion</button>
+                    <button type="button" (click)="applyBadgePreset('Bourse d\'État')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[10px] cursor-pointer">Bourse d'État</button>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-bold text-[#1B1D1F] mb-1">
+                      Ordre d'Affichage (Priorité)
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="formData.ordre"
+                      placeholder="0"
+                      aria-label="Ordre d'affichage"
+                      title="Ordre d'affichage"
+                      class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-[#1B1D1F] mb-1">
+                      Frais Indicatifs (USD / CDF)
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="formData.fraisInscription"
+                      placeholder="Optionnel"
+                      aria-label="Frais indicatifs d'inscription"
+                      title="Frais indicatifs d'inscription"
+                      class="w-full px-3 py-2 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+              </div>
+            }
+
+          </div>
+
+          <!-- Boutons de bascule d'onglets rapides dans le formulaire -->
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+            @if (modalActiveTab === 'identite') {
+              <div></div>
+              <button
+                type="button"
+                (click)="modalActiveTab = 'pedagogie'"
+                class="btn btn-secondary text-xs py-1.5 px-3 cursor-pointer"
+              >
+                Suivant : Pédagogie ➔
+              </button>
+            } @else if (modalActiveTab === 'pedagogie') {
+              <button
+                type="button"
+                (click)="modalActiveTab = 'identite'"
+                class="btn btn-ghost text-xs py-1.5 px-3 cursor-pointer"
+              >
+                ⬅ Précédent
+              </button>
+              <button
+                type="button"
+                (click)="modalActiveTab = 'vitrine'"
+                class="btn btn-secondary text-xs py-1.5 px-3 cursor-pointer"
+              >
+                Suivant : Vitrine ➔
+              </button>
+            } @else {
+              <button
+                type="button"
+                (click)="modalActiveTab = 'pedagogie'"
+                class="btn btn-ghost text-xs py-1.5 px-3 cursor-pointer"
+              >
+                ⬅ Précédent
+              </button>
+              <div></div>
+            }
+          </div>
+
+        </div>
+
+        <!-- COLONNE DROITE (5/12) : APERÇU EN DIRECT (LIVE PREVIEW LANDING) -->
+        <div class="lg:col-span-5 flex flex-col space-y-2">
+          <div class="flex items-center justify-between text-xs text-[#124F80] font-bold">
+            <span class="flex items-center gap-1.5">
+              <span>👁️</span> Aperçu en direct sur la Landing Page
+            </span>
+            <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded">Rendu public</span>
+          </div>
+
+          <!-- LA CARTE VITRINE PUBLIQUE EN TEMPS RÉEL (STYLE COURSERA / LANDING VITALIS) -->
+          <div class="bg-white border-2 border-[#1C75BC] overflow-hidden shadow-md flex flex-col justify-between rounded-xs">
+            <div>
+              <!-- Ligne de couleur selon catégorie -->
+              <div 
+                class="h-2 w-full transition-all"
+                [style.background-color]="getCategorieColor(formData.categorie)"
+              ></div>
+
+              <div class="p-4 sm:p-5">
+                <!-- En-tête : Badge Catégorie & Badge Statut -->
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded" [ngClass]="getCategorieBadgeClass(formData.categorie)">
+                    {{ getCategorieLabel(formData.categorie) }}
+                  </span>
+
+                  <span class="text-[10px] font-semibold text-[#276B44] bg-[#E7F1EA] px-2 py-0.5 rounded flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#276B44] animate-pulse"></span>
+                    {{ formData.badgeTexte || 'Session ouverte' }}
+                  </span>
+                </div>
+
+                @if (formData.aLaUne) {
+                  <div class="mb-2 text-[10px] font-extrabold bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]/30 px-2 py-0.5 rounded flex items-center gap-1">
+                    <span>⭐</span> Formation Vedette Recommandée
+                  </div>
+                }
+
+                <h3 class="text-base font-bold text-[#1B1D1F] mt-1 leading-snug">
+                  {{ formData.titre || 'Titre de la formation...' }}
+                </h3>
+
+                <p class="text-xs text-[#4B5157] my-2.5 leading-relaxed line-clamp-3">
+                  {{ formData.description || 'Description de la formation validée sous la tutelle du Ministère de la Formation Professionnelle.' }}
+                </p>
+
+                <div class="space-y-1.5 text-xs text-[#4B5157] pt-2.5 border-t border-[#F5F6F7]">
+                  <div class="flex justify-between">
+                    <span>Volume horaire :</span>
+                    <span class="font-semibold text-[#1B1D1F]">{{ formData.duree || '40 Heures' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Structure :</span>
+                    <span class="font-semibold text-[#1B1D1F]">Modules certifiants officiels</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Débouchés :</span>
+                    <span class="font-semibold text-[#1C75BC] truncate max-w-[170px]" [title]="formData.debouches || 'Insertion professionnelle garantie'">
+                      {{ formData.debouches || 'Insertion immédiate' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 pt-0 bg-white">
+              <button type="button" disabled class="w-full btn btn-secondary text-xs py-2 px-4 shadow-2xs text-center block opacity-90 cursor-not-allowed">
+                Postuler à cette session (Bouton Public)
+              </button>
+            </div>
+          </div>
+
+          <!-- Note sous aperçu -->
+          <div class="p-2.5 bg-slate-100 rounded-xs text-[11px] text-[#4B5157]">
+            <strong class="text-[#124F80]">Visibilité vitrine :</strong> 
+            {{ formData.publieSurLanding ? '✅ Visible pour tous les visiteurs du site' : '⚠️ Masquée de la Landing Page' }}.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Pied Modale Actions -->
+      <div class="p-4 sm:p-5 border-t border-[#D7DBDE] bg-white flex items-center justify-between shrink-0">
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="btn btn-ghost text-xs py-2 px-4 border border-[#D7DBDE] cursor-pointer"
+        >
+          Annuler
+        </button>
+
+        <button
+          type="button"
+          (click)="saveFormation()"
+          [disabled]="saving"
+          class="btn btn-primary text-xs py-2 px-6 shadow-xs flex items-center gap-2 cursor-pointer"
+        >
+          @if (saving) {
+            <span class="animate-spin">🔄</span>
+            <span>Enregistrement...</span>
+          } @else {
+            <span>💾</span>
+            <span>{{ isEditing ? 'Mettre à jour la formation' : 'Créer et publier la formation' }}</span>
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═════════════════════════════════════════════════════════════════ -->
+<!-- MODALE CONFIRMATION SUPPRESSION                                   -->
+<!-- ═════════════════════════════════════════════════════════════════ -->
+@if (showDeleteModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+    <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-xl max-w-md w-full p-6 space-y-4 animate-scale-up">
+      <div class="flex items-center gap-3 text-[#ED1C24]">
+        <span class="text-3xl">⚠️</span>
+        <h3 class="text-base font-bold">Confirmer la suppression</h3>
+      </div>
+      <p class="text-xs text-[#4B5157] leading-relaxed">
+        Êtes-vous sûr de vouloir supprimer définitivement la formation <strong class="text-[#1B1D1F]">« {{ formationToDelete?.titre }} »</strong> ?
+      </p>
+      <div class="p-3 bg-red-50 border border-red-200 rounded text-[11px] text-[#ED1C24]">
+        Cette action retirera automatiquement la formation de la Landing Page et supprimera les modules et supports pédagogiques rattachés.
+      </div>
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="closeDeleteModal()"
+          [disabled]="deleting"
+          class="btn btn-ghost text-xs py-2 px-3 border border-[#D7DBDE] cursor-pointer"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="confirmDelete()"
+          [disabled]="deleting"
+          class="btn btn-primary text-xs py-2 px-4 bg-[#ED1C24] hover:bg-red-700 border-none cursor-pointer flex items-center gap-1.5"
+        >
+          @if (deleting) {
+            <span class="animate-spin">🔄</span>
+            <span>Suppression...</span>
+          } @else {
+            <span>Supprimer définitivement</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═════════════════════════════════════════════════════════════════ -->
+<!-- MODALE GESTION DES CATÉGORIES (ADMINISTRATEUR CENTRAL)            -->
+<!-- ═════════════════════════════════════════════════════════════════ -->
+@if (showCategoryModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in font-['Public_Sans',sans-serif]">
+    <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-scale-up">
+      
+      <!-- En-tête de la modale -->
+      <div class="p-5 border-b border-[#D7DBDE] flex items-center justify-between bg-[#F5F6F7]">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xs bg-[#1C75BC]/10 text-[#1C75BC] flex items-center justify-center text-xl font-bold border border-[#1C75BC]/20">
+            🏷️
+          </div>
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-[#1C75BC]">Administration Centrale</div>
+            <h2 class="text-lg font-extrabold text-[#1B1D1F]">
+              Gestion des Catégories de Formation
+            </h2>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="closeCategoryModal()"
+          class="w-8 h-8 rounded-xs hover:bg-[#D7DBDE]/50 text-[#4B5157] hover:text-[#1B1D1F] flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
+          title="Fermer"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Corps de la modale en 2 colonnes -->
+      <div class="p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+        
+        <!-- Colonne Gauche : Liste des catégories existantes (7 cols) -->
+        <div class="lg:col-span-7 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#4B5157] flex items-center gap-1.5">
+              <span>Catégories Officielles</span>
+              <span class="bg-[#1C75BC] text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold">{{ categories.length }}</span>
+            </h3>
+            <button
+              type="button"
+              (click)="resetCategoryForm()"
+              class="text-[11px] font-bold text-[#1C75BC] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>➕ Nouvelle</span>
+            </button>
+          </div>
+
+          <div class="space-y-2 max-h-[440px] overflow-y-auto pr-1">
+            @for (cat of categories; track cat.id) {
+              <div 
+                [class.border-[#1C75BC]]="categoryFormData.id === cat.id"
+                [class.bg-[#E7F1FA]/30]="categoryFormData.id === cat.id"
+                class="p-3 bg-white border border-[#D7DBDE] rounded-xs hover:border-[#1C75BC] transition-all flex items-start justify-between gap-3 shadow-2xs"
+              >
+                <div class="flex items-start gap-2.5 min-w-0">
+                  <span 
+                    class="w-3.5 h-3.5 rounded-full shrink-0 mt-0.5 shadow-2xs border border-white"
+                    [style.background-color]="cat.couleur || '#1C75BC'"
+                  ></span>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-xs font-extrabold text-[#1B1D1F] truncate">{{ cat.libelle }}</span>
+                      <span class="text-[10px] font-mono px-1.5 py-0.2 bg-slate-100 text-[#4B5157] rounded border border-slate-200">
+                        code: {{ cat.code }}
+                      </span>
+                      @if (!cat.actif) {
+                        <span class="text-[9px] font-bold px-1.5 py-0.2 bg-red-100 text-red-700 rounded">
+                          Inactif
+                        </span>
+                      }
+                    </div>
+                    @if (cat.description) {
+                      <p class="text-[11px] text-[#4B5157] mt-0.5 line-clamp-1">{{ cat.description }}</p>
+                    }
+                    <div class="text-[10px] text-slate-500 mt-1 flex items-center gap-3">
+                      <span>Ordre : <strong>#{{ cat.ordre }}</strong></span>
+                      <span>Formations associées : <strong>{{ countFormationsForCategory(cat.code) }}</strong></span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions sur la catégorie -->
+                <div class="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    (click)="openCategoryModal(cat)"
+                    class="p-1.5 hover:bg-slate-100 text-[#1C75BC] rounded-xs transition-colors cursor-pointer"
+                    title="Modifier cette catégorie"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    type="button"
+                    (click)="confirmDeleteCategory(cat, $event)"
+                    class="p-1.5 hover:bg-red-50 text-[#ED1C24] rounded-xs transition-colors cursor-pointer"
+                    title="Supprimer ou désactiver cette catégorie"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="p-6 text-center bg-slate-50 border border-dashed border-[#D7DBDE] rounded-xs text-xs text-[#4B5157]">
+                Aucune catégorie enregistrée. Remplissez le formulaire ci-contre pour en créer une.
+              </div>
+            }
+          </div>
+
+          <div class="p-3 bg-[#E7F1FA]/50 border border-[#1C75BC]/20 rounded-xs text-[11px] text-[#124F80] space-y-1">
+            <div class="font-bold flex items-center gap-1.5">
+              <span>💡 Synchronisation Immédiate</span>
+            </div>
+            <p>
+              Toute nouvelle catégorie ajoutée ou modifiée ici est instantanément injectée dans le sélecteur des formations et répercutée en temps réel sur la vitrine publique du portail (<code class="bg-white px-1 py-0.5 rounded font-mono font-bold">/#formations</code>).
+            </p>
+          </div>
+        </div>
+
+        <!-- Colonne Droite : Formulaire d'Ajout / Édition (5 cols) -->
+        <div class="lg:col-span-5 bg-[#F5F6F7] p-4.5 rounded-xs border border-[#D7DBDE] space-y-3.5">
+          <div class="flex items-center justify-between border-b border-[#D7DBDE] pb-2.5">
+            <h3 class="text-xs font-bold text-[#1B1D1F] flex items-center gap-1.5">
+              <span>{{ isEditingCategory ? '✏️ Modifier la catégorie' : '➕ Nouvelle catégorie' }}</span>
+            </h3>
+            @if (isEditingCategory) {
+              <button
+                type="button"
+                (click)="resetCategoryForm()"
+                class="text-[10px] text-[#4B5157] hover:underline cursor-pointer"
+              >
+                Annuler
+              </button>
+            }
+          </div>
+
+          <!-- Libellé -->
+          <div>
+            <label class="block text-[11px] font-bold text-[#1B1D1F] mb-1">
+              Libellé officiel <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              [(ngModel)]="categoryFormData.libelle"
+              (ngModelChange)="onCategoryLibelleChange()"
+              placeholder="Ex: Santé & Sciences Médicales"
+              aria-label="Libellé officiel de la catégorie"
+              title="Libellé officiel de la catégorie"
+              class="w-full px-2.5 py-1.5 text-xs bg-white border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+            />
+          </div>
+
+          <!-- Code Identifiant / Slug -->
+          <div>
+            <label class="block text-[11px] font-bold text-[#1B1D1F] mb-1">
+              Code identifiant (slug URL) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              [(ngModel)]="categoryFormData.code"
+              placeholder="Ex: sante"
+              aria-label="Code identifiant de la catégorie"
+              title="Code identifiant de la catégorie"
+              class="w-full px-2.5 py-1.5 text-xs font-mono bg-white border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+            />
+            <p class="text-[10px] text-[#4B5157] mt-0.5">Identifiant unique utilisé pour le filtrage et les classes de styles.</p>
+          </div>
+
+          <!-- Sélection de la Couleur -->
+          <div>
+            <label class="block text-[11px] font-bold text-[#1B1D1F] mb-1">
+              Couleur distinctive de la filière
+            </label>
+            <div class="flex items-center gap-1.5 flex-wrap mb-2">
+              @for (color of categoryColorPresets; track color) {
+                <button
+                  type="button"
+                  (click)="categoryFormData.couleur = color"
+                  [style.background-color]="color"
+                  [class.ring-2]="categoryFormData.couleur === color"
+                  [class.ring-offset-1]="categoryFormData.couleur === color"
+                  [class.ring-[#124F80]]="categoryFormData.couleur === color"
+                  class="w-5 h-5 rounded-full border border-black/10 transition-transform hover:scale-110 cursor-pointer"
+                  title="Choisir cette couleur"
+                  [attr.aria-label]="'Choisir la couleur ' + color"
+                  [attr.title]="'Choisir la couleur ' + color"
+                >
+                  <span class="sr-only">Couleur {{ color }}</span>
+                </button>
+              }
+            </div>
+            <div class="flex items-center gap-2">
+              <input
+                type="color"
+                [(ngModel)]="categoryFormData.couleur"
+                aria-label="Couleur personnalisée"
+                title="Couleur personnalisée"
+                class="w-7 h-7 p-0 border border-[#D7DBDE] rounded-xs cursor-pointer bg-white"
+              />
+              <input
+                type="text"
+                [(ngModel)]="categoryFormData.couleur"
+                aria-label="Code couleur hexadécimal"
+                title="Code couleur hexadécimal"
+                class="w-24 px-2 py-1 text-xs font-mono bg-white border border-[#D7DBDE] rounded-xs focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label class="block text-[11px] font-bold text-[#1B1D1F] mb-1">
+              Description succincte (optionnelle)
+            </label>
+            <textarea
+              [(ngModel)]="categoryFormData.description"
+              rows="2"
+              placeholder="Ex: Soins infirmiers, pharmacie, santé publique et secourisme."
+              aria-label="Description de la catégorie"
+              title="Description de la catégorie"
+              class="w-full px-2.5 py-1.5 text-xs bg-white border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+            ></textarea>
+          </div>
+
+          <!-- Ordre & Actif -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-[#1B1D1F] mb-1">
+                Ordre d'affichage
+              </label>
+              <input
+                type="number"
+                min="0"
+                [(ngModel)]="categoryFormData.ordre"
+                aria-label="Ordre d'affichage"
+                title="Ordre d'affichage"
+                class="w-full px-2.5 py-1.5 text-xs bg-white border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-[#1B1D1F] mb-1">
+                Statut
+              </label>
+              <label class="flex items-center gap-2 mt-2 cursor-pointer text-xs font-semibold text-[#1B1D1F]">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="categoryFormData.actif"
+                  class="rounded text-[#1C75BC]"
+                />
+                <span>Catégorie active</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Bouton Enregistrer -->
+          <div class="pt-2">
+            <button
+              type="button"
+              (click)="saveCategory()"
+              [disabled]="categorySaving"
+              class="w-full bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold py-2.5 px-4 rounded-xs shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              @if (categorySaving) {
+                <span class="animate-spin">🔄</span>
+                <span>Enregistrement en cours...</span>
+              } @else {
+                <span>💾</span>
+                <span>{{ isEditingCategory ? 'Mettre à jour la catégorie' : 'Créer la catégorie' }}</span>
+              }
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Pied de modale -->
+      <div class="p-4 border-t border-[#D7DBDE] bg-white flex items-center justify-between">
+        <span class="text-[11px] text-[#4B5157]">
+          Vitalis Center EUP · Nomenclature officielle des formations professionnelles
+        </span>
+        <button
+          type="button"
+          (click)="closeCategoryModal()"
+          class="px-4 py-2 text-xs font-semibold border border-[#D7DBDE] hover:bg-slate-50 text-[#1B1D1F] rounded-xs cursor-pointer"
+        >
+          Fermer
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═════════════════════════════════════════════════════════════════ -->
+<!-- MODALE CONFIRMATION SUPPRESSION CATÉGORIE                         -->
+<!-- ═════════════════════════════════════════════════════════════════ -->
+@if (showDeleteCategoryModal) {
+  <div class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in font-['Public_Sans',sans-serif]">
+    <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-xl max-w-md w-full p-6 space-y-4 animate-scale-up">
+      <div class="flex items-center gap-3 text-[#ED1C24]">
+        <span class="text-3xl">⚠️</span>
+        <h3 class="text-base font-bold">Confirmer l'action sur la catégorie</h3>
+      </div>
+      <p class="text-xs text-[#4B5157] leading-relaxed">
+        Souhaitez-vous retirer la catégorie <strong class="text-[#1B1D1F]">« {{ categoryToDelete?.libelle }} »</strong> ?
+      </p>
+      
+      @if (categoryToDelete && countFormationsForCategory(categoryToDelete.code) > 0) {
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded text-[11px] text-[#D97706] space-y-1">
+          <p class="font-bold">⚠️ Catégorie en cours d'utilisation :</p>
+          <p>
+            <strong>{{ countFormationsForCategory(categoryToDelete.code) }} formation(s)</strong> sont rattachées à cette catégorie.
+            Par sécurité, elle sera automatiquement <strong>désactivée</strong> (masquée des nouveaux formulaires) sans altérer l'historique de vos formations existantes.
+          </p>
+        </div>
+      } @else {
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded text-[11px] text-[#4B5157]">
+          Aucune formation n'utilise actuellement cette catégorie. Elle sera définitivement supprimée de la base de données.
+        </div>
+      }
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="closeDeleteCategoryModal()"
+          class="btn btn-ghost text-xs py-2 px-3 border border-[#D7DBDE] cursor-pointer"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="executeDeleteCategory()"
+          class="btn btn-primary text-xs py-2 px-4 bg-[#ED1C24] hover:bg-red-700 border-none cursor-pointer flex items-center gap-1.5"
+        >
+          <span>Confirmer le retrait</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════ MODALE : DÉPLOIEMENT VERS ÉTABLISSEMENTS SATELLITES (ADMIN CENTRAL) ══════════ -->
+@if (showDeployModal && formationToDeploy) {
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-2xl w-full max-w-xl overflow-hidden text-xs">
+      <div class="p-5 border-b border-[#D7DBDE] bg-[#F5F6F7] flex items-center justify-between">
+        <div>
+          <div class="text-[10px] uppercase font-bold text-[#1C75BC] tracking-wider">01 · Administration Centrale</div>
+          <h3 class="text-base font-bold text-[#1B1D1F] mt-0.5">
+            Déployer la Formation vers les Établissements
+          </h3>
+          <p class="text-[11px] text-[#4B5157] mt-0.5">
+            Propagation automatique de « {{ formationToDeploy.titre }} » et de son programme complet.
+          </p>
+        </div>
+        <button (click)="closeDeployModal()" class="text-gray-400 hover:text-gray-700 font-bold text-base cursor-pointer">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="p-3 bg-[#E7F1FA] border border-[#1C75BC]/30 rounded-xs text-[11px] text-[#124F80] space-y-1">
+          <p class="font-bold">Établissement d'origine : {{ formationToDeploy.etablissement?.nom || 'Établissement Siège' }}</p>
+          <p class="text-[#4B5157]">
+            Cette action dupliquera la formation ainsi que l'ensemble de ses modules et cours vers les antennes sélectionnées.
+          </p>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="font-bold text-[#1B1D1F]">Sélectionner les antennes cibles :</label>
+            <button
+              type="button"
+              (click)="selectAllEtabs()"
+              class="text-[11px] text-[#1C75BC] font-semibold hover:underline cursor-pointer"
+            >
+              Tout sélectionner
+            </button>
+          </div>
+
+          <div class="space-y-1.5 max-h-56 overflow-y-auto border border-[#D7DBDE] rounded-xs p-2 bg-[#F8FAFC]">
+            @for (e of etablissements; track e.id) {
+              @if (e.id !== formationToDeploy.etablissementId) {
+                <label class="flex items-center justify-between p-2 rounded hover:bg-white cursor-pointer border border-transparent hover:border-[#D7DBDE] transition-colors">
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      [checked]="selectedCibleEtabIds.includes(e.id)"
+                      (change)="toggleCibleEtab(e.id)"
+                      class="w-4 h-4 text-[#1C75BC] rounded"
+                    />
+                    <span class="font-semibold text-[#1B1D1F]">{{ e.nom }}</span>
+                    @if (e.codeAntenne) {
+                      <span class="text-[10px] text-slate-400 font-mono">({{ e.codeAntenne }})</span>
+                    }
+                  </div>
+                  <span class="text-[10px] text-slate-400">{{ e.pays || 'RDC' }}</span>
+                </label>
+              }
+            }
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">
+            {{ selectedCibleEtabIds.length }} établissement(s) sélectionné(s).
+          </p>
+        </div>
+
+        <div class="p-4 border-t border-[#D7DBDE] bg-[#F5F6F7] flex items-center justify-end gap-3 -mx-6 -mb-6 mt-6">
+          <button
+            type="button"
+            (click)="closeDeployModal()"
+            class="btn btn-secondary text-xs py-2 px-4 font-semibold cursor-pointer"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            (click)="submitDeploy()"
+            [disabled]="deploying || selectedCibleEtabIds.length === 0"
+            class="btn btn-primary text-xs py-2 px-4 font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <span>{{ deploying ? 'Déploiement en cours...' : '🚀 Confirmer le Déploiement' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+

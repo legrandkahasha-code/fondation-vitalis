@@ -688,39 +688,22 @@
                 >
                   Toutes
                 </button>
-                <button 
-                  (click)="filtrerCategorie('tech')"
-                  [class.bg-[#1C75BC]]="categorieActive === 'tech'"
-                  [class.text-white]="categorieActive === 'tech'"
-                  [class.shadow-xs]="categorieActive === 'tech'"
-                  [class.bg-[#F5F6F7]]="categorieActive !== 'tech'"
-                  [class.text-[#4B5157]]="categorieActive !== 'tech'"
-                  class="px-3 py-1.5 rounded-xs text-xs font-semibold border border-[#D7DBDE] transition-all hover:border-[#1C75BC] cursor-pointer"
-                >
-                  Tech
-                </button>
-                <button 
-                  (click)="filtrerCategorie('gestion')"
-                  [class.bg-[#1C75BC]]="categorieActive === 'gestion'"
-                  [class.text-white]="categorieActive === 'gestion'"
-                  [class.shadow-xs]="categorieActive === 'gestion'"
-                  [class.bg-[#F5F6F7]]="categorieActive !== 'gestion'"
-                  [class.text-[#4B5157]]="categorieActive !== 'gestion'"
-                  class="px-3 py-1.5 rounded-xs text-xs font-semibold border border-[#D7DBDE] transition-all hover:border-[#1C75BC] cursor-pointer"
-                >
-                  Gestion
-                </button>
-                <button 
-                  (click)="filtrerCategorie('technique')"
-                  [class.bg-[#1C75BC]]="categorieActive === 'technique'"
-                  [class.text-white]="categorieActive === 'technique'"
-                  [class.shadow-xs]="categorieActive === 'technique'"
-                  [class.bg-[#F5F6F7]]="categorieActive !== 'technique'"
-                  [class.text-[#4B5157]]="categorieActive !== 'technique'"
-                  class="px-3 py-1.5 rounded-xs text-xs font-semibold border border-[#D7DBDE] transition-all hover:border-[#1C75BC] cursor-pointer"
-                >
-                  Technique
-                </button>
+                @for (cat of categoriesFormation; track cat.id) {
+                  <button 
+                    (click)="filtrerCategorie(cat.code)"
+                    [style.background-color]="categorieActive === cat.code ? (cat.couleur || '#1C75BC') : ''"
+                    [class.text-white]="categorieActive === cat.code"
+                    [class.shadow-xs]="categorieActive === cat.code"
+                    [class.bg-[#F5F6F7]]="categorieActive !== cat.code"
+                    [class.text-[#4B5157]]="categorieActive !== cat.code"
+                    class="px-3 py-1.5 rounded-xs text-xs font-semibold border border-[#D7DBDE] transition-all hover:border-[#1C75BC] cursor-pointer flex items-center gap-1.5"
+                  >
+                    @if (categorieActive !== cat.code && cat.couleur) {
+                      <span class="w-2 h-2 rounded-full shrink-0" [style.background-color]="cat.couleur"></span>
+                    }
+                    <span>{{ cat.libelle }}</span>
+                  </button>
+                }
               </div>
             </div>
           </div>
@@ -738,28 +721,42 @@
             @for (formation of formationsFiltrees; track formation.id) {
             <div class="bg-white border border-[#D7DBDE] overflow-hidden shadow-xs flex flex-col justify-between hover:border-[#1C75BC] card-interactive">
               <div>
-                <div class="h-1.5" [ngClass]="{
-                  'bg-[#1C75BC]': formation.categorie === 'tech',
-                  'bg-[#F0791E]': formation.categorie === 'gestion',
-                  'bg-[#276B44]': formation.categorie === 'technique'
-                }"></div>
+                <div class="h-1.5" [style.background-color]="formation.couleur || '#1C75BC'"></div>
                 
                 <div class="p-5">
                   <div class="flex items-center justify-between gap-2 mb-2">
-                    <span [ngClass]="formation.badgeClass" class="tag">
+                    <span 
+                      class="tag border text-[11px] font-bold"
+                      [style.background-color]="formation.couleur ? formation.couleur + '1A' : '#E7F1FA'"
+                      [style.color]="formation.couleur || '#1C75BC'"
+                      [style.border-color]="formation.couleur ? formation.couleur + '40' : '#1C75BC40'"
+                    >
                       {{ formation.categorieNom }}
                     </span>
                     <span class="text-[10px] font-semibold text-[#276B44] bg-[#E7F1EA] px-2 py-0.5 rounded flex items-center gap-1">
                       <span class="w-1.5 h-1.5 rounded-full bg-[#276B44] animate-pulse-glow"></span>
-                      Session ouverte
+                      {{ formation.prochaineSession || formation.badgeTexte || 'Session ouverte' }}
                     </span>
                   </div>
 
-                  <h3 class="text-base font-bold text-[#1B1D1F] mt-1 leading-snug">
+
+                  @if (formation.aLaUne) {
+                    <div class="mb-2 text-[10px] font-extrabold bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]/30 px-2 py-0.5 rounded flex items-center gap-1">
+                      <span>⭐</span> Formation Vedette Recommandée
+                    </div>
+                  }
+
+                  @if (formation.code) {
+                    <span class="text-[10px] font-mono text-slate-400 font-semibold block mb-0.5">
+                      {{ formation.code }}
+                    </span>
+                  }
+
+                  <h3 class="text-base font-bold text-[#1B1D1F] mt-0.5 leading-snug">
                     {{ formation.titre }}
                   </h3>
                   
-                  <p class="text-xs text-[#4B5157] my-3 leading-relaxed">
+                  <p class="text-xs text-[#4B5157] my-3 leading-relaxed line-clamp-3">
                     {{ formation.description }}
                   </p>
                   
@@ -781,7 +778,7 @@
               </div>
 
               <div class="p-5 pt-0 bg-white">
-                <a routerLink="/login" class="w-full btn btn-secondary text-xs py-2 px-4 shadow-2xs text-center block hover:bg-[#1C75BC] hover:text-white transition-colors">
+                <a routerLink="/login" [queryParams]="{ formation: formation.id }" class="w-full btn btn-secondary text-xs py-2 px-4 shadow-2xs text-center block hover:bg-[#1C75BC] hover:text-white transition-colors cursor-pointer">
                   Postuler à cette session
                 </a>
               </div>

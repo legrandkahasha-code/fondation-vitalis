@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Param,
   Body,
   Req,
@@ -38,6 +39,33 @@ export class ApprenantController {
   ) {}
 
   /**
+   * GET /apprenant/bootstrap
+   * Bundle d'agrégation unique de tout l'espace apprenant (0ms navigation, 1 seule requête HTTP)
+   */
+  @Get('bootstrap')
+  getBootstrap(@Req() req: any) {
+    return this.service.getBootstrap(req.user);
+  }
+
+  /**
+   * PATCH /apprenant/profil
+   * Met à jour synchroniquement les informations d'identité (Utilisateur + Apprenant)
+   */
+  @Patch('profil')
+  updateProfile(@Body() dto: { nom?: string; prenom?: string; telephone?: string }, @Req() req: any) {
+    return this.service.updateProfile(req.user, dto);
+  }
+
+  /**
+   * POST /apprenant/formations/:id/generer-certificat
+   * Déclenche la génération du certificat ministériel si les conditions BR-03 sont satisfaites
+   */
+  @Post('formations/:id/generer-certificat')
+  genererCertificat(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.genererCertificatSiEligible(id, req.user);
+  }
+
+  /**
    * GET /apprenant/dashboard
    * Agrégat : formations actives, % complétion global, prochaine échéance
    */
@@ -53,6 +81,15 @@ export class ApprenantController {
   @Get('formations')
   getFormations(@Req() req: any) {
     return this.service.getFormations(req.user);
+  }
+
+  /**
+   * GET /apprenant/formations-filiere
+   * Formations disponibles dans l'établissement pour la filière choisie par l'apprenant
+   */
+  @Get('formations-filiere')
+  getFormationsFiliere(@Req() req: any) {
+    return this.service.getFormationsFiliere(req.user);
   }
 
   /**
@@ -149,6 +186,83 @@ export class ApprenantController {
   getAllDevoirs(@Req() req: any) {
     return this.service.getAllDevoirs(req.user);
   }
+
+  /**
+   * GET /apprenant/seances
+   * Emploi du temps & calendrier des séances de cours
+   */
+  @Get('seances')
+  getSeances(@Req() req: any) {
+    return this.service.getSeances(req.user);
+  }
+
+  /**
+   * GET /apprenant/assiduite
+   * Synthèse et pourcentage d'assiduité officielle
+   */
+  @Get('assiduite')
+  getAssiduite(@Req() req: any) {
+    return this.service.getAssiduite(req.user);
+  }
+
+  /**
+   * GET /apprenant/formations/:id/releve-notes
+   * Relevé de notes officiel de la formation (coefficients, devoirs, quiz, examens)
+   */
+  @Get('formations/:id/releve-notes')
+  getReleveNotes(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.getReleveNotes(id, req.user);
+  }
+
+  /**
+   * GET /apprenant/dossier
+   * Pièces du dossier administratif & demandes de régularisation
+   */
+  @Get('dossier')
+  getDossier(@Req() req: any) {
+    return this.service.getDossier(req.user);
+  }
+
+  /**
+   * POST /apprenant/dossier/upload
+   * Téléversement d'un document administratif par l'apprenant
+   */
+  @Post('dossier/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: uploadFileFilter,
+      limits: { fileSize: MAX_UPLOAD_FILE_SIZE },
+    }),
+  )
+  uploadDocumentDossier(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('typeDocument') typeDocument: string,
+    @Body('titre') titre: string,
+    @Req() req: any,
+  ) {
+    return this.service.uploadDocumentDossier(file, typeDocument, titre, req.user);
+  }
+
+  /**
+   * POST /apprenant/dossier/regularisation/:id/repondre
+   * Transmet une pièce et/ou un commentaire pour régulariser un dossier administratif
+   */
+  @Post('dossier/regularisation/:id/repondre')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: uploadFileFilter,
+      limits: { fileSize: MAX_UPLOAD_FILE_SIZE },
+    }),
+  )
+  repondreRegularisation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('commentaire') commentaire: string,
+    @Req() req: any,
+  ) {
+    return this.service.repondreRegularisation(id, file, commentaire, req.user);
+  }
+
 
   /**
    * GET /apprenant/certificats

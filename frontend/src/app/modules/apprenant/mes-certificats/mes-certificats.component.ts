@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription, filter } from 'rxjs';
-import { ApprenantService, ApprenantCertificat } from '../../../core/services/apprenant.service';
+import { ApprenantService, ApprenantCertificat, ApprenantFormation } from '../../../core/services/apprenant.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
@@ -124,6 +124,48 @@ import { ToastService } from '../../../core/services/toast.service';
               <p class="text-[10px] text-[#4B5157] mt-0.5">protection SHA-256 active</p>
             </div>
           </div>
+        </div>
+      }
+
+      <!-- ══════════ FORMATIONS ÉLIGIBLES EN ATTENTE DE CERTIFICATION (BR-03) ══════════ -->
+      @if (formationsEligiblesSansCertificat.length > 0) {
+        <div class="space-y-3">
+          @for (f of formationsEligiblesSansCertificat; track f.id) {
+            <div class="p-5 bg-[#E7F1EA] border-l-4 border-[#276B44] border border-[#D7DBDE] rounded-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xs bg-[#276B44] text-white flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-2 py-0.5 rounded-xs bg-[#276B44] text-white text-[10px] font-bold uppercase">Éligibilité BR-03 Validée</span>
+                    <span class="text-xs font-bold text-[#1B1D1F]">{{ f.titre }}</span>
+                  </div>
+                  <p class="text-xs text-[#276B44] mt-1">
+                    Félicitations ! Vous avez validé l'intégralité des modules. Votre titre officiel d'aptitude professionnelle peut être émis immédiatement.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="genererCertificat(f.id)"
+                [disabled]="generatingId === f.id"
+                class="px-4 py-2.5 rounded-xs bg-[#276B44] hover:bg-[#1e5234] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 shrink-0 cursor-pointer disabled:opacity-60 transition-all"
+              >
+                @if (generatingId === f.id) {
+                  <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Génération en cours...</span>
+                } @else {
+                  <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                  <span>Générer mon Certificat Officiel</span>
+                }
+              </button>
+            </div>
+          }
         </div>
       }
 
@@ -550,20 +592,28 @@ import { ToastService } from '../../../core/services/toast.service';
 })
 export class MesCertificatsComponent implements OnInit, OnDestroy {
   certificats: ApprenantCertificat[] = [];
+  formations: ApprenantFormation[] = [];
   loading = true;
   searchTerm = '';
   hashOpenId: string | null = null;
   copiedHashId: string | null = null;
   copiedLinkId: string | null = null;
   downloadingId: string | null = null;
+  generatingId: string | null = null;
   certificatApercu: ApprenantCertificat | null = null;
 
   private liveSub: Subscription | null = null;
+  private bootstrapSub: Subscription | null = null;
 
   constructor(
     private apprenantService: ApprenantService,
     private toast: ToastService,
   ) {}
+
+  get formationsEligiblesSansCertificat(): ApprenantFormation[] {
+    const certFormationIds = new Set(this.certificats.map((c) => c.formation.id));
+    return this.formations.filter((f) => f.pourcentage === 100 && !certFormationIds.has(f.id));
+  }
 
   get certificatsFiltres(): ApprenantCertificat[] {
     if (!this.searchTerm || !this.searchTerm.trim()) {
@@ -734,6 +784,20 @@ export class MesCertificatsComponent implements OnInit, OnDestroy {
       this.loading = false;
     }
 
+    const formationsSnap = this.apprenantService.getFormationsSnapshot();
+    if (formationsSnap) {
+      this.formations = formationsSnap;
+    }
+
+    // Synchronisation unifiée avec le flux bootstrap
+    this.bootstrapSub = this.apprenantService.bootstrap$.subscribe((data) => {
+      if (data?.formations) this.formations = data.formations;
+      if (data?.certificats) {
+        this.certificats = data.certificats;
+        this.loading = false;
+      }
+    });
+
     // 2. Revalidation silencieuse en tâche de fond
     this.loadCertificats(cached === null, false);
 
@@ -747,6 +811,23 @@ export class MesCertificatsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.liveSub?.unsubscribe();
+    this.bootstrapSub?.unsubscribe();
+  }
+
+  genererCertificat(formationId: string) {
+    if (this.generatingId === formationId) return;
+    this.generatingId = formationId;
+    this.apprenantService.genererCertificat(formationId).subscribe({
+      next: (cert) => {
+        this.generatingId = null;
+        this.toast.success(`Certificat officiel N° ${cert.numeroSerie} émis avec succès !`);
+        this.loadCertificats(false, false);
+      },
+      error: (err) => {
+        this.generatingId = null;
+        this.toast.error(err.error?.message || 'Erreur lors de la génération du certificat.');
+      },
+    });
   }
 
   loadCertificats(showSpinner = true, isManual = false) {

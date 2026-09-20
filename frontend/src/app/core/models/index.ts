@@ -29,20 +29,75 @@ export interface Utilisateur {
 export interface Formation {
   id: string;
   titre: string;
+  code?: string;
   description?: string;
+  duree?: string;
+  categorie?: 'tech' | 'gestion' | 'technique' | string;
+  debouches?: string;
+  prerequis?: string;
+  objectifs?: string;
+  publieSurLanding?: boolean;
+  aLaUne?: boolean;
+  badgeTexte?: string;
+  ordre?: number;
+  actif?: boolean;
+  fraisInscription?: number | null;
   etablissementId: string;
+  formationReferentielId?: string | null;
+  createdAt?: string;
   modules?: Module[];
-  etablissement?: { nom: string };
+  etablissement?: { id?: string; nom: string; codeAntenne?: string; typeEtablissement?: string };
+  formationReferentiel?: {
+    id?: string;
+    filiere?: { id: string; code: string; libelle: string; description?: string | null };
+    niveau?: { id: string; code: string; libelle: string };
+  };
+  _count?: {
+    modules?: number;
+    inscriptions?: number;
+    sessionsAdmission?: number;
+  };
 }
+
+export interface CategorieFormation {
+  id: string;
+  code: string;
+  libelle: string;
+  description?: string | null;
+  couleur?: string;
+  icone?: string;
+  ordre?: number;
+  actif?: boolean;
+  createdAt?: string;
+}
+
+export interface FiliereReferentiel {
+  id: string;
+  code: string;
+  libelle: string;
+  description?: string | null;
+  ordre?: number;
+  actif?: boolean;
+  createdAt?: string;
+  formationsReferentiel?: any[];
+  _count?: {
+    formationsReferentiel?: number;
+    sessionsAdmission?: number;
+  };
+}
+
 
 export interface Module {
   id: string;
+  formationId?: string;
   titre: string;
   ordre: number;
   coefficient?: number;
   cours?: Cours[];
   evaluations?: Evaluation[];
-  _count?: { cours: number };
+  quiz?: any[];
+  devoirs?: any[];
+  _count?: { cours?: number; evaluations?: number; quiz?: number; devoirs?: number };
 }
 
 export interface Cours {
@@ -225,6 +280,7 @@ export interface PublicLandingData {
   };
   temoignages?: LandingPageTemoignage[];
   actualites?: LandingPageActualite[];
+  categories?: CategorieFormation[];
   formations: Array<{
     id: string;
     titre: string;
@@ -276,7 +332,7 @@ export interface FiliereSuiviItem {
   formationReferentiel?: {
     id: string;
     libelle: string;
-    filiere?: { id: string; code: string; libelle: string };
+    filiere?: { id: string; code: string; libelle: string; description?: string | null };
     niveau?: { id: string; code: string; libelle: string };
   } | null;
   statut: 'EN_PREPARATION' | 'OUVERTE' | 'EN_COURS' | 'CLOTUREE';

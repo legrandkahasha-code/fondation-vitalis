@@ -200,5 +200,10 @@ export class StorageService {
 
     return primaryPath;
   }
+
+  resolveUrl(fileUrl: string): string {
+    if (!fileUrl) return '';
+    return fileUrl;
+  }
 }
 

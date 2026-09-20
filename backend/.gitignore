@@ -6,3 +6,13 @@ uploads/
 .env.*
 !.env.example
 /generated/prisma
+
+# Temporary / local scratch scripts
+check-db-temp.js
+scratch-test-db.js
+scratch-test-endpoints.js
+scripts/migrate-*.js
+!/scripts/install-postgres.ps1
+!/scripts/start-local-db.ps1
+!/scripts/validate-local-db.ps1
+!/scripts/backup.ps1

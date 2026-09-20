@@ -24,6 +24,8 @@ export const routes: Routes = [
   { path: 'admin/analytics', canActivate: [adminCentreGuard], loadComponent: () => import('./modules/admin-centre/analytics/analytics.component').then(m => m.AnalyticsComponent) },
   { path: 'admin/admissions', canActivate: [adminCentreGuard], loadComponent: () => import('./modules/admin-etab/admission/admission-admin.component').then(m => m.AdmissionAdminComponent) },
   { path: 'admin/candidatures', redirectTo: 'admin/admissions', pathMatch: 'full' },
+  { path: 'admin/formations', canActivate: [adminCentreGuard], loadComponent: () => import('./modules/formateur/formations/formations.component').then(m => m.FormationsComponent) },
+  { path: 'admin/formations/:id', canActivate: [adminCentreGuard], loadComponent: () => import('./modules/formateur/formation-detail/formation-detail.component').then(m => m.FormationDetailComponent) },
 
   { path: 'admin-etab/dashboard', canActivate: [adminEtabGuard], loadComponent: () => import('./modules/admin-etab/dashboard/dashboard.component').then(m => m.AdminEtabDashboardComponent) },
   { path: 'admin-etab/utilisateurs', canActivate: [adminEtabGuard], loadComponent: () => import('./modules/admin-etab/utilisateurs/utilisateurs-etab.component').then(m => m.UtilisateursEtabComponent) },
@@ -55,6 +57,7 @@ export const routes: Routes = [
       { path: 'candidatures', loadComponent: () => import('./modules/admission/candidature/candidature.component').then(m => m.CandidatureComponent) },
       { path: 'formations', loadComponent: () => import('./modules/apprenant/mes-formations/mes-formations.component').then(m => m.MesFormationsComponent) },
       { path: 'formations/:id', loadComponent: () => import('./modules/apprenant/mes-formations/formation-detail/formation-detail.component').then(m => m.FormationDetailComponent) },
+      { path: 'seances', loadComponent: () => import('./modules/apprenant/mes-seances/mes-seances.component').then(m => m.MesSeancesComponent) },
       { path: 'cours', redirectTo: 'formations' },
       { path: 'cours/:id', redirectTo: 'formations' },
       { path: 'evaluations', redirectTo: 'evaluations/depot-devoir' },

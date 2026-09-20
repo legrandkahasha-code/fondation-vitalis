@@ -7,7 +7,7 @@ import { EtablissementsService } from '../../../core/services/etablissements.ser
 import { NotificationsService } from '../../../core/services/notifications.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { MainLayoutComponent } from '../../../shared/layout/main-layout.component';
-import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement } from '../../../core/models';
+import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement, FiliereReferentiel } from '../../../core/models';
 
 @Component({
   selector: 'app-filieres-central',
@@ -25,35 +25,81 @@ import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement } from '../../../co
                 <span>🌐</span> Administration Centrale · Direction Pédagogique Nationale
               </div>
               <h1 class="text-2xl md:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading tracking-tight">
-                Pilotage Central des Filières & Classes
+                Pilotage Central des Filières & Modules
               </h1>
               <div class="barre"></div>
               <p class="text-xs text-[#4B5157] mt-2 max-w-3xl leading-relaxed">
-                Supervision nationale consolidée, attribution centralisée des filières aux antennes satellites, suivi en temps réel des effectifs, avancements pédagogiques, évaluations et certifications délivrées.
+                Supervision nationale consolidée, gestion directe du Référentiel National des Filières, attribution centralisée aux antennes satellites, et suivi en temps réel des modules pédagogiques.
               </p>
             </div>
 
             <div class="flex items-center gap-3 shrink-0 flex-wrap">
+              @if (mainTab === 'referentiel') {
+                <button
+                  type="button"
+                  (click)="ouvrirNouvelleFiliereModal()"
+                  class="btn btn-primary text-xs font-semibold py-2.5 px-4 shadow-xs flex items-center gap-2 cursor-pointer"
+                >
+                  <span>➕</span>
+                  <span>Nouvelle Filière Nationale</span>
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  (click)="showCreateModal = true"
+                  class="btn btn-primary text-xs font-semibold py-2.5 px-4 shadow-xs flex items-center gap-2 cursor-pointer"
+                >
+                  <span>➕</span>
+                  <span>Attribuer une Filière</span>
+                </button>
+              }
               <button
                 type="button"
-                (click)="showCreateModal = true"
-                class="btn btn-primary text-xs font-semibold py-2.5 px-4 shadow-xs flex items-center gap-2 cursor-pointer"
-              >
-                <span>➕</span>
-                <span>Attribuer une Filière</span>
-              </button>
-              <button
-                type="button"
-                (click)="chargerDonnees()"
-                [disabled]="loading"
+                (click)="mainTab === 'referentiel' ? chargerReferentielFilieres() : chargerDonnees()"
+                [disabled]="loading || loadingReferentiel"
                 class="btn btn-ghost text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer"
               >
-                <span [class.animate-spin]="loading">🔄</span>
+                <span [class.animate-spin]="loading || loadingReferentiel">🔄</span>
                 <span>Actualiser</span>
               </button>
             </div>
           </div>
         </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- SÉLECTEUR D'ONGLETS PRINCIPAL : CLASSES VS RÉFÉRENTIEL          -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="flex items-center gap-3 border-b border-[#D7DBDE] pb-2 overflow-x-auto">
+          <button
+            type="button"
+            (click)="mainTab = 'classes'"
+            [class.border-b-2]="mainTab === 'classes'"
+            [class.border-[#1C75BC]]="mainTab === 'classes'"
+            [class.text-[#1C75BC]]="mainTab === 'classes'"
+            [class.font-bold]="mainTab === 'classes'"
+            class="px-4 py-2.5 text-xs text-[#4B5157] hover:text-[#1B1D1F] transition-all flex items-center gap-2 cursor-pointer shrink-0"
+          >
+            <span>🏛️</span>
+            <span>Classes & Formations Déployées</span>
+            <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono">{{ filieres.length }}</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="mainTab = 'referentiel'"
+            [class.border-b-2]="mainTab === 'referentiel'"
+            [class.border-[#1C75BC]]="mainTab === 'referentiel'"
+            [class.text-[#1C75BC]]="mainTab === 'referentiel'"
+            [class.font-bold]="mainTab === 'referentiel'"
+            class="px-4 py-2.5 text-xs text-[#4B5157] hover:text-[#1B1D1F] transition-all flex items-center gap-2 cursor-pointer shrink-0"
+          >
+            <span>📚</span>
+            <span>Référentiel National des Filières</span>
+            <span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-[#1C75BC] font-mono font-bold">{{ referentielFilieres.length }}</span>
+          </button>
+        </div>
+
+        @if (mainTab === 'classes') {
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- KPIS GLOBAUX RÉSEAU                                            -->
@@ -291,6 +337,168 @@ import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement } from '../../../co
             </div>
           }
         </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- ONGLET 2 : GESTION DU RÉFÉRENTIEL NATIONAL DES FILIÈRES         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        @if (mainTab === 'referentiel') {
+          <div class="space-y-6">
+            <!-- Statistiques Référentiel -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#124F80]">
+                <p class="text-2xl md:text-3xl font-black text-[#124F80] font-mono leading-tight">{{ referentielFilieres.length }}</p>
+                <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Filières Référentielles</p>
+                <p class="text-[10px] text-[#4B5157] mt-0.5">catalogue national</p>
+              </div>
+
+              <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#276B44]">
+                <p class="text-2xl md:text-3xl font-black text-[#276B44] font-mono leading-tight">{{ filieresActivesCount }}</p>
+                <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Filières Actives</p>
+                <p class="text-[10px] text-[#4B5157] mt-0.5">disponibles pour rattachement</p>
+              </div>
+
+              <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#1C75BC]">
+                <p class="text-2xl md:text-3xl font-black text-[#1C75BC] font-mono leading-tight">{{ totalClassesRattachees }}</p>
+                <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Classes Rattachées</p>
+                <p class="text-[10px] text-[#4B5157] mt-0.5">réparties en antennes</p>
+              </div>
+
+              <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#F0791E]">
+                <p class="text-2xl md:text-3xl font-black text-[#F0791E] font-mono leading-tight">{{ totalModulesRattaches }}</p>
+                <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Modules Déployés</p>
+                <p class="text-[10px] text-[#4B5157] mt-0.5">associés aux filières</p>
+              </div>
+            </div>
+
+            <!-- Liste et Gestion des Filières -->
+            <div class="bg-white border border-[#D7DBDE] rounded-xs shadow-xs p-6 space-y-6">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#D7DBDE]">
+                <div>
+                  <h2 class="text-lg font-bold text-[#1B1D1F] flex items-center gap-2">
+                    <span>📚</span> Répertoire National des Filières & Référentiels
+                    <span class="px-2 py-0.5 text-xs bg-[#E7F1FA] text-[#1C75BC] rounded-xs font-mono font-bold">
+                      {{ filieresReferentielFiltrees.length }}
+                    </span>
+                  </h2>
+                  <p class="text-xs text-[#4B5157] mt-1">
+                    Gérez directement les filières officielles que chaque antenne associe à ses formations et modules pédagogiques.
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <input
+                    type="text"
+                    [(ngModel)]="searchReferentielQuery"
+                    placeholder="Rechercher code, libellé..."
+                    class="p-2 border border-[#9AA1A8] rounded-xs text-xs focus:outline-none focus:border-[#1C75BC] w-64 bg-white"
+                  />
+                  <button
+                    type="button"
+                    (click)="ouvrirNouvelleFiliereModal()"
+                    class="btn btn-primary text-xs font-semibold py-2 px-3 flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <span>➕</span>
+                    <span>Ajouter une Filière</span>
+                  </button>
+                </div>
+              </div>
+
+              @if (loadingReferentiel) {
+                <div class="py-12 text-center text-[#4B5157]">
+                  <div class="inline-block animate-spin text-2xl mb-2">🔄</div>
+                  <p class="text-xs font-semibold">Chargement du référentiel national...</p>
+                </div>
+              } @else if (filieresReferentielFiltrees.length === 0) {
+                <div class="py-12 text-center text-[#4B5157]">
+                  <p class="text-sm font-semibold">Aucune filière trouvée dans le référentiel.</p>
+                  <p class="text-xs mt-1">Cliquez sur « Ajouter une Filière » pour créer la première discipline nationale.</p>
+                </div>
+              } @else {
+                <div class="overflow-x-auto border border-[#D7DBDE] rounded-xs">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-[#F5F6F7] text-[#1B1D1F] font-bold border-b border-[#D7DBDE]">
+                      <tr>
+                        <th class="py-3 px-4">Code</th>
+                        <th class="py-3 px-4">Intitulé Officiel</th>
+                        <th class="py-3 px-4">Description</th>
+                        <th class="py-3 px-4 text-center">Ordre</th>
+                        <th class="py-3 px-4 text-center">Classes Rattachées</th>
+                        <th class="py-3 px-4 text-center">Statut</th>
+                        <th class="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[#D7DBDE]">
+                      @for (fil of filieresReferentielFiltrees; track fil.id) {
+                        <tr class="hover:bg-[#F9FAFB] transition-colors">
+                          <td class="py-3 px-4">
+                            <span class="px-2.5 py-1 rounded-xs bg-[#E7F1FA] text-[#1C75BC] font-mono font-bold text-xs border border-[#1C75BC]/30">
+                              {{ fil.code }}
+                            </span>
+                          </td>
+                          <td class="py-3 px-4 font-bold text-[#1B1D1F]">
+                            {{ fil.libelle }}
+                          </td>
+                          <td class="py-3 px-4 text-[#4B5157] max-w-xs truncate">
+                            {{ fil.description || '— Aucune description —' }}
+                          </td>
+                          <td class="py-3 px-4 text-center font-mono text-[#4B5157]">
+                            {{ fil.ordre || 0 }}
+                          </td>
+                          <td class="py-3 px-4 text-center">
+                            <span class="font-bold text-[#124F80]">
+                              {{ getClassesCountForFiliere(fil.id) }}
+                            </span>
+                            <span class="text-[10px] text-slate-400 block">classe(s)</span>
+                          </td>
+                          <td class="py-3 px-4 text-center">
+                            @if (fil.actif) {
+                              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E7F1EA] text-[#276B44] border border-[#276B44]/30">
+                                ● Active
+                              </span>
+                            } @else {
+                              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 border border-gray-300">
+                                ○ Inactive
+                              </span>
+                            }
+                          </td>
+                          <td class="py-3 px-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                (click)="ouvrirModifierFiliereModal(fil)"
+                                class="btn btn-ghost text-[11px] py-1 px-2 border border-[#D7DBDE] text-[#124F80] hover:bg-slate-50 cursor-pointer"
+                                title="Modifier cette filière"
+                              >
+                                ✏️ Modifier
+                              </button>
+                              <button
+                                type="button"
+                                (click)="toggleActifFiliere(fil)"
+                                class="btn btn-ghost text-[11px] py-1 px-2 border border-[#D7DBDE] hover:bg-slate-50 cursor-pointer"
+                                [title]="fil.actif ? 'Désactiver' : 'Activer'"
+                              >
+                                {{ fil.actif ? '⏸️' : '▶️' }}
+                              </button>
+                              <button
+                                type="button"
+                                (click)="supprimerFiliere(fil)"
+                                class="btn btn-ghost text-[11px] py-1 px-2 border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
+                                title="Supprimer ou désactiver"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </div>
+        }
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- MODAL 1 : ATTRIBUTION / CRÉATION CENTRALE D'UNE FILIÈRE        -->
@@ -338,6 +546,21 @@ import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement } from '../../../co
                     placeholder="Ex: Génie Logiciel & Systèmes d'Information — Promo 2026"
                     class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC]"
                   />
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-[#1B1D1F] mb-1">Filière Référentielle de Rattachement (Optionnel)</label>
+                  <select
+                    [(ngModel)]="nouvelleFiliere.formationReferentielId"
+                    name="formationReferentielId"
+                    class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC] bg-white"
+                  >
+                    <option value="">-- Sans rattachement officiel direct --</option>
+                    @for (fil of referentielFilieres; track fil.id) {
+                      <option [value]="fil.id">{{ fil.libelle }} ({{ fil.code }})</option>
+                    }
+                  </select>
+                  <p class="text-[10px] text-slate-400 mt-1">Lie cette classe au tronc commun national pour standardiser les modules pédagogiques.</p>
                 </div>
 
                 <div>
@@ -619,6 +842,107 @@ import { FiliereSuiviItem, FiliereSuiviDetail, Etablissement } from '../../../co
           </div>
         }
 
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- MODAL 3 : CRÉER / MODIFIER UNE FILIÈRE RÉFÉRENTIELLE          -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        @if (showFiliereModal) {
+          <div class="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4 animate-fade-in">
+            <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-2xl w-full max-w-lg overflow-hidden text-xs">
+              <div class="p-5 border-b border-[#D7DBDE] bg-[#F5F6F7] flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-[#1B1D1F]">
+                    {{ isEditingFiliere ? 'Modifier la Filière Référentielle' : 'Ajouter une Filière Nationale' }}
+                  </h3>
+                  <p class="text-[11px] text-[#4B5157] mt-0.5">
+                    Référentiel national des compétences et spécialités officielles.
+                  </p>
+                </div>
+                <button (click)="showFiliereModal = false" class="text-gray-400 hover:text-gray-700 font-bold text-base cursor-pointer">
+                  ✕
+                </button>
+              </div>
+
+              <form (ngSubmit)="sauvegarderFiliere()" class="p-6 space-y-4">
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-semibold text-[#1B1D1F] mb-1">Code National *</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="filiereForm.code"
+                      name="code"
+                      required
+                      placeholder="Ex: INFO, ELEC"
+                      class="w-full p-2.5 border border-[#9AA1A8] rounded-xs font-mono font-bold uppercase focus:outline-none focus:border-[#1C75BC]"
+                    />
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block font-semibold text-[#1B1D1F] mb-1">Intitulé Officiel *</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="filiereForm.libelle"
+                      name="libelle"
+                      required
+                      placeholder="Ex: Informatique & Réseaux"
+                      class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-[#1B1D1F] mb-1">Description & Spécialités</label>
+                  <textarea
+                    rows="3"
+                    [(ngModel)]="filiereForm.description"
+                    name="description"
+                    placeholder="Description du programme cadre, débouchés visés et compétences nationales..."
+                    class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC]"
+                  ></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 items-center">
+                  <div>
+                    <label class="block font-semibold text-[#1B1D1F] mb-1">Ordre d'affichage</label>
+                    <input
+                      type="number"
+                      [(ngModel)]="filiereForm.ordre"
+                      name="ordre"
+                      class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC]"
+                    />
+                  </div>
+                  <div class="pt-5">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="filiereForm.actif"
+                        name="actif"
+                        class="w-4 h-4 text-[#1C75BC] rounded-xs"
+                      />
+                      <span class="font-semibold text-[#1B1D1F]">Filière active</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="p-4 border-t border-[#D7DBDE] bg-[#F5F6F7] flex items-center justify-end gap-3 -mx-6 -mb-6 mt-6">
+                  <button
+                    type="button"
+                    (click)="showFiliereModal = false"
+                    class="btn btn-secondary text-xs py-2 px-4 font-semibold cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    [disabled]="isSavingFiliere || !filiereForm.code || !filiereForm.libelle"
+                    class="btn btn-primary text-xs py-2 px-4 font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <span>{{ isSavingFiliere ? 'Sauvegarde...' : 'Enregistrer la Filière' }}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        }
+
       </div>
     </app-main-layout>
   `,
@@ -628,7 +952,28 @@ export class FilieresCentralComponent implements OnInit, OnDestroy {
   etablissements: Etablissement[] = [];
   loading = false;
 
-  // Filtres
+  // Navigation principale
+  mainTab: 'classes' | 'referentiel' = 'classes';
+
+  // Référentiel National des Filières
+  referentielFilieres: FiliereReferentiel[] = [];
+  loadingReferentiel = false;
+  searchReferentielQuery = '';
+
+  // Modale Filière Référentiel
+  showFiliereModal = false;
+  isEditingFiliere = false;
+  isSavingFiliere = false;
+  filiereForm = {
+    id: '',
+    code: '',
+    libelle: '',
+    description: '',
+    ordre: 0,
+    actif: true,
+  };
+
+  // Filtres Classes
   selectedEtablissementId = 'ALL';
   selectedStatut = 'ALL';
   searchQuery = '';
@@ -640,6 +985,7 @@ export class FilieresCentralComponent implements OnInit, OnDestroy {
     etablissementId: '',
     titre: '',
     description: '',
+    formationReferentielId: '',
   };
 
   // Modal Détail
@@ -658,12 +1004,14 @@ export class FilieresCentralComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.chargerDonnees();
     this.chargerEtablissements();
+    this.chargerReferentielFilieres();
 
-    // Auto-refresh en temps réel sur les événements SSE de type FILIERE_UPDATE
+    // Auto-refresh en temps réel sur les événements SSE
     this.notifSub = this.notifications.messages().subscribe({
       next: (msg) => {
         if (msg && (msg.type === 'FILIERE_UPDATE' || msg.type === 'FORMATION_UPDATE')) {
           this.chargerDonnees();
+          this.chargerReferentielFilieres();
         }
       },
     });
@@ -696,6 +1044,156 @@ export class FilieresCentralComponent implements OnInit, OnDestroy {
     this.etablissementsService.getAll().subscribe({
       next: (etabs) => (this.etablissements = etabs),
       error: () => {},
+    });
+  }
+
+  chargerReferentielFilieres() {
+    this.loadingReferentiel = true;
+    this.pedagogie.getReferentielFilieres(true).subscribe({
+      next: (fils) => {
+        this.referentielFilieres = fils || [];
+        this.loadingReferentiel = false;
+      },
+      error: () => {
+        this.loadingReferentiel = false;
+        this.toast.error('Erreur lors du chargement des filières du référentiel.');
+      },
+    });
+  }
+
+  get filieresReferentielFiltrees(): FiliereReferentiel[] {
+    if (!this.searchReferentielQuery.trim()) return this.referentielFilieres;
+    const q = this.searchReferentielQuery.toLowerCase().trim();
+    return this.referentielFilieres.filter(
+      (f) =>
+        f.code?.toLowerCase().includes(q) ||
+        f.libelle?.toLowerCase().includes(q) ||
+        f.description?.toLowerCase().includes(q),
+    );
+  }
+
+  get filieresActivesCount(): number {
+    return this.referentielFilieres.filter((f) => f.actif).length;
+  }
+
+  get totalClassesRattachees(): number {
+    return this.filieres.filter((f) => !!f.formationReferentiel?.filiere?.id).length;
+  }
+
+  get totalModulesRattaches(): number {
+    return this.filieres.reduce((acc, f) => acc + (f.modulesCount || 0), 0);
+  }
+
+  getClassesCountForFiliere(filiereId: string): number {
+    return this.filieres.filter((f) => f.formationReferentiel?.filiere?.id === filiereId).length;
+  }
+
+  ouvrirNouvelleFiliereModal() {
+    this.isEditingFiliere = false;
+    this.filiereForm = {
+      id: '',
+      code: '',
+      libelle: '',
+      description: '',
+      ordre: this.referentielFilieres.length + 1,
+      actif: true,
+    };
+    this.showFiliereModal = true;
+  }
+
+  ouvrirModifierFiliereModal(fil: FiliereReferentiel) {
+    this.isEditingFiliere = true;
+    this.filiereForm = {
+      id: fil.id,
+      code: fil.code,
+      libelle: fil.libelle,
+      description: fil.description || '',
+      ordre: fil.ordre || 0,
+      actif: fil.actif ?? true,
+    };
+    this.showFiliereModal = true;
+  }
+
+  sauvegarderFiliere() {
+    if (!this.filiereForm.code.trim() || !this.filiereForm.libelle.trim()) {
+      this.toast.info('Le code et le libellé sont obligatoires.');
+      return;
+    }
+
+    this.isSavingFiliere = true;
+
+    if (this.isEditingFiliere) {
+      this.pedagogie
+        .updateFiliere(this.filiereForm.id, {
+          code: this.filiereForm.code.trim().toUpperCase(),
+          libelle: this.filiereForm.libelle.trim(),
+          description: this.filiereForm.description.trim() || undefined,
+          ordre: Number(this.filiereForm.ordre) || 0,
+          actif: this.filiereForm.actif,
+        })
+        .subscribe({
+          next: () => {
+            this.isSavingFiliere = false;
+            this.showFiliereModal = false;
+            this.toast.success('Filière mise à jour avec succès.');
+            this.chargerReferentielFilieres();
+            this.chargerDonnees();
+          },
+          error: (err) => {
+            this.isSavingFiliere = false;
+            this.toast.error(err?.error?.message || 'Erreur lors de la mise à jour de la filière.');
+          },
+        });
+    } else {
+      this.pedagogie
+        .createFiliere({
+          code: this.filiereForm.code.trim().toUpperCase(),
+          libelle: this.filiereForm.libelle.trim(),
+          description: this.filiereForm.description.trim() || undefined,
+          ordre: Number(this.filiereForm.ordre) || 0,
+        })
+        .subscribe({
+          next: () => {
+            this.isSavingFiliere = false;
+            this.showFiliereModal = false;
+            this.toast.success('Nouvelle filière créée avec succès dans le référentiel.');
+            this.chargerReferentielFilieres();
+            this.chargerDonnees();
+          },
+          error: (err) => {
+            this.isSavingFiliere = false;
+            this.toast.error(err?.error?.message || 'Erreur lors de la création de la filière.');
+          },
+        });
+    }
+  }
+
+  toggleActifFiliere(fil: FiliereReferentiel) {
+    const nouveauStatut = !fil.actif;
+    this.pedagogie.updateFiliere(fil.id, { actif: nouveauStatut }).subscribe({
+      next: () => {
+        fil.actif = nouveauStatut;
+        this.toast.success(`Filière ${nouveauStatut ? 'activée' : 'désactivée'} avec succès.`);
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Erreur lors du changement de statut.');
+      },
+    });
+  }
+
+  supprimerFiliere(fil: FiliereReferentiel) {
+    const conf = confirm(`Êtes-vous sûr de vouloir supprimer ou désactiver la filière "${fil.libelle}" (${fil.code}) ?`);
+    if (!conf) return;
+
+    this.pedagogie.deleteFiliere(fil.id).subscribe({
+      next: (res) => {
+        this.toast.success(res.message || 'Filière mise à jour avec succès.');
+        this.chargerReferentielFilieres();
+        this.chargerDonnees();
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Impossible de supprimer cette filière.');
+      },
     });
   }
 
@@ -735,12 +1233,13 @@ export class FilieresCentralComponent implements OnInit, OnDestroy {
         titre: this.nouvelleFiliere.titre.trim(),
         description: this.nouvelleFiliere.description.trim(),
         etablissementId: this.nouvelleFiliere.etablissementId,
+        formationReferentielId: this.nouvelleFiliere.formationReferentielId || undefined,
       })
       .subscribe({
         next: () => {
           this.creatingFiliere = false;
           this.showCreateModal = false;
-          this.nouvelleFiliere = { etablissementId: '', titre: '', description: '' };
+          this.nouvelleFiliere = { etablissementId: '', titre: '', description: '', formationReferentielId: '' };
           this.toast.success('Filière attribuée avec succès à l\'établissement.');
           this.chargerDonnees();
         },

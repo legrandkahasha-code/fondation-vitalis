@@ -15,14 +15,17 @@ import {
   LandingPageTemoignage,
   LandingPageActualite,
   PublicLandingData,
+  CategorieFormation,
 } from '../../core/models';
 import { buildWhatsappUrl, buildWhatsappUrlLenient, DEFAULT_WHATSAPP_MESSAGE, subscribeLandingSettingsChanged, isWhatsappEnabled } from '../../core/utils/whatsapp.util';
 
 export interface FormationDisplayItem {
   id: string;
   titre: string;
-  categorie: 'tech' | 'gestion' | 'technique';
+  code?: string;
+  categorie: string;
   categorieNom: string;
+  couleur?: string;
   description: string;
   duree: string;
   modulesCount: number;
@@ -30,6 +33,8 @@ export interface FormationDisplayItem {
   debouches: string;
   prochaineSession: string;
   prerequis: string;
+  aLaUne?: boolean;
+  badgeTexte?: string;
 }
 
 export interface FaqDisplayItem {
@@ -358,9 +363,17 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   private statsObserver?: IntersectionObserver;
   private countUpDone: boolean = false;
 
+  // Catégories officielles des formations
+  categoriesFormation: CategorieFormation[] = [
+    { id: '1', code: 'tech', libelle: 'Informatique & Technologies', description: 'Développement, Réseaux & IA', couleur: '#1C75BC', icone: 'code', ordre: 1, actif: true },
+    { id: '2', code: 'gestion', libelle: 'Gestion & Management', description: 'Management, Comptabilité & Audit', couleur: '#F0791E', icone: 'briefcase', ordre: 2, actif: true },
+    { id: '3', code: 'technique', libelle: 'Technique, Énergie & BTP', description: 'Génie électrique, Maintenance & BTP', couleur: '#276B44', icone: 'tool', ordre: 3, actif: true },
+  ];
+
   // Formations
   formationsList: FormationDisplayItem[] = [];
   formationsFiltrees: FormationDisplayItem[] = [];
+
 
   isVideoLocal(url?: string): boolean {
     if (!url) return false;
@@ -583,43 +596,39 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
           this.temoignagesList = data.temoignages;
         }
 
+        if (data.categories && data.categories.length > 0) {
+          this.categoriesFormation = data.categories;
+        }
+
         if (data.formations && data.formations.length > 0) {
           this.formationsList = data.formations.map((f: any) => {
-            const titreLower = (f.titre || '').toLowerCase();
-            let cat: 'tech' | 'gestion' | 'technique' = f.categorieOfficielle || 'tech';
-            let catNom = f.filiereNom || (cat === 'gestion' ? 'Gestion & Management' : cat === 'technique' ? 'Technique & Énergie' : 'Informatique & Tech');
-            let badge = cat === 'gestion' ? 'tag attente' : cat === 'technique' ? 'tag valide' : 'tag info';
-            let debouches = cat === 'gestion' ? 'Manager, Gestionnaire, Chef de projet' : cat === 'technique' ? 'Technicien Supérieur, Installateur' : 'Développeur, Administrateur Systèmes, Spécialiste Tech';
-
-            if (!f.categorieOfficielle) {
-              if (titreLower.includes('gestion') || titreLower.includes('marché') || titreLower.includes('compta') || titreLower.includes('management')) {
-                cat = 'gestion';
-                catNom = 'Gestion & Management';
-                badge = 'tag attente';
-                debouches = 'Manager, Gestionnaire, Chef de projet';
-              } else if (titreLower.includes('électric') || titreLower.includes('btp') || titreLower.includes('énergie') || titreLower.includes('mécanique')) {
-                cat = 'technique';
-                catNom = 'Technique & Énergie';
-                badge = 'tag valide';
-                debouches = 'Technicien Supérieur, Installateur';
-              }
-            }
+            const catCode: string = f.categorieOfficielle || f.categorie || 'tech';
+            const catObj = this.categoriesFormation.find((c) => c.code.toLowerCase() === catCode.toLowerCase());
+            const catNom = catObj?.libelle || f.filiereNom || (catCode === 'gestion' ? 'Gestion & Management' : catCode === 'technique' ? 'Technique & Énergie' : 'Informatique & Tech');
+            const couleur = catObj?.couleur || (catCode === 'gestion' ? '#F0791E' : catCode === 'technique' ? '#276B44' : '#1C75BC');
+            const badge = catCode === 'gestion' ? 'tag attente' : catCode === 'technique' ? 'tag valide' : 'tag info';
+            const debouches = f.debouches || (catCode === 'gestion' ? 'Manager, Gestionnaire, Chef de projet' : catCode === 'technique' ? 'Technicien Supérieur, Installateur' : 'Développeur, Administrateur Systèmes, Spécialiste Tech');
 
             return {
               id: f.id,
               titre: f.titre,
-              categorie: cat,
+              code: f.code,
+              categorie: catCode,
               categorieNom: catNom,
-              description: f.description || 'Formation certifiante d\'excellence validée par le Ministère.',
-              duree: '40 Heures',
+              couleur: couleur,
+              description: f.description || 'Formation certifiante d\'excellence validée sous la tutelle du Ministère de la Formation Professionnelle.',
+              duree: f.duree || '40 Heures',
               modulesCount: f.modulesCount || 4,
               badgeClass: badge,
               debouches: debouches,
-              prochaineSession: 'Inscriptions ouvertes',
-              prerequis: f.niveauNom || 'Niveau secondaire ou expérience',
+              prochaineSession: f.badgeTexte || (f.aLaUne ? '⭐ Formation Vedette' : 'Session ouverte'),
+              prerequis: f.prerequis || f.niveauNom || 'Niveau secondaire ou test de positionnement',
+              aLaUne: Boolean(f.aLaUne),
+              badgeTexte: f.badgeTexte || 'Session ouverte',
             };
           });
         }
+
 
         this.isLoadingLanding = false;
         this.filtrerFormations();

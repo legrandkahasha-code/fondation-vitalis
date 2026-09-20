@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete, Param, Body, Req, Query, UseGuards, UseInterceptors, UploadedFile, ParseUUIDPipe,
+  Controller, Get, Post, Put, Patch, Delete, Param, Body, Req, Query, UseGuards, UseInterceptors, UploadedFile, ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -17,6 +17,8 @@ import {
   CreateCoursDto,
   CreateEvaluationDto,
   SubmitNoteDto,
+  CreateCategorieFormationDto,
+  UpdateCategorieFormationDto,
 } from './dto/pedagogie.dto';
 import {
   UpdateModuleDto,
@@ -52,8 +54,16 @@ export class PedagogieController {
 
   @Get('formations')
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR, Role.APPRENANT, Role.PERSONNEL_ADMINISTRATIF)
-  getFormations(@Req() req: any) {
-    return this.service.getFormations(req.user);
+  getFormations(
+    @Req() req: any,
+    @Query('search') search?: string,
+    @Query('filiereId') filiereId?: string,
+    @Query('etablissementId') etablissementId?: string,
+    @Query('categorie') categorie?: string,
+    @Query('publieSurLanding') publieSurLanding?: string,
+    @Query('actif') actif?: string,
+  ) {
+    return this.service.getFormations(req.user, { search, filiereId, etablissementId, categorie, publieSurLanding, actif });
   }
 
   @Get('formations/:id')
@@ -72,6 +82,28 @@ export class PedagogieController {
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
   updateFormation(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateFormationDto, @Req() req: any) {
     return this.service.updateFormation(id, dto, req.user);
+  }
+
+  @Patch('formations/:id/toggle-landing')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  toggleLanding(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.toggleLanding(id, req.user);
+  }
+
+  @Patch('formations/:id/toggle-une')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  toggleUne(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.toggleUne(id, req.user);
+  }
+
+  @Post('formations/:id/deployer')
+  @Roles(Role.ADMIN_CENTRE)
+  deployerFormation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('etablissementIds') etablissementIds: string[],
+    @Req() req: any,
+  ) {
+    return this.service.deployerFormationVersEtablissements(id, etablissementIds, req.user);
   }
 
   @Delete('formations/:id')
@@ -216,4 +248,32 @@ export class PedagogieController {
   deleteEvaluation(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.deleteEvaluation(id, req.user);
   }
+
+  // ====================================
+  // CATEGORIES DE FORMATION
+  // ====================================
+  @Get('categories')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR, Role.APPRENANT, Role.PERSONNEL_ADMINISTRATIF)
+  getCategories(@Query('includeInactive') includeInactive?: string) {
+    return this.service.getCategories(includeInactive === 'true');
+  }
+
+  @Post('categories')
+  @Roles(Role.ADMIN_CENTRE)
+  createCategorie(@Body() dto: CreateCategorieFormationDto, @Req() req: any) {
+    return this.service.createCategorie(dto, req.user);
+  }
+
+  @Put('categories/:id')
+  @Roles(Role.ADMIN_CENTRE)
+  updateCategorie(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateCategorieFormationDto, @Req() req: any) {
+    return this.service.updateCategorie(id, dto, req.user);
+  }
+
+  @Delete('categories/:id')
+  @Roles(Role.ADMIN_CENTRE)
+  deleteCategorie(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.deleteCategorie(id, req.user);
+  }
 }
+

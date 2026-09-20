@@ -7,15 +7,20 @@ import { environment } from '../../../environments/environment';
 export interface SessionAdmission {
   id: string;
   libelle: string;
+  description?: string;
+  piecesRequises?: string[];
+  etablissementsPartages?: string[];
   statut: string;
   modeSelection: string;
   capacite: number;
   dateOuverture: string;
   dateFermeture: string;
   dateDebutFormation: string;
-  filiere: { libelle: string };
-  niveau: { libelle: string };
-  etablissement: { id: string; nom: string; codeAntenne: string; pays?: string };
+  delaiConfirmationJours?: number;
+  filiere: { id?: string; libelle: string };
+  niveau: { id?: string; libelle: string };
+  formation?: { id: string; titre: string } | null;
+  etablissement: { id: string; nom: string; codeAntenne: string; pays?: string; typeEtablissement?: string };
   _count?: { candidatures: number };
 }
 
@@ -127,8 +132,14 @@ export class AdmissionService {
     return this.getLocal<AdmissionReference[]>(this.CACHE_KEYS.NIVEAUX);
   }
 
-  getSessionsPubliques(): Observable<SessionAdmission[]> {
-    return this.http.get<SessionAdmission[]>(`${this.url}/sessions-admission/public`).pipe(
+  /**
+   * Sessions publiques OUVERTES.
+   * Si etablissementId est fourni, le backend filtre pour ne retourner que
+   * les sessions de cet établissement + celles qui lui sont partagées.
+   */
+  getSessionsPubliques(etablissementId?: string): Observable<SessionAdmission[]> {
+    const params = etablissementId ? `?etablissementId=${encodeURIComponent(etablissementId)}` : '';
+    return this.http.get<SessionAdmission[]>(`${this.url}/sessions-admission/public${params}`).pipe(
       tap((sessions) => this.setLocal(this.CACHE_KEYS.SESSIONS_PUB, sessions))
     );
   }
@@ -191,8 +202,29 @@ export class AdmissionService {
     return this.http.post<SessionAdmission>(`${this.url}/sessions-admission`, data);
   }
 
+  /** Mettre à jour les infos d'une session (description, pièces requises, capacité, partage) */
+  updateSession(id: string, data: Partial<{
+    libelle: string;
+    description: string;
+    piecesRequises: string[];
+    capacite: number;
+    etablissementsPartages: string[];
+  }>): Observable<SessionAdmission> {
+    return this.http.patch<SessionAdmission>(`${this.url}/sessions-admission/${id}`, data);
+  }
+
   updateSessionStatus(id: string, statut: string): Observable<SessionAdmission> {
     return this.http.patch<SessionAdmission>(`${this.url}/sessions-admission/${id}/statut`, { statut });
+  }
+
+  /** Partager une session avec une liste d'établissements (Admin Central uniquement) */
+  partagerSession(id: string, etablissementIds: string[]): Observable<SessionAdmission> {
+    return this.http.patch<SessionAdmission>(`${this.url}/sessions-admission/${id}/partager`, { etablissementIds });
+  }
+
+  /** Obtenir le détail d'une session par son id */
+  getSession(id: string): Observable<SessionAdmission> {
+    return this.http.get<SessionAdmission>(`${this.url}/sessions-admission/${id}`);
   }
 
   submitCandidature(id: string): Observable<Candidature> {

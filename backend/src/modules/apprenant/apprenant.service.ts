@@ -4,6 +4,9 @@ import { StorageService } from '../../common/services/storage.service';
 import { Role } from '../../common/enums/role.enum';
 import { PedagogieService } from '../pedagogie/pedagogie.service';
 import { CertificationService } from '../certification/certification.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { IdentityService } from '../admission/identity.service';
+import { CandidatureService } from '../admission/candidature.service';
 
 @Injectable()
 export class ApprenantService {
@@ -16,6 +19,9 @@ export class ApprenantService {
     private storage: StorageService,
     private pedagogieService: PedagogieService,
     private certificationService: CertificationService,
+    private notifications: NotificationsService,
+    private identityService: IdentityService,
+    private candidatureService: CandidatureService,
   ) {}
 
   /**
@@ -52,8 +58,41 @@ export class ApprenantService {
     }
   }
 
+  /**
+   * Garantit qu'un profil Apprenant existe pour cet utilisateur avec son matricule officiel
+   */
+  public async ensureApprenantProfile(user: any) {
+    if (this.identityService) {
+      return this.identityService.ensureProfileFromUser(user);
+    }
+    const existing = await this.prisma.apprenant.findFirst({
+      where: { OR: [{ utilisateurId: user.id }, { email: user.email }] },
+    });
+    if (existing) {
+      if (!existing.utilisateurId) {
+        return this.prisma.apprenant.update({
+          where: { id: existing.id },
+          data: { utilisateurId: user.id },
+        });
+      }
+      return existing;
+    }
+    const count = await this.prisma.apprenant.count();
+    const matricule = `VIT-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
+    return this.prisma.apprenant.create({
+      data: {
+        matricule,
+        nom: user.nom || 'Apprenant',
+        prenom: user.prenom || '',
+        email: user.email,
+        utilisateurId: user.id,
+        etablissementOrigineId: user.etablissementId,
+      },
+    });
+  }
+
   private async getEnrolledFormationIds(user: any): Promise<string[]> {
-    const profile = await this.prisma.apprenant.findUnique({ where: { utilisateurId: user.id } });
+    const profile = await this.ensureApprenantProfile(user);
     if (!profile) return [];
     const inscriptions = await this.prisma.inscription.findMany({
       where: {
@@ -84,7 +123,9 @@ export class ApprenantService {
         etablissementId: user.etablissementId,
       };
     }
-    return { etablissementId: user.etablissementId };
+    // Si l'apprenant n'est inscrit à aucune formation, ne pas exposer arbitrairement le catalogue
+    // complet comme des formations déjà affectées
+    return { id: { in: ['00000000-0000-0000-0000-000000000000'] } };
   }
 
   private async assertFormationAccess(formationId: string, user: any, preloadedFormation?: any) {
@@ -128,41 +169,49 @@ export class ApprenantService {
       return;
     }
 
-    // 4. Inscription automatique au premier accès à la formation de son établissement si non encore inscrit
-    let profile = await this.prisma.apprenant.findUnique({ where: { utilisateurId: user.id } });
-    if (!profile) {
-      try {
-        const count = await this.prisma.apprenant.count();
-        const matricule = `VIT-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
-        profile = await this.prisma.apprenant.create({
-          data: {
-            utilisateurId: user.id,
-            matricule,
-            nom: user.nom || 'Apprenant',
-            prenom: user.prenom || '',
-            email: user.email,
-          },
-        });
-      } catch (err) {
-        profile = await this.prisma.apprenant.findUnique({ where: { utilisateurId: user.id } });
+    // 4. Vérifier si l'apprenant dispose d'une candidature formellement admise ou confirmée
+    const profile = await this.prisma.apprenant.findUnique({ where: { utilisateurId: user.id } });
+    if (profile) {
+      const candidatureValidee = await this.prisma.candidature.findFirst({
+        where: {
+          apprenantId: profile.id,
+          session: { formationId },
+          statut: { in: ['CONFIRMEE', 'INSCRITE', 'ADMISE'] },
+        },
+        select: { id: true, sessionId: true },
+      });
+
+      if (candidatureValidee) {
+        try {
+          await this.prisma.inscription.upsert({
+            where: {
+              apprenantId_formationId: {
+                apprenantId: profile.id,
+                formationId,
+              },
+            },
+            update: { statut: 'ACTIVE' },
+            create: {
+              apprenantId: profile.id,
+              formationId,
+              candidatureId: candidatureValidee.id,
+              sessionId: candidatureValidee.sessionId,
+              statut: 'ACTIVE',
+            },
+          });
+          this.invalidateUserCache(user.id);
+          this.setCache(accessKey, true, 300_000);
+          return;
+        } catch (err) {
+          this.setCache(accessKey, true, 300_000);
+          return;
+        }
       }
     }
 
-    if (profile) {
-      try {
-        await this.prisma.inscription.create({
-          data: {
-            apprenantId: profile.id,
-            formationId,
-            statut: 'ACTIVE',
-          },
-        });
-        this.invalidateUserCache(user.id);
-        this.setCache(accessKey, true, 300_000);
-      } catch (err) {
-        this.setCache(accessKey, true, 300_000);
-      }
-    }
+    throw new ForbiddenException(
+      "Accès non autorisé : vous devez être officiellement inscrit ou admis à cette formation pour accéder à son contenu pédagogique. Veuillez soumettre ou confirmer votre candidature via l'espace Candidatures.",
+    );
   }
 
   /**
@@ -279,6 +328,45 @@ export class ApprenantService {
       };
     });
 
+    // Recherche d'un quiz non passé si aucun devoir ni séance urgente
+    let prochaineEcheanceResult: any = null;
+    if (prochainDevoir) {
+      prochaineEcheanceResult = {
+        type: 'devoir',
+        id: prochainDevoir.id,
+        titre: prochainDevoir.titre,
+        formationTitre: prochainDevoir.module.formation.titre,
+        dateLimite: prochainDevoir.dateLimite,
+      };
+    } else if (prochaineSeance) {
+      prochaineEcheanceResult = {
+        type: 'seance',
+        id: prochaineSeance.id,
+        titre: prochaineSeance.titreActivite,
+        formationTitre: prochaineSeance.module.formation.titre,
+        dateLimite: prochaineSeance.dateHeureDebut,
+      };
+    } else if (moduleIds.length > 0) {
+      const prochainQuiz = await this.prisma.quiz.findFirst({
+        where: {
+          moduleId: { in: moduleIds },
+          tentatives: { none: { apprenantId: user.id } },
+        },
+        include: {
+          module: { include: { formation: { select: { titre: true } } } },
+        },
+      });
+      if (prochainQuiz) {
+        prochaineEcheanceResult = {
+          type: 'quiz',
+          id: prochainQuiz.id,
+          titre: prochainQuiz.titre,
+          formationTitre: prochainQuiz.module.formation.titre,
+          dateLimite: null,
+        };
+      }
+    }
+
     const result = {
       completionGlobale,
       formationsActives: formationsResume,
@@ -286,25 +374,73 @@ export class ApprenantService {
       nbQuizPasses,
       nbDevoirsDeposes: devoirsSoumis.length,
       nbCertificats,
-      prochaineEcheance: prochainDevoir
-        ? {
-            type: 'devoir',
-            id: prochainDevoir.id,
-            titre: prochainDevoir.titre,
-            formationTitre: prochainDevoir.module.formation.titre,
-            dateLimite: prochainDevoir.dateLimite,
-          }
-        : prochaineSeance
-        ? {
-            type: 'seance',
-            id: prochaineSeance.id,
-            titre: prochaineSeance.titreActivite,
-            formationTitre: prochaineSeance.module.formation.titre,
-            dateLimite: prochaineSeance.dateHeureDebut,
-          }
-        : null,
+      prochaineEcheance: prochaineEcheanceResult,
     };
     return this.setCache(cacheKey, result);
+  }
+
+  /**
+   * GET /apprenant/bootstrap
+   * Bundle unique d'agrégation haute performance : renvoie TOUTES les données
+   * de l'apprenant en 1 seule requête parallèle optimisée.
+   */
+  async getBootstrap(user: any) {
+    this.assertApprenant(user);
+    const cacheKey = `bootstrap:${user.id}`;
+    const cached = this.getFromCache<any>(cacheKey);
+    if (cached) return cached;
+
+    const profile = await this.ensureApprenantProfile(user);
+
+    const [
+      dashboard,
+      formations,
+      devoirs,
+      quiz,
+      seances,
+      assiduite,
+      certificats,
+      candidatures,
+      dossier,
+      formationsFiliere,
+    ] = await Promise.all([
+      this.getDashboard(user),
+      this.getFormations(user),
+      this.getAllDevoirs(user),
+      this.getAllQuiz(user),
+      this.getSeances(user),
+      this.getAssiduite(user),
+      this.getCertificats(user),
+      this.candidatureService ? this.candidatureService.listMine(user) : [],
+      this.getDossier(user),
+      this.getFormationsFiliere(user),
+    ]);
+
+    const result = {
+      profile: {
+        id: profile.id,
+        utilisateurId: user.id,
+        matricule: profile.matricule,
+        nom: user.nom || profile.nom,
+        prenom: user.prenom || profile.prenom,
+        email: user.email || profile.email,
+        telephone: profile.telephone || null,
+        dateNaissance: profile.dateNaissance || null,
+        etablissement: user.etablissement || null,
+      },
+      dashboard,
+      formations,
+      formationsFiliere,
+      devoirs,
+      quiz,
+      seances,
+      assiduite,
+      certificats,
+      candidatures,
+      dossier,
+    };
+
+    return this.setCache(cacheKey, result, 60_000);
   }
 
   /**
@@ -389,6 +525,148 @@ export class ApprenantService {
     });
 
     return this.setCache(cacheKey, result);
+  }
+
+  /**
+   * Récupère toutes les formations de l'établissement rattachées à la filière
+   * choisie par l'apprenant lors de sa candidature
+   */
+  async getFormationsFiliere(user: any) {
+    this.assertApprenant(user);
+    const cacheKey = `formations_filiere:${user.id}`;
+    const cached = this.getFromCache<any>(cacheKey);
+    if (cached) return cached;
+
+    const profile = await this.ensureApprenantProfile(user);
+    const userEtabId = user.etablissementId;
+
+    // 1. Détecter les filières choisies par l'apprenant via ses candidatures
+    const candidatures = await this.prisma.candidature.findMany({
+      where: { apprenantId: profile.id },
+      include: {
+        session: {
+          include: {
+            filiere: true,
+            niveau: true,
+            etablissement: { select: { id: true, nom: true, codeAntenne: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const filieresMap = new Map<string, { id: string; libelle: string; code: string; description?: string | null }>();
+    for (const c of candidatures) {
+      if (c.session?.filiere) {
+        filieresMap.set(c.session.filiere.id, {
+          id: c.session.filiere.id,
+          libelle: c.session.filiere.libelle,
+          code: c.session.filiere.code,
+          description: c.session.filiere.description,
+        });
+      }
+    }
+
+    const filiereIds = Array.from(filieresMap.keys());
+
+    // 2. Filtre des formations de l'établissement
+    const whereFormation: any = {
+      actif: true,
+    };
+
+    if (userEtabId) {
+      whereFormation.etablissementId = userEtabId;
+    }
+
+    if (filiereIds.length > 0) {
+      whereFormation.formationReferentiel = {
+        filiereId: { in: filiereIds },
+      };
+    }
+
+    // 3. Récupérer les formations
+    const formations = await this.prisma.formation.findMany({
+      where: whereFormation,
+      include: {
+        etablissement: { select: { id: true, nom: true, codeAntenne: true } },
+        formationReferentiel: {
+          include: {
+            filiere: true,
+            niveau: true,
+          },
+        },
+        modules: {
+          select: {
+            id: true,
+            titre: true,
+            ordre: true,
+            _count: { select: { cours: true, quiz: true, devoirs: true } },
+          },
+          orderBy: { ordre: 'asc' },
+        },
+      },
+      orderBy: [{ aLaUne: 'desc' }, { ordre: 'asc' }, { titre: 'asc' }],
+    });
+
+    // 4. Charger les inscriptions actives ou réservées de l'apprenant
+    const mesInscriptions = await this.prisma.inscription.findMany({
+      where: {
+        apprenantId: profile.id,
+        formationId: { in: formations.map((f) => f.id) },
+      },
+      select: {
+        id: true,
+        formationId: true,
+        statut: true,
+        dateDebut: true,
+      },
+    });
+
+    const inscriptionMap = new Map(mesInscriptions.map((i) => [i.formationId, i]));
+
+    // 5. Annoter le statut de chaque formation pour l'apprenant
+    const result = formations.map((f) => {
+      const insc = inscriptionMap.get(f.id);
+      const filiereId = f.formationReferentiel?.filiereId;
+      const filiereInfo = filiereId ? filieresMap.get(filiereId) : null;
+      const totalCours = f.modules.reduce((acc, m) => acc + (m._count?.cours || 0), 0);
+      const totalQuiz = f.modules.reduce((acc, m) => acc + (m._count?.quiz || 0), 0);
+      const totalDevoirs = f.modules.reduce((acc, m) => acc + (m._count?.devoirs || 0), 0);
+
+      return {
+        id: f.id,
+        titre: f.titre,
+        code: f.code,
+        description: f.description,
+        duree: f.duree,
+        categorie: f.categorie,
+        debouches: f.debouches,
+        prerequis: f.prerequis,
+        objectifs: f.objectifs,
+        fraisInscription: f.fraisInscription,
+        etablissement: f.etablissement,
+        filiere: f.formationReferentiel?.filiere || filiereInfo || null,
+        niveau: f.formationReferentiel?.niveau || null,
+        nbModules: f.modules.length,
+        totalCours,
+        totalQuiz,
+        totalDevoirs,
+        modulesApercu: f.modules.map((m) => ({ id: m.id, titre: m.titre })),
+        estInscrit: !!insc && ['ACTIVE', 'RESERVEE', 'TERMINEE'].includes(insc.statut),
+        statutInscription: insc ? insc.statut : null,
+        inscriptionId: insc ? insc.id : null,
+        pourcentage: null,
+      };
+    });
+
+    const response = {
+      filieresChoisies: Array.from(filieresMap.values()),
+      hasFiliereChoisie: filiereIds.length > 0,
+      totalFormations: result.length,
+      formations: result,
+    };
+
+    return this.setCache(cacheKey, response, 60_000);
   }
 
   /**
@@ -530,6 +808,17 @@ export class ApprenantService {
         };
       });
 
+      const evaluationsList = (m.evaluations || []).map((ev) => {
+        const n = ev.notes[0] || null;
+        return {
+          id: ev.id,
+          titre: ev.titre,
+          noteMaximale: Number(ev.noteMaximale || 20),
+          note: n ? Number(n.valeur) : null,
+          dateNotation: n?.dateNotation ?? null,
+        };
+      });
+
       return {
         id: m.id,
         titre: m.titre,
@@ -542,6 +831,7 @@ export class ApprenantService {
         cours: coursList,
         quiz: quizList,
         devoirs: devoirsList,
+        evaluations: evaluationsList,
       };
     });
 
@@ -1146,5 +1436,393 @@ export class ApprenantService {
     }
 
     return certificat;
+  }
+
+  /**
+   * Séances / Emploi du temps de l'apprenant pour ses formations inscrites
+   */
+  async getSeances(user: any) {
+    this.assertApprenant(user);
+    const enrolledIds = await this.getEnrolledFormationIds(user);
+    if (enrolledIds.length === 0) return [];
+
+    const seances = await this.prisma.seanceFormation.findMany({
+      where: {
+        module: {
+          formationId: { in: enrolledIds },
+        },
+      },
+      include: {
+        module: {
+          select: {
+            id: true,
+            titre: true,
+            formation: { select: { id: true, titre: true } },
+          },
+        },
+        formateur: { select: { nom: true, prenom: true, email: true } },
+        presences: {
+          where: { utilisateurId: user.id },
+          select: { statut: true, remarqueJustification: true, misAJourA: true },
+        },
+      },
+      orderBy: { dateHeureDebut: 'asc' },
+    });
+
+    return seances.map((s) => ({
+      id: s.id,
+      titreActivite: s.titreActivite,
+      typeSession: s.typeSession,
+      dateHeureDebut: s.dateHeureDebut,
+      dateHeureFin: s.dateHeureFin,
+      salleOuLien: s.salleOuLien,
+      moduleTitre: s.module.titre,
+      formationId: s.module.formation.id,
+      formationTitre: s.module.formation.titre,
+      formateurNom: s.formateur ? `${s.formateur.prenom} ${s.formateur.nom}` : 'Non assigné',
+      presence: s.presences[0] || null,
+    }));
+  }
+
+  /**
+   * Assiduité globale et statistiques de présence de l'apprenant
+   */
+  async getAssiduite(user: any) {
+    this.assertApprenant(user);
+    const presences = await this.prisma.presenceSeance.findMany({
+      where: { utilisateurId: user.id },
+    });
+    const total = presences.length;
+    const presents = presences.filter((p) => p.statut === 'PRESENT').length;
+    const retards = presences.filter((p) => p.statut === 'RETARD').length;
+    const absents = presences.filter((p) => p.statut === 'ABSENT').length;
+    const justifies = presences.filter((p) => p.statut === 'JUSTIFIE').length;
+
+    const assidu = presents + retards + justifies;
+    const taux = total > 0 ? Math.round((assidu / total) * 100) : 100;
+
+    return {
+      total,
+      presents,
+      retards,
+      absents,
+      justifies,
+      tauxAssiduite: taux,
+    };
+  }
+
+  /**
+   * Relevé de notes officiel complet pour une formation donnée
+   */
+  async getReleveNotes(formationId: string, user: any) {
+    this.assertApprenant(user);
+    await this.assertFormationAccess(formationId, user);
+
+    const formation = await this.prisma.formation.findUnique({
+      where: { id: formationId },
+      include: {
+        etablissement: { select: { nom: true, codeAntenne: true } },
+        modules: {
+          orderBy: { ordre: 'asc' },
+          include: {
+            evaluations: {
+              include: {
+                notes: { where: { utilisateurId: user.id } },
+              },
+            },
+            devoirs: {
+              include: {
+                soumissions: {
+                  where: { apprenantId: user.id },
+                  select: { note: true, commentaire: true, dateDepot: true },
+                },
+              },
+            },
+            quiz: {
+              include: {
+                tentatives: {
+                  where: { apprenantId: user.id },
+                  select: { score: true, datePassage: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!formation) throw new NotFoundException('Formation introuvable.');
+
+    const moyenneGenerale = await this.pedagogieService.getMoyennePonderee(formationId, user.id);
+    const progress = await this.pedagogieService.getProgressByFormation(formationId, user.id);
+
+    const modulesDetails = formation.modules.map((m) => {
+      const epreuves: Array<{
+        type: 'evaluation' | 'devoir' | 'quiz';
+        titre: string;
+        noteSur20: number | null;
+        date: Date | null;
+      }> = [];
+
+      for (const ev of m.evaluations) {
+        const n = ev.notes[0];
+        const max = Number(ev.noteMaximale) || 20;
+        epreuves.push({
+          type: 'evaluation',
+          titre: ev.titre,
+          noteSur20: n ? (Number(n.valeur) / max) * 20 : null,
+          date: n?.dateNotation ?? null,
+        });
+      }
+
+      for (const dev of m.devoirs) {
+        const s = dev.soumissions[0];
+        epreuves.push({
+          type: 'devoir',
+          titre: dev.titre,
+          noteSur20: s && s.note !== null ? Number(s.note) : null,
+          date: s?.dateDepot ?? null,
+        });
+      }
+
+      for (const q of m.quiz) {
+        const t = q.tentatives[0];
+        epreuves.push({
+          type: 'quiz',
+          titre: q.titre,
+          noteSur20: t && t.score !== null ? (Number(t.score) / 100) * 20 : null,
+          date: t?.datePassage ?? null,
+        });
+      }
+
+      const notesValides = epreuves.map((e) => e.noteSur20).filter((n): n is number => n !== null);
+      const moyenneModule =
+        notesValides.length > 0
+          ? Math.round((notesValides.reduce((acc, v) => acc + v, 0) / notesValides.length) * 100) / 100
+          : null;
+
+      return {
+        id: m.id,
+        titre: m.titre,
+        ordre: m.ordre,
+        coefficient: Number(m.coefficient ?? 1),
+        moyenneModule,
+        epreuves,
+      };
+    });
+
+    let mention = 'Ajourné';
+    if (moyenneGenerale >= 16) mention = 'Très Bien';
+    else if (moyenneGenerale >= 14) mention = 'Bien';
+    else if (moyenneGenerale >= 12) mention = 'Assez Bien';
+    else if (moyenneGenerale >= 10) mention = 'Passable';
+
+    return {
+      formation: {
+        id: formation.id,
+        titre: formation.titre,
+        etablissement: formation.etablissement,
+      },
+      apprenant: {
+        id: user.id,
+        nom: user.nom,
+        prenom: user.prenom,
+        email: user.email,
+      },
+      completionRate: progress.completionRate,
+      moyenneGenerale,
+      mention,
+      dateEdition: new Date(),
+      modules: modulesDetails,
+    };
+  }
+
+  /**
+   * Dossier administratif & pièces justificatives de l'apprenant
+   */
+  async getDossier(user: any) {
+    this.assertApprenant(user);
+    const [documents, regularisations] = await Promise.all([
+      this.prisma.documentDossier.findMany({
+        where: { utilisateurId: user.id },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.demandeRegularisation.findMany({
+        where: { utilisateurId: user.id },
+        include: { auteur: { select: { nom: true, prenom: true, role: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return {
+      documents: documents.map((d) => ({
+        ...d,
+        fileUrl: d.fileUrl ? this.storage.resolveUrl(d.fileUrl) : null,
+      })),
+      regularisations,
+    };
+  }
+
+  /**
+   * Téléversement d'un document administratif par l'apprenant
+   */
+  async uploadDocumentDossier(file: Express.Multer.File, typeDocument: string, titre: string, user: any) {
+    this.assertApprenant(user);
+    if (!file) throw new BadRequestException('Fichier obligatoire.');
+
+    const fileUrl = await this.storage.uploadFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      'dossiers',
+    );
+
+    const doc = await this.prisma.documentDossier.create({
+      data: {
+        utilisateurId: user.id,
+        titre: titre || file.originalname,
+        typeDocument: typeDocument || 'AUTRE',
+        nomFichier: file.originalname,
+        fileUrl,
+        statut: 'EN_ATTENTE',
+        ajouteParId: user.id,
+      },
+    });
+
+    return doc;
+  }
+
+  /**
+   * Répondre à une demande de régularisation administrative (pièce justificative + commentaire)
+   */
+  async repondreRegularisation(
+    regularisationId: string,
+    file: Express.Multer.File | undefined,
+    commentaire: string,
+    user: any,
+  ) {
+    this.assertApprenant(user);
+    const demande = await this.prisma.demandeRegularisation.findUnique({
+      where: { id: regularisationId },
+    });
+    if (!demande) {
+      throw new NotFoundException('Demande de régularisation introuvable.');
+    }
+    if (demande.utilisateurId !== user.id) {
+      throw new ForbiddenException('Accès interdit à cette demande de régularisation.');
+    }
+
+    let documentCreated: any = null;
+    if (file) {
+      const fileUrl = await this.storage.uploadFile(
+        file.buffer,
+        file.originalname,
+        file.mimetype,
+        'dossiers',
+      );
+
+      documentCreated = await this.prisma.documentDossier.create({
+        data: {
+          utilisateurId: user.id,
+          titre: `Pièce justificative - ${demande.motif}`,
+          typeDocument: 'REGULARISATION',
+          nomFichier: file.originalname,
+          fileUrl,
+          statut: 'EN_ATTENTE',
+          commentaire: commentaire || 'Transmis en réponse à la demande de régularisation',
+          ajouteParId: user.id,
+        },
+      });
+    }
+
+    const updated = await this.prisma.demandeRegularisation.update({
+      where: { id: regularisationId },
+      data: {
+        statut: 'SOUMIS',
+        decisionCommentaire: commentaire
+          ? `Réponse apprenant (${new Date().toLocaleDateString('fr-FR')}) : ${commentaire}`
+          : demande.decisionCommentaire,
+        updatedAt: new Date(),
+      },
+    });
+
+    // Notifier l'auteur de la demande (Agent administratif ou Admin Centre)
+    if (demande.auteurId) {
+      this.notifications.emit({
+        type: 'REGULARISATION_REPONDUE',
+        recipientUserId: demande.auteurId,
+        title: 'Pièce de régularisation soumise',
+        message: `L'apprenant ${user.prenom || ''} ${user.nom || ''} a transmis les pièces pour la demande : « ${demande.motif} ».`,
+        data: {
+          demandeId: demande.id,
+          apprenantId: user.id,
+          documentId: documentCreated?.id,
+        },
+      });
+    }
+
+    return {
+      demande: updated,
+      document: documentCreated,
+    };
+  }
+
+  /**
+   * Mise à jour du profil apprenant (synchronise Utilisateur + Apprenant)
+   */
+  async updateProfile(user: any, dto: { nom?: string; prenom?: string; telephone?: string }) {
+    this.assertApprenant(user);
+    const profile = await this.ensureApprenantProfile(user);
+
+    const userUpdate: any = {};
+    if (dto.nom && dto.nom.trim()) userUpdate.nom = dto.nom.trim();
+    if (dto.prenom && dto.prenom.trim()) userUpdate.prenom = dto.prenom.trim();
+
+    if (Object.keys(userUpdate).length > 0) {
+      await this.prisma.utilisateur.update({
+        where: { id: user.id },
+        data: userUpdate,
+      });
+    }
+
+    const apprenantUpdate: any = {};
+    if (dto.nom && dto.nom.trim()) apprenantUpdate.nom = dto.nom.trim();
+    if (dto.prenom && dto.prenom.trim()) apprenantUpdate.prenom = dto.prenom.trim();
+    if (dto.telephone !== undefined) apprenantUpdate.telephone = dto.telephone ? dto.telephone.trim() : null;
+
+    if (Object.keys(apprenantUpdate).length > 0) {
+      await this.prisma.apprenant.update({
+        where: { id: profile.id },
+        data: apprenantUpdate,
+      });
+    }
+
+    this.invalidateUserCache(user.id);
+
+    return {
+      success: true,
+      nom: dto.nom ?? user.nom,
+      prenom: dto.prenom ?? user.prenom,
+      telephone: dto.telephone ?? profile.telephone,
+      matricule: profile.matricule,
+    };
+  }
+
+  /**
+   * Génération manuelle ou déclenchement du certificat pour une formation si éligible (Règle BR-03)
+   */
+  async genererCertificatSiEligible(formationId: string, user: any) {
+    this.assertApprenant(user);
+    await this.assertFormationAccess(formationId, user);
+    const cert = await this.triggerAutoCertification(formationId, user.id);
+    if (!cert) {
+      const eligibilite = await this.checkEligibiliteCertificat(formationId, user);
+      if (!eligibilite.eligible) {
+        throw new BadRequestException(
+          eligibilite.raison || "Les conditions d'obtention de la certification (Règle BR-03) ne sont pas encore réunies.",
+        );
+      }
+    }
+    this.invalidateUserCache(user.id);
+    return { success: true, certificat: cert };
   }
 }

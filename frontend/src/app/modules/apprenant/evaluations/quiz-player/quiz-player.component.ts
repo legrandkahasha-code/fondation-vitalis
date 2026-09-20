@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -129,22 +129,37 @@ import { ToastService } from '../../../../core/services/toast.service';
             </div>
           </div>
         } @else if (result) {
-          <!-- RESULT SCREEN POST SUBMISSION -->
-          <div class="p-8 md:p-12 bg-white border border-[#D7DBDE] rounded-xs space-y-8 animate-fade-in shadow-xs">
+          <!-- RESULT SCREEN POST SUBMISSION (AVEC CÉLÉBRATION ET ANIMATION) -->
+          <div class="relative overflow-hidden p-8 md:p-12 bg-white border border-[#D7DBDE] rounded-xs space-y-8 animate-fade-in shadow-xs">
+            @if (result.score >= 50) {
+              <!-- Particules festives CSS pour célébration de réussite -->
+              <div class="absolute inset-x-0 top-0 h-24 pointer-events-none overflow-hidden flex justify-around opacity-75">
+                <span class="confetti-dot bg-[#F0791E]" style="animation-delay: 0.1s;"></span>
+                <span class="confetti-dot bg-[#1C75BC]" style="animation-delay: 0.3s;"></span>
+                <span class="confetti-dot bg-[#276B44]" style="animation-delay: 0.5s;"></span>
+                <span class="confetti-dot bg-[#F0791E]" style="animation-delay: 0.2s;"></span>
+                <span class="confetti-dot bg-[#124F80]" style="animation-delay: 0.4s;"></span>
+              </div>
+            }
+
             <div class="text-center space-y-3">
-              <div class="w-14 h-14 rounded-xs text-3xl flex items-center justify-center mx-auto border-b-2" [class]="result.score >= 50 ? 'bg-[#E7F1EA] text-[#276B44] border-[#276B44]' : 'bg-[#FDECEA] text-[#ED1C24] border-[#ED1C24]'">
+              <div class="w-16 h-16 rounded-xs text-3xl flex items-center justify-center mx-auto border-b-2 shadow-xs transition-transform duration-500 scale-105" [class]="result.score >= 50 ? 'bg-[#E7F1EA] text-[#276B44] border-[#276B44]' : 'bg-[#FDECEA] text-[#ED1C24] border-[#ED1C24]'">
                 @if (result.score >= 50) {
-                  <svg class="w-7 h-7 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <svg class="w-8 h-8 text-[#276B44] animate-bounce-short" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                   </svg>
                 } @else {
-                  <svg class="w-7 h-7 text-[#ED1C24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <svg class="w-8 h-8 text-[#ED1C24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 }
               </div>
-              <h1 class="text-2xl font-bold text-[#1B1D1F]">Résultats de votre Quiz</h1>
-              <p class="text-xs text-[#4B5157]">Calculé et certifié côté serveur · Vitalis Center EUP</p>
+              <h1 class="text-2xl font-bold text-[#1B1D1F]">
+                {{ result.score >= 50 ? 'Félicitations ! Évaluation Validée 🎉' : 'Résultats de votre Évaluation' }}
+              </h1>
+              <p class="text-xs text-[#4B5157]">
+                {{ result.score >= 50 ? 'Vos compétences ont été certifiées avec succès par le jury académique.' : 'Score inférieur au seuil d’aptitude (50%). Rapprochez-vous de votre encadrant.' }}
+              </p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
@@ -245,65 +260,98 @@ import { ToastService } from '../../../../core/services/toast.service';
                   </h3>
                 </div>
 
-                <!-- Options -->
+                <!-- Options avec badges touches clavier [A], [B], [C] -->
                 <div class="space-y-2.5 sm:space-y-3">
                   @for (opt of currentQuestion.options; track opt.text; let optIdx = $index) {
                     <label
                       (click)="selectOption(currentQuestion.id, optIdx)"
-                      class="p-3 sm:p-4 border cursor-pointer flex items-center gap-3 sm:gap-4 transition-all rounded-xs shadow-2xs"
+                      class="group p-3 sm:p-4 border cursor-pointer flex items-center gap-3 sm:gap-4 transition-all rounded-xs shadow-2xs"
                       [class]="getSelectedOption(currentQuestion.id) === optIdx ? 'bg-[#E7F1FA] border-[#1C75BC] border-l-4 border-l-[#F0791E]' : 'bg-white border-[#D7DBDE] hover:bg-[#F5F6F7] hover:border-[#1C75BC]'"
                     >
+                      <span
+                        class="w-6 h-6 rounded-xs flex items-center justify-center text-[11px] font-bold font-mono transition-colors shrink-0"
+                        [class]="getSelectedOption(currentQuestion.id) === optIdx ? 'bg-[#1C75BC] text-white' : 'bg-[#F5F6F7] text-[#4B5157] group-hover:bg-[#E7F1FA] group-hover:text-[#1C75BC] border border-[#D7DBDE]'"
+                      >
+                        {{ getOptionKeyLabel(optIdx) }}
+                      </span>
                       <input
                         type="radio"
                         [name]="'q_' + currentQuestion.id"
                         [checked]="getSelectedOption(currentQuestion.id) === optIdx"
                         class="w-4 h-4 accent-[#1C75BC] border-[#D7DBDE] shrink-0"
                       />
-                      <span class="text-xs font-semibold text-[#1B1D1F] leading-snug">{{ opt.text }}</span>
+                      <span class="text-xs font-semibold text-[#1B1D1F] leading-snug flex-1">{{ opt.text }}</span>
                     </label>
                   }
                 </div>
               </div>
             }
 
-            <!-- Bottom Navigation Actions -->
-            <div class="p-3 sm:p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs flex items-center justify-between gap-3">
-              <button
-                type="button"
-                (click)="prevQuestion()"
-                [disabled]="currentQuestionIndex === 0"
-                class="px-3 sm:px-4 py-2 rounded-xs bg-white border border-[#D7DBDE] text-xs font-semibold text-[#1B1D1F] hover:bg-[#E7F1FA] disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
-              >
-                ← Précédente
-              </button>
+            <!-- Bottom Navigation Actions + Keyboard shortcut reminder -->
+            <div class="space-y-2.5">
+              <div class="p-3 sm:p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  (click)="prevQuestion()"
+                  [disabled]="currentQuestionIndex === 0"
+                  class="px-3 sm:px-4 py-2 rounded-xs bg-white border border-[#D7DBDE] text-xs font-semibold text-[#1B1D1F] hover:bg-[#E7F1FA] disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
+                >
+                  ← Précédente
+                </button>
 
-              <div class="flex items-center gap-2 sm:gap-3">
-                @if (currentQuestionIndex < quiz.questions.length - 1) {
-                  <button
-                    type="button"
-                    (click)="nextQuestion()"
-                    class="px-3 sm:px-4 py-2 rounded-xs bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
-                  >
-                    Suivante →
-                  </button>
-                } @else {
-                  <button
-                    type="button"
-                    (click)="submitQuiz()"
-                    [disabled]="submitting"
-                    class="px-5 py-2.5 rounded-xs bg-[#276B44] hover:bg-[#1e5234] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>{{ submitting ? 'Calcul sécurisé...' : 'Soumettre le Quiz' }}</span>
-                    <span>✓</span>
-                  </button>
-                }
+                <div class="flex items-center gap-2 sm:gap-3">
+                  @if (currentQuestionIndex < quiz.questions.length - 1) {
+                    <button
+                      type="button"
+                      (click)="nextQuestion()"
+                      class="px-3 sm:px-4 py-2 rounded-xs bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                    >
+                      Suivante →
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      (click)="submitQuiz()"
+                      [disabled]="submitting"
+                      class="px-5 py-2.5 rounded-xs bg-[#276B44] hover:bg-[#1e5234] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <span>{{ submitting ? 'Calcul sécurisé...' : 'Soumettre le Quiz' }}</span>
+                      <span>✓</span>
+                    </button>
+                  }
+                </div>
               </div>
+
+              <!-- Astuce ergonomique clavier -->
+              <p class="text-[11px] text-[#71787E] text-center">
+                💡 <strong class="text-[#4B5157]">Navigation rapide :</strong> touches <kbd class="px-1 py-0.5 bg-white border border-[#D7DBDE] rounded text-[10px] font-mono">1-4</kbd> ou <kbd class="px-1 py-0.5 bg-white border border-[#D7DBDE] rounded text-[10px] font-mono">A-D</kbd> pour répondre · <kbd class="px-1 py-0.5 bg-white border border-[#D7DBDE] rounded text-[10px] font-mono">Entrée</kbd> ou <kbd class="px-1 py-0.5 bg-white border border-[#D7DBDE] rounded text-[10px] font-mono">→</kbd> pour avancer.
+              </p>
             </div>
           </div>
         }
       }
     </div>
   `,
+  styles: [`
+    @keyframes fall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100px) rotate(360deg); opacity: 0; }
+    }
+    .confetti-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      animation: fall 2s ease-out infinite;
+    }
+    @keyframes bounce-short {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .animate-bounce-short {
+      animation: bounce-short 1.5s ease-in-out infinite;
+    }
+  `]
 })
 export class QuizPlayerComponent implements OnInit, OnDestroy {
   quizId = '';
@@ -523,5 +571,63 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
         this.toast.error(msg);
       },
     });
+  }
+
+  getOptionKeyLabel(index: number): string {
+    const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+    return letters[index] || `${index + 1}`;
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent) {
+    // Ne pas intercepter si l'utilisateur est en train de taper dans un champ
+    const target = event.target as HTMLElement;
+    const tagName = target?.tagName?.toLowerCase();
+    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+      return;
+    }
+
+    // Uniquement actif en cours de quiz non encore soumis
+    if (!this.quiz || this.quiz.tentative || this.result || !this.currentQuestion) {
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+
+    // Raccourcis pour options 1-6 ou a-f
+    const optionMap: Record<string, number> = {
+      '1': 0, 'a': 0,
+      '2': 1, 'b': 1,
+      '3': 2, 'c': 2,
+      '4': 3, 'd': 3,
+      '5': 4, 'e': 4,
+      '6': 5, 'f': 5,
+    };
+
+    if (key in optionMap) {
+      const optIdx = optionMap[key];
+      if (optIdx < this.currentQuestion.options.length) {
+        event.preventDefault();
+        this.selectOption(this.currentQuestion.id, optIdx);
+      }
+      return;
+    }
+
+    if (key === 'arrowright') {
+      event.preventDefault();
+      this.nextQuestion();
+    } else if (key === 'arrowleft') {
+      event.preventDefault();
+      this.prevQuestion();
+    } else if (key === 'enter') {
+      event.preventDefault();
+      if (this.currentQuestionIndex === this.quiz.questions.length - 1) {
+        if (!this.submitting) {
+          this.submitQuiz();
+        }
+      } else {
+        this.nextQuestion();
+      }
+    }
   }
 }

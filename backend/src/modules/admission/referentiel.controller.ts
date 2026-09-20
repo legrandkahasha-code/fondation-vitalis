@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -33,6 +33,12 @@ export class ReferentielController {
   @Roles(Role.ADMIN_CENTRE)
   updateFiliere(@Param('id', ParseUUIDPipe) id: string, @Body() dto: Partial<CreateFiliereDto> & { actif?: boolean }) {
     return this.service.updateFiliere(id, dto);
+  }
+
+  @Delete('filieres/:id')
+  @Roles(Role.ADMIN_CENTRE)
+  deleteFiliere(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.deleteFiliere(id);
   }
 
   @Get('niveaux')

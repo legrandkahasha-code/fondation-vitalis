@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription, timer, forkJoin, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { SeancesService } from '../../../core/services/seances.service';
 import { EtablissementsService } from '../../../core/services/etablissements.service';
+import { NotificationsService } from '../../../core/services/notifications.service';
 import { MainLayoutComponent } from '../../../shared/layout/main-layout.component';
 import { Utilisateur, Etablissement } from '../../../core/models';
 
@@ -58,27 +61,62 @@ interface AssiduiteSyntheseItem {
         </div>
 
         <!-- Indicateurs de Synthèse -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
-            <span class="text-xs text-[#4B5157] font-semibold uppercase tracking-wider">Apprenants Suivis</span>
-            <div class="text-2xl font-bold text-[#1B1D1F] mt-1">{{ assiduiteData.length }}</div>
+        @if (!loading) {
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
+              <span class="text-xs text-[#4B5157] font-semibold uppercase tracking-wider">Apprenants Suivis</span>
+              <div class="text-2xl font-bold text-[#1B1D1F] mt-1">{{ assiduiteData.length }}</div>
+            </div>
+            <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
+              <span class="text-xs text-emerald-700 font-semibold uppercase tracking-wider">Taux Moyen de Présence</span>
+              <div class="text-2xl font-bold text-emerald-700 mt-1">{{ getTauxMoyen() }}%</div>
+            </div>
+            <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
+              <span class="text-xs text-amber-700 font-semibold uppercase tracking-wider">Vigilance Décrochage (< 75%)</span>
+              <div class="text-2xl font-bold text-amber-700 mt-1">{{ getApprenantsEnRisque() }}</div>
+            </div>
           </div>
-          <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
-            <span class="text-xs text-emerald-700 font-semibold uppercase tracking-wider">Taux Moyen de Présence</span>
-            <div class="text-2xl font-bold text-emerald-700 mt-1">{{ getTauxMoyen() }}%</div>
+        } @else {
+          <!-- Skeleton KPIs -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            @for (i of [1,2,3]; track i) {
+              <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs animate-pulse">
+                <div class="h-3 bg-slate-200 rounded w-1/2 mb-3"></div>
+                <div class="h-6 bg-slate-200 rounded w-1/3"></div>
+              </div>
+            }
           </div>
-          <div class="bg-white border border-[#D7DBDE] p-4 rounded-[2px] shadow-2xs">
-            <span class="text-xs text-amber-700 font-semibold uppercase tracking-wider">Vigilance Décrochage (< 75%)</span>
-            <div class="text-2xl font-bold text-amber-700 mt-1">{{ getApprenantsEnRisque() }}</div>
-          </div>
-        </div>
+        }
 
-        <!-- Tableau d'Assiduité Optimisé (Requête Unique) -->
+        <!-- Tableau d'Assiduité -->
         <div class="bg-white border border-[#D7DBDE] rounded-[2px] shadow-2xs overflow-hidden">
           @if (loading) {
-            <div class="p-12 text-center">
-              <div class="inline-block w-8 h-8 border-3 border-[#005B94] border-t-transparent rounded-full animate-spin"></div>
-              <p class="mt-4 text-sm text-[#4B5157]">Calcul de la synthèse d'assiduité...</p>
+            <!-- Skeleton Tableau -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-[#D7DBDE] text-[#4B5157] font-semibold uppercase text-[11px] tracking-wider">
+                    <th class="py-3 px-4">Apprenant</th>
+                    <th class="py-3 px-4">Email</th>
+                    <th class="py-3 px-4 text-center">Séances</th>
+                    <th class="py-3 px-4 text-center">Présences</th>
+                    <th class="py-3 px-4 text-center">Absences</th>
+                    <th class="py-3 px-4 text-right">Taux</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (i of [1,2,3,4,5,6]; track i) {
+                    <tr class="border-b border-gray-50 animate-pulse">
+                      <td class="py-3 px-4"><div class="h-3 bg-slate-200 rounded w-28"></div></td>
+                      <td class="py-3 px-4"><div class="h-3 bg-slate-100 rounded w-36"></div></td>
+                      <td class="py-3 px-4 text-center"><div class="h-3 bg-slate-100 rounded w-8 mx-auto"></div></td>
+                      <td class="py-3 px-4 text-center"><div class="h-3 bg-slate-100 rounded w-8 mx-auto"></div></td>
+                      <td class="py-3 px-4 text-center"><div class="h-3 bg-slate-100 rounded w-8 mx-auto"></div></td>
+                      <td class="py-3 px-4"><div class="h-3 bg-slate-200 rounded w-16 ml-auto"></div></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
           } @else {
             <div class="overflow-x-auto">
@@ -162,54 +200,91 @@ interface AssiduiteSyntheseItem {
     </app-main-layout>
   `,
 })
-export class AssiduiteComponent implements OnInit {
+export class AssiduiteComponent implements OnInit, OnDestroy {
   assiduiteData: AssiduiteSyntheseItem[] = [];
   etablissements: Etablissement[] = [];
   selectedEtabId = '';
   loading = true;
   isAdminCentre = false;
 
+  private sseSub?: Subscription;
+  private pollSub?: Subscription;
+
   constructor(
     private auth: AuthService,
     private seancesService: SeancesService,
-    private etablissementsService: EtablissementsService
+    private etablissementsService: EtablissementsService,
+    private notifications: NotificationsService,
   ) {}
 
   ngOnInit() {
     const user = this.auth.currentUser;
     this.isAdminCentre = user?.role === 'ADMIN_CENTRE';
+    const initialEtabId = user?.etablissementId;
 
     if (this.isAdminCentre) {
+      if (initialEtabId) {
+        this.selectedEtabId = initialEtabId;
+        this.chargerSynthese(initialEtabId);
+      }
       this.etablissementsService.getAll().subscribe({
         next: (etabs) => {
           this.etablissements = etabs;
-          const targetId = user?.etablissementId || (etabs.length > 0 ? etabs[0].id : '');
-          if (targetId) {
-            this.selectedEtabId = targetId;
-            this.chargerSynthese(targetId);
-          } else {
-            this.loading = false;
+          if (!this.selectedEtabId && etabs.length > 0) {
+            this.selectedEtabId = etabs[0].id;
+            this.chargerSynthese(this.selectedEtabId);
           }
         },
         error: () => {
-          this.loading = false;
+          if (!this.selectedEtabId) this.loading = false;
         },
       });
+    } else if (initialEtabId) {
+      this.selectedEtabId = initialEtabId;
+      this.chargerSynthese(initialEtabId);
     } else {
-      const etabId = user?.etablissementId;
-      if (etabId) {
-        this.selectedEtabId = etabId;
-        this.chargerSynthese(etabId);
-      } else {
-        this.loading = false;
-      }
+      this.loading = false;
     }
+
+    // ─── Flux Temps Réel SSE : Réception immédiate dès qu'un émargement est validé ───
+    this.sseSub = this.notifications.messages().subscribe((msg) => {
+      if (msg.type === 'ASSIDUITE_UPDATE' || msg.type === 'SEANCE_UPDATE') {
+        const msgEtabId = msg.recipientEtablissementId || msg.data?.['etablissementId'];
+        if (!msgEtabId || msgEtabId === this.selectedEtabId || this.isAdminCentre) {
+          this.seancesService.invalidateAssiduiteCache();
+          if (this.selectedEtabId) {
+            this.chargerSynthese(this.selectedEtabId, true);
+          }
+        }
+      }
+    });
+
+    this.startPolling();
   }
 
-  chargerSynthese(etablissementId: string) {
+  ngOnDestroy() {
+    this.sseSub?.unsubscribe();
+    this.pollSub?.unsubscribe();
+  }
+
+  /** Filet de sécurité périodique (60s) en cas de coupure SSE transitoire */
+  private startPolling() {
+    this.pollSub = timer(60_000, 60_000).pipe(
+      switchMap(() => {
+        if (!this.selectedEtabId) return of([]);
+        return this.seancesService.getAssiduiteSynthese(this.selectedEtabId, true);
+      })
+    ).subscribe({
+      next: (data) => {
+        if (data) this.assiduiteData = data;
+      },
+    });
+  }
+
+  chargerSynthese(etablissementId: string, forceRefresh = false) {
     if (!etablissementId) return;
     this.loading = true;
-    this.seancesService.getAssiduiteSynthese(etablissementId).subscribe({
+    this.seancesService.getAssiduiteSynthese(etablissementId, forceRefresh).subscribe({
       next: (data) => {
         this.assiduiteData = data;
         this.loading = false;

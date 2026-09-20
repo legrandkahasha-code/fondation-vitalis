@@ -241,8 +241,8 @@ import { AuthService } from '../../../core/services/auth.service';
             @if (dashboard?.prochaineEcheance; as ech) {
               <div class="p-4 bg-[#E7F1FA] border-l-4 border-[#1C75BC] space-y-2 rounded-xs">
                 <div class="flex items-center justify-between">
-                  <span class="px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase" [class]="ech.type === 'devoir' ? 'bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]' : 'bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC]'">
-                    {{ ech.type === 'devoir' ? 'Devoir à rendre' : 'Séance programmée' }}
+                  <span class="px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase" [class]="ech.type === 'devoir' ? 'bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]' : ech.type === 'quiz' ? 'bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC]' : 'bg-[#E7F1EA] text-[#276B44] border border-[#276B44]'">
+                    {{ ech.type === 'devoir' ? 'Devoir à rendre' : ech.type === 'quiz' ? 'Quiz à passer' : 'Séance programmée' }}
                   </span>
                   <span class="text-[11px] font-semibold text-[#4B5157] font-mono">
                     {{ ech.dateLimite | date:'dd MMM yyyy à HH:mm' }}
@@ -252,10 +252,11 @@ import { AuthService } from '../../../core/services/auth.service';
                 <p class="text-[11px] text-[#4B5157]">{{ ech.formationTitre }}</p>
                 <div class="pt-2">
                   <a
-                    routerLink="/apprenant/evaluations/depot-devoir"
+                    [routerLink]="ech.type === 'seance' ? '/apprenant/seances' : ech.type === 'quiz' ? '/apprenant/evaluations/depot-devoir' : '/apprenant/evaluations/depot-devoir'"
+                    [queryParams]="ech.type === 'quiz' ? { tab: 'quiz' } : null"
                     class="inline-block text-xs font-bold text-[#1C75BC] hover:underline"
                   >
-                    Accéder à l'épreuve →
+                    {{ ech.type === 'seance' ? 'Consulter le planning →' : ech.type === 'quiz' ? 'Passer le quiz en ligne →' : 'Accéder à l\'épreuve →' }}
                   </a>
                 </div>
               </div>
@@ -306,6 +307,7 @@ export class ApprenantDashboardComponent implements OnInit, OnDestroy {
   loading = true;
 
   private liveSub?: Subscription;
+  private bootstrapSub?: Subscription;
 
   constructor(
     private apprenantService: ApprenantService,
@@ -320,10 +322,19 @@ export class ApprenantDashboardComponent implements OnInit, OnDestroy {
       this.dashboard = cached;
       this.loading = false;
     }
-    // 2. Revalidation silencieuse en tâche de fond
+
+    // 2. Synchronisation unifiée avec le flux bootstrap
+    this.bootstrapSub = this.apprenantService.bootstrap$.subscribe((data) => {
+      if (data?.dashboard) {
+        this.dashboard = data.dashboard;
+        this.loading = false;
+      }
+    });
+
+    // 3. Revalidation silencieuse en tâche de fond
     this.loadDashboard(cached === null);
 
-    // 3. Écouter les mises à jour temps réel SSE — recharger silencieusement
+    // 4. Écouter les mises à jour temps réel SSE — recharger silencieusement
     this.liveSub = this.apprenantService.liveUpdates$.subscribe(() => {
       this.loadDashboard(false);
     });
@@ -331,6 +342,7 @@ export class ApprenantDashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.liveSub?.unsubscribe();
+    this.bootstrapSub?.unsubscribe();
   }
 
   loadDashboard(showSpinner = true) {

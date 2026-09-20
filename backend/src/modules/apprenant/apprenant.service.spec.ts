@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
 import { PedagogieService } from '../pedagogie/pedagogie.service';
 import { CertificationService } from '../certification/certification.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { Role } from '../../common/enums/role.enum';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
@@ -43,9 +44,17 @@ describe('ApprenantService (Performance & BR-03)', () => {
     },
     apprenant: {
       findUnique: jest.fn(),
+      count: jest.fn(),
+      create: jest.fn(),
     },
     inscription: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      upsert: jest.fn(),
+    },
+    candidature: {
+      findFirst: jest.fn(),
     },
     cours: {
       findUnique: jest.fn(),
@@ -53,10 +62,20 @@ describe('ApprenantService (Performance & BR-03)', () => {
     quiz: {
       findUnique: jest.fn(),
     },
+    documentDossier: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+    },
+    demandeRegularisation: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+    },
   };
 
   const mockStorageService = {
     uploadFile: jest.fn(),
+    resolveUrl: jest.fn((u) => u),
   };
 
   const mockPedagogieService = {
@@ -68,6 +87,10 @@ describe('ApprenantService (Performance & BR-03)', () => {
     genererCertificat: jest.fn(),
   };
 
+  const mockNotificationsService = {
+    emit: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -76,6 +99,7 @@ describe('ApprenantService (Performance & BR-03)', () => {
         { provide: StorageService, useValue: mockStorageService },
         { provide: PedagogieService, useValue: mockPedagogieService },
         { provide: CertificationService, useValue: mockCertificationService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
       ],
     }).compile();
 
@@ -134,6 +158,10 @@ describe('ApprenantService (Performance & BR-03)', () => {
   });
 
   describe('checkEligibiliteCertificat (BR-03)', () => {
+    beforeEach(() => {
+      mockPrisma.inscription.findFirst.mockResolvedValue({ id: 'ins-1' });
+    });
+
     it('should reject eligibility if courses are not 100% completed', async () => {
       const user = { id: 'u-apprenant-1', role: Role.APPRENANT, etablissementId: 'e-1' };
       mockPrisma.formation.findUnique.mockResolvedValue({ id: 'f-1', etablissementId: 'e-1' });
@@ -173,4 +201,71 @@ describe('ApprenantService (Performance & BR-03)', () => {
       expect(result.raison).toBeNull();
     });
   });
+
+  describe('repondreRegularisation', () => {
+    it('should throw NotFoundException if demande does not exist', async () => {
+      const user = { id: 'u-apprenant-1', role: Role.APPRENANT };
+      mockPrisma.demandeRegularisation.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.repondreRegularisation('reg-1', undefined, 'Mon commentaire', user),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if demande belongs to another user', async () => {
+      const user = { id: 'u-apprenant-1', role: Role.APPRENANT };
+      mockPrisma.demandeRegularisation.findUnique.mockResolvedValue({
+        id: 'reg-1',
+        utilisateurId: 'other-user',
+      });
+
+      await expect(
+        service.repondreRegularisation('reg-1', undefined, 'Mon commentaire', user),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should upload file and mark regularisation as SOUMIS', async () => {
+      const user = { id: 'u-apprenant-1', role: Role.APPRENANT, nom: 'Diallo', prenom: 'Amadou' };
+      mockPrisma.demandeRegularisation.findUnique.mockResolvedValue({
+        id: 'reg-1',
+        utilisateurId: 'u-apprenant-1',
+        auteurId: 'agent-1',
+        motif: 'Carte d identite manquante',
+      });
+      mockStorageService.uploadFile.mockResolvedValue('dossiers/doc-123.pdf');
+      mockPrisma.documentDossier.create.mockResolvedValue({
+        id: 'doc-1',
+        fileUrl: 'dossiers/doc-123.pdf',
+      });
+      mockPrisma.demandeRegularisation.update.mockResolvedValue({
+        id: 'reg-1',
+        statut: 'SOUMIS',
+      });
+
+      const mockFile: any = {
+        buffer: Buffer.from('%PDF-test'),
+        originalname: 'cni.pdf',
+        mimetype: 'application/pdf',
+      };
+
+      const res = await service.repondreRegularisation('reg-1', mockFile, 'Voici ma CNI', user);
+
+      expect(mockStorageService.uploadFile).toHaveBeenCalled();
+      expect(mockPrisma.documentDossier.create).toHaveBeenCalled();
+      expect(mockPrisma.demandeRegularisation.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'reg-1' },
+          data: expect.objectContaining({ statut: 'SOUMIS' }),
+        }),
+      );
+      expect(mockNotificationsService.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'REGULARISATION_REPONDUE',
+          recipientUserId: 'agent-1',
+        }),
+      );
+      expect(res.demande.statut).toBe('SOUMIS');
+    });
+  });
 });
+

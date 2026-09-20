@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter, debounceTime } from 'rxjs/operators';
 import { AnalyticsService } from '../../../core/services/analytics.service';
@@ -41,7 +42,7 @@ interface DetailedAnalyticsData {
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, FormsModule, MainLayoutComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MainLayoutComponent],
   template: `
     <app-main-layout>
       <div class="max-w-7xl mx-auto pb-16 font-['Public_Sans',sans-serif] px-4 sm:px-6">
@@ -147,9 +148,9 @@ interface DetailedAnalyticsData {
             </div>
 
             <!-- Formations -->
-            <div class="bg-white border border-[#D7DBDE] p-5 rounded-xs shadow-2xs hover:border-[#1C75BC] transition-colors">
+            <a routerLink="/admin/formations" class="bg-white border border-[#D7DBDE] p-5 rounded-xs shadow-2xs hover:border-[#1C75BC] transition-all no-underline block cursor-pointer group">
               <div class="flex items-center justify-between text-[#4B5157] text-xs font-semibold uppercase tracking-wider mb-2">
-                <span>Programmes</span>
+                <span class="group-hover:text-[#1C75BC] transition-colors">Programmes</span>
                 <span class="text-[#124F80] bg-[#E7F1FA] p-1.5 rounded-xs">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -157,8 +158,11 @@ interface DetailedAnalyticsData {
                 </span>
               </div>
               <div class="text-3xl font-extrabold text-[#1B1D1F] tracking-tight">{{ data.kpi.formations }}</div>
-              <div class="text-[11px] text-[#4B5157] mt-1 font-medium">Formations actives</div>
-            </div>
+              <div class="text-[11px] text-[#4B5157] mt-1 font-medium flex items-center justify-between">
+                <span>Formations actives</span>
+                <span class="text-[#1C75BC] font-semibold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">Gérer ➔</span>
+              </div>
+            </a>
 
             <!-- Certificats -->
             <div class="bg-white border border-[#D7DBDE] p-5 rounded-xs shadow-2xs hover:border-[#1C75BC] transition-colors">

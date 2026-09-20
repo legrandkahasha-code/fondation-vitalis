@@ -42,16 +42,31 @@ export class CreateSessionAdmissionDto {
   @IsOptional() @IsUUID() formationId?: string;
   @IsOptional() @IsUUID() etablissementId?: string;
   @IsString() @IsNotEmpty() libelle: string;
+  @IsOptional() @IsString() description?: string;
+  @IsOptional() piecesRequises?: string[];
   @IsOptional() @IsEnum(mode_selection) modeSelection?: mode_selection;
   @IsOptional() @IsInt() @Min(1) @Max(500) capacite?: number;
   @IsDateString() dateOuverture: string;
   @IsDateString() dateFermeture: string;
   @IsDateString() dateDebutFormation: string;
   @IsOptional() @IsInt() @Min(1) @Max(60) delaiConfirmationJours?: number;
+  @IsOptional() etablissementsPartages?: string[];
 }
 
 export class UpdateSessionStatutDto {
   @IsEnum(statut_session_admission) statut: statut_session_admission;
+}
+
+export class UpdatePartageSessionDto {
+  etablissementIds: string[];
+}
+
+export class UpdateSessionAdmissionDto {
+  @IsOptional() @IsString() libelle?: string;
+  @IsOptional() @IsString() description?: string;
+  @IsOptional() piecesRequises?: string[];
+  @IsOptional() @IsInt() @Min(1) @Max(500) capacite?: number;
+  @IsOptional() etablissementsPartages?: string[];
 }
 
 export class CreateCandidatureDto {
@@ -69,6 +84,13 @@ export class DecisionCandidatureDto {
 
 export class UpdateInscriptionStatutDto {
   @IsEnum(statut_inscription) statut: statut_inscription;
+}
+
+export class InscrireApprenantDto {
+  @IsUUID() apprenantId: string;
+  @IsUUID() formationId: string;
+  @IsOptional() @IsUUID() sessionId?: string;
+  @IsOptional() @IsEnum(statut_inscription) statut?: statut_inscription;
 }
 
 export class UpdateParametresReseauDto {

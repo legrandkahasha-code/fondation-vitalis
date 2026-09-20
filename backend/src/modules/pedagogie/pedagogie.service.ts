@@ -1,7 +1,19 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '../../common/enums/role.enum';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CreateCategorieFormationDto, UpdateCategorieFormationDto } from './dto/pedagogie.dto';
+
+function slugifyCategoryCode(text: string): string {
+  return text
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'cat';
+}
 
 @Injectable()
 export class PedagogieService {
@@ -10,26 +22,145 @@ export class PedagogieService {
     private notifications: NotificationsService,
   ) {}
 
+  // Cache serveur mémoire à TTL (3 min) + invalidation immédiate sur toute écriture
+  private formationsCache = new Map<string, { data: any; expiresAt: number }>();
+  private formationDetailCache = new Map<string, { data: any; expiresAt: number }>();
+  private readonly CACHE_TTL = 180_000; // 3 minutes
+
+  public invalidateFormationsCache(formationId?: string) {
+    this.formationsCache.clear();
+    if (formationId) {
+      this.formationDetailCache.delete(formationId);
+    } else {
+      this.formationDetailCache.clear();
+    }
+  }
+
   // ====================================
   // FORMATIONS
   // ====================================
-  async getFormations(user: any) {
-    const where = user.role === Role.ADMIN_CENTRE
-      ? {}
-      : { etablissementId: user.etablissementId };
-    return this.prisma.formation.findMany({
-      where,
-      include: { modules: { include: { _count: { select: { cours: true } } } }, etablissement: { select: { nom: true } } },
-      orderBy: { titre: 'asc' },
+  async getFormations(
+    user: any,
+    filters?: {
+      search?: string;
+      filiereId?: string;
+      etablissementId?: string;
+      categorie?: string;
+      publieSurLanding?: string;
+      actif?: string;
+    },
+  ) {
+    const cacheKey = JSON.stringify({
+      role: user.role,
+      userEtab: user.etablissementId,
+      filters: filters || {},
     });
+
+    const cached = this.formationsCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data;
+    }
+
+    const where: any = {};
+    if (user.role !== Role.ADMIN_CENTRE) {
+      where.etablissementId = user.etablissementId;
+    } else if (filters?.etablissementId && filters.etablissementId !== 'ALL') {
+      where.etablissementId = filters.etablissementId;
+    }
+
+    if (filters?.search && filters.search.trim()) {
+      const s = filters.search.trim();
+      where.OR = [
+        { titre: { contains: s, mode: 'insensitive' } },
+        { code: { contains: s, mode: 'insensitive' } },
+        { description: { contains: s, mode: 'insensitive' } },
+        { debouches: { contains: s, mode: 'insensitive' } },
+      ];
+    }
+
+    if (filters?.filiereId && filters.filiereId !== 'ALL') {
+      where.formationReferentiel = { filiereId: filters.filiereId };
+    }
+
+    if (filters?.categorie && filters.categorie !== 'toutes' && filters.categorie !== 'ALL') {
+      where.categorie = filters.categorie;
+    }
+
+    if (filters?.publieSurLanding !== undefined && filters.publieSurLanding !== '' && filters.publieSurLanding !== 'ALL') {
+      where.publieSurLanding = filters.publieSurLanding === 'true';
+    }
+
+    if (filters?.actif !== undefined && filters.actif !== '' && filters.actif !== 'ALL') {
+      where.actif = filters.actif === 'true';
+    }
+
+    const data = await this.prisma.formation.findMany({
+      where,
+      include: {
+        modules: {
+          select: { id: true, titre: true, coefficient: true, ordre: true, _count: { select: { cours: true } } },
+        },
+        etablissement: { select: { id: true, nom: true, codeAntenne: true, typeEtablissement: true } },
+        formationReferentiel: {
+          include: {
+            filiere: true,
+            niveau: true,
+          },
+        },
+        _count: {
+          select: { modules: true, inscriptions: true, sessionsAdmission: true },
+        },
+      },
+      orderBy: [{ aLaUne: 'desc' }, { ordre: 'asc' }, { titre: 'asc' }],
+    });
+
+    this.formationsCache.set(cacheKey, {
+      data,
+      expiresAt: Date.now() + this.CACHE_TTL,
+    });
+
+    return data;
   }
 
   async getFormation(id: string, user: any) {
+    const cacheKey = `${id}_${user.role === Role.ADMIN_CENTRE ? 'ADMIN' : user.etablissementId}`;
+    const cached = this.formationDetailCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data;
+    }
+
     const formation = await this.prisma.formation.findUnique({
       where: { id },
       include: {
-        modules: { include: { cours: true } },
-        etablissement: { select: { nom: true } },
+        modules: {
+          include: {
+            cours: {
+              select: {
+                id: true,
+                titre: true,
+                fileUrl: true,
+                moduleId: true,
+                contenu: true,
+                createdAt: true,
+              },
+              orderBy: { createdAt: 'asc' },
+            },
+            evaluations: true,
+            quiz: true,
+            devoirs: true,
+          },
+          orderBy: { ordre: 'asc' },
+        },
+        etablissement: { select: { id: true, nom: true, codeAntenne: true } },
+        formationReferentiel: {
+          include: {
+            filiere: true,
+            niveau: true,
+          },
+        },
+        _count: {
+          select: { modules: true, inscriptions: true, sessionsAdmission: true },
+        },
       },
     });
     if (!formation) throw new NotFoundException('Formation introuvable.');
@@ -38,25 +169,100 @@ export class PedagogieService {
     if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Vous ne pouvez pas accéder aux formations d\'un autre établissement.');
     }
+
+    this.formationDetailCache.set(cacheKey, {
+      data: formation,
+      expiresAt: Date.now() + this.CACHE_TTL,
+    });
+
     return formation;
   }
 
-  async createFormation(data: { titre: string; description?: string; formationReferentielId?: string; etablissementId?: string }, user: any) {
+  private async resolveFormationReferentielId(inputRefOrFiliereId?: string): Promise<string | null> {
+    if (!inputRefOrFiliereId || !inputRefOrFiliereId.trim()) return null;
+    const trimmedId = inputRefOrFiliereId.trim();
+
+    // 1. Vérifier si c'est directement un ID existant de formation_referentiel
+    const existingRef = await this.prisma.formationReferentiel.findUnique({
+      where: { id: trimmedId },
+    });
+    if (existingRef) return existingRef.id;
+
+    // 2. Vérifier si c'est un ID de filiere
+    const filiere = await this.prisma.filiere.findUnique({
+      where: { id: trimmedId },
+    });
+    if (filiere) {
+      const refAssociee = await this.prisma.formationReferentiel.findFirst({
+        where: { filiereId: filiere.id },
+      });
+      if (refAssociee) {
+        return refAssociee.id;
+      }
+      // Créer une liaison avec le premier niveau disponible
+      const premierNiveau = await this.prisma.niveau.findFirst({
+        where: { actif: true },
+        orderBy: { ordre: 'asc' },
+      });
+      if (premierNiveau) {
+        const newRef = await this.prisma.formationReferentiel.create({
+          data: {
+            filiereId: filiere.id,
+            niveauId: premierNiveau.id,
+            libelle: `${filiere.libelle} — ${premierNiveau.libelle}`,
+            actif: true,
+          },
+        });
+        return newRef.id;
+      }
+    }
+
+    return null;
+  }
+
+  async createFormation(data: any, user: any) {
     const etablissementId = (user.role === Role.ADMIN_CENTRE && data.etablissementId)
       ? data.etablissementId
       : user.etablissementId;
 
+    let code = data.code?.trim();
+    if (!code) {
+      const cleanTitre = (data.titre || 'FORM').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+      const rand = Math.floor(100 + Math.random() * 900);
+      code = `FORM-${cleanTitre}-${rand}`;
+    }
+
+    const formationReferentielId = await this.resolveFormationReferentielId(
+      data.formationReferentielId || data.filiereId,
+    );
+
     const formation = await this.prisma.formation.create({
       data: {
         titre: data.titre,
-        description: data.description,
+        code,
+        description: data.description || null,
+        duree: data.duree || '40 Heures',
+        categorie: data.categorie || 'tech',
+        debouches: data.debouches || null,
+        prerequis: data.prerequis || null,
+        objectifs: data.objectifs || null,
+        publieSurLanding: data.publieSurLanding !== undefined ? data.publieSurLanding : true,
+        aLaUne: data.aLaUne !== undefined ? data.aLaUne : false,
+        badgeTexte: data.badgeTexte || 'Session ouverte',
+        ordre: Number(data.ordre) || 0,
+        actif: data.actif !== undefined ? data.actif : true,
+        fraisInscription: data.fraisInscription ? Number(data.fraisInscription) : null,
         etablissementId,
-        formationReferentielId: data.formationReferentielId,
+        formationReferentielId,
       },
       include: {
-        etablissement: { select: { nom: true } },
+        etablissement: { select: { id: true, nom: true, codeAntenne: true } },
+        formationReferentiel: { include: { filiere: true, niveau: true } },
+        modules: true,
       },
     });
+
+    this.invalidateFormationsCache(etablissementId);
 
     this.notifications.emit({
       type: 'FILIERE_UPDATE',
@@ -66,16 +272,63 @@ export class PedagogieService {
       data: { formationId: formation.id, etablissementId },
     });
 
+    this.notifications.emit({
+      type: 'FORMATION_UPDATE',
+      recipientEtablissementId: etablissementId,
+      title: 'Nouvelle Formation',
+      message: `La formation "${formation.titre}" a été créée.`,
+      data: { formationId: formation.id, action: 'CREATE', etablissementId },
+    });
+
+    this.notifications.emit({
+      type: 'LANDING_UPDATE',
+      title: 'Vitrine des formations mise à jour',
+      message: `Une nouvelle formation est disponible au catalogue officiel.`,
+      data: { formationId: formation.id, action: 'CREATE' },
+    });
+
     return formation;
   }
 
-  async updateFormation(id: string, data: { titre?: string; description?: string }, user: any) {
+  async updateFormation(id: string, data: any, user: any) {
     const formation = await this.getFormation(id, user);
     // BR-02 : Seul l'établissement d'origine peut modifier
     if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Modification interdite pour un établissement tiers.');
     }
-    const updated = await this.prisma.formation.update({ where: { id }, data });
+
+    const updateData: any = {};
+    if (data.titre !== undefined) updateData.titre = data.titre;
+    if (data.code !== undefined) updateData.code = data.code;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.duree !== undefined) updateData.duree = data.duree;
+    if (data.categorie !== undefined) updateData.categorie = data.categorie;
+    if (data.debouches !== undefined) updateData.debouches = data.debouches;
+    if (data.prerequis !== undefined) updateData.prerequis = data.prerequis;
+    if (data.objectifs !== undefined) updateData.objectifs = data.objectifs;
+    if (data.publieSurLanding !== undefined) updateData.publieSurLanding = data.publieSurLanding;
+    if (data.aLaUne !== undefined) updateData.aLaUne = data.aLaUne;
+    if (data.badgeTexte !== undefined) updateData.badgeTexte = data.badgeTexte;
+    if (data.ordre !== undefined) updateData.ordre = Number(data.ordre);
+    if (data.actif !== undefined) updateData.actif = data.actif;
+    if (data.formationReferentielId !== undefined || data.filiereId !== undefined) {
+      updateData.formationReferentielId = await this.resolveFormationReferentielId(
+        data.formationReferentielId !== undefined ? data.formationReferentielId : data.filiereId,
+      );
+    }
+    if (data.etablissementId !== undefined && user.role === Role.ADMIN_CENTRE) updateData.etablissementId = data.etablissementId;
+
+    const updated = await this.prisma.formation.update({
+      where: { id },
+      data: updateData,
+      include: {
+        etablissement: { select: { id: true, nom: true, codeAntenne: true } },
+        formationReferentiel: { include: { filiere: true, niveau: true } },
+        modules: true,
+      },
+    });
+
+    this.invalidateFormationsCache(formation.etablissementId);
 
     this.notifications.emit({
       type: 'FILIERE_UPDATE',
@@ -85,6 +338,219 @@ export class PedagogieService {
       data: { formationId: updated.id, etablissementId: formation.etablissementId },
     });
 
+    this.notifications.emit({
+      type: 'FORMATION_UPDATE',
+      recipientEtablissementId: formation.etablissementId,
+      title: 'Formation mise à jour',
+      message: `La formation "${updated.titre}" a été modifiée.`,
+      data: { formationId: updated.id, action: 'UPDATE', etablissementId: formation.etablissementId },
+    });
+
+    this.notifications.emit({
+      type: 'LANDING_UPDATE',
+      title: 'Vitrine des formations mise à jour',
+      message: `Le catalogue des formations a été actualisé.`,
+      data: { formationId: updated.id, action: 'UPDATE' },
+    });
+
+    return updated;
+  }
+
+  async deployerFormationVersEtablissements(formationId: string, cibleEtablissementIds: string[], user: any) {
+    if (user.role !== Role.ADMIN_CENTRE) {
+      throw new ForbiddenException('Seul l\'Administrateur Central peut déployer une formation vers plusieurs établissements.');
+    }
+
+    if (!cibleEtablissementIds || !Array.isArray(cibleEtablissementIds) || cibleEtablissementIds.length === 0) {
+      throw new BadRequestException('Veuillez sélectionner au moins un établissement cible.');
+    }
+
+    const source = await this.prisma.formation.findUnique({
+      where: { id: formationId },
+      include: {
+        modules: {
+          include: {
+            cours: true,
+            evaluations: true,
+            quiz: {
+              include: {
+                questions: true,
+              },
+            },
+            devoirs: true,
+          },
+        },
+      },
+    });
+
+    if (!source) throw new NotFoundException('Formation source introuvable.');
+
+    const deployes: string[] = [];
+
+    for (const etabId of cibleEtablissementIds) {
+      if (etabId === source.etablissementId) continue;
+
+      const etab = await this.prisma.etablissement.findUnique({ where: { id: etabId } });
+      if (!etab) continue;
+
+      const codeSuffix = etab.codeAntenne ? etab.codeAntenne.replace(/[^A-Z0-9]/gi, '').toUpperCase() : Math.floor(100 + Math.random() * 900);
+      const codeClone = `${source.code || 'FORM'}-${codeSuffix}`;
+
+      const nouvelleFormation = await this.prisma.formation.create({
+        data: {
+          titre: source.titre,
+          code: codeClone,
+          description: source.description,
+          duree: source.duree,
+          categorie: source.categorie,
+          debouches: source.debouches,
+          prerequis: source.prerequis,
+          objectifs: source.objectifs,
+          publieSurLanding: source.publieSurLanding,
+          aLaUne: false,
+          badgeTexte: source.badgeTexte,
+          ordre: source.ordre,
+          actif: true,
+          fraisInscription: source.fraisInscription,
+          etablissementId: etab.id,
+          formationReferentielId: source.formationReferentielId,
+        },
+      });
+
+      for (const mod of source.modules) {
+        const nouveauModule = await this.prisma.module.create({
+          data: {
+            formationId: nouvelleFormation.id,
+            titre: mod.titre,
+            ordre: mod.ordre,
+            coefficient: mod.coefficient,
+          },
+        });
+
+        for (const cours of mod.cours) {
+          await this.prisma.cours.create({
+            data: {
+              moduleId: nouveauModule.id,
+              titre: cours.titre,
+              contenu: cours.contenu,
+              fileUrl: cours.fileUrl,
+            },
+          });
+        }
+
+        for (const ev of mod.evaluations) {
+          await this.prisma.evaluation.create({
+            data: {
+              moduleId: nouveauModule.id,
+              titre: ev.titre,
+              noteMaximale: ev.noteMaximale,
+            },
+          });
+        }
+
+        for (const qz of mod.quiz || []) {
+          const nouveauQuiz = await this.prisma.quiz.create({
+            data: {
+              moduleId: nouveauModule.id,
+              titre: qz.titre,
+              dureeMinutes: qz.dureeMinutes,
+            },
+          });
+          if (qz.questions && qz.questions.length > 0) {
+            await this.prisma.questionQuiz.createMany({
+              data: qz.questions.map((q) => ({
+                quizId: nouveauQuiz.id,
+                enonce: q.enonce,
+                ordre: q.ordre,
+                options: q.options as any,
+              })),
+            });
+          }
+        }
+
+        for (const dv of mod.devoirs || []) {
+          await this.prisma.devoir.create({
+            data: {
+              moduleId: nouveauModule.id,
+              titre: dv.titre,
+              consignes: dv.consignes,
+              dateLimite: dv.dateLimite,
+            },
+          });
+        }
+      }
+
+      this.invalidateFormationsCache(etab.id);
+
+      this.notifications.emit({
+        type: 'FORMATION_UPDATE',
+        recipientEtablissementId: etab.id,
+        title: 'Formation Nationale Déployée',
+        message: `La formation "${nouvelleFormation.titre}" a été déployée dans votre établissement par l'Administration Centrale.`,
+        data: { formationId: nouvelleFormation.id, etablissementId: etab.id },
+      });
+
+      deployes.push(etab.nom);
+    }
+
+    this.invalidateFormationsCache();
+
+    return {
+      success: true,
+      message: `Formation déployée avec succès dans ${deployes.length} établissement(s) : ${deployes.join(', ')}.`,
+      nbEtablissements: deployes.length,
+    };
+  }
+
+  async toggleLanding(id: string, user: any) {
+    const formation = await this.getFormation(id, user);
+    if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
+      throw new ForbiddenException('BR-02 : Action non autorisée pour cet établissement.');
+    }
+    const updated = await this.prisma.formation.update({
+      where: { id },
+      data: { publieSurLanding: !formation.publieSurLanding },
+    });
+    this.invalidateFormationsCache(formation.etablissementId);
+    this.notifications.emit({
+      type: 'FORMATION_UPDATE',
+      recipientEtablissementId: formation.etablissementId,
+      title: 'Statut vitrine modifié',
+      message: `La formation "${updated.titre}" est désormais ${updated.publieSurLanding ? 'visible' : 'masquée'} sur la Landing Page.`,
+      data: { formationId: id, publieSurLanding: updated.publieSurLanding },
+    });
+    this.notifications.emit({
+      type: 'LANDING_UPDATE',
+      title: 'Vitrine mise à jour',
+      message: `Le catalogue public a été modifié.`,
+      data: { formationId: id },
+    });
+    return updated;
+  }
+
+  async toggleUne(id: string, user: any) {
+    const formation = await this.getFormation(id, user);
+    if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
+      throw new ForbiddenException('BR-02 : Action non autorisée pour cet établissement.');
+    }
+    const updated = await this.prisma.formation.update({
+      where: { id },
+      data: { aLaUne: !formation.aLaUne },
+    });
+    this.invalidateFormationsCache(formation.etablissementId);
+    this.notifications.emit({
+      type: 'FORMATION_UPDATE',
+      recipientEtablissementId: formation.etablissementId,
+      title: 'Mise à la une modifiée',
+      message: `La formation "${updated.titre}" est désormais ${updated.aLaUne ? 'en vedette' : 'standard'}.`,
+      data: { formationId: id, aLaUne: updated.aLaUne },
+    });
+    this.notifications.emit({
+      type: 'LANDING_UPDATE',
+      title: 'Vitrine mise à jour',
+      message: `Le catalogue public a été modifié.`,
+      data: { formationId: id },
+    });
     return updated;
   }
 
@@ -109,6 +575,8 @@ export class PedagogieService {
         formationId,
       },
     });
+
+    this.invalidateFormationsCache(formationId);
 
     this.notifications.emit({
       type: 'FILIERE_UPDATE',
@@ -135,6 +603,8 @@ export class PedagogieService {
       throw new ForbiddenException('BR-02 : Ajout de cours interdit pour un établissement tiers.');
     }
     const cours = await this.prisma.cours.create({ data: { ...data, moduleId } });
+
+    this.invalidateFormationsCache(mod.formationId);
 
     // ─── Push temps réel : notifier tous les apprenants de l'établissement ───
     this.notifications.emit({
@@ -216,9 +686,11 @@ export class PedagogieService {
     if (user.role !== Role.ADMIN_CENTRE && mod.formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Création d\'évaluation interdite.');
     }
-    return this.prisma.evaluation.create({
+    const evalCreated = await this.prisma.evaluation.create({
       data: { titre: data.titre, moduleId, noteMaximale: data.noteMaximale ?? 20 },
     });
+    this.invalidateFormationsCache(mod.formationId);
+    return evalCreated;
   }
 
   async getEvaluationsByModule(moduleId: string, user: any) {
@@ -257,12 +729,29 @@ export class PedagogieService {
     if (user.role !== Role.ADMIN_CENTRE && cours.module.formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Upload interdit.');
     }
-    return this.prisma.cours.update({ where: { id: coursId }, data: { fileUrl } });
+    const updatedCours = await this.prisma.cours.update({ where: { id: coursId }, data: { fileUrl } });
+    this.invalidateFormationsCache(cours.module.formationId);
+    return updatedCours;
   }
 
   async deleteFormation(id: string, user: any) {
-    await this.getFormation(id, user);
-    return this.prisma.formation.delete({ where: { id } });
+    const formation = await this.getFormation(id, user);
+    const deleted = await this.prisma.formation.delete({ where: { id } });
+    this.invalidateFormationsCache(id);
+    this.notifications.emit({
+      type: 'FORMATION_UPDATE',
+      recipientEtablissementId: formation.etablissementId,
+      title: 'Formation supprimée',
+      message: `La formation a été supprimée.`,
+      data: { formationId: id, action: 'DELETE', etablissementId: formation.etablissementId },
+    });
+    this.notifications.emit({
+      type: 'LANDING_UPDATE',
+      title: 'Vitrine des formations mise à jour',
+      message: `Une formation a été retirée du catalogue.`,
+      data: { formationId: id, action: 'DELETE' },
+    });
+    return deleted;
   }
 
   async submitNote(evaluationId: string, userId: string, valeur: number, user: any, ipAdresse: string) {
@@ -303,6 +792,8 @@ export class PedagogieService {
       create: { utilisateurId: userId, evaluationId, valeur, formateurId: user.id },
     });
 
+    this.invalidateFormationsCache(evaluation.module.formationId);
+
     // Journaliser dans AuditLog (Exigence de traçabilité immuable avec états avant/après)
     await this.prisma.auditLog.create({
       data: {
@@ -331,8 +822,12 @@ export class PedagogieService {
   }
 
   /**
-   * BR-03 : Calcule la moyenne pondérée d'un apprenant pour une formation.
-   * Moyenne = Σ(note * coefficient) / Σ(coefficient)
+   * BR-03 : Calcule la moyenne pondérée académique d'un apprenant pour une formation.
+   * Prend en compte :
+   * 1. Évaluations / Contrôles continus (notes ramenées sur 20)
+   * 2. Devoirs & Travaux pratiques notés (notes sur 20)
+   * 3. Quiz d'évaluation (scores sur 100 ramenés sur 20)
+   * Moyenne formation = Σ(moyenne_module * coefficient) / Σ(coefficient)
    */
   async getMoyennePonderee(formationId: string, userId: string): Promise<number> {
     const modules = await this.prisma.module.findMany({
@@ -343,6 +838,22 @@ export class PedagogieService {
             notes: { where: { utilisateurId: userId } },
           },
         },
+        devoirs: {
+          include: {
+            soumissions: {
+              where: { apprenantId: userId, note: { not: null } },
+              select: { note: true },
+            },
+          },
+        },
+        quiz: {
+          include: {
+            tentatives: {
+              where: { apprenantId: userId },
+              select: { score: true },
+            },
+          },
+        },
       },
     });
 
@@ -350,14 +861,41 @@ export class PedagogieService {
     let totalPondere = 0;
 
     for (const mod of modules) {
-      for (const evaluation of mod.evaluations) {
-        if (evaluation.notes.length > 0) {
-          const note = evaluation.notes[0];
-          const noteVal = Number(note.valeur);
-          const coeff = Number(mod.coefficient ?? 1);
-          totalPondere += noteVal * coeff;
-          totalPoids += coeff;
+      const moduleNotesSur20: number[] = [];
+
+      // 1. Notes d'évaluations (ramenées sur 20)
+      for (const ev of mod.evaluations) {
+        if (ev.notes.length > 0) {
+          const noteRaw = Number(ev.notes[0].valeur);
+          const maxNote = Number(ev.noteMaximale) || 20;
+          const noteSur20 = maxNote > 0 ? (noteRaw / maxNote) * 20 : noteRaw;
+          moduleNotesSur20.push(noteSur20);
         }
+      }
+
+      // 2. Notes des devoirs rendus et corrigés
+      for (const dev of mod.devoirs) {
+        if (dev.soumissions.length > 0 && dev.soumissions[0].note !== null) {
+          moduleNotesSur20.push(Number(dev.soumissions[0].note));
+        }
+      }
+
+      // 3. Scores des quiz (pourcentage converti sur 20)
+      for (const q of mod.quiz) {
+        if (q.tentatives.length > 0 && q.tentatives[0].score !== null) {
+          const scorePercent = Number(q.tentatives[0].score);
+          const noteSur20 = (scorePercent / 100) * 20;
+          moduleNotesSur20.push(noteSur20);
+        }
+      }
+
+      // Calcul de la moyenne du module si au moins une note existe
+      if (moduleNotesSur20.length > 0) {
+        const moduleMoyenne =
+          moduleNotesSur20.reduce((acc, n) => acc + n, 0) / moduleNotesSur20.length;
+        const coeff = Number(mod.coefficient ?? 1);
+        totalPondere += moduleMoyenne * coeff;
+        totalPoids += coeff;
       }
     }
 
@@ -376,7 +914,7 @@ export class PedagogieService {
     if (user.role !== Role.ADMIN_CENTRE && mod.formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Accès interdit.');
     }
-    return this.prisma.module.update({
+    const updated = await this.prisma.module.update({
       where: { id },
       data: {
         titre: data.titre,
@@ -384,6 +922,8 @@ export class PedagogieService {
         ordre: data.ordre !== undefined ? data.ordre : undefined,
       },
     });
+    this.invalidateFormationsCache(mod.formationId);
+    return updated;
   }
 
   async deleteModule(id: string, user: any) {
@@ -395,7 +935,9 @@ export class PedagogieService {
     if (user.role !== Role.ADMIN_CENTRE && mod.formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Accès interdit.');
     }
-    return this.prisma.module.delete({ where: { id } });
+    const deleted = await this.prisma.module.delete({ where: { id } });
+    this.invalidateFormationsCache(mod.formationId);
+    return deleted;
   }
 
   // ====================================
@@ -410,7 +952,7 @@ export class PedagogieService {
     if (user.role !== Role.ADMIN_CENTRE && cours.module.formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Accès interdit.');
     }
-    return this.prisma.cours.update({
+    const updated = await this.prisma.cours.update({
       where: { id },
       data: {
         titre: data.titre,
@@ -418,6 +960,8 @@ export class PedagogieService {
         fileUrl: data.fileUrl,
       },
     });
+    this.invalidateFormationsCache(cours.module.formationId);
+    return updated;
   }
 
   async deleteCours(id: string, user: any) {
@@ -434,7 +978,9 @@ export class PedagogieService {
       where: { coursId: id },
       data: { coursId: null },
     });
-    return this.prisma.cours.delete({ where: { id } });
+    const deleted = await this.prisma.cours.delete({ where: { id } });
+    this.invalidateFormationsCache(cours.module.formationId);
+    return deleted;
   }
 
   // ====================================
@@ -449,13 +995,15 @@ export class PedagogieService {
     if (user.role !== Role.ADMIN_CENTRE && evaluation.module.formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Accès interdit.');
     }
-    return this.prisma.evaluation.update({
+    const updated = await this.prisma.evaluation.update({
       where: { id },
       data: {
         titre: data.titre,
         noteMaximale: data.noteMaximale !== undefined ? data.noteMaximale : undefined,
       },
     });
+    this.invalidateFormationsCache(evaluation.module.formationId);
+    return updated;
   }
 
   async deleteEvaluation(id: string, user: any) {
@@ -469,7 +1017,9 @@ export class PedagogieService {
     }
     // Supprimer les notes
     await this.prisma.note.deleteMany({ where: { evaluationId: id } });
-    return this.prisma.evaluation.delete({ where: { id } });
+    const deleted = await this.prisma.evaluation.delete({ where: { id } });
+    this.invalidateFormationsCache(evaluation.module.formationId);
+    return deleted;
   }
 
   // ====================================
@@ -873,5 +1423,173 @@ export class PedagogieService {
       apprenantsDetails,
     };
   }
+
+  // ====================================
+  // CATEGORIES DE FORMATION
+  // ====================================
+  async getCategories(includeInactive = false) {
+    return this.prisma.categorieFormation.findMany({
+      where: includeInactive ? {} : { actif: true },
+      orderBy: [{ ordre: 'asc' }, { libelle: 'asc' }],
+    });
+  }
+
+  async createCategorie(dto: CreateCategorieFormationDto, user: any) {
+    if (user.role !== Role.ADMIN_CENTRE) {
+      throw new ForbiddenException('Seul l\'Administrateur Central peut créer des catégories de formation.');
+    }
+
+    let code = (dto.code && dto.code.trim()) ? slugifyCategoryCode(dto.code) : slugifyCategoryCode(dto.libelle);
+
+    // Vérifier l'unicité du code
+    const existing = await this.prisma.categorieFormation.findUnique({ where: { code } });
+    if (existing) {
+      code = `${code}-${Math.floor(100 + Math.random() * 900)}`;
+    }
+
+    const maxOrdre = await this.prisma.categorieFormation.aggregate({ _max: { ordre: true } });
+    const nextOrdre = dto.ordre !== undefined ? dto.ordre : ((maxOrdre._max.ordre || 0) + 1);
+
+    const cat = await this.prisma.categorieFormation.create({
+      data: {
+        code,
+        libelle: dto.libelle.trim(),
+        description: dto.description?.trim() || null,
+        couleur: dto.couleur?.trim() || '#1C75BC',
+        icone: dto.icone?.trim() || 'code',
+        ordre: nextOrdre,
+        actif: dto.actif !== undefined ? dto.actif : true,
+      },
+    });
+
+    this.notifications.emit({
+      type: 'CATEGORIE_UPDATE',
+      title: 'Nouvelle Catégorie de Formation',
+      message: `La catégorie "${cat.libelle}" a été ajoutée.`,
+      data: { categorie: cat, action: 'CREATE' },
+    });
+
+    this.notifications.emit({
+      type: 'LANDING_UPDATE',
+      title: 'Catalogue des catégories mis à jour',
+      message: `Une nouvelle catégorie "${cat.libelle}" est disponible au catalogue.`,
+      data: { categorieId: cat.id, action: 'CREATE' },
+    });
+
+    return cat;
+  }
+
+  async updateCategorie(id: string, dto: UpdateCategorieFormationDto, user: any) {
+    if (user.role !== Role.ADMIN_CENTRE) {
+      throw new ForbiddenException('Seul l\'Administrateur Central peut modifier des catégories de formation.');
+    }
+
+    const existing = await this.prisma.categorieFormation.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Catégorie introuvable.');
+    }
+
+    let code = existing.code;
+    if (dto.code && dto.code.trim()) {
+      const formattedCode = slugifyCategoryCode(dto.code);
+      if (formattedCode !== existing.code) {
+        const duplicate = await this.prisma.categorieFormation.findUnique({ where: { code: formattedCode } });
+        if (duplicate && duplicate.id !== id) {
+          throw new ConflictException(`Le code "${formattedCode}" est déjà utilisé par une autre catégorie.`);
+        }
+        code = formattedCode;
+      }
+    }
+
+    const updated = await this.prisma.categorieFormation.update({
+      where: { id },
+      data: {
+        code,
+        libelle: dto.libelle !== undefined ? dto.libelle.trim() : existing.libelle,
+        description: dto.description !== undefined ? dto.description?.trim() || null : existing.description,
+        couleur: dto.couleur !== undefined ? dto.couleur?.trim() || '#1C75BC' : existing.couleur,
+        icone: dto.icone !== undefined ? dto.icone?.trim() || 'code' : existing.icone,
+        ordre: dto.ordre !== undefined ? dto.ordre : existing.ordre,
+        actif: dto.actif !== undefined ? dto.actif : existing.actif,
+      },
+    });
+
+    this.notifications.emit({
+      type: 'CATEGORIE_UPDATE',
+      title: 'Catégorie mise à jour',
+      message: `La catégorie "${updated.libelle}" a été modifiée.`,
+      data: { categorie: updated, action: 'UPDATE' },
+    });
+
+    this.notifications.emit({
+      type: 'LANDING_UPDATE',
+      title: 'Catalogue des catégories mis à jour',
+      message: `La catégorie "${updated.libelle}" a été mise à jour.`,
+      data: { categorieId: updated.id, action: 'UPDATE' },
+    });
+
+    return updated;
+  }
+
+  async deleteCategorie(id: string, user: any) {
+    if (user.role !== Role.ADMIN_CENTRE) {
+      throw new ForbiddenException('Seul l\'Administrateur Central peut supprimer des catégories de formation.');
+    }
+
+    const existing = await this.prisma.categorieFormation.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Catégorie introuvable.');
+    }
+
+    // Vérifier si des formations utilisent cette catégorie
+    const formationsCount = await this.prisma.formation.count({
+      where: {
+        OR: [
+          { categorie: existing.code },
+          { categorie: existing.libelle },
+        ],
+      },
+    });
+
+    if (formationsCount > 0) {
+      // Désactiver au lieu de détruire pour préserver l'intégrité
+      await this.prisma.categorieFormation.update({
+        where: { id },
+        data: { actif: false },
+      });
+
+      this.notifications.emit({
+        type: 'CATEGORIE_UPDATE',
+        title: 'Catégorie désactivée',
+        message: `La catégorie "${existing.libelle}" a été désactivée (${formationsCount} formations associées).`,
+        data: { categorieId: id, action: 'DEACTIVATE' },
+      });
+
+      return {
+        success: true,
+        deactivated: true,
+        message: `La catégorie est rattachée à ${formationsCount} formation(s) : elle a été désactivée sans impacter l'historique existant.`,
+      };
+    }
+
+    await this.prisma.categorieFormation.delete({ where: { id } });
+
+    this.notifications.emit({
+      type: 'CATEGORIE_UPDATE',
+      title: 'Catégorie supprimée',
+      message: `La catégorie "${existing.libelle}" a été définitivement supprimée.`,
+      data: { categorieId: id, action: 'DELETE' },
+    });
+
+    this.notifications.emit({
+      type: 'LANDING_UPDATE',
+      title: 'Catalogue des catégories mis à jour',
+      message: `La catégorie "${existing.libelle}" a été retirée du catalogue.`,
+      data: { categorieId: id, action: 'DELETE' },
+    });
+
+    return { success: true, deactivated: false, message: 'Catégorie supprimée avec succès.' };
+  }
 }
+
 

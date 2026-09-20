@@ -3,6 +3,7 @@ import { PedagogieService } from './pedagogie.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Role } from '../../common/enums/role.enum';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('PedagogieService (Business Rules)', () => {
   let service: PedagogieService;
@@ -43,6 +44,7 @@ describe('PedagogieService (Business Rules)', () => {
       providers: [
         PedagogieService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: NotificationsService, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

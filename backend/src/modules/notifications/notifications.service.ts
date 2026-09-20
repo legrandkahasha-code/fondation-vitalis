@@ -10,6 +10,8 @@ export type NotificationEventType =
   | 'CERTIFICAT_EMIS'
   | 'FILIERE_UPDATE'
   | 'FORMATION_UPDATE'
+  | 'SEANCE_UPDATE'
+  | 'ASSIDUITE_UPDATE'
   // ─── Module Admission ───────────────────────────────────────────────────────
   | 'ADMISSION_NEW_CANDIDATURE'
   | 'ADMISSION_CONFIRMED'

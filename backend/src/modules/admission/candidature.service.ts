@@ -17,7 +17,7 @@ import {
 } from '@prisma/client';
 
 const TRANSITIONS: Record<statut_candidature, statut_candidature[]> = {
-  BROUILLON: [statut_candidature.SOUMISE, statut_candidature.RETIREE],
+  BROUILLON: [statut_candidature.SOUMISE, statut_candidature.EN_EVALUATION, statut_candidature.RETIREE],
   SOUMISE: [statut_candidature.EN_EVALUATION, statut_candidature.RETIREE],
   EN_EVALUATION: [
     statut_candidature.ADMISE,

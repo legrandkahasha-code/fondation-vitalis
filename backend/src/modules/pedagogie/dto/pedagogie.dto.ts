@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, Min, IsUUID, IsEnum, IsDateString, IsArray, ArrayMinSize, ValidateNested } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min, IsUUID, IsEnum, IsDateString, IsArray, ArrayMinSize, ValidateNested, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { type_seance, statut_presence } from '@prisma/client';
 
@@ -8,7 +8,55 @@ export class CreateFormationDto {
 
   @IsOptional()
   @IsString()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  duree?: string;
+
+  @IsOptional()
+  @IsString()
+  categorie?: string; // 'tech' | 'gestion' | 'technique'
+
+  @IsOptional()
+  @IsString()
+  debouches?: string;
+
+  @IsOptional()
+  @IsString()
+  prerequis?: string;
+
+  @IsOptional()
+  @IsString()
+  objectifs?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  publieSurLanding?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  aLaUne?: boolean;
+
+  @IsOptional()
+  @IsString()
+  badgeTexte?: string;
+
+  @IsOptional()
+  @IsNumber()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  fraisInscription?: number;
 
   @IsOptional()
   @IsUUID()
@@ -26,7 +74,63 @@ export class UpdateFormationDto {
 
   @IsOptional()
   @IsString()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  duree?: string;
+
+  @IsOptional()
+  @IsString()
+  categorie?: string;
+
+  @IsOptional()
+  @IsString()
+  debouches?: string;
+
+  @IsOptional()
+  @IsString()
+  prerequis?: string;
+
+  @IsOptional()
+  @IsString()
+  objectifs?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  publieSurLanding?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  aLaUne?: boolean;
+
+  @IsOptional()
+  @IsString()
+  badgeTexte?: string;
+
+  @IsOptional()
+  @IsNumber()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  fraisInscription?: number;
+
+  @IsOptional()
+  @IsUUID()
+  formationReferentielId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  etablissementId?: string;
 }
 
 export class CreateModuleDto {
@@ -124,3 +228,71 @@ export class BulkEmargementDto {
   @Type(() => EmargementDto)
   presences: EmargementDto[];
 }
+
+export class CreateCategorieFormationDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @IsString()
+  libelle: string;
+
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  couleur?: string;
+
+  @IsOptional()
+  @IsString()
+  icone?: string;
+
+  @IsOptional()
+  @IsNumber()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+}
+
+export class UpdateCategorieFormationDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  libelle?: string;
+
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  couleur?: string;
+
+  @IsOptional()
+  @IsString()
+  icone?: string;
+
+  @IsOptional()
+  @IsNumber()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+}
+

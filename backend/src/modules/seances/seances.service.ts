@@ -2,12 +2,33 @@ import {
   Injectable, NotFoundException, ForbiddenException, BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { Role } from '../../common/enums/role.enum';
 import { CreateSeanceDto, UpdateSeanceDto, EmargementDto } from './dto/seances.dto';
 
 @Injectable()
 export class SeancesService {
-  constructor(private prisma: PrismaService) {}
+  // Cache serveur mémoire à TTL court + invalidation immédiate sur écriture
+  private seancesCache = new Map<string, { data: any; expiresAt: number }>();
+  private assiduiteCache = new Map<string, { data: any; expiresAt: number }>();
+  private readonly CACHE_TTL = 60_000; // 60 secondes
+
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
+
+  private invalidateCache(etablissementId?: string) {
+    if (etablissementId) {
+      this.seancesCache.delete(etablissementId);
+      this.assiduiteCache.delete(etablissementId);
+    } else {
+      this.seancesCache.clear();
+      this.assiduiteCache.clear();
+    }
+    this.seancesCache.delete('ALL');
+    this.assiduiteCache.delete('ALL');
+  }
 
   private async assertModuleAccess(moduleId: string, user: any) {
     const mod = await this.prisma.module.findUnique({
@@ -22,11 +43,11 @@ export class SeancesService {
   }
 
   async create(dto: CreateSeanceDto, user: any) {
-    await this.assertModuleAccess(dto.moduleId, user);
+    const mod = await this.assertModuleAccess(dto.moduleId, user);
     if (new Date(dto.dateHeureFin) <= new Date(dto.dateHeureDebut)) {
       throw new BadRequestException('La date de fin doit être postérieure à la date de début.');
     }
-    return this.prisma.seanceFormation.create({
+    const seance = await this.prisma.seanceFormation.create({
       data: {
         moduleId: dto.moduleId,
         coursId: dto.coursId,
@@ -37,8 +58,22 @@ export class SeancesService {
         dateHeureFin: new Date(dto.dateHeureFin),
         salleOuLien: dto.salleOuLien,
       },
-      include: { module: true, formateur: { select: { nom: true, prenom: true } } },
+      include: { module: { include: { formation: true } }, formateur: { select: { nom: true, prenom: true } } },
     });
+
+    const etabId = mod.formation.etablissementId;
+    this.invalidateCache(etabId);
+
+    // ─── Push Temps Réel SSE ───
+    this.notifications.emit({
+      type: 'SEANCE_UPDATE',
+      recipientEtablissementId: etabId,
+      title: 'Nouvelle séance planifiée',
+      message: `Une séance "${seance.titreActivite}" a été planifiée.`,
+      data: { seanceId: seance.id, action: 'CREATE', etablissementId: etabId },
+    });
+
+    return seance;
   }
 
   async findByModule(moduleId: string, user: any) {
@@ -54,11 +89,17 @@ export class SeancesService {
   }
 
   async findByEtablissement(user: any) {
+    const cacheKey = user.role === Role.ADMIN_CENTRE ? 'ALL' : user.etablissementId;
+    const cached = this.seancesCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
     const where = user.role === Role.ADMIN_CENTRE
       ? {}
       : { module: { formation: { etablissementId: user.etablissementId } } };
 
-    return this.prisma.seanceFormation.findMany({
+    const data = await this.prisma.seanceFormation.findMany({
       where,
       include: {
         module: { include: { formation: { select: { titre: true } } } },
@@ -67,6 +108,9 @@ export class SeancesService {
       },
       orderBy: { dateHeureDebut: 'desc' },
     });
+
+    this.seancesCache.set(cacheKey, { data, expiresAt: Date.now() + this.CACHE_TTL });
+    return data;
   }
 
   async findOne(id: string, user: any) {
@@ -93,7 +137,7 @@ export class SeancesService {
     if (user.role === Role.FORMATEUR && seance.formateurId !== user.id) {
       throw new ForbiddenException('Seul le formateur assigné peut modifier cette séance.');
     }
-    return this.prisma.seanceFormation.update({
+    const updated = await this.prisma.seanceFormation.update({
       where: { id },
       data: {
         ...dto,
@@ -101,11 +145,39 @@ export class SeancesService {
         dateHeureFin: dto.dateHeureFin ? new Date(dto.dateHeureFin) : undefined,
       },
     });
+
+    const etabId = seance.module.formation.etablissementId;
+    this.invalidateCache(etabId);
+
+    // ─── Push Temps Réel SSE ───
+    this.notifications.emit({
+      type: 'SEANCE_UPDATE',
+      recipientEtablissementId: etabId,
+      title: 'Séance modifiée',
+      message: `La séance "${updated.titreActivite}" a été modifiée.`,
+      data: { seanceId: updated.id, action: 'UPDATE', etablissementId: etabId },
+    });
+
+    return updated;
   }
 
   async remove(id: string, user: any) {
-    await this.findOne(id, user);
-    return this.prisma.seanceFormation.delete({ where: { id } });
+    const seance = await this.findOne(id, user);
+    const etabId = seance.module.formation.etablissementId;
+    const deleted = await this.prisma.seanceFormation.delete({ where: { id } });
+
+    this.invalidateCache(etabId);
+
+    // ─── Push Temps Réel SSE ───
+    this.notifications.emit({
+      type: 'SEANCE_UPDATE',
+      recipientEtablissementId: etabId,
+      title: 'Séance supprimée',
+      message: `Une séance a été supprimée / annulée.`,
+      data: { seanceId: id, action: 'DELETE', etablissementId: etabId },
+    });
+
+    return deleted;
   }
 
   async emargement(seanceId: string, presences: EmargementDto[], user: any, ip: string) {
@@ -142,6 +214,25 @@ export class SeancesService {
       },
     });
 
+    const etabId = seance.module.formation.etablissementId;
+    this.invalidateCache(etabId);
+
+    // ─── Push Temps Réel SSE pour Assiduité & Séances ───
+    this.notifications.emit({
+      type: 'ASSIDUITE_UPDATE',
+      recipientEtablissementId: etabId,
+      title: 'Émargement enregistré',
+      message: `L'émargement de la séance "${seance.titreActivite}" a été validé.`,
+      data: { seanceId, count: presences.length, etablissementId: etabId },
+    });
+    this.notifications.emit({
+      type: 'SEANCE_UPDATE',
+      recipientEtablissementId: etabId,
+      title: 'Séance émargée',
+      message: `Présences mises à jour pour "${seance.titreActivite}".`,
+      data: { seanceId, action: 'EMARGEMENT', etablissementId: etabId },
+    });
+
     return { success: true, presences: results };
   }
 
@@ -176,6 +267,11 @@ export class SeancesService {
       throw new ForbiddenException('Accès interdit à cet établissement.');
     }
 
+    const cached = this.assiduiteCache.get(etablissementId);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
     const apprenants = await this.prisma.utilisateur.findMany({
       where: {
         etablissementId,
@@ -187,6 +283,7 @@ export class SeancesService {
     });
 
     if (apprenants.length === 0) {
+      this.assiduiteCache.set(etablissementId, { data: [], expiresAt: Date.now() + this.CACHE_TTL });
       return [];
     }
 
@@ -209,7 +306,7 @@ export class SeancesService {
       presencesMap.set(g.utilisateurId, entry);
     }
 
-    return apprenants.map((a) => {
+    const data = apprenants.map((a) => {
       const stats = presencesMap.get(a.id) || { total: 0, present: 0 };
       const taux = stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 100;
       return {
@@ -220,5 +317,8 @@ export class SeancesService {
         taux,
       };
     });
+
+    this.assiduiteCache.set(etablissementId, { data, expiresAt: Date.now() + this.CACHE_TTL });
+    return data;
   }
 }

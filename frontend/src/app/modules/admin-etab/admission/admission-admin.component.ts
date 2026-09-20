@@ -199,14 +199,14 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
 
                   <!-- Session -->
                   <td class="p-3.5">
-                    <div class="font-bold text-[#1C75BC]">{{ c.session.libelle }}</div>
-                    <div class="text-[11px] text-[#4B5157] mt-0.5">{{ c.session.filiere.libelle }} · {{ c.session.niveau.libelle }}</div>
+                    <div class="font-bold text-[#1C75BC]">{{ c.session.libelle || '—' }}</div>
+                    <div class="text-[11px] text-[#4B5157] mt-0.5">{{ c.session.filiere.libelle || '—' }} · {{ c.session.niveau.libelle || '—' }}</div>
                   </td>
 
                   <!-- Etablissement -->
                   <td class="p-3.5 text-[#4B5157]">
-                    <div class="font-semibold text-[#1B1D1F]">{{ c.session.etablissement.nom }}</div>
-                    <div class="text-[10px] text-[#4B5157]">Code : {{ c.session.etablissement.codeAntenne }}</div>
+                    <div class="font-semibold text-[#1B1D1F]">{{ c.session.etablissement.nom || '—' }}</div>
+                    <div class="text-[10px] text-[#4B5157]">Code : {{ c.session.etablissement.codeAntenne || '—' }}</div>
                   </td>
 
                   <!-- Pièces jointes -->
@@ -220,7 +220,7 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
                   <td class="p-3.5">
                     <span class="rounded-[2px] px-2.5 py-1 text-[11px] font-bold inline-block border"
                           [ngClass]="getStatutBadgeClass(c.statut)">
-                      {{ c.statut }}
+                      {{ getStatutLabel(c.statut) }}
                     </span>
                     <div *ngIf="c.rangListeAttente" class="mt-1 text-[10px] font-semibold text-[#F0791E]">
                       Rang #{{ c.rangListeAttente }}
@@ -266,15 +266,13 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
         <!-- ONGLET 2 : GESTION DES SESSIONS D'ADMISSION                                               -->
         <!-- ========================================================================================= -->
         <section *ngIf="activeTab === 'sessions'" class="space-y-6">
-          <!-- Formulaire de création de session avec bordure institutionnelle -->
+          <!-- Formulaire de création de session enrichi -->
           <div class="rounded-[2px] border border-[#D7DBDE] border-t-[4px] border-t-[#1C75BC] bg-white p-5 shadow-2xs">
-            <h2 class="text-sm font-bold text-[#1B1D1F] mb-3 uppercase tracking-[0.05em]">
-              Ouvrir une nouvelle session d'admission
-            </h2>
+            <h2 class="text-sm font-bold text-[#1B1D1F] mb-3 uppercase tracking-[0.05em]">Ouvrir une nouvelle session d'admission</h2>
             <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" (ngSubmit)="createSession()">
               <input class="w-full px-3 py-2 text-xs border border-[#9AA1A8] rounded-[2px] focus:outline-hidden focus:border-[#1C75BC] bg-white"
                      name="libelle" [(ngModel)]="draft.libelle" placeholder="Libellé de la session (ex: Promo 2026-A)" required />
-              
+
               <select *ngIf="isCentreAdmin" class="w-full px-3 py-2 text-xs border border-[#9AA1A8] rounded-[2px] focus:outline-hidden focus:border-[#1C75BC] bg-white"
                       name="etablissementId" [(ngModel)]="draft.etablissementId" required>
                 <option value="">Sélectionnez l'Établissement</option>
@@ -295,7 +293,7 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
 
               <input class="w-full px-3 py-2 text-xs border border-[#9AA1A8] rounded-[2px] focus:outline-hidden focus:border-[#1C75BC] bg-white"
                      name="capacite" type="number" min="1" [(ngModel)]="draft.capacite" placeholder="Capacité (places)" required />
-              
+
               <div class="flex flex-col">
                 <label class="text-[11px] text-[#4B5157] font-semibold mb-0.5">Ouverture des inscriptions</label>
                 <input class="w-full px-3 py-2 text-xs border border-[#9AA1A8] rounded-[2px] focus:outline-hidden focus:border-[#1C75BC] bg-white"
@@ -314,9 +312,36 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
                        name="dateDebutFormation" type="datetime-local" [(ngModel)]="draft.dateDebutFormation" required />
               </div>
 
+              <!-- Description de la session -->
+              <div class="sm:col-span-2 lg:col-span-4">
+                <label class="text-[11px] text-[#4B5157] font-semibold mb-0.5 block">Description de la session (visible par les apprenants)</label>
+                <textarea name="description" [(ngModel)]="draft.description" rows="2"
+                          class="w-full px-3 py-2 text-xs border border-[#9AA1A8] rounded-[2px] focus:outline-hidden focus:border-[#1C75BC] bg-white leading-relaxed"
+                          placeholder="Décrivez cette session : objectifs, public cible, conditions, débouchés..."></textarea>
+              </div>
+
+              <!-- Pièces requises -->
+              <div class="sm:col-span-2 lg:col-span-4">
+                <label class="text-[11px] text-[#4B5157] font-semibold mb-1.5 block">Pièces justificatives requises :</label>
+                <div class="flex flex-wrap gap-2">
+                  <label *ngFor="let piece of PIECES_DISPONIBLES"
+                         class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] border text-xs cursor-pointer transition-all select-none"
+                         [class.border-[#1C75BC]]="isPieceSelected(piece.value)"
+                         [class.bg-[#E7F1FA]]="isPieceSelected(piece.value)"
+                         [class.text-[#124F80]]="isPieceSelected(piece.value)"
+                         [class.font-semibold]="isPieceSelected(piece.value)"
+                         [class.border-[#D7DBDE]]="!isPieceSelected(piece.value)"
+                         [class.bg-white]="!isPieceSelected(piece.value)">
+                    <input type="checkbox" [checked]="isPieceSelected(piece.value)" (change)="togglePiece(piece.value)" class="hidden" />
+                    <span>{{ isPieceSelected(piece.value) ? '✅' : '⬜' }}</span>
+                    <span>{{ piece.label }}</span>
+                  </label>
+                </div>
+              </div>
+
               <div class="flex items-end sm:col-span-2 lg:col-span-4">
                 <button class="btn btn-primary text-xs w-full h-[38px] shadow-2xs cursor-pointer" type="submit" [disabled]="creating">
-                  {{ creating ? 'Création en cours...' : '+ Créer la session d’admission' }}
+                  {{ creating ? 'Création en cours...' : '+ Créer la session d\'admission' }}
                 </button>
               </div>
             </form>
@@ -328,40 +353,65 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
             <div>
               <div class="mb-3 flex items-center justify-between">
                 <h2 class="text-base font-bold text-[#1B1D1F]">Sessions configurées</h2>
-                <span class="text-xs text-[#4B5157] font-semibold">{{ sessions.length }} session{{ sessions.length === 1 ? '' : 's' }}</span>
+              </div>
+              <!-- Filtre sessions -->
+              <div class="mb-3">
+                <input type="text" [(ngModel)]="sessionSearchFilter"
+                       class="w-full px-3 py-2 text-xs border border-[#9AA1A8] rounded-[2px] focus:outline-hidden focus:border-[#1C75BC] bg-white"
+                       placeholder="🔍 Rechercher une session..." />
+              </div>
+              <div class="mb-2">
+                <span class="text-xs text-[#4B5157] font-semibold">{{ filteredSessions.length }} session{{ filteredSessions.length === 1 ? '' : 's' }}</span>
               </div>
 
-              <div *ngIf="sessions.length === 0" class="border border-[#D7DBDE] bg-white p-8 text-center text-sm text-[#4B5157] shadow-2xs rounded-[2px]">
-                <p class="font-medium">Aucune session d'admission configurée.</p>
+              <div *ngIf="filteredSessions.length === 0" class="border border-[#D7DBDE] bg-white p-8 text-center text-sm text-[#4B5157] shadow-2xs rounded-[2px]">
+                <p class="font-medium">Aucune session d'admission trouvée.</p>
               </div>
 
-              <div *ngIf="sessions.length > 0" class="space-y-3">
-                <button *ngFor="let session of sessions" type="button" (click)="selectSession(session)"
+              <div *ngIf="filteredSessions.length > 0" class="space-y-3">
+                <button *ngFor="let session of filteredSessions" type="button" (click)="selectSession(session)"
                         class="block w-full rounded-[2px] border bg-white p-4 text-left transition hover:border-[#1C75BC] shadow-2xs cursor-pointer"
                         [class.border-[#1C75BC]]="selected?.id === session.id"
                         [class.border-l-[4px]]="selected?.id === session.id"
                         [class.border-l-[#F0791E]]="selected?.id === session.id"
                         [class.border-[#D7DBDE]]="selected?.id !== session.id">
                   <div class="flex items-start justify-between gap-3">
-                    <div>
+                    <div class="min-w-0 flex-1">
                       <strong class="text-sm text-[#1B1D1F]">{{ session.libelle }}</strong>
                       <p class="mt-1 text-xs text-[#4B5157]">{{ session.filiere.libelle }} · {{ session.niveau.libelle }}</p>
                       <p class="mt-1 text-[11px] text-[#4B5157]">Établissement : {{ session.etablissement.nom }}</p>
                       <p class="mt-0.5 text-[11px] text-[#4B5157]">Capacité : {{ session.capacite }} places</p>
+                      <p *ngIf="(session.etablissementsPartages?.length || 0) > 0" class="mt-1 text-[11px] font-semibold text-[#F0791E]">
+                        📡 Partagée avec {{ session.etablissementsPartages?.length }} établissement(s)
+                      </p>
+                      <p *ngIf="session.description" class="mt-1 text-[11px] text-[#4B5157] line-clamp-1 italic">{{ session.description }}</p>
                     </div>
-                    <span class="rounded-[2px] px-2.5 py-1 text-xs font-semibold border"
+                    <span class="rounded-[2px] px-2.5 py-1 text-xs font-semibold border shrink-0"
                           [ngClass]="getSessionBadgeClass(session.statut)">
-                      {{ session.statut }}
+                      {{ getSessionStatutLabel(session.statut) }}
                     </span>
                   </div>
-                  <div class="mt-3 flex gap-2">
+                  <div class="mt-3 flex gap-2 flex-wrap">
                     <button *ngIf="session.statut === 'BROUILLON'" type="button" class="btn btn-primary text-xs py-1.5 px-3 cursor-pointer"
                             [disabled]="busy === session.id" (click)="setStatus(session, 'OUVERTE', $event)">
-                      Ouvrir au public
+                      🟢 Ouvrir au public
                     </button>
                     <button *ngIf="session.statut === 'OUVERTE'" type="button" class="btn btn-ghost text-xs py-1.5 px-3 text-[#ED1C24] border-[#ED1C24] hover:bg-[#FDE6E6] cursor-pointer"
                             [disabled]="busy === session.id" (click)="setStatus(session, 'FERMEE', $event)">
-                      Fermer la session
+                      🔴 Fermer la session
+                    </button>
+                    <button *ngIf="session.statut === 'FERMEE'" type="button" class="btn btn-ghost text-xs py-1.5 px-3 text-[#F0791E] border-[#F0791E] hover:bg-[#FDECDD] cursor-pointer"
+                            [disabled]="busy === session.id" (click)="setStatus(session, 'TRAITEMENT', $event)">
+                      ⚙️ Passer en traitement
+                    </button>
+                    <button *ngIf="session.statut === 'TRAITEMENT'" type="button" class="btn btn-ghost text-xs py-1.5 px-3 text-[#276B44] border-[#276B44] hover:bg-[#E7F1EA] cursor-pointer"
+                            [disabled]="busy === session.id" (click)="setStatus(session, 'CLOTUREE', $event)">
+                      ✅ Clôturer définitivement
+                    </button>
+                    <button *ngIf="isCentreAdmin" type="button"
+                            (click)="openPartageModal(session, $event)"
+                            class="btn btn-secondary text-xs py-1.5 px-3 text-[#1C75BC] border-[#1C75BC] hover:bg-[#E7F1FA] cursor-pointer">
+                      📡 Partager
                     </button>
                   </div>
                 </button>
@@ -395,7 +445,7 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
                     </span>
                     <span class="rounded-[2px] px-2 py-0.5 text-xs font-bold border"
                           [ngClass]="getStatutBadgeClass(c.statut)">
-                      {{ c.statut }}
+                      {{ getStatutLabel(c.statut) }}
                     </span>
                   </div>
                   <p class="text-xs text-[#4B5157] font-mono">✉ {{ c.apprenant?.email }}</p>
@@ -739,6 +789,31 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
                     </div>
                   </div>
 
+                  <!-- Alerte contextuelle selon le statut actuel -->
+                  <div *ngIf="modalCandidature.statut === 'BROUILLON'"
+                       class="mb-3 p-3 rounded-[2px] bg-[#FFF3E0] border border-[#F0791E]/50 text-xs text-[#7D3900] flex items-start gap-2">
+                    <span class="text-base shrink-0">⚠️</span>
+                    <div>
+                      <strong>Dossier non encore soumis officiellement</strong> — l'apprenant est encore en phase de constitution.
+                      Vous pouvez tout de même ouvrir l’évaluation directement si les pièces sont en ordre.
+                    </div>
+                  </div>
+                  <div *ngIf="modalCandidature.statut === 'SOUMISE'"
+                       class="mb-3 p-3 rounded-[2px] bg-[#E7F1EA] border border-[#276B44]/50 text-xs text-[#276B44] flex items-start gap-2">
+                    <span class="text-base shrink-0">✅</span>
+                    <div>
+                      <strong>Dossier soumis officiellement</strong> — l’apprenant attend votre décision.
+                      Choisissez « En cours d’examen » pour débuter l’évaluation, ou rendez directement une décision finale.
+                    </div>
+                  </div>
+                  <div *ngIf="modalCandidature.statut === 'EN_EVALUATION'"
+                       class="mb-3 p-3 rounded-[2px] bg-[#E7F1FA] border border-[#1C75BC]/50 text-xs text-[#124F80] flex items-start gap-2">
+                    <span class="text-base shrink-0">🔍</span>
+                    <div>
+                      <strong>Dossier en cours d’évaluation</strong> — rendez votre décision finale : admission, liste d’attente ou rejet.
+                    </div>
+                  </div>
+
                   <div class="space-y-3">
                     <!-- Choix de la décision -->
                     <div>
@@ -767,9 +842,12 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
 
                         <label class="flex items-center gap-2 p-2 rounded-[2px] border bg-white cursor-pointer transition hover:border-[#1C75BC]"
                                [class.border-[#1C75BC]]="decisionForm.decision === 'EN_EVALUATION'"
-                               [class.bg-[#E7F1FA]]="decisionForm.decision === 'EN_EVALUATION'">
-                          <input type="radio" name="decision" value="EN_EVALUATION" [(ngModel)]="decisionForm.decision" class="accent-[#1C75BC]" />
-                          <span class="font-bold text-[#1C75BC] text-xs">🔵 En cours examen</span>
+                               [class.bg-[#E7F1FA]]="decisionForm.decision === 'EN_EVALUATION'"
+                               [class.opacity-40]="modalCandidature.statut === 'EN_EVALUATION'"
+                               [class.pointer-events-none]="modalCandidature.statut === 'EN_EVALUATION'">
+                          <input type="radio" name="decision" value="EN_EVALUATION" [(ngModel)]="decisionForm.decision" class="accent-[#1C75BC]"
+                                 [disabled]="modalCandidature.statut === 'EN_EVALUATION'" />
+                          <span class="font-bold text-[#1C75BC] text-xs">🔵 Ouvrir l'examen</span>
                         </label>
                       </div>
                     </div>
@@ -980,6 +1058,55 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
           </div>
         </div>
       </div>
+
+      <!-- ========================================================================================= -->
+      <!-- MODAL PARTAGE SESSION (Admin Central uniquement)                                          -->
+      <!-- ========================================================================================= -->
+      <div *ngIf="partageModal.session" class="fixed inset-0 z-50 flex items-center justify-center bg-[#1B1D1F]/60 p-4 backdrop-blur-xs animate-fade-in">
+        <div class="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[2px] bg-white p-6 shadow-2xl border border-[#D7DBDE] border-t-[5px] border-t-[#F0791E]">
+          <div class="flex items-start justify-between border-b border-[#D7DBDE] pb-4 mb-4">
+            <div>
+              <h3 class="text-base font-bold text-[#1B1D1F]">📡 Partager la session avec des établissements</h3>
+              <p class="text-xs text-[#4B5157] mt-1">{{ partageModal.session.libelle }}</p>
+              <p class="text-[11px] text-[#4B5157] mt-0.5">Établissement propriétaire : {{ partageModal.session.etablissement.nom }}</p>
+            </div>
+            <button (click)="closePartageModal()" class="text-[#4B5157] hover:text-[#1B1D1F] text-xl font-bold p-1 cursor-pointer">✕</button>
+          </div>
+
+          <p class="text-xs text-[#4B5157] mb-3">
+            Sélectionnez les établissements satellites qui pourront voir cette session et recevoir les candidatures de leurs apprenants.
+          </p>
+
+          <div class="space-y-2 max-h-64 overflow-y-auto border border-[#D7DBDE] rounded-[2px] p-2">
+            <label *ngFor="let etab of etablissements"
+                   class="flex items-center gap-3 p-2.5 rounded-[2px] border cursor-pointer transition-all"
+                   [class.border-[#1C75BC]]="isEtabPartage(etab.id)"
+                   [class.bg-[#E7F1FA]]="isEtabPartage(etab.id)"
+                   [class.border-[#D7DBDE]]="!isEtabPartage(etab.id)">
+              <input type="checkbox" [checked]="isEtabPartage(etab.id)" (change)="toggleEtabPartage(etab.id)" class="w-4 h-4 accent-[#1C75BC]" />
+              <div class="min-w-0 flex-1">
+                <div class="text-xs font-semibold text-[#1B1D1F]">{{ etab.nom }}</div>
+                <div class="text-[11px] text-[#4B5157]">{{ etab.codeAntenne }}</div>
+              </div>
+              <span *ngIf="etab.id === partageModal.session.etablissement.id"
+                    class="text-[10px] text-[#276B44] font-bold bg-[#E7F1EA] px-1.5 py-0.5 rounded-[2px] border border-[#276B44]/30">
+                Propriétaire
+              </span>
+            </label>
+          </div>
+
+          <div class="mt-4 flex justify-between items-center">
+            <span class="text-xs text-[#4B5157]">{{ partageModal.selectedIds.length }} établissement(s) sélectionné(s)</span>
+            <div class="flex gap-2">
+              <button type="button" (click)="closePartageModal()" class="btn btn-secondary text-xs py-2 px-4 cursor-pointer">Annuler</button>
+              <button type="button" (click)="submitPartage()" [disabled]="partageSaving"
+                      class="btn btn-primary text-xs py-2 px-5 font-bold cursor-pointer">
+                {{ partageSaving ? 'Sauvegarde...' : '📡 Appliquer le partage' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </app-main-layout>
   `,
 })
@@ -994,6 +1121,116 @@ export class AdmissionAdminComponent implements OnInit, OnDestroy {
   orientationSearch: string = '';
   etablissements: any[] = [];
   filieres: AdmissionReference[] = [];
+
+  sessionSearchFilter = '';
+  partageSaving = false;
+  partageModal: { session: SessionAdmission | null; selectedIds: string[] } = { session: null, selectedIds: [] };
+
+  readonly PIECES_DISPONIBLES = [
+    { value: 'PIECE_IDENTITE', label: 'Pièce d\'identité' },
+    { value: 'DIPLOME', label: 'Diplôme / Attestation' },
+    { value: 'RELEVE_NOTES', label: 'Relevé de notes' },
+    { value: 'PHOTO', label: 'Photo d\'identité' },
+    { value: 'CV', label: 'Curriculum Vitae' },
+    { value: 'LETTRE_MOTIVATION', label: 'Lettre de motivation' },
+  ];
+
+  get filteredSessions(): SessionAdmission[] {
+    if (!this.sessionSearchFilter?.trim()) return this.sessions;
+    const q = this.sessionSearchFilter.toLowerCase().trim();
+    return this.sessions.filter((s) =>
+      s.libelle?.toLowerCase().includes(q) ||
+      s.filiere?.libelle?.toLowerCase().includes(q) ||
+      s.niveau?.libelle?.toLowerCase().includes(q) ||
+      s.etablissement?.nom?.toLowerCase().includes(q)
+    );
+  }
+
+  isPieceSelected(value: string): boolean {
+    return (this.draft.piecesRequises || []).includes(value);
+  }
+
+  togglePiece(value: string): void {
+    const current = this.draft.piecesRequises || [];
+    if (current.includes(value)) {
+      this.draft.piecesRequises = current.filter((v) => v !== value);
+    } else {
+      this.draft.piecesRequises = [...current, value];
+    }
+  }
+
+  openPartageModal(session: SessionAdmission, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.partageModal = {
+      session,
+      selectedIds: [...(session.etablissementsPartages || [])],
+    };
+  }
+
+  closePartageModal(): void {
+    this.partageModal = { session: null, selectedIds: [] };
+  }
+
+  isEtabPartage(etabId: string): boolean {
+    return this.partageModal.selectedIds.includes(etabId);
+  }
+
+  toggleEtabPartage(etabId: string): void {
+    if (!this.partageModal.session) return;
+    if (etabId === this.partageModal.session.etablissement?.id) return; // ne pas retirer le propriétaire
+    if (this.isEtabPartage(etabId)) {
+      this.partageModal.selectedIds = this.partageModal.selectedIds.filter((id) => id !== etabId);
+    } else {
+      this.partageModal.selectedIds = [...this.partageModal.selectedIds, etabId];
+    }
+  }
+
+  submitPartage(): void {
+    if (!this.partageModal.session) return;
+    this.partageSaving = true;
+    const ids = this.partageModal.selectedIds.filter((id) => id !== this.partageModal.session?.etablissement?.id);
+    this.admission.partagerSession(this.partageModal.session.id, ids).subscribe({
+      next: (updated) => {
+        this.sessions = this.sessions.map((s) => s.id === updated.id ? { ...s, ...updated } : s);
+        if (this.selected?.id === updated.id) this.selected = { ...this.selected, ...updated };
+        this.toast.success(`Session partagée avec ${ids.length} établissement(s).`);
+        this.partageSaving = false;
+        this.closePartageModal();
+      },
+      error: (err) => {
+        this.toast.error(err.error?.message || 'Impossible de mettre à jour le partage.');
+        this.partageSaving = false;
+      },
+    });
+  }
+
+  getStatutLabel(statut: string): string {
+    const labels: Record<string, string> = {
+      BROUILLON: '📝 Brouillon',
+      SOUMISE: '📤 Soumis — En attente',
+      EN_EVALUATION: '🔍 En évaluation',
+      ADMISE: '🎉 Admis(e) — Confirmation requise',
+      LISTE_ATTENTE: '⏳ Liste d\'attente',
+      CONFIRMEE: '✅ Confirmé(e)',
+      INSCRITE: '🎓 Inscrit(e)',
+      REJETEE: '❌ Non retenu(e)',
+      EXPIREE: '⌛ Expiré(e)',
+      RETIREE: '🚫 Retiré(e)',
+    };
+    return labels[statut] || statut;
+  }
+
+  getSessionStatutLabel(statut: string): string {
+    const labels: Record<string, string> = {
+      BROUILLON: 'Brouillon',
+      OUVERTE: '🟢 Ouverte',
+      FERMEE: '🔴 Fermée',
+      TRAITEMENT: '⚙️ En traitement',
+      CLOTUREE: '✅ Clôturée',
+      ARCHIVEE: '📂 Archivée',
+    };
+    return labels[statut] || statut;
+  }
   niveaux: AdmissionReference[] = [];
   selected: SessionAdmission | null = null;
   stats: SessionStats | null = null;
@@ -1021,7 +1258,7 @@ export class AdmissionAdminComponent implements OnInit, OnDestroy {
   isCentreAdmin = false;
   downloadingPieceId: string | null = null;
 
-  draft = { libelle: '', etablissementId: '', filiereId: '', niveauId: '', capacite: 30, dateOuverture: '', dateFermeture: '', dateDebutFormation: '' };
+  draft = { libelle: '', etablissementId: '', filiereId: '', niveauId: '', capacite: 30, dateOuverture: '', dateFermeture: '', dateDebutFormation: '', description: '', piecesRequises: [] as string[] };
   private sub: Subscription | null = null;
 
   constructor(
@@ -1034,10 +1271,16 @@ export class AdmissionAdminComponent implements OnInit, OnDestroy {
   ) {
     this.isCentreAdmin = this.auth.hasRole('ADMIN_CENTRE');
 
+    // Invalider le cache des candidatures qui peut contenir d'anciennes données sans filiere/niveau
+    localStorage.removeItem('vc_admission_all_candidatures');
     const cachedCandidatures = this.admission.getAllCandidaturesSnapshot();
     if (cachedCandidatures) {
-      this.allCandidatures = cachedCandidatures;
-      this.filteredCandidatures = cachedCandidatures;
+      // Ne garder que les candidatures avec session complète (filiere + niveau)
+      const valid = cachedCandidatures.filter(
+        (c) => c.session && c.session.filiere && c.session.niveau
+      );
+      this.allCandidatures = valid;
+      this.filteredCandidatures = valid;
     }
 
     const cachedSessions = this.admission.getSessionsGestionSnapshot();
@@ -1076,6 +1319,9 @@ export class AdmissionAdminComponent implements OnInit, OnDestroy {
             if (this.selected) {
               this.refreshSelected(false);
             }
+          } else if (msg.type === 'SESSION_OUVERTE' || msg.type === 'SESSION_PARTAGEE') {
+            this.loadSessions();
+            this.toast.info(`📢 ${msg.message || 'Une session d\'admission a été mise à jour.'}`);
           } else if (msg.type === 'DEMANDE_ORIENTATION') {
             this.loadOrientations();
             this.toast.info(`📬 ${msg.message || 'Nouvelle demande d\'orientation reçue.'}`);
@@ -1090,9 +1336,14 @@ export class AdmissionAdminComponent implements OnInit, OnDestroy {
   }
 
   loadAllCandidatures(): void {
+    // Vider le cache potentiellement obsolète (ancienne structure sans filiere/niveau)
+    localStorage.removeItem('vc_admission_all_candidatures');
     this.admission.getAllCandidatures().subscribe({
       next: (candidatures) => {
-        this.allCandidatures = candidatures || [];
+        // Filtrer les enregistrements incomplets (session sans filiere ou niveau)
+        this.allCandidatures = (candidatures || []).filter(
+          (c) => c.session && c.session.filiere && c.session.niveau
+        );
         this.filterCandidatures();
       },
       error: () => {
@@ -1147,12 +1398,14 @@ export class AdmissionAdminComponent implements OnInit, OnDestroy {
       dateOuverture: new Date(this.draft.dateOuverture).toISOString(),
       dateFermeture: new Date(this.draft.dateFermeture).toISOString(),
       dateDebutFormation: new Date(this.draft.dateDebutFormation).toISOString(),
+      description: this.draft.description || undefined,
+      piecesRequises: this.draft.piecesRequises?.length ? this.draft.piecesRequises : undefined,
     }).subscribe({
       next: (session) => {
         this.sessions = [session, ...this.sessions];
         this.selected = session;
         this.creating = false;
-        this.draft = { libelle: '', etablissementId: '', filiereId: '', niveauId: '', capacite: 30, dateOuverture: '', dateFermeture: '', dateDebutFormation: '' };
+        this.draft = { libelle: '', etablissementId: '', filiereId: '', niveauId: '', capacite: 30, dateOuverture: '', dateFermeture: '', dateDebutFormation: '', description: '', piecesRequises: [] };
         this.toast.success('Session d’admission créée avec succès.');
         this.loadAllCandidatures();
         this.refreshSelected(false);

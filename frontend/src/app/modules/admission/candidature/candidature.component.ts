@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AdmissionService, Candidature, SessionAdmission, PieceCandidature } from '../../../core/services/admission.service';
+import { ApprenantService } from '../../../core/services/apprenant.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -92,6 +94,18 @@ import { ToastService } from '../../../core/services/toast.service';
                     <p class="mt-0.5 text-[11px] text-[#71787E]">
                       Clôture le {{ session.dateFermeture | date:'dd/MM/yyyy' }} · Capacité : {{ session.capacite }} places
                     </p>
+                    <!-- Description de la session -->
+                    <p *ngIf="session.description" class="mt-1.5 text-[11px] text-[#4B5157] italic leading-relaxed line-clamp-2">
+                      {{ session.description }}
+                    </p>
+                    <!-- Pièces requises -->
+                    <div *ngIf="session.piecesRequises && session.piecesRequises.length > 0" class="mt-2 flex flex-wrap gap-1">
+                      <span class="text-[10px] font-semibold text-[#4B5157] w-full">Pièces requises :</span>
+                      <span *ngFor="let p of session.piecesRequises"
+                            class="inline-block px-1.5 py-0.5 text-[10px] bg-[#E7F1FA] text-[#1C75BC] rounded-[2px] border border-[#1C75BC]/20">
+                        {{ formatPieceType(p) }}
+                      </span>
+                    </div>
                   </div>
                   <div class="pt-2 border-t border-[#D7DBDE] flex justify-end">
                     <button type="button" class="w-full sm:w-auto text-xs py-2 px-3.5 bg-[#1C75BC] hover:bg-[#124F80] disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold rounded-xs shadow-2xs transition-all cursor-pointer text-center"
@@ -146,7 +160,7 @@ import { ToastService } from '../../../core/services/toast.service';
                             'bg-rose-100 text-rose-800 border-rose-300': voeu.statut === 'REJETEE' || voeu.statut === 'EXPIREE',
                             'bg-gray-100 text-gray-800 border-gray-300': voeu.statut === 'RETIREE'
                           }">
-                      {{ voeu.statut }}
+                      {{ getStatutLabel(voeu.statut) }}
                     </span>
                   </div>
 
@@ -371,6 +385,8 @@ export class CandidatureComponent implements OnInit, OnDestroy {
     private admission: AdmissionService,
     private notifications: NotificationsService,
     private toast: ToastService,
+    private apprenantService: ApprenantService,
+    private auth: AuthService,
   ) {
     const cachedSessions = this.admission.getSessionsPubliquesSnapshot();
     if (cachedSessions && cachedSessions.length > 0) {
@@ -388,15 +404,22 @@ export class CandidatureComponent implements OnInit, OnDestroy {
     this.loadSessions();
     this.loadVoeux(false);
 
-    setTimeout(() => {
-      this.loading = false;
-    }, 2000);
-
     // Abonnement temps réel SSE
     this.sub = this.notifications.messages().subscribe({
       next: (msg) => {
-        if (msg && typeof msg === 'object' && (msg.type === 'ADMISSION_STATUS_CHANGE' || msg.type === 'ADMISSION_CONFIRMED' || msg.type === 'ADMISSION_INSCRIBED')) {
-          this.loadVoeux(false);
+        if (msg && typeof msg === 'object') {
+          if (msg.type === 'ADMISSION_STATUS_CHANGE' || msg.type === 'ADMISSION_CONFIRMED' || msg.type === 'ADMISSION_INSCRIBED') {
+            this.loadVoeux(false);
+            this.apprenantService.invalidateCache([
+              this.apprenantService.CACHE_KEYS.FORMATIONS,
+              this.apprenantService.CACHE_KEYS.DASHBOARD,
+              this.apprenantService.CACHE_KEYS.BOOTSTRAP
+            ]);
+          } else if (msg.type === 'SESSION_OUVERTE' || msg.type === 'SESSION_PARTAGEE') {
+            // Nouvelle session disponible pour cet établissement
+            this.loadSessions();
+            this.toast.info(`📢 ${msg.message || 'Une nouvelle session d\'admission est disponible pour votre établissement !'}`);
+          }
         }
       },
     });
@@ -408,7 +431,9 @@ export class CandidatureComponent implements OnInit, OnDestroy {
 
   loadSessions(): void {
     this.syncing = true;
-    this.admission.getSessionsPubliques().subscribe({
+    // Filtrer les sessions par établissement de l'apprenant connecté
+    const etablissementId = this.auth.currentUser?.etablissementId || undefined;
+    this.admission.getSessionsPubliques(etablissementId).subscribe({
       next: (sessions) => {
         this.sessions = sessions || [];
         this.loading = false;
@@ -531,6 +556,12 @@ export class CandidatureComponent implements OnInit, OnDestroy {
         });
         this.busy = '';
         this.toast.success('Admission confirmée ! Vos autres vœux ont été automatiquement retirés.');
+        // Invalidation instantanée pour que le tableau de bord et mes formations soient à jour
+        this.apprenantService.invalidateCache([
+          this.apprenantService.CACHE_KEYS.FORMATIONS,
+          this.apprenantService.CACHE_KEYS.DASHBOARD,
+          this.apprenantService.CACHE_KEYS.BOOTSTRAP
+        ]);
       },
       error: (error) => {
         this.error = error.error?.message || 'Impossible de confirmer l’admission.';
@@ -608,5 +639,21 @@ export class CandidatureComponent implements OnInit, OnDestroy {
       case 'LETTRE_MOTIVATION': return 'Lettre de motivation';
       default: return 'Autre';
     }
+  }
+
+  getStatutLabel(statut: string): string {
+    const labels: Record<string, string> = {
+      BROUILLON: '📝 Dossier en cours',
+      SOUMISE: '📤 Soumis — En attente d\'examen',
+      EN_EVALUATION: '🔍 En cours d\'évaluation',
+      ADMISE: '🎉 Admis(e) — Confirmation requise',
+      LISTE_ATTENTE: '⏳ Liste d\'attente',
+      CONFIRMEE: '✅ Confirmé(e)',
+      INSCRITE: '🎓 Inscrit(e) — Accès LMS actif',
+      REJETEE: '❌ Non retenu(e)',
+      EXPIREE: '⌛ Délai expiré',
+      RETIREE: '🚫 Retiré(e)',
+    };
+    return labels[statut] || statut;
   }
 }

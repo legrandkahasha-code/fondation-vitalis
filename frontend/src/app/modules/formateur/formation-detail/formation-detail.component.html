@@ -1,0 +1,1590 @@
+<app-main-layout>
+  <div class="min-h-screen bg-[#F5F6F7] pb-16 font-sans">
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 1. ÉTAT DE CHARGEMENT (SKELETON LOADER)                        -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    @if (isLoading) {
+      <div class="p-6 md:p-8 max-w-7xl mx-auto space-y-6 animate-pulse">
+        <!-- Fil d'ariane skeleton -->
+        <div class="h-4 bg-slate-200 rounded w-64"></div>
+        
+        <!-- Header banner skeleton -->
+        <div class="bg-white p-6 rounded-xs border border-[#D7DBDE] shadow-xs space-y-4">
+          <div class="flex gap-2">
+            <div class="h-5 bg-slate-200 rounded w-28"></div>
+            <div class="h-5 bg-slate-200 rounded w-20"></div>
+          </div>
+          <div class="h-8 bg-slate-200 rounded w-1/2"></div>
+          <div class="h-4 bg-slate-200 rounded w-3/4"></div>
+          <div class="h-10 bg-slate-100 rounded w-full"></div>
+        </div>
+
+        <!-- KPI grid skeleton -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="h-24 bg-white rounded-xs border border-[#D7DBDE]"></div>
+          <div class="h-24 bg-white rounded-xs border border-[#D7DBDE]"></div>
+          <div class="h-24 bg-white rounded-xs border border-[#D7DBDE]"></div>
+          <div class="h-24 bg-white rounded-xs border border-[#D7DBDE]"></div>
+        </div>
+
+        <!-- Modules list skeleton -->
+        <div class="space-y-4">
+          <div class="h-32 bg-white rounded-xs border border-[#D7DBDE]"></div>
+          <div class="h-32 bg-white rounded-xs border border-[#D7DBDE]"></div>
+        </div>
+      </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 2. ÉTAT D'ERREUR                                               -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    @else if (errorMessage || !formation) {
+      <div class="p-8 max-w-2xl mx-auto mt-12">
+        <div class="bg-white border-l-4 border-[#ED1C24] p-6 rounded-xs shadow-md border border-[#D7DBDE]">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-full bg-red-50 text-[#ED1C24] flex items-center justify-center text-2xl shrink-0">
+              ⚠️
+            </div>
+            <div class="flex-1">
+              <h2 class="text-lg font-bold text-[#1B1D1F] font-heading">Impossible d'afficher la formation</h2>
+              <p class="text-sm text-[#4B5157] mt-1.5 leading-relaxed">
+                {{ errorMessage || 'La formation demandée est introuvable ou vous ne disposez pas des autorisations nécessaires pour y accéder.' }}
+              </p>
+              <div class="mt-6 flex items-center gap-3">
+                <button
+                  type="button"
+                  (click)="reloadFormation()"
+                  class="btn btn-primary text-xs py-2 px-4 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>🔄</span>
+                  <span>Réessayer</span>
+                </button>
+                <a
+                  [routerLink]="backLink"
+                  class="btn btn-ghost text-xs py-2 px-4 border border-[#D7DBDE] text-[#124F80] hover:bg-slate-50"
+                >
+                  <span>← Retour aux Formations</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- 3. PAGE PRINCIPALE FORMATION (CHARGÉE AVEC SUCCÈS)             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    @else {
+      <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+
+        <!-- 3.1 FIL D'ARIANE & NAVIGATION RETOUR -->
+        <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+          <nav class="flex items-center gap-2 text-[#4B5157] font-medium" aria-label="Breadcrumb">
+            <a [routerLink]="homeRoute" class="hover:text-[#1C75BC] transition-colors flex items-center gap-1">
+              <span>🏛️</span>
+              <span>Accueil</span>
+            </a>
+            <span class="text-slate-300">/</span>
+            <a [routerLink]="backLink" class="hover:text-[#1C75BC] transition-colors font-semibold">
+              Programmes & Formations
+            </a>
+            <span class="text-slate-300">/</span>
+            <span class="text-[#1B1D1F] font-bold truncate max-w-xs">{{ formation.titre }}</span>
+          </nav>
+
+          <a
+            [routerLink]="backLink"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#124F80] bg-white border border-[#D7DBDE] rounded-xs hover:bg-[#E7F1FA] hover:border-[#1C75BC] transition-all shadow-2xs"
+          >
+            <span>←</span>
+            <span>Retour au Répertoire</span>
+          </a>
+        </div>
+
+        <!-- 3.2 HERO BANNER : FICHE OFFICIELLE DU PROGRAMME -->
+        <div class="bg-white border border-[#D7DBDE] rounded-xs shadow-xs overflow-hidden relative">
+          <!-- Bande chromatique supérieure de catégorie -->
+          <div 
+            class="h-2 w-full transition-all"
+            [style.background-color]="getCategorieColor(formation.categorie)"
+          ></div>
+
+          <div class="p-6 md:p-8">
+            <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+              
+              <!-- Informations Principales -->
+              <div class="space-y-3 flex-1">
+                <!-- Badges de métadonnées -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <!-- Catégorie officielle -->
+                  <span 
+                    class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded border shadow-2xs flex items-center gap-1"
+                    [style.background-color]="getCategorieColor(formation.categorie) + '15'"
+                    [style.border-color]="getCategorieColor(formation.categorie) + '40'"
+                    [style.color]="getCategorieColor(formation.categorie)"
+                  >
+                    <span>🏷️</span>
+                    <span>{{ getCategorieLabel(formation.categorie) }}</span>
+                  </span>
+
+                  <!-- Code formation -->
+                  <span class="text-[10px] font-mono font-bold bg-slate-100 text-[#4B5157] px-2 py-0.5 rounded border border-slate-200">
+                    {{ formation.code || 'FORM-' + formation.id.substring(0, 8).toUpperCase() }}
+                  </span>
+
+                  <!-- Durée -->
+                  <span class="text-[10px] font-bold bg-[#E7F1FA] text-[#1C75BC] px-2.5 py-1 rounded border border-[#1C75BC]/30 flex items-center gap-1">
+                    <span>⏱️</span>
+                    <span>{{ formation.duree || '40 Heures' }}</span>
+                  </span>
+
+                  <!-- Étoile À la une -->
+                  @if (formation.aLaUne) {
+                    <span class="text-[10px] font-extrabold bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]/40 px-2 py-1 rounded flex items-center gap-1 shadow-2xs">
+                      <span>⭐</span>
+                      <span>En Vedette</span>
+                    </span>
+                  }
+
+                  <!-- Statut Vitrine Landing -->
+                  <span 
+                    class="text-[10px] font-extrabold px-2 py-1 rounded border flex items-center gap-1"
+                    [class.bg-[#E7F1EA]]="formation.publieSurLanding"
+                    [class.text-[#276B44]]="formation.publieSurLanding"
+                    [class.border-[#276B44]/40]="formation.publieSurLanding"
+                    [class.bg-slate-100]="!formation.publieSurLanding"
+                    [class.text-slate-500]="!formation.publieSurLanding"
+                    [class.border-slate-300]="!formation.publieSurLanding"
+                  >
+                    <span>{{ formation.publieSurLanding ? '🌐 En Vitrine' : '🔒 Masquée' }}</span>
+                  </span>
+
+                  <!-- Badge marketing -->
+                  @if (formation.badgeTexte) {
+                    <span class="text-[10px] font-bold bg-[#F5F6F7] text-[#124F80] border border-[#D7DBDE] px-2 py-0.5 rounded">
+                      {{ formation.badgeTexte }}
+                    </span>
+                  }
+                </div>
+
+                <!-- Titre officiel -->
+                <h1 class="text-2xl md:text-3xl font-extrabold text-[#1B1D1F] font-heading tracking-tight leading-tight">
+                  {{ formation.titre }}
+                </h1>
+
+                <!-- Établissement et filière de tutelle -->
+                <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-[#4B5157]">
+                  <span class="flex items-center gap-1.5 font-medium">
+                    <span class="text-slate-400">🏛️ Antenne :</span>
+                    <strong class="text-[#1B1D1F]">{{ formation.etablissement?.nom || 'Centre Principal' }}</strong>
+                    @if (formation.etablissement?.codeAntenne) {
+                      <span class="text-[10px] font-mono text-slate-400">({{ formation.etablissement?.codeAntenne }})</span>
+                    }
+                  </span>
+
+                  @if (formation.formationReferentiel?.filiere?.libelle) {
+                    <span class="text-slate-300">•</span>
+                    <span class="flex items-center gap-1.5">
+                      <span class="text-slate-400">Filière Référentiel :</span>
+                      <strong class="text-[#124F80]">{{ formation.formationReferentiel?.filiere?.libelle }}</strong>
+                    </span>
+                  }
+
+                  @if (formation.fraisInscription !== null && formation.fraisInscription !== undefined) {
+                    <span class="text-slate-300">•</span>
+                    <span class="flex items-center gap-1 font-bold text-[#276B44]">
+                      <span>💳 Frais :</span>
+                      <span>{{ formation.fraisInscription > 0 ? (formation.fraisInscription + ' $') : 'Gratuit / Pris en charge' }}</span>
+                    </span>
+                  }
+                </div>
+
+                <!-- Description officielle -->
+                <p class="text-sm text-[#4B5157] leading-relaxed max-w-4xl pt-1">
+                  {{ formation.description || 'Ce programme officiel est dispensé dans le cadre des référentiels pédagogiques de la République Démocratique du Congo, sous la tutelle du Ministère de la Formation Professionnelle.' }}
+                </p>
+              </div>
+
+              <!-- Boutons d'actions rapides -->
+              <div class="flex flex-row lg:flex-col items-stretch gap-2 shrink-0 border-t lg:border-t-0 lg:border-l border-[#D7DBDE] pt-4 lg:pt-0 lg:pl-6">
+                <!-- Bouton Nouveau Module -->
+                <button
+                  type="button"
+                  (click)="openCreateModuleModal()"
+                  class="btn btn-primary text-xs py-2.5 px-4 shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span class="text-base font-bold leading-none">➕</span>
+                  <span class="font-bold">Nouveau Module</span>
+                </button>
+
+                <!-- Bouton Modifier Paramètres Formation -->
+                <button
+                  type="button"
+                  (click)="openEditFormationModal()"
+                  class="btn btn-ghost text-xs py-2 px-3 border border-[#D7DBDE] text-[#124F80] hover:bg-slate-50 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>✏️</span>
+                  <span>Paramètres & Vitrine</span>
+                </button>
+
+                <!-- Bouton Voir Vitrine Publique -->
+                <a
+                  href="/#formations"
+                  target="_blank"
+                  class="btn btn-ghost text-xs py-2 px-3 border border-slate-200 text-[#4B5157] hover:text-[#1C75BC] hover:bg-slate-50 flex items-center justify-center gap-1.5"
+                  title="Ouvrir la section vitrine de la landing page dans un nouvel onglet"
+                >
+                  <span>🌐</span>
+                  <span>Voir en Vitrine</span>
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 3.3 4 CARTES KPIS PÉDAGOGIQUES -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 1 : Modules -->
+          <div class="bg-white border border-[#D7DBDE] rounded-xs p-4 shadow-2xs flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xs bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC]/20 flex items-center justify-center text-xl shrink-0">
+              📚
+            </div>
+            <div>
+              <p class="text-[11px] font-bold text-[#4B5157] uppercase tracking-wider">Modules Cursus</p>
+              <h3 class="text-2xl font-black text-[#1B1D1F] font-heading leading-tight">
+                {{ formation.modules?.length || 0 }}
+              </h3>
+              <p class="text-[10px] text-slate-400 font-medium">Unités d'enseignement</p>
+            </div>
+          </div>
+
+          <!-- KPI 2 : Cours & Supports -->
+          <div class="bg-white border border-[#D7DBDE] rounded-xs p-4 shadow-2xs flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xs bg-[#E7F1EA] text-[#276B44] border border-[#276B44]/20 flex items-center justify-center text-xl shrink-0">
+              📄
+            </div>
+            <div>
+              <p class="text-[11px] font-bold text-[#4B5157] uppercase tracking-wider">Cours & Supports</p>
+              <h3 class="text-2xl font-black text-[#1B1D1F] font-heading leading-tight">
+                {{ totalCoursCount }}
+              </h3>
+              <p class="text-[10px] text-slate-400 font-medium">{{ totalPdfCount }} document(s) PDF</p>
+            </div>
+          </div>
+
+          <!-- KPI 3 : Évaluations, Quiz & Devoirs -->
+          <div class="bg-white border border-[#D7DBDE] rounded-xs p-4 shadow-2xs flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xs bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]/30 flex items-center justify-center text-xl shrink-0">
+              📝
+            </div>
+            <div>
+              <p class="text-[11px] font-bold text-[#4B5157] uppercase tracking-wider">Évaluations & Devoirs</p>
+              <h3 class="text-2xl font-black text-[#1B1D1F] font-heading leading-tight">
+                {{ totalAssessmentsCount }}
+              </h3>
+              <p class="text-[10px] text-slate-400 font-medium">Contrôles continus & Quiz</p>
+            </div>
+          </div>
+
+          <!-- KPI 4 : Apprenants Inscrits -->
+          <div class="bg-white border border-[#D7DBDE] rounded-xs p-4 shadow-2xs flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xs bg-slate-100 text-[#124F80] border border-slate-200 flex items-center justify-center text-xl shrink-0">
+              👥
+            </div>
+            <div>
+              <p class="text-[11px] font-bold text-[#4B5157] uppercase tracking-wider">Inscriptions</p>
+              <h3 class="text-2xl font-black text-[#1B1D1F] font-heading leading-tight">
+                {{ formation._count?.inscriptions ?? apprenants.length }}
+              </h3>
+              <p class="text-[10px] text-slate-400 font-medium">Effectif en formation</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3.4 ONGLET DE NAVIGATION INTERNE -->
+        <div class="border-b border-[#D7DBDE] flex items-center gap-2 overflow-x-auto bg-white px-4 rounded-t-xs shadow-2xs">
+          <!-- Onglet 1 : Modules & Cours -->
+          <button
+            type="button"
+            (click)="selectTab('modules')"
+            class="py-3.5 px-4 text-xs font-extrabold flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap"
+            [class.border-[#1C75BC]]="activeTab === 'modules'"
+            [class.text-[#1C75BC]]="activeTab === 'modules'"
+            [class.border-transparent]="activeTab !== 'modules'"
+            [class.text-[#4B5157]]="activeTab !== 'modules'"
+            [class.hover:text-[#1B1D1F]]="activeTab !== 'modules'"
+          >
+            <span>📚</span>
+            <span>Modules & Supports de Cours</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold" [class.bg-[#E7F1FA]]="activeTab === 'modules'" [class.text-[#1C75BC]]="activeTab === 'modules'" [class.bg-slate-100]="activeTab !== 'modules'">
+              {{ formation.modules?.length || 0 }}
+            </span>
+          </button>
+
+          <!-- Onglet 2 : Évaluations, Quiz & Devoirs -->
+          <button
+            type="button"
+            (click)="selectTab('evaluations')"
+            class="py-3.5 px-4 text-xs font-extrabold flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap"
+            [class.border-[#1C75BC]]="activeTab === 'evaluations'"
+            [class.text-[#1C75BC]]="activeTab === 'evaluations'"
+            [class.border-transparent]="activeTab !== 'evaluations'"
+            [class.text-[#4B5157]]="activeTab !== 'evaluations'"
+            [class.hover:text-[#1B1D1F]]="activeTab !== 'evaluations'"
+          >
+            <span>📝</span>
+            <span>Évaluations, Devoirs & Quiz</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold" [class.bg-[#E7F1FA]]="activeTab === 'evaluations'" [class.text-[#1C75BC]]="activeTab === 'evaluations'" [class.bg-slate-100]="activeTab !== 'evaluations'">
+              {{ totalAssessmentsCount }}
+            </span>
+          </button>
+
+          <!-- Onglet 3 : Apprenants & Certifications -->
+          <button
+            type="button"
+            (click)="selectTab('apprenants')"
+            class="py-3.5 px-4 text-xs font-extrabold flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap"
+            [class.border-[#1C75BC]]="activeTab === 'apprenants'"
+            [class.text-[#1C75BC]]="activeTab === 'apprenants'"
+            [class.border-transparent]="activeTab !== 'apprenants'"
+            [class.text-[#4B5157]]="activeTab !== 'apprenants'"
+            [class.hover:text-[#1B1D1F]]="activeTab !== 'apprenants'"
+          >
+            <span>👥</span>
+            <span>Apprenants & Certificats</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold" [class.bg-[#E7F1FA]]="activeTab === 'apprenants'" [class.text-[#1C75BC]]="activeTab === 'apprenants'" [class.bg-slate-100]="activeTab !== 'apprenants'">
+              {{ formation._count?.inscriptions ?? apprenants.length }}
+            </span>
+          </button>
+
+          <!-- Onglet 4 : Fiche Référentiel & Compétences -->
+          <button
+            type="button"
+            (click)="selectTab('referentiel')"
+            class="py-3.5 px-4 text-xs font-extrabold flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap"
+            [class.border-[#1C75BC]]="activeTab === 'referentiel'"
+            [class.text-[#1C75BC]]="activeTab === 'referentiel'"
+            [class.border-transparent]="activeTab !== 'referentiel'"
+            [class.text-[#4B5157]]="activeTab !== 'referentiel'"
+            [class.hover:text-[#1B1D1F]]="activeTab !== 'referentiel'"
+          >
+            <span>📋</span>
+            <span>Fiche Pédagogique (APC)</span>
+          </button>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- CONTENU ONGLET 1 : MODULES & COURS                             -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        @if (activeTab === 'modules') {
+          <div class="space-y-4">
+            
+            <!-- Barre d'outils de la liste des modules -->
+            <div class="bg-white p-4 rounded-xs border border-[#D7DBDE] shadow-2xs flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <h3 class="text-sm font-bold text-[#1B1D1F] flex items-center gap-2">
+                  <span>Programme Détaillé des Modules</span>
+                  <span class="text-xs text-slate-400 font-normal">({{ formation.modules?.length || 0 }} module(s))</span>
+                </h3>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="toggleAllModules()"
+                  class="btn btn-ghost text-xs py-1.5 px-3 border border-[#D7DBDE] text-[#4B5157] hover:bg-slate-50 cursor-pointer"
+                >
+                  {{ areAllModulesExpanded() ? '▲ Tout replier' : '▼ Tout déplier' }}
+                </button>
+                <button
+                  type="button"
+                  (click)="openCreateModuleModal()"
+                  class="btn btn-primary text-xs py-1.5 px-3.5 shadow-xs flex items-center gap-1 cursor-pointer"
+                >
+                  <span>➕</span>
+                  <span>Ajouter un Module</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Liste des Modules -->
+            @if (!formation.modules || formation.modules.length === 0) {
+              <div class="bg-white border-2 border-dashed border-[#D7DBDE] rounded-xs p-12 text-center space-y-3">
+                <div class="w-16 h-16 rounded-full bg-[#E7F1FA] text-[#1C75BC] flex items-center justify-center text-3xl mx-auto">
+                  📚
+                </div>
+                <h4 class="text-base font-bold text-[#1B1D1F]">Aucun module pour cette formation</h4>
+                <p class="text-xs text-[#4B5157] max-w-md mx-auto">
+                  La structure pédagogique n'a pas encore été configurée. Commencez par ajouter le premier module d'enseignement (cours, travaux dirigés, évaluations).
+                </p>
+                <div class="pt-2">
+                  <button
+                    type="button"
+                    (click)="openCreateModuleModal()"
+                    class="btn btn-primary text-xs py-2 px-5 shadow-xs cursor-pointer inline-flex items-center gap-2"
+                  >
+                    <span>➕</span>
+                    <span>Créer le Module 1</span>
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="space-y-4">
+                @for (mod of formation.modules; track mod.id; let modIdx = $index) {
+                  <div class="bg-white border border-[#D7DBDE] rounded-xs shadow-2xs overflow-hidden transition-all hover:border-[#1C75BC]/60">
+                    
+                    <!-- EN-TÊTE DU MODULE (CLIQUE POUR DÉPLIER) -->
+                    <div 
+                      class="p-4 md:p-5 bg-gradient-to-r from-[#F8FAFC] to-white flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none border-b border-[#D7DBDE]/60 hover:bg-slate-50"
+                      (click)="toggleModule(mod.id)"
+                    >
+                      <div class="flex items-center gap-3.5 flex-1 min-w-[260px]">
+                        <!-- Numéro d'ordre stylisé -->
+                        <div class="w-8 h-8 rounded-xs bg-[#1C75BC] text-white font-extrabold flex items-center justify-center text-xs shadow-2xs shrink-0">
+                          {{ mod.ordre || (modIdx + 1) }}
+                        </div>
+
+                        <div>
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <h4 class="text-sm md:text-base font-extrabold text-[#1B1D1F] font-heading">
+                              {{ mod.titre }}
+                            </h4>
+                            <span class="text-[10px] font-bold bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC]/30 px-2 py-0.2 rounded">
+                              Coef. {{ mod.coefficient || 1 }}
+                            </span>
+                          </div>
+                          
+                          <!-- Badges des compteurs internes -->
+                          <div class="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                            <span class="flex items-center gap-1">
+                              <span>📄</span>
+                              <span>{{ mod.cours?.length || 0 }} cours</span>
+                            </span>
+                            <span>•</span>
+                            <span class="flex items-center gap-1">
+                              <span>📝</span>
+                              <span>{{ mod.evaluations?.length || 0 }} éval(s)</span>
+                            </span>
+                            @if (mod.quiz && mod.quiz.length > 0) {
+                              <span>•</span>
+                              <span class="flex items-center gap-1 text-[#276B44] font-medium">
+                                <span>💡</span>
+                                <span>{{ mod.quiz.length }} quiz</span>
+                              </span>
+                            }
+                            @if (mod.devoirs && mod.devoirs.length > 0) {
+                              <span>•</span>
+                              <span class="flex items-center gap-1 text-[#F0791E] font-medium">
+                                <span>📋</span>
+                                <span>{{ mod.devoirs.length }} devoir(s)</span>
+                              </span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Actions sur le module -->
+                      <div class="flex items-center gap-1.5" (click)="$event.stopPropagation()">
+                        <!-- Bouton + Cours -->
+                        <button
+                          type="button"
+                          (click)="openCreateCoursModal(mod)"
+                          class="btn btn-ghost text-xs py-1.5 px-2.5 bg-white border border-[#D7DBDE] text-[#1C75BC] hover:bg-[#E7F1FA] hover:border-[#1C75BC] flex items-center gap-1 cursor-pointer font-bold"
+                          title="Ajouter un support de cours"
+                        >
+                          <span>📄</span>
+                          <span>+ Cours</span>
+                        </button>
+
+                        <!-- Bouton + Évaluation -->
+                        <button
+                          type="button"
+                          (click)="openCreateEvaluationModal(mod)"
+                          class="btn btn-ghost text-xs py-1.5 px-2 bg-white border border-[#D7DBDE] text-[#4B5157] hover:bg-slate-50 flex items-center gap-1 cursor-pointer font-semibold"
+                          title="Ajouter une évaluation continue"
+                        >
+                          <span>📝</span>
+                          <span>+ Éval</span>
+                        </button>
+
+                        <!-- Bouton + Quiz -->
+                        <button
+                          type="button"
+                          (click)="openCreateQuizModal(mod)"
+                          class="btn btn-ghost text-xs py-1.5 px-2 bg-white border border-[#D7DBDE] text-[#276B44] hover:bg-[#E7F1EA] flex items-center gap-1 cursor-pointer font-semibold"
+                          title="Créer un quiz interactif"
+                        >
+                          <span>💡</span>
+                          <span>+ Quiz</span>
+                        </button>
+
+                        <!-- Bouton + Devoir -->
+                        <button
+                          type="button"
+                          (click)="openCreateDevoirModal(mod)"
+                          class="btn btn-ghost text-xs py-1.5 px-2 bg-white border border-[#D7DBDE] text-[#F0791E] hover:bg-[#FDECDD] flex items-center gap-1 cursor-pointer font-semibold"
+                          title="Créer un devoir pratique"
+                        >
+                          <span>📋</span>
+                          <span>+ Devoir</span>
+                        </button>
+
+                        <!-- Modifier module -->
+                        <button
+                          type="button"
+                          (click)="openEditModuleModal(mod)"
+                          class="p-1.5 text-xs text-[#124F80] hover:bg-slate-100 rounded border border-transparent hover:border-slate-300 cursor-pointer"
+                          title="Modifier le titre et coefficient du module"
+                        >
+                          ✏️
+                        </button>
+
+                        <!-- Supprimer module -->
+                        <button
+                          type="button"
+                          (click)="confirmDeleteModule(mod)"
+                          class="p-1.5 text-xs text-[#ED1C24] hover:bg-red-50 rounded border border-transparent hover:border-red-200 cursor-pointer"
+                          title="Supprimer ce module"
+                        >
+                          🗑️
+                        </button>
+
+                        <!-- Indicateur accordéon chevron -->
+                        <span class="text-xs text-slate-400 pl-1">
+                          {{ isModuleExpanded(mod.id) ? '▲' : '▼' }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- CORPS DU MODULE (DÉPLIABLE) -->
+                    @if (isModuleExpanded(mod.id)) {
+                      <div class="p-5 space-y-5 bg-white">
+                        
+                        <!-- SOUS-SECTION 1 : SUPPORTS & COURS DU MODULE -->
+                        <div>
+                          <div class="flex items-center justify-between gap-2 mb-3">
+                            <h5 class="text-xs font-bold text-[#1B1D1F] uppercase tracking-wider flex items-center gap-1.5">
+                              <span>📄 Supports & Séances de Cours</span>
+                              <span class="text-[10px] font-mono text-slate-400">({{ mod.cours?.length || 0 }})</span>
+                            </h5>
+                            <button
+                              type="button"
+                              (click)="openCreateCoursModal(mod)"
+                              class="text-xs font-bold text-[#1C75BC] hover:underline flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>➕ Ajouter un cours</span>
+                            </button>
+                          </div>
+
+                          @if (!mod.cours || mod.cours.length === 0) {
+                            <div class="p-4 bg-[#F5F6F7] rounded-xs border border-dashed border-[#D7DBDE] text-center text-xs text-[#4B5157]">
+                              Aucun support de cours déposé pour ce module.
+                            </div>
+                          } @else {
+                            <div class="space-y-2">
+                              @for (c of mod.cours; track c.id) {
+                                <div class="p-3 bg-[#F8FAFC] border border-[#D7DBDE] rounded-xs flex flex-wrap items-center justify-between gap-3 hover:bg-white hover:border-[#1C75BC] transition-all">
+                                  
+                                  <div class="flex items-center gap-3 flex-1 min-w-[200px]">
+                                    <div class="w-8 h-8 rounded-xs flex items-center justify-center text-sm shrink-0"
+                                         [class.bg-[#FDE6E6]]="c.fileUrl"
+                                         [class.text-[#ED1C24]]="c.fileUrl"
+                                         [class.bg-[#E7F1FA]]="!c.fileUrl"
+                                         [class.text-[#1C75BC]]="!c.fileUrl">
+                                      {{ c.fileUrl ? '📕' : '📝' }}
+                                    </div>
+                                    <div>
+                                      <h6 class="text-xs md:text-sm font-bold text-[#1B1D1F]">
+                                        {{ c.titre }}
+                                      </h6>
+                                      @if (c.contenu) {
+                                        <p class="text-[11px] text-[#4B5157] line-clamp-1 mt-0.5">
+                                          {{ c.contenu }}
+                                        </p>
+                                      }
+                                      <div class="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                                        @if (c.fileUrl) {
+                                          <span class="text-[#276B44] font-semibold flex items-center gap-0.5">
+                                            <span>✓</span> Document PDF attaché
+                                          </span>
+                                        } @else {
+                                          <span>Texte / Notes de cours</span>
+                                        }
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Actions sur le cours -->
+                                  <div class="flex items-center gap-1.5">
+                                    @if (c.fileUrl) {
+                                      <a
+                                        [href]="c.fileUrl"
+                                        target="_blank"
+                                        class="btn btn-ghost text-[11px] py-1 px-2.5 bg-white border border-[#D7DBDE] text-[#276B44] hover:bg-[#E7F1EA] flex items-center gap-1"
+                                      >
+                                        <span>⬇️</span>
+                                        <span>Consulter</span>
+                                      </a>
+                                    }
+
+                                    <!-- Upload / Remplacement de fichier -->
+                                    <label class="btn btn-ghost text-[11px] py-1 px-2.5 bg-white border border-[#D7DBDE] text-[#1C75BC] hover:bg-[#E7F1FA] cursor-pointer flex items-center gap-1" title="Attacher ou remplacer le document PDF/Word">
+                                      <span>📤</span>
+                                      <span>{{ c.fileUrl ? 'Remplacer' : 'Joindre PDF' }}</span>
+                                      <input
+                                        type="file"
+                                        class="hidden"
+                                        accept=".pdf,.doc,.docx"
+                                        title="Attacher un document de cours PDF ou Word"
+                                        aria-label="Attacher un document de cours PDF ou Word"
+                                        (change)="uploadCoursFile(c.id, $event)"
+                                      />
+                                    </label>
+
+                                    <!-- Modifier cours -->
+                                    <button
+                                      type="button"
+                                      (click)="openEditCoursModal(mod, c)"
+                                      class="p-1 text-xs text-[#124F80] hover:bg-slate-100 rounded border border-transparent hover:border-slate-300 cursor-pointer"
+                                      title="Modifier ce cours"
+                                    >
+                                      ✏️
+                                    </button>
+
+                                    <!-- Supprimer cours -->
+                                    <button
+                                      type="button"
+                                      (click)="confirmDeleteCours(c)"
+                                      class="p-1 text-xs text-[#ED1C24] hover:bg-red-50 rounded border border-transparent hover:border-red-200 cursor-pointer"
+                                      title="Supprimer ce cours"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
+
+                                </div>
+                              }
+                            </div>
+                          }
+                        </div>
+
+                        <!-- SOUS-SECTION 2 : ÉVALUATIONS CONTINUES, QUIZ & DEVOIRS DU MODULE -->
+                        <div class="pt-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-3">
+                          
+                          <!-- Bloc Évaluations du module -->
+                          <div class="bg-[#F8FAFC] p-3 rounded-xs border border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                              <span class="text-[11px] font-extrabold uppercase text-[#124F80]">Évaluations (/20)</span>
+                              <button
+                                type="button"
+                                (click)="openCreateEvaluationModal(mod)"
+                                class="text-[10px] font-bold text-[#1C75BC] hover:underline cursor-pointer"
+                              >
+                                + Nouveau
+                              </button>
+                            </div>
+                            @if (!mod.evaluations || mod.evaluations.length === 0) {
+                              <p class="text-[11px] text-slate-400">Aucune évaluation continue.</p>
+                            } @else {
+                              <div class="space-y-1 text-xs">
+                                @for (ev of mod.evaluations; track ev.id) {
+                                  <div class="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
+                                    <span class="font-medium text-[#1B1D1F] truncate mr-1">• {{ ev.titre }}</span>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                      <span class="text-[10px] bg-slate-200 px-1 rounded font-bold">/{{ ev.noteMaximale || 20 }}</span>
+                                      <button type="button" (click)="confirmDeleteEvaluation(ev)" class="text-red-500 hover:text-red-700 text-[10px] cursor-pointer ml-1" title="Supprimer cette évaluation" aria-label="Supprimer cette évaluation">✕</button>
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Bloc Quiz du module -->
+                          <div class="bg-[#F8FAFC] p-3 rounded-xs border border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                              <span class="text-[11px] font-extrabold uppercase text-[#276B44]">Quiz Interactifs</span>
+                              <button
+                                type="button"
+                                (click)="openCreateQuizModal(mod)"
+                                class="text-[10px] font-bold text-[#276B44] hover:underline cursor-pointer"
+                              >
+                                + Nouveau
+                              </button>
+                            </div>
+                            @if (!mod.quiz || mod.quiz.length === 0) {
+                              <p class="text-[11px] text-slate-400">Aucun quiz d'entraînement.</p>
+                            } @else {
+                              <div class="space-y-1 text-xs">
+                                @for (q of mod.quiz; track q.id) {
+                                  <div class="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
+                                    <span class="font-medium text-[#1B1D1F] truncate mr-1">💡 {{ q.titre }}</span>
+                                    <button type="button" (click)="confirmDeleteQuiz(q)" class="text-red-500 hover:text-red-700 text-[10px] cursor-pointer" title="Supprimer ce quiz" aria-label="Supprimer ce quiz">✕</button>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Bloc Devoirs du module -->
+                          <div class="bg-[#F8FAFC] p-3 rounded-xs border border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                              <span class="text-[11px] font-extrabold uppercase text-[#F0791E]">Devoirs & Ateliers</span>
+                              <button
+                                type="button"
+                                (click)="openCreateDevoirModal(mod)"
+                                class="text-[10px] font-bold text-[#F0791E] hover:underline cursor-pointer"
+                              >
+                                + Nouveau
+                              </button>
+                            </div>
+                            @if (!mod.devoirs || mod.devoirs.length === 0) {
+                              <p class="text-[11px] text-slate-400">Aucun devoir pratique.</p>
+                            } @else {
+                              <div class="space-y-1 text-xs">
+                                @for (d of mod.devoirs; track d.id) {
+                                  <div class="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
+                                    <span class="font-medium text-[#1B1D1F] truncate mr-1">📋 {{ d.titre }}</span>
+                                    <button type="button" (click)="confirmDeleteDevoir(d)" class="text-red-500 hover:text-red-700 text-[10px] cursor-pointer" title="Supprimer ce devoir" aria-label="Supprimer ce devoir">✕</button>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+
+                        </div>
+
+                      </div>
+                    }
+
+                  </div>
+                }
+              </div>
+            }
+
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- CONTENU ONGLET 2 : ÉVALUATIONS, QUIZ & DEVOIRS                 -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        @if (activeTab === 'evaluations') {
+          <div class="space-y-6">
+            
+            <!-- SECTION 1 : ÉVALUATIONS CONTINUES -->
+            <div class="bg-white border border-[#D7DBDE] rounded-xs p-6 shadow-2xs space-y-4">
+              <div class="flex items-center justify-between gap-3 border-b border-[#D7DBDE] pb-3">
+                <div>
+                  <h3 class="text-base font-bold text-[#1B1D1F] flex items-center gap-2">
+                    <span>📝</span>
+                    <span>Évaluations Continues & Notées</span>
+                  </h3>
+                  <p class="text-xs text-[#4B5157]">Contrôles périodiques et examens de validation des compétences APC.</p>
+                </div>
+              </div>
+
+              @if (allEvaluations.length === 0) {
+                <p class="text-xs text-slate-400 italic py-3 text-center">Aucune évaluation continue configurée.</p>
+              } @else {
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs">
+                    <thead>
+                      <tr class="bg-[#F5F6F7] border-b border-[#D7DBDE] text-[#4B5157] uppercase font-bold text-[10px]">
+                        <th class="py-2.5 px-3">Module</th>
+                        <th class="py-2.5 px-3">Titre de l'Évaluation</th>
+                        <th class="py-2.5 px-3 text-center">Barème</th>
+                        <th class="py-2.5 px-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      @for (ev of allEvaluations; track ev.id) {
+                        <tr class="hover:bg-slate-50">
+                          <td class="py-2.5 px-3 font-semibold text-[#124F80]">{{ ev.moduleTitre }}</td>
+                          <td class="py-2.5 px-3 font-bold text-[#1B1D1F]">{{ ev.titre }}</td>
+                          <td class="py-2.5 px-3 text-center font-mono font-bold">/{{ ev.noteMaximale || 20 }}</td>
+                          <td class="py-2.5 px-3 text-right space-x-1">
+                            <button
+                              type="button"
+                              (click)="confirmDeleteEvaluation(ev)"
+                              class="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50 cursor-pointer"
+                            >
+                              Supprimer
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+
+            <!-- SECTION 2 : QUIZ NUMÉRIQUES -->
+            <div class="bg-white border border-[#D7DBDE] rounded-xs p-6 shadow-2xs space-y-4">
+              <div class="flex items-center justify-between gap-3 border-b border-[#D7DBDE] pb-3">
+                <div>
+                  <h3 class="text-base font-bold text-[#1B1D1F] flex items-center gap-2">
+                    <span>💡</span>
+                    <span>Quiz Numériques d'Auto-Évaluation</span>
+                  </h3>
+                  <p class="text-xs text-[#4B5157]">Questionnaires à choix multiples interactifs avec correction immédiate.</p>
+                </div>
+              </div>
+
+              @if (allQuiz.length === 0) {
+                <p class="text-xs text-slate-400 italic py-3 text-center">Aucun quiz numérique configuré.</p>
+              } @else {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  @for (q of allQuiz; track q.id) {
+                    <div class="p-4 border border-[#D7DBDE] rounded-xs bg-[#F8FAFC] flex flex-col justify-between space-y-3">
+                      <div>
+                        <div class="flex items-center justify-between gap-1 text-[10px] text-slate-400 font-medium">
+                          <span>Module : {{ q.moduleTitre }}</span>
+                          @if (q.dureeMinutes) {
+                            <span>⏱️ {{ q.dureeMinutes }} min</span>
+                          }
+                        </div>
+                        <h4 class="text-sm font-bold text-[#1B1D1F] mt-1">{{ q.titre }}</h4>
+                      </div>
+                      <div class="flex items-center justify-between pt-2 border-t border-slate-200">
+                        <span class="text-[11px] text-[#276B44] font-bold">Quiz actif</span>
+                        <button
+                          type="button"
+                          (click)="confirmDeleteQuiz(q)"
+                          class="text-red-500 hover:text-red-700 text-xs cursor-pointer"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- SECTION 3 : DEVOIRS PRATIQUES -->
+            <div class="bg-white border border-[#D7DBDE] rounded-xs p-6 shadow-2xs space-y-4">
+              <div class="flex items-center justify-between gap-3 border-b border-[#D7DBDE] pb-3">
+                <div>
+                  <h3 class="text-base font-bold text-[#1B1D1F] flex items-center gap-2">
+                    <span>📋</span>
+                    <span>Devoirs & Travaux Pratiques à Rendre</span>
+                  </h3>
+                  <p class="text-xs text-[#4B5157]">Sujets de travaux dirigés, projets techniques et dossiers de fin de module.</p>
+                </div>
+              </div>
+
+              @if (allDevoirs.length === 0) {
+                <p class="text-xs text-slate-400 italic py-3 text-center">Aucun devoir pratique configuré.</p>
+              } @else {
+                <div class="space-y-3">
+                  @for (d of allDevoirs; track d.id) {
+                    <div class="p-4 border border-[#D7DBDE] rounded-xs bg-[#F8FAFC] flex flex-wrap items-start justify-between gap-4">
+                      <div class="flex-1 min-w-[240px]">
+                        <span class="text-[10px] font-bold text-[#124F80] uppercase tracking-wider">{{ d.moduleTitre }}</span>
+                        <h4 class="text-sm font-bold text-[#1B1D1F] mt-0.5">{{ d.titre }}</h4>
+                        @if (d.consignes) {
+                          <p class="text-xs text-[#4B5157] mt-1 line-clamp-2 leading-relaxed">{{ d.consignes }}</p>
+                        }
+                        @if (d.dateLimite) {
+                          <p class="text-[11px] text-[#F0791E] font-medium mt-1">
+                            📅 Date limite : {{ d.dateLimite | date:'dd/MM/yyyy HH:mm' }}
+                          </p>
+                        }
+                      </div>
+
+                      <div class="flex items-center gap-2">
+                        <button
+                          type="button"
+                          (click)="confirmDeleteDevoir(d)"
+                          class="btn btn-ghost text-xs py-1 px-2.5 border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- CONTENU ONGLET 3 : APPRENANTS & CERTIFICATS                    -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        @if (activeTab === 'apprenants') {
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Colonne 1 & 2 : Liste des apprenants inscrits -->
+            <div class="lg:col-span-2 bg-white border border-[#D7DBDE] rounded-xs p-6 shadow-2xs space-y-4">
+              <div class="flex items-center justify-between gap-3 border-b border-[#D7DBDE] pb-3 flex-wrap">
+                <div>
+                  <h3 class="text-base font-bold text-[#1B1D1F]">Apprenants Inscrits à cette Formation</h3>
+                  <p class="text-xs text-[#4B5157]">Effectif officiellement inscrit et ayant accès aux modules pédagogiques.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold bg-[#E7F1FA] text-[#1C75BC] px-2.5 py-1 rounded">
+                    {{ inscriptions.length }} inscrit(s)
+                  </span>
+                  @if (auth.hasRole('ADMIN_CENTRE') || auth.hasRole('ADMIN_ETABLISSEMENT')) {
+                    <button
+                      type="button"
+                      (click)="openInscrireModal()"
+                      class="btn btn-primary text-xs py-1.5 px-3 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>➕ Inscrire un Apprenant</span>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (loadingInscriptions) {
+                <div class="py-12 text-center text-[#4B5157]">
+                  <div class="inline-block w-6 h-6 border-2 border-[#1C75BC] border-t-transparent rounded-full animate-spin mb-2"></div>
+                  <p class="text-xs">Chargement des inscriptions...</p>
+                </div>
+              } @else if (inscriptions.length === 0) {
+                <div class="py-12 text-center space-y-3">
+                  <p class="text-xs text-slate-400 italic">Aucun apprenant n'est actuellement inscrit à cette formation.</p>
+                  @if (auth.hasRole('ADMIN_CENTRE') || auth.hasRole('ADMIN_ETABLISSEMENT')) {
+                    <button
+                      type="button"
+                      (click)="openInscrireModal()"
+                      class="btn btn-secondary text-xs py-1.5 px-3 cursor-pointer"
+                    >
+                      Attribuer cette formation à un premier apprenant
+                    </button>
+                  }
+                </div>
+              } @else {
+                <div class="divide-y divide-slate-100 max-h-96 overflow-y-auto pr-1">
+                  @for (insc of inscriptions; track insc.id) {
+                    <div class="py-3 flex items-center justify-between gap-3 flex-wrap">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-[#1C75BC] text-white font-bold flex items-center justify-center text-xs">
+                          {{ insc.apprenant?.prenom?.charAt(0) }}{{ insc.apprenant?.nom?.charAt(0) }}
+                        </div>
+                        <div>
+                          <p class="text-xs font-bold text-[#1B1D1F]">
+                            {{ insc.apprenant?.prenom }} {{ insc.apprenant?.nom }}
+                            @if (insc.apprenant?.matricule) {
+                              <span class="text-[10px] font-mono text-[#1C75BC] font-semibold ml-1">({{ insc.apprenant?.matricule }})</span>
+                            }
+                          </p>
+                          <p class="text-[10px] text-slate-400">{{ insc.apprenant?.email }} · Inscrit le {{ insc.dateDebut | date:'dd/MM/yyyy' }}</p>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                          [class.bg-[#E7F1EA]]="insc.statut === 'ACTIVE'"
+                          [class.text-[#276B44]]="insc.statut === 'ACTIVE'"
+                          [class.bg-amber-100]="insc.statut === 'RESERVEE'"
+                          [class.text-amber-800]="insc.statut === 'RESERVEE'"
+                        >
+                          {{ insc.statut === 'ACTIVE' ? 'Actif' : insc.statut }}
+                        </span>
+
+                        <button
+                          type="button"
+                          (click)="selectApprenantForCertificat(insc.apprenant?.utilisateurId || insc.apprenant?.id)"
+                          class="btn btn-ghost text-[11px] py-1 px-2 border border-[#D7DBDE] text-[#124F80] hover:bg-slate-50 cursor-pointer"
+                          title="Sélectionner pour émission du certificat"
+                        >
+                          🎖️ Certifier
+                        </button>
+
+                        @if (auth.hasRole('ADMIN_CENTRE') || auth.hasRole('ADMIN_ETABLISSEMENT')) {
+                          <button
+                            type="button"
+                            (click)="desinscrireApprenant(insc.id, insc.apprenant?.prenom + ' ' + insc.apprenant?.nom)"
+                            class="btn btn-ghost text-[11px] py-1 px-2 border border-red-200 text-red-600 hover:bg-red-50 cursor-pointer"
+                            title="Désinscrire cet apprenant"
+                          >
+                            ✕
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Colonne 3 : Émission officielle de certificat -->
+            <div class="bg-white border border-[#D7DBDE] rounded-xs p-6 shadow-2xs space-y-4 h-fit">
+              <div class="border-b border-[#D7DBDE] pb-3">
+                <h3 class="text-base font-bold text-[#1B1D1F] flex items-center gap-2">
+                  <span>🎓</span>
+                  <span>Émission de Certificat</span>
+                </h3>
+                <p class="text-xs text-[#4B5157]">Délivrance d'un titre officiel infalsifiable avec QR code.</p>
+              </div>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="form-label text-xs" for="selectedApprenantId">Sélectionner l'Apprenant Lauréat</label>
+                  <select 
+                    id="selectedApprenantId"
+                    name="selectedApprenantId"
+                    title="Sélectionner l'Apprenant Lauréat"
+                    aria-label="Sélectionner l'Apprenant Lauréat"
+                    class="form-input text-xs" 
+                    [(ngModel)]="selectedApprenantId">
+                    <option value="">— Choisir un apprenant —</option>
+                    @for (a of apprenants; track a.id) {
+                      <option [value]="a.id">{{ a.prenom }} {{ a.nom }} ({{ a.email }})</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="p-3 bg-[#F5F6F7] rounded-xs text-[11px] text-[#4B5157] space-y-1">
+                  <p class="font-bold text-[#124F80]">Conditions de certification :</p>
+                  <p>• Validation de 100% des modules</p>
+                  <p>• Moyenne minimale requise : 10/20</p>
+                </div>
+
+                <button
+                  type="button"
+                  [disabled]="!selectedApprenantId || isEmittingCertificat"
+                  (click)="emettreCertificat()"
+                  class="btn btn-primary w-full text-xs py-2.5 shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <span>{{ isEmittingCertificat ? '⏳ Émission...' : '🎖️ Délivrer le Certificat Officiel' }}</span>
+                </button>
+
+                @if (certMessage) {
+                  <div 
+                    class="p-3 rounded-xs text-xs font-semibold"
+                    [class.bg-emerald-50]="certSuccess"
+                    [class.text-emerald-700]="certSuccess"
+                    [class.border]="certSuccess"
+                    [class.border-emerald-200]="certSuccess"
+                    [class.bg-red-50]="!certSuccess"
+                    [class.text-red-700]="!certSuccess"
+                    [class.border-red-200]="!certSuccess"
+                  >
+                    {{ certMessage }}
+                  </div>
+                }
+              </div>
+            </div>
+
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- CONTENU ONGLET 4 : FICHE PÉDAGOGIQUE RÉFÉRENTIEL (APC)         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        @if (activeTab === 'referentiel') {
+          <div class="bg-white border border-[#D7DBDE] rounded-xs p-6 md:p-8 shadow-2xs space-y-6">
+            <div class="flex items-center justify-between border-b border-[#D7DBDE] pb-4">
+              <div>
+                <h3 class="text-lg font-bold text-[#1B1D1F] font-heading">Fiche Pédagogique Officielle & Compétences (APC)</h3>
+                <p class="text-xs text-[#4B5157]">Conformité avec les standards du Ministère de la Formation Professionnelle.</p>
+              </div>
+              <button
+                type="button"
+                (click)="openEditFormationModal()"
+                class="btn btn-ghost text-xs py-1.5 px-3 border border-[#D7DBDE] text-[#124F80] hover:bg-slate-50 cursor-pointer"
+              >
+                ✏️ Modifier la fiche
+              </button>
+            </div>
+
+            <!-- Filière Référentielle Attachée -->
+            <div class="p-4 bg-[#E7F1FA] border border-[#1C75BC]/30 rounded-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-[10px] uppercase font-bold tracking-wider text-[#1C75BC] flex items-center gap-1.5">
+                  <span>🏛️</span> Référentiel National Professionnel
+                </div>
+                <h4 class="text-sm font-bold text-[#124F80]">
+                  {{ formation.formationReferentiel?.filiere?.libelle || 'Filière Non Rattachée au Référentiel National' }}
+                  @if (formation.formationReferentiel?.filiere?.code) {
+                    <span class="font-mono text-xs px-2 py-0.5 rounded-xs bg-white text-[#1C75BC] border border-[#1C75BC]/40 font-bold ml-1">
+                      {{ formation.formationReferentiel?.filiere?.code }}
+                    </span>
+                  }
+                </h4>
+                <p class="text-xs text-[#4B5157]">
+                  {{ formation.formationReferentiel?.filiere?.description || 'Cette formation et ses modules peuvent être rattachés à une filière officielle pour standardiser les certifications.' }}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                (click)="openEditFormationModal()"
+                class="btn btn-primary text-xs py-1.5 px-3 shadow-xs shrink-0 flex items-center gap-1 cursor-pointer"
+              >
+                <span>🔄</span>
+                <span>{{ formation.formationReferentiel?.filiere ? 'Modifier le rattachement' : 'Rattacher à une filière' }}</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+              <!-- Objectifs Pédagogiques -->
+              <div class="space-y-2 p-4 bg-[#F8FAFC] border border-slate-200 rounded-xs">
+                <h4 class="font-extrabold text-[#124F80] uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🎯</span>
+                  <span>Compétences & Objectifs Visés (APC)</span>
+                </h4>
+                <p class="text-[#4B5157] leading-relaxed whitespace-pre-line">
+                  {{ formation.objectifs || 'Non spécifiés. Cliquez sur « Modifier la fiche » pour renseigner les objectifs d\'apprentissage.' }}
+                </p>
+              </div>
+
+              <!-- Prérequis d'Admission -->
+              <div class="space-y-2 p-4 bg-[#F8FAFC] border border-slate-200 rounded-xs">
+                <h4 class="font-extrabold text-[#124F80] uppercase tracking-wider flex items-center gap-1.5">
+                  <span>📋</span>
+                  <span>Prérequis & Profil Requis</span>
+                </h4>
+                <p class="text-[#4B5157] leading-relaxed whitespace-pre-line">
+                  {{ formation.prerequis || 'Niveau secondaire ou évaluation diagnostique / test de positionnement.' }}
+                </p>
+              </div>
+
+              <!-- Débouchés Professionnels -->
+              <div class="space-y-2 p-4 bg-[#F8FAFC] border border-slate-200 rounded-xs">
+                <h4 class="font-extrabold text-[#276B44] uppercase tracking-wider flex items-center gap-1.5">
+                  <span>💼</span>
+                  <span>Débouchés Professionnels & Métiers</span>
+                </h4>
+                <p class="text-[#4B5157] leading-relaxed whitespace-pre-line">
+                  {{ formation.debouches || 'Insertion directe en entreprise, artisanat qualifié ou création d\'entreprise autonome.' }}
+                </p>
+              </div>
+
+              <!-- Paramètres Vitrine Landing Page -->
+              <div class="space-y-2 p-4 bg-[#F8FAFC] border border-slate-200 rounded-xs">
+                <h4 class="font-extrabold text-[#F0791E] uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🌐</span>
+                  <span>Gouvernance Vitrine Publique</span>
+                </h4>
+                <div class="space-y-1.5 text-[#4B5157]">
+                  <p>• Statut vitrine : <strong [class.text-[#276B44]]="formation.publieSurLanding">{{ formation.publieSurLanding ? 'Publiée sur #formations' : 'Non visible en ligne' }}</strong></p>
+                  <p>• Mise en vedette : <strong [class.text-[#F0791E]]="formation.aLaUne">{{ formation.aLaUne ? 'Oui (À la une)' : 'Non' }}</strong></p>
+                  <p>• Badge marketing : <strong>{{ formation.badgeTexte || 'Aucun' }}</strong></p>
+                  <p>• Ordre d'affichage : <strong>{{ formation.ordre || 0 }}</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MODALES D'ACTION (CRUD COMPLET)                                -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- MODALE 1 : CRÉER / MODIFIER MODULE -->
+    @if (showModuleModal) {
+      <div class="fixed inset-0 bg-[#1B1D1F]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-xl w-full max-w-md overflow-hidden animate-fade-in">
+          <div class="p-4 bg-[#124F80] text-white flex items-center justify-between">
+            <h3 class="text-sm font-bold font-heading">
+              {{ isEditingModule ? 'Modifier le Module' : 'Nouveau Module d\'Enseignement' }}
+            </h3>
+            <button type="button" (click)="closeModuleModal()" class="text-white/80 hover:text-white text-base cursor-pointer">✕</button>
+          </div>
+          <div class="p-5 space-y-4 text-xs">
+            <div>
+              <label class="form-label" for="modTitre">Titre du module *</label>
+              <input id="modTitre" name="modTitre" class="form-input" title="Titre du module" placeholder="Ex: Coupe & Patronage industriel" [(ngModel)]="moduleFormData.titre" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label" for="modCoef">Coefficient</label>
+                <input id="modCoef" name="modCoef" class="form-input" type="number" min="0.5" step="0.5" title="Coefficient du module" placeholder="1" [(ngModel)]="moduleFormData.coefficient" />
+              </div>
+              <div>
+                <label class="form-label" for="modOrdre">Ordre</label>
+                <input id="modOrdre" name="modOrdre" class="form-input" type="number" min="1" title="Ordre d'affichage" placeholder="1" [(ngModel)]="moduleFormData.ordre" />
+              </div>
+            </div>
+          </div>
+          <div class="p-4 bg-[#F5F6F7] border-t border-[#D7DBDE] flex justify-end gap-2">
+            <button type="button" (click)="closeModuleModal()" class="btn btn-ghost text-xs py-1.5 px-3 border border-[#D7DBDE]">Annuler</button>
+            <button type="button" (click)="saveModule()" [disabled]="isSavingModule" class="btn btn-primary text-xs py-1.5 px-4">
+              {{ isSavingModule ? 'Enregistrement...' : 'Enregistrer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- MODALE 2 : CRÉER / MODIFIER COURS -->
+    @if (showCoursModal) {
+      <div class="fixed inset-0 bg-[#1B1D1F]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-xl w-full max-w-lg overflow-hidden animate-fade-in">
+          <div class="p-4 bg-[#1C75BC] text-white flex items-center justify-between">
+            <h3 class="text-sm font-bold font-heading">
+              {{ isEditingCours ? 'Modifier le Cours' : 'Ajouter un Support de Cours' }}
+            </h3>
+            <button type="button" (click)="closeCoursModal()" class="text-white/80 hover:text-white text-base cursor-pointer">✕</button>
+          </div>
+          <div class="p-5 space-y-4 text-xs">
+            <div>
+              <label class="form-label" for="coursTitre">Titre de la leçon / séance *</label>
+              <input id="coursTitre" name="coursTitre" class="form-input" title="Titre de la séance" placeholder="Ex: Chapitre 1 : Prise des mesures et calibrage" [(ngModel)]="coursFormData.titre" />
+            </div>
+            <div>
+              <label class="form-label" for="coursContenu">Contenu textuel / Résumé</label>
+              <textarea id="coursContenu" name="coursContenu" class="form-input" rows="4" title="Contenu ou résumé du cours" placeholder="Points clés de la séance ou notes pédagogiques..." [(ngModel)]="coursFormData.contenu"></textarea>
+            </div>
+            <div>
+              <label class="form-label" for="coursFileUrl">Lien vers document externe (optionnel)</label>
+              <input id="coursFileUrl" name="coursFileUrl" class="form-input" title="Lien vers document externe" placeholder="https://..." [(ngModel)]="coursFormData.fileUrl" />
+            </div>
+          </div>
+          <div class="p-4 bg-[#F5F6F7] border-t border-[#D7DBDE] flex justify-end gap-2">
+            <button type="button" (click)="closeCoursModal()" class="btn btn-ghost text-xs py-1.5 px-3 border border-[#D7DBDE]">Annuler</button>
+            <button type="button" (click)="saveCours()" [disabled]="isSavingCours" class="btn btn-primary text-xs py-1.5 px-4">
+              {{ isSavingCours ? 'Enregistrement...' : 'Enregistrer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- MODALE 3 : CRÉER ÉVALUATION -->
+    @if (showEvaluationModal) {
+      <div class="fixed inset-0 bg-[#1B1D1F]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-xl w-full max-w-md overflow-hidden animate-fade-in">
+          <div class="p-4 bg-[#124F80] text-white flex items-center justify-between">
+            <h3 class="text-sm font-bold font-heading">Ajouter une Évaluation Continue</h3>
+            <button type="button" (click)="closeEvaluationModal()" class="text-white/80 hover:text-white text-base cursor-pointer">✕</button>
+          </div>
+          <div class="p-5 space-y-4 text-xs">
+            <div>
+              <label class="form-label" for="evalTitre">Titre de l'évaluation *</label>
+              <input id="evalTitre" name="evalTitre" class="form-input" title="Titre de l'évaluation" placeholder="Ex: Contrôle pratique n°1" [(ngModel)]="evalFormData.titre" />
+            </div>
+            <div>
+              <label class="form-label" for="evalNoteMax">Note Maximale (Barème)</label>
+              <input id="evalNoteMax" name="evalNoteMax" class="form-input" type="number" min="5" max="100" title="Note Maximale" placeholder="20" [(ngModel)]="evalFormData.noteMaximale" />
+            </div>
+          </div>
+          <div class="p-4 bg-[#F5F6F7] border-t border-[#D7DBDE] flex justify-end gap-2">
+            <button type="button" (click)="closeEvaluationModal()" class="btn btn-ghost text-xs py-1.5 px-3 border border-[#D7DBDE]">Annuler</button>
+            <button type="button" (click)="saveEvaluation()" [disabled]="isSavingEval" class="btn btn-primary text-xs py-1.5 px-4">
+              {{ isSavingEval ? 'Création...' : 'Créer l\'Évaluation' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- MODALE 4 : CRÉER QUIZ -->
+    @if (showQuizModal) {
+      <div class="fixed inset-0 bg-[#1B1D1F]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-xl w-full max-w-lg overflow-hidden animate-fade-in">
+          <div class="p-4 bg-[#276B44] text-white flex items-center justify-between">
+            <h3 class="text-sm font-bold font-heading">Nouveau Quiz Numérique</h3>
+            <button type="button" (click)="closeQuizModal()" class="text-white/80 hover:text-white text-base cursor-pointer">✕</button>
+          </div>
+          <div class="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+            <div>
+              <label class="form-label" for="quizTitre">Titre du quiz *</label>
+              <input id="quizTitre" name="quizTitre" class="form-input" title="Titre du quiz" placeholder="Ex: Quiz de révision générale" [(ngModel)]="quizFormData.titre" />
+            </div>
+            <div>
+              <label class="form-label" for="quizDureeMinutes">Durée indicative (minutes)</label>
+              <input id="quizDureeMinutes" name="quizDureeMinutes" class="form-input" type="number" min="5" step="5" title="Durée indicative en minutes" placeholder="15" [(ngModel)]="quizFormData.dureeMinutes" />
+            </div>
+
+            <!-- Questions dynamiques -->
+            <div class="border-t border-slate-200 pt-3 space-y-3">
+              <h4 class="font-bold text-[#1B1D1F]">Questions du Quiz</h4>
+              
+              <!-- Question 1 -->
+              <div class="p-3 bg-slate-50 border border-slate-200 rounded space-y-2">
+                <label class="font-semibold text-[#124F80]" for="quizQ1">Question 1 *</label>
+                <input id="quizQ1" name="quizQ1" class="form-input" title="Énoncé de la question 1" placeholder="Énoncé de la question 1..." [(ngModel)]="quizFormData.q1" />
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <label class="text-[10px] text-emerald-700 font-bold" for="quizA1">✓ Bonne réponse *</label>
+                    <input id="quizA1" name="quizA1" class="form-input border-emerald-300" title="Bonne réponse question 1" placeholder="Réponse correcte" [(ngModel)]="quizFormData.a1" />
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-500 font-semibold" for="quizA1Wrong">✗ Autre option (fausse)</label>
+                    <input id="quizA1Wrong" name="quizA1Wrong" class="form-input" title="Option fausse question 1" placeholder="Option fausse" [(ngModel)]="quizFormData.a1_wrong" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Question 2 -->
+              <div class="p-3 bg-slate-50 border border-slate-200 rounded space-y-2">
+                <label class="font-semibold text-[#124F80]" for="quizQ2">Question 2 *</label>
+                <input id="quizQ2" name="quizQ2" class="form-input" title="Énoncé de la question 2" placeholder="Énoncé de la question 2..." [(ngModel)]="quizFormData.q2" />
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <label class="text-[10px] text-emerald-700 font-bold" for="quizA2">✓ Bonne réponse *</label>
+                    <input id="quizA2" name="quizA2" class="form-input border-emerald-300" title="Bonne réponse question 2" placeholder="Réponse correcte" [(ngModel)]="quizFormData.a2" />
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-500 font-semibold" for="quizA2Wrong">✗ Autre option (fausse)</label>
+                    <input id="quizA2Wrong" name="quizA2Wrong" class="form-input" title="Option fausse question 2" placeholder="Option fausse" [(ngModel)]="quizFormData.a2_wrong" />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="p-4 bg-[#F5F6F7] border-t border-[#D7DBDE] flex justify-end gap-2">
+            <button type="button" (click)="closeQuizModal()" class="btn btn-ghost text-xs py-1.5 px-3 border border-[#D7DBDE]">Annuler</button>
+            <button type="button" (click)="saveQuiz()" [disabled]="isSavingQuiz" class="btn btn-primary text-xs py-1.5 px-4 bg-[#276B44] hover:bg-[#1e5435] border-[#276B44]">
+              {{ isSavingQuiz ? 'Création...' : 'Créer le Quiz' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- MODALE 5 : CRÉER DEVOIR -->
+    @if (showDevoirModal) {
+      <div class="fixed inset-0 bg-[#1B1D1F]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-xl w-full max-w-md overflow-hidden animate-fade-in">
+          <div class="p-4 bg-[#F0791E] text-white flex items-center justify-between">
+            <h3 class="text-sm font-bold font-heading">Nouveau Devoir / Travail Pratique</h3>
+            <button type="button" (click)="closeDevoirModal()" class="text-white/80 hover:text-white text-base cursor-pointer">✕</button>
+          </div>
+          <div class="p-5 space-y-4 text-xs">
+            <div>
+              <label class="form-label" for="devTitre">Titre du devoir *</label>
+              <input id="devTitre" name="devTitre" class="form-input" title="Titre du devoir" placeholder="Ex: Réalisation d'une chemise avec col officier" [(ngModel)]="devoirFormData.titre" />
+            </div>
+            <div>
+              <label class="form-label" for="devConsignes">Consignes et barème détaillé</label>
+              <textarea id="devConsignes" name="devConsignes" class="form-input" rows="3" title="Consignes et barème détaillé" placeholder="Précisez les étapes techniques et les critères d'évaluation..." [(ngModel)]="devoirFormData.consignes"></textarea>
+            </div>
+            <div>
+              <label class="form-label" for="devDateLimite">Date limite de dépôt</label>
+              <input id="devDateLimite" name="devDateLimite" class="form-input" type="datetime-local" title="Date limite de dépôt" placeholder="Date limite" [(ngModel)]="devoirFormData.dateLimite" />
+            </div>
+          </div>
+          <div class="p-4 bg-[#F5F6F7] border-t border-[#D7DBDE] flex justify-end gap-2">
+            <button type="button" (click)="closeDevoirModal()" class="btn btn-ghost text-xs py-1.5 px-3 border border-[#D7DBDE]">Annuler</button>
+            <button type="button" (click)="saveDevoir()" [disabled]="isSavingDevoir" class="btn btn-primary text-xs py-1.5 px-4 bg-[#F0791E] hover:bg-[#d66512] border-[#F0791E]">
+              {{ isSavingDevoir ? 'Création...' : 'Créer le Devoir' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- MODALE 6 : MODIFIER FORMATION & PARAMÈTRES VITRINE -->
+    @if (showEditFormationModal) {
+      <div class="fixed inset-0 bg-[#1B1D1F]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-xl w-full max-w-xl overflow-hidden animate-fade-in max-h-[90vh] flex flex-col">
+          <div class="p-4 bg-[#124F80] text-white flex items-center justify-between shrink-0">
+            <h3 class="text-sm font-bold font-heading">Paramètres de la Formation & Vitrine Publique</h3>
+            <button type="button" (click)="closeEditFormationModal()" class="text-white/80 hover:text-white text-base cursor-pointer">✕</button>
+          </div>
+
+          <div class="p-5 space-y-4 text-xs overflow-y-auto flex-1">
+            <div>
+              <label class="form-label" for="editFormTitre">Titre de la formation *</label>
+              <input id="editFormTitre" name="editFormTitre" class="form-input" title="Titre de la formation" placeholder="Intitulé de la formation" [(ngModel)]="editFormationData.titre" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label" for="editFormCategorie">Catégorie Métier</label>
+                <select id="editFormCategorie" name="editFormCategorie" class="form-input" title="Catégorie Métier" aria-label="Catégorie Métier" [(ngModel)]="editFormationData.categorie">
+                  @for (cat of categories; track cat.code) {
+                    <option [value]="cat.code">{{ cat.libelle }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="form-label" for="editFormDuree">Durée globale</label>
+                <input id="editFormDuree" name="editFormDuree" class="form-input" title="Durée globale" placeholder="Ex: 6 mois (480h)" [(ngModel)]="editFormationData.duree" />
+              </div>
+            </div>
+
+            <!-- Filière Référentielle de Rattachement -->
+            <div>
+              <label class="form-label font-bold flex items-center justify-between" for="editFormationReferentielId">
+                <span>Filière Référentielle de Rattachement</span>
+                <span class="text-[10px] text-[#1C75BC] font-normal font-sans">Référentiel National Officiel</span>
+              </label>
+              <select
+                id="editFormationReferentielId"
+                name="editFormationReferentielId"
+                class="form-input"
+                title="Filière Référentielle de Rattachement"
+                aria-label="Filière Référentielle de Rattachement"
+                [(ngModel)]="editFormationData.formationReferentielId"
+              >
+                <option value="">-- Sans rattachement officiel direct (Générale) --</option>
+                @for (fil of referentielFilieres; track fil.id) {
+                  <option [value]="fil.id">{{ fil.libelle }} ({{ fil.code }})</option>
+                }
+              </select>
+              <p class="text-[10px] text-slate-500 mt-1">
+                Rattache cette formation et tous ses modules au standard national officiel pour la certification.
+              </p>
+            </div>
+
+            <div>
+              <label class="form-label" for="editFormDescription">Description générale</label>
+              <textarea id="editFormDescription" name="editFormDescription" class="form-input" rows="3" title="Description générale" placeholder="Description générale..." [(ngModel)]="editFormationData.description"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label" for="editFormBadgeTexte">Badge vitrine</label>
+                <input id="editFormBadgeTexte" name="editFormBadgeTexte" class="form-input" title="Badge vitrine" placeholder="Ex: Places limitées" [(ngModel)]="editFormationData.badgeTexte" />
+              </div>
+              <div>
+                <label class="form-label" for="editFormFraisInscription">Frais d'inscription ($)</label>
+                <input id="editFormFraisInscription" name="editFormFraisInscription" class="form-input" type="number" title="Frais d'inscription" placeholder="0" [(ngModel)]="editFormationData.fraisInscription" />
+              </div>
+            </div>
+
+            <!-- Interrupteurs vitrine -->
+            <div class="p-3 bg-slate-50 rounded-xs border border-slate-200 space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer" for="editFormPublieSurLanding">
+                <input id="editFormPublieSurLanding" name="editFormPublieSurLanding" type="checkbox" class="w-4 h-4 text-[#1C75BC]" title="Publier immédiatement sur la vitrine" aria-label="Publier immédiatement sur la vitrine landing page" [(ngModel)]="editFormationData.publieSurLanding" />
+                <span class="font-bold text-[#1B1D1F]">Publier immédiatement sur la vitrine landing page (#formations)</span>
+              </label>
+
+              <label class="flex items-center gap-2 cursor-pointer" for="editFormALaUne">
+                <input id="editFormALaUne" name="editFormALaUne" type="checkbox" class="w-4 h-4 text-[#F0791E]" title="Mettre en vedette À la une" aria-label="Mettre en vedette À la une" [(ngModel)]="editFormationData.aLaUne" />
+                <span class="font-bold text-[#1B1D1F]">Mettre en vedette « À la une »</span>
+              </label>
+            </div>
+
+            <div>
+              <label class="form-label" for="editFormDebouches">Débouchés professionnels</label>
+              <textarea id="editFormDebouches" name="editFormDebouches" class="form-input" rows="2" title="Débouchés professionnels" placeholder="Débouchés professionnels..." [(ngModel)]="editFormationData.debouches"></textarea>
+            </div>
+
+            <div>
+              <label class="form-label" for="editFormObjectifs">Compétences visées (Objectifs APC)</label>
+              <textarea id="editFormObjectifs" name="editFormObjectifs" class="form-input" rows="2" title="Compétences visées" placeholder="Compétences visées selon l'APC..." [(ngModel)]="editFormationData.objectifs"></textarea>
+            </div>
+          </div>
+
+          <div class="p-4 bg-[#F5F6F7] border-t border-[#D7DBDE] flex justify-end gap-2 shrink-0">
+            <button type="button" (click)="closeEditFormationModal()" class="btn btn-ghost text-xs py-1.5 px-3 border border-[#D7DBDE]">Annuler</button>
+            <button type="button" (click)="saveFormationSettings()" [disabled]="isSavingFormationSettings" class="btn btn-primary text-xs py-1.5 px-4">
+              {{ isSavingFormationSettings ? 'Enregistrement...' : 'Mettre à jour' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- MODALE 7 : CONFIRMATION DE SUPPRESSION SÉCURISÉE -->
+    @if (deleteModalState.open) {
+      <div class="fixed inset-0 bg-[#1B1D1F]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-xl w-full max-w-md overflow-hidden animate-fade-in">
+          <div class="p-4 bg-[#ED1C24] text-white flex items-center justify-between">
+            <h3 class="text-sm font-bold font-heading">Confirmer la suppression</h3>
+            <button type="button" (click)="closeDeleteModal()" class="text-white/80 hover:text-white text-base cursor-pointer">✕</button>
+          </div>
+          <div class="p-5 space-y-3 text-xs">
+            <p class="text-[#1B1D1F] font-semibold">
+              Êtes-vous certain de vouloir supprimer cet élément ?
+            </p>
+            <div class="p-3 bg-red-50 text-[#ED1C24] rounded-xs font-bold">
+              {{ deleteModalState.itemTitle }}
+            </div>
+            <p class="text-[11px] text-slate-500">
+              Cette action est irréversible et supprimera également les données dépendantes associées.
+            </p>
+          </div>
+          <div class="p-4 bg-[#F5F6F7] border-t border-[#D7DBDE] flex justify-end gap-2">
+            <button type="button" (click)="closeDeleteModal()" class="btn btn-ghost text-xs py-1.5 px-3 border border-[#D7DBDE]">Annuler</button>
+            <button type="button" (click)="executeDelete()" [disabled]="isDeletingItem" class="btn btn-primary text-xs py-1.5 px-4 bg-[#ED1C24] hover:bg-red-700 border-[#ED1C24]">
+              {{ isDeletingItem ? 'Suppression...' : 'Supprimer Définitivement' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════ MODALE : INSCRIRE DIRECTEMENT UN APPRENANT ══════════ -->
+    @if (showInscrireModal) {
+      <div class="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4 animate-fade-in">
+        <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-2xl w-full max-w-lg overflow-hidden text-xs">
+          <div class="p-5 border-b border-[#D7DBDE] bg-[#F5F6F7] flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-[#1B1D1F]">Inscrire / Attribuer un Apprenant</h3>
+              <p class="text-[11px] text-[#4B5157] mt-0.5">
+                Affectation directe de la formation « {{ formation?.titre }} ».
+              </p>
+            </div>
+            <button (click)="closeInscrireModal()" class="text-gray-400 hover:text-gray-700 font-bold text-base cursor-pointer">✕</button>
+          </div>
+
+          <form (ngSubmit)="submitInscription()" class="p-6 space-y-4">
+            <div>
+              <label class="block font-semibold text-[#1B1D1F] mb-1" for="inscrireApprenantId">Sélectionner l'Apprenant *</label>
+              <select
+                id="inscrireApprenantId"
+                [(ngModel)]="inscrireFormData.apprenantId"
+                name="apprenantId"
+                required
+                title="Sélectionner l'Apprenant"
+                aria-label="Sélectionner l'Apprenant"
+                class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC] bg-white text-xs"
+              >
+                <option value="">— Choisir un apprenant dans l'effectif —</option>
+                @for (a of apprenants; track a.id) {
+                  <option [value]="a.id">{{ a.prenom }} {{ a.nom }} ({{ a.email }})</option>
+                }
+              </select>
+              <p class="text-[10px] text-slate-400 mt-1">
+                L'apprenant aura immédiatement accès à l'arborescence des cours et quiz de cette formation.
+              </p>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-[#1B1D1F] mb-1" for="inscrireStatut">Statut Initial de l'Inscription</label>
+              <select
+                id="inscrireStatut"
+                [(ngModel)]="inscrireFormData.statut"
+                name="statut"
+                title="Statut Initial de l'Inscription"
+                aria-label="Statut Initial de l'Inscription"
+                class="w-full p-2.5 border border-[#9AA1A8] rounded-xs focus:outline-none focus:border-[#1C75BC] bg-white text-xs"
+              >
+                <option value="ACTIVE">Actif (Accès complet immédiat)</option>
+                <option value="RESERVEE">Réservée (En attente de démarrage)</option>
+              </select>
+            </div>
+
+            <div class="p-4 border-t border-[#D7DBDE] bg-[#F5F6F7] flex items-center justify-end gap-3 -mx-6 -mb-6 mt-6">
+              <button
+                type="button"
+                (click)="closeInscrireModal()"
+                class="btn btn-secondary text-xs py-2 px-4 font-semibold cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                [disabled]="isInscribing || !inscrireFormData.apprenantId"
+                class="btn btn-primary text-xs py-2 px-4 font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <span>{{ isInscribing ? 'Inscription en cours...' : 'Confirmer l\'inscription' }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+  </div>
+</app-main-layout>

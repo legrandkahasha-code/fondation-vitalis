@@ -8,6 +8,7 @@ import {
   FormationArborescence,
   EligibiliteCertificat,
   CoursContenu,
+  ReleveNotesBulletin,
 } from '../../../../core/services/apprenant.service';
 import { ToastService } from '../../../../core/services/toast.service';
 
@@ -29,23 +30,39 @@ import { ToastService } from '../../../../core/services/toast.service';
           <span>Retour aux formations</span>
         </a>
 
-        <!-- BOUTON ACTUALISER -->
-        <button
-          type="button"
-          (click)="rechargerTout(true)"
-          [disabled]="loading"
-          class="px-3 py-1.5 rounded-xs bg-white hover:bg-[#F5F6F7] text-[#1B1D1F] border border-[#D7DBDE] text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
-          title="Rafraîchir les modules et progressions"
-        >
-          <svg
-            class="w-3.5 h-3.5 text-[#1C75BC]"
-            [class.animate-spin]="loading"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
+        <div class="flex items-center gap-2">
+          <!-- BOUTON RELEVÉ DE NOTES OFFICIEL -->
+          <button
+            type="button"
+            (click)="ouvrirReleveNotes()"
+            class="px-3 py-1.5 rounded-xs bg-white hover:bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC] text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Consulter le relevé de notes officiel de la formation"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span class="hidden sm:inline">Actualiser</span>
-        </button>
+            <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span class="hidden sm:inline">Relevé de notes officiel</span>
+            <span class="sm:hidden">Notes</span>
+          </button>
+
+          <!-- BOUTON ACTUALISER -->
+          <button
+            type="button"
+            (click)="rechargerTout(true)"
+            [disabled]="loading"
+            class="px-3 py-1.5 rounded-xs bg-white hover:bg-[#F5F6F7] text-[#1B1D1F] border border-[#D7DBDE] text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+            title="Rafraîchir les modules et progressions"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-[#1C75BC]"
+              [class.animate-spin]="loading"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span class="hidden sm:inline">Actualiser</span>
+          </button>
+        </div>
       </div>
 
       @if (loading) {
@@ -173,6 +190,25 @@ import { ToastService } from '../../../../core/services/toast.service';
                     }
                   </button>
                 </div>
+              } @else if (eligibilite.eligible && !eligibilite.dejaEmis) {
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    (click)="genererMonCertificat()"
+                    [disabled]="generatingCert"
+                    class="px-4 py-2.5 rounded-xs bg-[#276B44] hover:bg-[#1e5234] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer disabled:opacity-60 transition-all"
+                  >
+                    @if (generatingCert) {
+                      <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Génération en cours...</span>
+                    } @else {
+                      <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      </svg>
+                      <span>Générer mon Certificat Officiel</span>
+                    }
+                  </button>
+                </div>
               }
             </div>
           }
@@ -249,6 +285,14 @@ import { ToastService } from '../../../../core/services/toast.service';
                           </svg>
                           <span>{{ mod.devoirs.length }} devoirs</span>
                         </span>
+                        @if (mod.evaluations && mod.evaluations.length > 0) {
+                          <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>{{ mod.evaluations.length }} éval.</span>
+                          </span>
+                        }
                       </div>
                     </div>
                   </div>
@@ -425,6 +469,65 @@ import { ToastService } from '../../../../core/services/toast.service';
                                 <span>{{ d.soumis ? 'Voir soumission' : 'Déposer mon travail' }}</span>
                                 <span>→</span>
                               </a>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    <!-- 4. CONTRÔLES & ÉVALUATIONS CONTINUES -->
+                    @if (mod.evaluations && mod.evaluations.length > 0) {
+                      <div class="space-y-2 pt-2 border-t border-[#D7DBDE]">
+                        <h4 class="text-xs font-bold text-[#4B5157] uppercase tracking-wider flex items-center gap-1.5">
+                          <svg class="w-4 h-4 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Contrôles & Évaluations Continues</span>
+                        </h4>
+                        <div class="space-y-2">
+                          @for (ev of mod.evaluations; track ev.id) {
+                            <div class="p-3 sm:p-3.5 bg-white border border-[#D7DBDE] rounded-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                              <div class="flex items-center gap-3 flex-1 min-w-0">
+                                <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0" [class]="ev.note !== null ? 'bg-[#E7F1EA] text-[#276B44]' : 'bg-[#F5F6F7] text-[#4B5157]'">
+                                  @if (ev.note !== null) {
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  } @else {
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  }
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                  <p class="text-xs font-semibold text-[#1B1D1F] break-words">{{ ev.titre }}</p>
+                                  <p class="text-[10px] text-[#4B5157]">
+                                    @if (ev.note !== null) {
+                                      <span class="text-[#276B44] font-bold font-mono">Note : {{ ev.note }} / {{ ev.noteMaximale }}</span>
+                                      @if (ev.dateNotation) {
+                                        <span> · Noté le {{ ev.dateNotation | date:'dd/MM/yyyy' }}</span>
+                                      }
+                                    } @else {
+                                      <span>Évaluation en cours · Barème : /{{ ev.noteMaximale }}</span>
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div class="flex items-center gap-2 shrink-0">
+                                @if (ev.note !== null) {
+                                  <span
+                                    class="px-2.5 py-1 rounded-xs text-[10px] font-bold uppercase font-mono"
+                                    [class]="(ev.note / ev.noteMaximale) >= 0.5 ? 'bg-[#E7F1EA] text-[#276B44] border border-[#276B44]' : 'bg-[#FDE8E8] text-[#ED1C24] border border-[#ED1C24]'"
+                                  >
+                                    {{ (ev.note / ev.noteMaximale) >= 0.5 ? 'Validé' : 'Insuffisant' }}
+                                  </span>
+                                } @else {
+                                  <span class="px-2.5 py-1 rounded-xs bg-[#F5F6F7] text-[#4B5157] border border-[#D7DBDE] text-[10px] font-semibold">
+                                    En attente
+                                  </span>
+                                }
+                              </div>
                             </div>
                           }
                         </div>
@@ -631,6 +734,170 @@ import { ToastService } from '../../../../core/services/toast.service';
           </div>
         </div>
       }
+
+      <!-- MODAL RELEVÉ DE NOTES OFFICIEL -->
+      @if (releveNotesModalOpen) {
+        <div
+          (click)="fermerReleveNotes()"
+          class="fixed inset-0 z-50 bg-[#1B1D1F]/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 animate-fade-in"
+        >
+          <div
+            (click)="$event.stopPropagation()"
+            class="bg-white w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-[#D7DBDE] shadow-2xl rounded-xs"
+          >
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-[#D7DBDE] bg-[#124F80] text-white flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xs bg-white text-[#124F80] font-bold flex items-center justify-center text-xs shadow-xs">
+                  VC
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white font-heading leading-tight">Relevé de Notes Académique Officiel</h3>
+                  <p class="text-[10px] text-[#C6D2E3] font-mono">Bulletin certifié · Vitalis Center EUP</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="imprimerReleveNotes()"
+                  class="px-3 py-1 rounded-xs bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  <span>Imprimer</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="fermerReleveNotes()"
+                  class="w-7 h-7 rounded-xs hover:bg-white/20 text-white flex items-center justify-center text-sm font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Modal Body (Printable area) -->
+            <div id="releve-printable" class="p-6 md:p-8 overflow-y-auto space-y-6 text-[#1B1D1F]">
+              @if (loadingReleve) {
+                <div class="p-12 text-center text-[#4B5157]">
+                  <div class="inline-block w-8 h-8 border-3 border-[#1C75BC] border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <p class="text-xs font-semibold">Génération du relevé officiel en cours...</p>
+                </div>
+              } @else if (releveBulletin) {
+                <!-- Official Header -->
+                <div class="flex items-center justify-between pb-4 border-b-2 border-[#124F80] gap-4">
+                  <div>
+                    <h2 class="text-lg font-bold text-[#124F80] font-heading">RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</h2>
+                    <p class="text-[10px] text-[#4B5157] font-semibold">MINISTÈRE DE LA FORMATION PROFESSIONNELLE</p>
+                    <p class="text-[9px] text-[#4B5157]">Établissement d'Utilité Publique VITALIS CENTER · CFP 00095</p>
+                  </div>
+                  <div class="text-right font-mono text-[11px] text-[#4B5157]">
+                    <p class="font-bold text-[#1B1D1F]">Édité le : {{ releveBulletin.dateEdition | date:'dd/MM/yyyy à HH:mm' }}</p>
+                    <p>Antenne : {{ releveBulletin.formation.etablissement.nom }}</p>
+                  </div>
+                </div>
+
+                <!-- Student & Formation Profile -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs text-xs">
+                  <div>
+                    <span class="text-[10px] uppercase font-bold text-[#4B5157] block">Apprenant</span>
+                    <p class="font-bold text-[#1B1D1F] text-sm">{{ releveBulletin.apprenant.prenom }} {{ releveBulletin.apprenant.nom }}</p>
+                    <p class="text-[11px] text-[#4B5157] font-mono">{{ releveBulletin.apprenant.email }}</p>
+                    <p class="text-[10px] text-[#1C75BC] font-mono">Matricule : {{ releveBulletin.apprenant.id.substring(0, 8).toUpperCase() }}</p>
+                  </div>
+                  <div>
+                    <span class="text-[10px] uppercase font-bold text-[#4B5157] block">Formation Suivie</span>
+                    <p class="font-bold text-[#1B1D1F]">{{ releveBulletin.formation.titre }}</p>
+                    <p class="text-[11px] text-[#4B5157]">Règle de validation : BR-03 (Moyenne &ge; 10/20)</p>
+                  </div>
+                </div>
+
+                <!-- Table of Grades -->
+                <div class="overflow-x-auto border border-[#D7DBDE] rounded-xs">
+                  <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr class="bg-[#124F80] text-white text-[11px] uppercase tracking-wider">
+                        <th class="p-3 font-semibold">Module</th>
+                        <th class="p-3 font-semibold text-center w-20">Coeff.</th>
+                        <th class="p-3 font-semibold">Épreuves Évaluées</th>
+                        <th class="p-3 font-semibold text-right w-28">Moyenne Module</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[#D7DBDE]">
+                      @for (m of releveBulletin.modules; track m.id) {
+                        <tr class="hover:bg-[#F5F6F7]">
+                          <td class="p-3 font-bold text-[#1B1D1F] align-top">
+                            {{ m.titre }}
+                          </td>
+                          <td class="p-3 font-mono text-center align-top text-[#4B5157]">
+                            {{ m.coefficient }}
+                          </td>
+                          <td class="p-3 align-top">
+                            @if (m.epreuves.length === 0) {
+                              <span class="text-[11px] text-[#4B5157] italic">Aucune note enregistrée</span>
+                            } @else {
+                              <div class="space-y-1">
+                                @for (el of m.epreuves; track el.titre) {
+                                  <div class="flex items-center justify-between text-[11px] gap-2">
+                                    <span class="text-[#4B5157] truncate max-w-xs">
+                                      <strong class="text-[10px] uppercase" [class]="el.type === 'evaluation' ? 'text-[#1C75BC]' : el.type === 'devoir' ? 'text-[#F0791E]' : 'text-[#276B44]'">[{{ el.type }}]</strong> {{ el.titre }}
+                                    </span>
+                                    <span class="font-mono font-bold text-[#1B1D1F] shrink-0">
+                                      {{ el.noteSur20 !== null ? (el.noteSur20 + '/20') : 'En attente' }}
+                                    </span>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </td>
+                          <td class="p-3 text-right font-mono font-black text-sm align-top" [class]="(m.moyenneModule ?? 0) >= 10 ? 'text-[#276B44]' : 'text-[#ED1C24]'">
+                            {{ m.moyenneModule !== null ? (m.moyenneModule | number:'1.2-2') : '-' }}/20
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Summary & Deliberation -->
+                <div class="p-5 bg-[#E7F1FA] border-2 border-[#1C75BC] rounded-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div class="space-y-1">
+                    <span class="text-[10px] uppercase font-bold text-[#124F80] tracking-wider">Résultat Académique Général</span>
+                    <div class="flex items-center gap-3">
+                      <span class="text-xs font-bold text-[#1B1D1F]">Mention :</span>
+                      <span class="px-2.5 py-0.5 rounded-xs bg-white text-[#124F80] border border-[#124F80] text-xs font-black uppercase">
+                        {{ releveBulletin.mention }}
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-[#4B5157]">
+                      Statut :
+                      <strong [class]="releveBulletin.moyenneGenerale >= 10 ? 'text-[#276B44]' : 'text-[#ED1C24]'">
+                        {{ releveBulletin.moyenneGenerale >= 10 ? 'ADMIS (BR-03)' : 'EN COURS / AJOURNÉ' }}
+                      </strong>
+                    </p>
+                  </div>
+
+                  <div class="text-right sm:border-l border-[#1C75BC]/30 sm:pl-6">
+                    <span class="text-[10px] uppercase font-bold text-[#4B5157] block">Moyenne Générale</span>
+                    <span class="text-3xl font-black font-mono leading-none" [class]="releveBulletin.moyenneGenerale >= 10 ? 'text-[#276B44]' : 'text-[#ED1C24]'">
+                      {{ releveBulletin.moyenneGenerale | number:'1.2-2' }}
+                    </span>
+                    <span class="text-xs font-bold text-[#4B5157]"> / 20</span>
+                  </div>
+                </div>
+
+                <!-- Legal Mention & Watermark -->
+                <div class="pt-4 border-t border-[#D7DBDE] text-[10px] text-[#4B5157] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <span>Document officiel délivré sous signature électronique sécurisée par Vitalis Center EUP.</span>
+                  <span class="font-mono">Cachet de conformité vérifiable sur portail national</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -642,12 +909,18 @@ export class FormationDetailComponent implements OnInit, OnDestroy {
   expandedModules = new Set<string>();
   private liveSub: Subscription | null = null;
 
+  // Relevé de notes officiel state
+  releveNotesModalOpen = false;
+  loadingReleve = false;
+  releveBulletin: ReleveNotesBulletin | null = null;
+
   // Viewer state
   activeCours: CoursContenu | null = null;
   viewerTab: 'media' | 'contenu' = 'media';
   safeMediaUrl: SafeResourceUrl | null = null;
   marking = false;
   downloadingCert = false;
+  generatingCert = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -746,6 +1019,23 @@ export class FormationDetailComponent implements OnInit, OnDestroy {
         this.downloadingCert = false;
         console.error('Erreur téléchargement certificat:', err);
         this.toast.error('Erreur lors du téléchargement du certificat.');
+      },
+    });
+  }
+
+  genererMonCertificat(): void {
+    if (this.generatingCert) return;
+    this.generatingCert = true;
+    this.apprenantService.genererCertificat(this.formationId).subscribe({
+      next: (cert) => {
+        this.generatingCert = false;
+        this.toast.success(`Félicitations ! Votre certificat N° ${cert.numeroSerie} a été généré avec succès.`);
+        this.loadEligibilite();
+        this.loadFormationTree(false);
+      },
+      error: (err) => {
+        this.generatingCert = false;
+        this.toast.error(err.error?.message || 'Erreur lors de la génération du certificat.');
       },
     });
   }
@@ -850,6 +1140,29 @@ export class FormationDetailComponent implements OnInit, OnDestroy {
         this.toast.error('Erreur lors de la synchronisation serveur.');
       },
     });
+  }
+
+  ouvrirReleveNotes(): void {
+    this.releveNotesModalOpen = true;
+    this.loadingReleve = true;
+    this.apprenantService.getReleveNotes(this.formationId).subscribe({
+      next: (res) => {
+        this.releveBulletin = res;
+        this.loadingReleve = false;
+      },
+      error: (err) => {
+        this.loadingReleve = false;
+        this.toast.error('Impossible de charger le relevé de notes : ' + (err.error?.message || err.message));
+      },
+    });
+  }
+
+  fermerReleveNotes(): void {
+    this.releveNotesModalOpen = false;
+  }
+
+  imprimerReleveNotes(): void {
+    window.print();
   }
 }
 

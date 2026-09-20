@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { ApprenantService, ApprenantQuizItem } from '../../../../core/services/apprenant.service';
 import { DevoirsService } from '../../../../core/services/devoirs.service';
@@ -419,16 +420,29 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
                         </div>
                       </div>
 
-                      <a
-                        [href]="selectedDevoir.soumission.fileUrl"
-                        target="_blank"
-                        class="px-4 py-2 bg-white hover:bg-[#F5F6F7] border border-[#276B44] rounded-xs text-xs font-bold text-[#276B44] flex items-center justify-center gap-1.5 shadow-2xs self-start sm:self-auto cursor-pointer"
-                      >
-                        <svg class="w-3.5 h-3.5 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        <span>Télécharger mon fichier déposé</span>
-                      </a>
+                      <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                        <button
+                          type="button"
+                          (click)="openFilePreview(selectedDevoir.soumission.fileUrl, selectedDevoir.titre)"
+                          class="px-3.5 py-2 bg-[#276B44] text-white hover:bg-[#1e5435] rounded-xs text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>Aperçu intégré</span>
+                        </button>
+                        <a
+                          [href]="selectedDevoir.soumission.fileUrl"
+                          target="_blank"
+                          class="px-3.5 py-2 bg-white hover:bg-[#F5F6F7] border border-[#276B44] rounded-xs text-xs font-bold text-[#276B44] flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                          <svg class="w-3.5 h-3.5 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          <span>Télécharger</span>
+                        </a>
+                      </div>
                     </div>
 
                     <!-- Remarque du formateur -->
@@ -461,17 +475,29 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
                         </div>
                       </div>
 
-                      <a
-                        [href]="selectedDevoir.soumission.fileUrl"
-                        target="_blank"
-                        class="px-3.5 py-1.5 bg-white hover:bg-[#F5F6F7] border border-[#1C75BC] rounded-xs text-xs font-bold text-[#1C75BC] flex items-center justify-center gap-1.5 shadow-2xs self-start sm:self-auto cursor-pointer"
-                      >
-                        <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <span>Consulter mon fichier</span>
-                      </a>
+                      <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                        <button
+                          type="button"
+                          (click)="openFilePreview(selectedDevoir.soumission.fileUrl, selectedDevoir.titre)"
+                          class="px-3.5 py-1.5 bg-[#1C75BC] text-white hover:bg-[#124F80] rounded-xs text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>Aperçu intégré</span>
+                        </button>
+                        <a
+                          [href]="selectedDevoir.soumission.fileUrl"
+                          target="_blank"
+                          class="px-3.5 py-1.5 bg-white hover:bg-[#F5F6F7] border border-[#1C75BC] rounded-xs text-xs font-bold text-[#1C75BC] flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                          <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          <span>Télécharger</span>
+                        </a>
+                      </div>
                     </div>
                     <p class="text-xs text-[#4B5157] leading-relaxed">
                       Votre document est enregistré. Dès que l'évaluation sera effectuée, la note et les observations apparaîtront ici et vous recevrez une alerte en direct. Vous pouvez le remplacer ci-dessous si nécessaire avant la notation.
@@ -774,6 +800,59 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
           }
         </div>
       }
+      <!-- MODAL APERÇU IN-APP DE FICHIER -->
+      @if (previewFileUrl) {
+        <div
+          class="fixed inset-0 bg-[#1B1D1F]/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 animate-fade-in"
+          (click)="closePreview()"
+        >
+          <div
+            class="bg-white rounded-xs max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl border border-[#D7DBDE] animate-scale-up overflow-hidden"
+            (click)="$event.stopPropagation()"
+          >
+            <!-- Header -->
+            <div class="p-4 border-b border-[#D7DBDE] flex items-center justify-between bg-[#F5F6F7]">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="px-2 py-0.5 rounded-xs bg-[#1C75BC] text-white text-[10px] font-bold uppercase shrink-0">Aperçu In-App</span>
+                <span class="text-xs font-bold text-[#1B1D1F] truncate">{{ previewFileName || 'Fichier déposé' }}</span>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <a
+                  [href]="previewFileUrl"
+                  target="_blank"
+                  download
+                  class="px-3 py-1 rounded-xs bg-white border border-[#D7DBDE] text-xs font-bold text-[#1C75BC] hover:bg-[#E7F1FA] flex items-center gap-1 shadow-2xs"
+                >
+                  <span>Télécharger</span>
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                </a>
+                <button
+                  type="button"
+                  (click)="closePreview()"
+                  class="w-7 h-7 rounded-xs bg-white hover:bg-[#D7DBDE] text-[#1B1D1F] flex items-center justify-center font-bold text-sm cursor-pointer shadow-2xs"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <!-- Content -->
+            <div class="flex-1 p-2 bg-[#E7ECEF] overflow-hidden flex items-center justify-center">
+              @if (isPdf(previewFileUrl)) {
+                <iframe [src]="safePreviewUrl" class="w-full h-full rounded-xs border-0 bg-white"></iframe>
+              } @else if (isImage(previewFileUrl)) {
+                <img [src]="previewFileUrl" alt="Aperçu" class="max-w-full max-h-full object-contain rounded-xs shadow-md" />
+              } @else {
+                <div class="p-8 text-center bg-white rounded-xs border border-[#D7DBDE] max-w-md space-y-3 shadow-xs">
+                  <svg class="w-12 h-12 text-[#1C75BC] mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  <h4 class="text-sm font-bold text-[#1B1D1F]">Fichier bureautique ou archive</h4>
+                  <p class="text-xs text-[#4B5157]">Ce format de fichier (.docx, .zip) ne peut pas être rendu directement dans le navigateur, mais votre soumission est validée et archivée.</p>
+                  <a [href]="previewFileUrl" target="_blank" download class="px-4 py-2 rounded-xs bg-[#1C75BC] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-xs cursor-pointer">Télécharger le document</a>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -785,6 +864,11 @@ export class DepotDevoirComponent implements OnInit, OnDestroy {
   devoirs: DevoirItem[] = [];
   selectedDevoir: DevoirItem | null = null;
   loading = true;
+
+  // In-App Previewer
+  previewFileUrl: string | null = null;
+  previewFileName: string | null = null;
+  safePreviewUrl: SafeResourceUrl | null = null;
 
   // Filtres & Recherche Devoirs
   filterStatus: DevoirFilterStatus = 'TOUS';
@@ -802,13 +886,36 @@ export class DepotDevoirComponent implements OnInit, OnDestroy {
   quizSearchQuery = '';
 
   private liveSub?: Subscription;
+  private bootstrapSub?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private apprenantService: ApprenantService,
     private devoirsService: DevoirsService,
     private toast: ToastService,
+    private sanitizer: DomSanitizer,
   ) { }
+
+  openFilePreview(url: string, fileName?: string): void {
+    if (!url) return;
+    this.previewFileUrl = url;
+    this.previewFileName = fileName || 'Fichier déposé';
+    this.safePreviewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  closePreview(): void {
+    this.previewFileUrl = null;
+    this.previewFileName = null;
+    this.safePreviewUrl = null;
+  }
+
+  isPdf(url: string | null): boolean {
+    return !!url && url.toLowerCase().includes('.pdf');
+  }
+
+  isImage(url: string | null): boolean {
+    return !!url && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url.toLowerCase());
+  }
 
   ngOnInit() {
     const targetDevoirId = this.route.snapshot.queryParamMap.get('devoirId');
@@ -817,41 +924,74 @@ export class DepotDevoirComponent implements OnInit, OnDestroy {
       this.activeTab = 'QUIZ';
     }
 
-    // 1. Rendu instantané devoirs depuis snapshot
+    // 1. Rendu instantané devoirs depuis snapshot (0ms !)
     const cached = this.apprenantService.getDevoirsSnapshot();
-    if (cached && cached.length >= 0) {
+    if (cached) {
       this.devoirs = cached as DevoirItem[];
       this.loading = false;
       this.selectInitial(targetDevoirId);
     }
 
-    // 2. Revalidation devoirs en tâche de fond
+    // 2. Revalidation devoirs en tâche de fond (SWR)
     this.loadAllDevoirs(cached === null, targetDevoirId);
 
-    // 3. Chargement des quiz
-    this.loadAllQuiz();
+    // 3. Rendu instantané quiz depuis snapshot (0ms !)
+    const cachedQuiz = this.apprenantService.getAllQuizSnapshot();
+    if (cachedQuiz) {
+      this.quizList = cachedQuiz;
+      this.loadingQuiz = false;
+    }
 
-    // 4. Rafraîchissement automatique SSE — quand un devoir est noté
+    // 4. Revalidation quiz en tâche de fond
+    this.loadAllQuiz(cachedQuiz === null);
+
+    // 5. Rafraîchissement automatique SSE complet en temps réel
     this.liveSub = this.apprenantService.liveUpdates$.subscribe((event) => {
-      if (event.type === 'DEVOIR_NOTE') {
+      if (
+        event.type === 'DEVOIR_NOTE' ||
+        event.type === 'DEVOIR_DEPOSE' ||
+        event.type === 'NOTE_PUBLIEE' ||
+        event.type === 'BROADCAST'
+      ) {
         this.loadAllDevoirs(false, null);
+      }
+      if (event.type === 'QUIZ_SUBMITTED' || event.type === 'BROADCAST') {
+        this.loadAllQuiz(false);
+      }
+    });
+
+    // 6. Synchronisation bootstrap initial
+    this.bootstrapSub = this.apprenantService.bootstrap$.subscribe((data) => {
+      if (data?.devoirs && (!this.devoirs || this.devoirs.length === 0)) {
+        this.devoirs = data.devoirs as DevoirItem[];
+        this.loading = false;
+        this.selectInitial(targetDevoirId);
+      }
+      if (data?.quiz && (!this.quizList || this.quizList.length === 0)) {
+        this.quizList = data.quiz;
+        this.loadingQuiz = false;
       }
     });
   }
 
   switchTab(tab: EvaluationTab) {
     this.activeTab = tab;
-    if (tab === 'QUIZ' && this.quizList.length === 0) {
-      this.loadAllQuiz();
+    if (tab === 'QUIZ') {
+      const snapshot = this.apprenantService.getAllQuizSnapshot();
+      if (snapshot && this.quizList.length === 0) {
+        this.quizList = snapshot;
+        this.loadingQuiz = false;
+      }
+      this.loadAllQuiz(this.quizList.length === 0);
     }
   }
 
-  loadAllQuiz() {
+  loadAllQuiz(showSpinner = true) {
     const snapshot = this.apprenantService.getAllQuizSnapshot();
-    if (snapshot) {
+    if (snapshot && this.quizList.length === 0) {
       this.quizList = snapshot;
       this.loadingQuiz = false;
-    } else {
+    } else if (showSpinner && this.quizList.length === 0) {
       this.loadingQuiz = true;
     }
 
@@ -913,6 +1053,7 @@ export class DepotDevoirComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.liveSub?.unsubscribe();
+    this.bootstrapSub?.unsubscribe();
   }
 
   // --- GETTERS KPIS ---
@@ -1129,13 +1270,18 @@ export class DepotDevoirComponent implements OnInit, OnDestroy {
         this.uploading = false;
         this.toast.success('Devoir déposé avec succès !');
         if (this.selectedDevoir) {
-          this.selectedDevoir.soumission = {
+          const soum = {
             id: res.soumissionId,
             fileUrl: res.fileUrl,
             note: null,
             commentaire: null,
             dateDepot: res.dateDepot || new Date().toISOString(),
           };
+          this.selectedDevoir.soumission = soum;
+          const found = this.devoirs.find((d) => d.id === this.selectedDevoir?.id);
+          if (found) {
+            found.soumission = soum;
+          }
         }
         this.selectedFile = null;
       },

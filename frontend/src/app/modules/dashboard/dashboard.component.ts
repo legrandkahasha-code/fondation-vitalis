@@ -73,9 +73,9 @@ import { KpiGlobal, KpiEtablissement } from '../../core/models';
                 <h3 class="font-bold text-[#1C75BC]">🌐 CMS & Portail Public</h3>
                 <p class="text-xs text-slate-500 mt-1">Configuration des contenus et sections d'accueil</p>
               </a>
-              <a routerLink="/formations" class="card block no-underline cursor-pointer hover:border-[#1C75BC] transition">
+              <a routerLink="/admin/formations" class="card block no-underline cursor-pointer hover:border-[#1C75BC] transition">
                 <h3 class="font-bold text-[#1C75BC]">📖 Catalogue des Formations</h3>
-                <p class="text-xs text-slate-500 mt-1">Gestion du catalogue pédagogique et cours</p>
+                <p class="text-xs text-slate-500 mt-1">Supervision nationale des programmes, volumes horaires et vitrine Landing Page</p>
               </a>
             }
             @if (isAdminEtab) {

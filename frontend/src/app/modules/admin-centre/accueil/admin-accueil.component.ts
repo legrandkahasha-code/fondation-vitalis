@@ -283,6 +283,73 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
 
         </div>
 
+        <!-- ONGLET VITRINE FORMATIONS & CATALOGUE OFFICIEL (PASSRELLE DIRECTE) -->
+        <div *ngIf="activeTab === 'formations'" class="space-y-6 animate-fade-in-up">
+          <div class="bg-white border border-[#D7DBDE] rounded-[2px] p-6 shadow-2xs space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#D7DBDE] pb-5">
+              <div>
+                <div class="text-[12px] font-bold text-[#1C75BC] uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🎓</span> Section Vitrine Publique /#formations
+                </div>
+                <h2 class="text-xl sm:text-2xl font-bold text-[#1B1D1F] mt-1">
+                  Gouvernance des Formations Certifiantes du Portail
+                </h2>
+                <div class="w-12 h-1 bg-[#F0791E] mt-2 mb-2 rounded-xs"></div>
+                <p class="text-xs text-[#4B5157] mt-1 max-w-2xl leading-relaxed">
+                  Toutes les formations affichées sur la page d'accueil (<code class="bg-slate-100 text-[#124F80] px-1 py-0.5 rounded font-mono font-bold">http://localhost:4200/#formations</code>), leurs statuts en vitrine, badges vedettes, durées et débouchés sont administrés en temps réel depuis le sous-module officiel de l'Administration Centrale.
+                </p>
+              </div>
+
+              <a routerLink="/admin/formations" class="btn btn-primary text-xs py-2.5 px-5 font-bold shadow-xs flex items-center gap-2 shrink-0 cursor-pointer">
+                <span>📚</span>
+                <span>Ouvrir le Module Formations</span>
+                <span>➔</span>
+              </a>
+            </div>
+
+            <!-- Cartes récapitulatives des fonctionnalités -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div class="p-4 bg-[#E7F1FA] border border-[#1C75BC]/30 rounded-xs">
+                <div class="font-bold text-[#124F80] flex items-center gap-1.5 mb-1.5 text-sm">
+                  <span>🌐</span> Publication en 1-Clic
+                </div>
+                <p class="text-slate-600 leading-relaxed">
+                  Activez ou masquez instantanément n'importe quelle formation de la vitrine publique du portail grâce à l'interrupteur réactif sans rechargement.
+                </p>
+              </div>
+
+              <div class="p-4 bg-[#FDECDD] border border-[#F0791E]/30 rounded-xs">
+                <div class="font-bold text-[#F0791E] flex items-center gap-1.5 mb-1.5 text-sm">
+                  <span>⭐</span> Mise en Vedette "À la une"
+                </div>
+                <p class="text-slate-600 leading-relaxed">
+                  Définissez les programmes phares qui apparaissent en tête de liste avec le badge doré officiel et la priorité d'affichage marketing.
+                </p>
+              </div>
+
+              <div class="p-4 bg-[#E7F1EA] border border-[#276B44]/30 rounded-xs">
+                <div class="font-bold text-[#276B44] flex items-center gap-1.5 mb-1.5 text-sm">
+                  <span>👁️</span> Live Preview Immédiat
+                </div>
+                <p class="text-slate-600 leading-relaxed">
+                  Visualisez le rendu visuel exact de la carte de formation avant même de valider son enregistrement en base de données.
+                </p>
+              </div>
+            </div>
+
+            <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="text-xs text-[#4B5157]">
+                <strong class="text-[#1B1D1F]">Accès direct au tableau de bord :</strong>
+                Consultez les 5 compteurs KPIs réseau, gérez les référentiels de compétences et rattachez les modules pédagogiques.
+              </div>
+              <a routerLink="/admin/formations" class="btn bg-[#124F80] hover:bg-[#0d3b61] text-white text-xs py-2 px-4 font-bold flex items-center gap-1.5 shrink-0">
+                <span>Gérer les Programmes</span>
+                <span>➔</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
         <!-- 2. ONGLET VÉRIFICATION, FORMATIONS ENTREPRISE & CONTACT / FOOTER -->
         <div *ngIf="activeTab === 'verif_contact'" class="space-y-6 animate-fade-in-up">
           
@@ -1173,6 +1240,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
 
   tabs = [
     { id: 'settings', label: 'Paramètres Hero & Stats' },
+    { id: 'formations', label: 'Catalogue Formations (/#formations)' },
     { id: 'messages', label: 'Demandes d\'Orientation & Doléances' },
     { id: 'actualites', label: 'Actualités & Vie du Centre' },
     { id: 'avantage', label: 'Pourquoi Vitalis (Avantages)' },
