@@ -13,7 +13,13 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY prisma ./prisma
 COPY prisma.config.ts ./
-RUN npx prisma generate
-RUN mkdir -p uploads
-EXPOSE 3000
-CMD ["node", "dist/src/main.js"]
+COPY entrypoint.sh ./entrypoint.sh
+RUN npx prisma generate && \
+    mkdir -p uploads && \
+    chmod +x /app/entrypoint.sh
+
+# Respecte $PORT injecté par Render (fallback 3000 en local)
+ENV PORT=${PORT:-3000}
+EXPOSE ${PORT}
+
+CMD ["/app/entrypoint.sh"]

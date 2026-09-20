@@ -1,0 +1,9 @@
+node_modules
+dist
+uploads
+coverage
+.env
+.env.*
+scratch-*.js
+check-db-temp.js
+*.log
