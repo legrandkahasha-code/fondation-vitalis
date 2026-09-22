@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '../../common/enums/role.enum';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ApprenantCache } from '../apprenant/apprenant-cache';
 import { CreateCategorieFormationDto, UpdateCategorieFormationDto } from './dto/pedagogie.dto';
 
 function slugifyCategoryCode(text: string): string {
@@ -17,6 +18,8 @@ function slugifyCategoryCode(text: string): string {
 
 @Injectable()
 export class PedagogieService {
+  private readonly logger = new Logger(PedagogieService.name);
+
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
@@ -79,7 +82,18 @@ export class PedagogieService {
     }
 
     if (filters?.filiereId && filters.filiereId !== 'ALL') {
-      where.formationReferentiel = { filiereId: filters.filiereId };
+      const filtreFiliere: any[] = [
+        { formationReferentiel: { filiereId: filters.filiereId } },
+      ];
+      const sessionsIds = await this.prisma.sessionAdmission.findMany({
+        where: { filiereId: filters.filiereId, formationId: { not: null } },
+        select: { formationId: true },
+      });
+      if (sessionsIds.length > 0) {
+        filtreFiliere.push({ id: { in: sessionsIds.map(s => s.formationId!) } });
+      }
+      const existingOr = where.OR;
+      where.AND = [{ OR: filtreFiliere }, existingOr ? { OR: existingOr } : {}].filter(x => Object.keys(x).length > 0);
     }
 
     if (filters?.categorie && filters.categorie !== 'toutes' && filters.categorie !== 'ALL') {
@@ -353,6 +367,14 @@ export class PedagogieService {
       data: { formationId: updated.id, action: 'UPDATE' },
     });
 
+    // ===== M2+C1 : Sync multi-établissement + cache =====
+    ApprenantCache.invalidateParEtablissement([formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(id).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] updateFormation ${id}: ${err.message}`);
+      });
+    }
+
     return updated;
   }
 
@@ -586,6 +608,14 @@ export class PedagogieService {
       data: { formationId, moduleId: mod.id, etablissementId: formation.etablissementId },
     });
 
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] createModule sur ${formationId}: ${err.message}`);
+      });
+    }
+
     return mod;
   }
 
@@ -615,6 +645,14 @@ export class PedagogieService {
       data: { coursId: cours.id, coursTitre: cours.titre, moduleId, moduleTitre: mod.titre },
     });
 
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([mod.formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(mod.formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] createCours sur formation ${mod.formationId}: ${err.message}`);
+      });
+    }
+
     return cours;
   }
 
@@ -631,11 +669,14 @@ export class PedagogieService {
   // PROGRESSION APPRENANT
   // ====================================
   async markComplete(coursId: string, userId: string) {
-    return this.prisma.userProgress.upsert({
+    const res = await this.prisma.userProgress.upsert({
       where: { utilisateurId_coursId: { utilisateurId: userId, coursId } },
       update: { complete: true },
       create: { utilisateurId: userId, coursId, complete: true },
     });
+    // Purge immédiate : progression/cursus de l'apprenant doit être à jour
+    ApprenantCache.invalidateAll();
+    return res;
   }
 
   async getProgressByFormation(formationId: string, userId: string) {
@@ -690,6 +731,15 @@ export class PedagogieService {
       data: { titre: data.titre, moduleId, noteMaximale: data.noteMaximale ?? 20 },
     });
     this.invalidateFormationsCache(mod.formationId);
+
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([mod.formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(mod.formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] createEvaluation formation ${mod.formationId}: ${err.message}`);
+      });
+    }
+
     return evalCreated;
   }
 
@@ -731,6 +781,15 @@ export class PedagogieService {
     }
     const updatedCours = await this.prisma.cours.update({ where: { id: coursId }, data: { fileUrl } });
     this.invalidateFormationsCache(cours.module.formationId);
+
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([cours.module.formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(cours.module.formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] uploadCoursDocument formation ${cours.module.formationId}: ${err.message}`);
+      });
+    }
+
     return updatedCours;
   }
 
@@ -817,6 +876,9 @@ export class PedagogieService {
       message: `Votre note pour l'évaluation « ${evaluation.titre} » a été enregistrée : ${valeur}/${evaluation.noteMaximale || 20}.`,
       data: { evaluationId, evaluationTitre: evaluation.titre, note: valeur, noteMax: evaluation.noteMaximale || 20 },
     });
+
+    // ===== C1 : Cache immédiat (progression apprenant altérée) =====
+    ApprenantCache.invalidateParEtablissement([evaluation.module.formation.etablissementId]);
 
     return result;
   }
@@ -923,6 +985,15 @@ export class PedagogieService {
       },
     });
     this.invalidateFormationsCache(mod.formationId);
+
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([mod.formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(mod.formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] updateModule formation ${mod.formationId}: ${err.message}`);
+      });
+    }
+
     return updated;
   }
 
@@ -937,6 +1008,15 @@ export class PedagogieService {
     }
     const deleted = await this.prisma.module.delete({ where: { id } });
     this.invalidateFormationsCache(mod.formationId);
+
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([mod.formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(mod.formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] deleteModule formation ${mod.formationId}: ${err.message}`);
+      });
+    }
+
     return deleted;
   }
 
@@ -961,6 +1041,15 @@ export class PedagogieService {
       },
     });
     this.invalidateFormationsCache(cours.module.formationId);
+
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([cours.module.formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(cours.module.formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] updateCours formation ${cours.module.formationId}: ${err.message}`);
+      });
+    }
+
     return updated;
   }
 
@@ -980,6 +1069,15 @@ export class PedagogieService {
     });
     const deleted = await this.prisma.cours.delete({ where: { id } });
     this.invalidateFormationsCache(cours.module.formationId);
+
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([cours.module.formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(cours.module.formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] deleteCours formation ${cours.module.formationId}: ${err.message}`);
+      });
+    }
+
     return deleted;
   }
 
@@ -1003,6 +1101,15 @@ export class PedagogieService {
       },
     });
     this.invalidateFormationsCache(evaluation.module.formationId);
+
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([evaluation.module.formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(evaluation.module.formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] updateEvaluation formation ${evaluation.module.formationId}: ${err.message}`);
+      });
+    }
+
     return updated;
   }
 
@@ -1019,6 +1126,15 @@ export class PedagogieService {
     await this.prisma.note.deleteMany({ where: { evaluationId: id } });
     const deleted = await this.prisma.evaluation.delete({ where: { id } });
     this.invalidateFormationsCache(evaluation.module.formationId);
+
+    // ===== M2+C1 =====
+    ApprenantCache.invalidateParEtablissement([evaluation.module.formation.etablissementId]);
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(evaluation.module.formationId).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] deleteEvaluation formation ${evaluation.module.formationId}: ${err.message}`);
+      });
+    }
+
     return deleted;
   }
 
@@ -1422,6 +1538,578 @@ export class PedagogieService {
       formateurs,
       apprenantsDetails,
     };
+  }
+
+  // ====================================
+  // SYNCHRONISATION MULTI-ETABLISSEMENTS
+  // ====================================
+
+  /**
+   * Réplique idempotente les modules > cours/évaluations/quiz+questions/devoirs
+   * d'une formation SOURCE vers TOUTES les formations CLONES (même
+   * formationReferentielId + même titre, id <> sourceId) dans les autres
+   * établissements.
+   *
+   * Détection d'équivalence :
+   *  - Module par (ordre) puis titre
+   *  - Cours / Quiz / Devoir / Evaluation par titre dans le module
+   *
+   * Comportement :
+   *  - Si élément absent côté clone → création
+   *  - Si élément existe (même clé naturelle) → mise à jour du contenu
+   *  - Si élément présent côté clone mais absent côté source → suppression
+   *    (UNIQUEMENT si cet élément n'a AUCUNE donnée de progression attachée :
+   *    notes, userProgress, soumissions, tentatives — sinon on le garde en
+   *    place et on log un warning.)
+   */
+  async synchroniserFormationSourceVersClones(formationSourceId: string) {
+    const debut = Date.now();
+    const stats = {
+      synchronisees: 0,
+      modulesCrees: 0, modulesMisAJour: 0, modulesSupprimes: 0,
+      coursCrees: 0, coursMisAJour: 0, coursSupprimes: 0,
+      quizCrees: 0, quizMisAJour: 0, quizSupprimes: 0,
+      devoirsCrees: 0, devoirsMisAJour: 0, devoirsSupprimes: 0,
+      evaluationsCrees: 0, evaluationsMisAJour: 0, evaluationsSupprimes: 0,
+      etablissementsCibles: [] as string[],
+    };
+
+    // 1. Charger la source avec toute l'arborescence
+    const source = await this.prisma.formation.findUnique({
+      where: { id: formationSourceId },
+      include: {
+        modules: {
+          orderBy: { ordre: 'asc' },
+          include: {
+            cours: { orderBy: { id: 'asc' } },
+            evaluations: { orderBy: { id: 'asc' } },
+            quiz: {
+              orderBy: { id: 'asc' },
+              include: { questions: { orderBy: { ordre: 'asc' } } },
+            },
+            devoirs: { orderBy: { id: 'asc' } },
+          },
+        },
+      },
+    });
+    if (!source) {
+      throw new NotFoundException(`Formation source ${formationSourceId} introuvable.`);
+    }
+
+    // 2. Trouver TOUS les clones (autres établissements, même référentiel + titre)
+    const whereClone: any = {
+      id: { not: source.id },
+      titre: source.titre,
+    };
+    if (source.formationReferentielId) {
+      whereClone.formationReferentielId = source.formationReferentielId;
+    } else {
+      whereClone.OR = [
+        { formationReferentielId: null },
+        { formationReferentielId: { equals: null as any } },
+      ];
+    }
+    const clones = await this.prisma.formation.findMany({
+      where: whereClone,
+      include: {
+        modules: {
+          orderBy: { ordre: 'asc' },
+          include: {
+            _count: { select: { cours: true, evaluations: true, quiz: true, devoirs: true } },
+            cours: { orderBy: { id: 'asc' } },
+            evaluations: { orderBy: { id: 'asc' } },
+            quiz: {
+              orderBy: { id: 'asc' },
+              include: {
+                questions: { orderBy: { ordre: 'asc' } },
+                _count: { select: { tentatives: true } },
+              },
+            },
+            devoirs: {
+              orderBy: { id: 'asc' },
+              include: { _count: { select: { soumissions: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    if (clones.length === 0) {
+      this.logger.log(`[SYNC] Formation ${source.id} ("${source.titre}") : aucun clone détecté — rien à synchroniser.`);
+      return { ...stats, dureeMs: Date.now() - debut };
+    }
+
+    this.logger.log(`[SYNC] Début synchronisation formation "${source.titre}" → ${clones.length} clone(s).`);
+
+    // 3. Pour chaque clone, appliquer l'algorithme idempotent
+    for (const clone of clones) {
+      stats.etablissementsCibles.push(clone.etablissementId);
+
+      // === Niveau 1 : MODULES (clé naturelle : ordre d'abord, sinon titre) ===
+      const modulesSourceByOrdre = new Map<number, any>();
+      const modulesSourceByTitre = new Map<string, any>();
+      for (const modSrc of source.modules) {
+        modulesSourceByOrdre.set(Number(modSrc.ordre), modSrc);
+        modulesSourceByTitre.set(modSrc.titre.trim().toLowerCase(), modSrc);
+      }
+      const modulesCloneByOrdre = new Map<number, any>();
+      const modulesCloneByTitre = new Map<string, any>();
+      for (const modClone of clone.modules) {
+        modulesCloneByOrdre.set(Number(modClone.ordre), modClone);
+        modulesCloneByTitre.set(modClone.titre.trim().toLowerCase(), modClone);
+      }
+
+      // Déterminer la liste des modules à créer / mettre à jour / supprimer
+      const modulesConservesClone = new Set<string>();
+      for (const modSrc of source.modules) {
+        let modClone = modulesCloneByOrdre.get(Number(modSrc.ordre));
+        if (!modClone) {
+          modClone = modulesCloneByTitre.get(modSrc.titre.trim().toLowerCase());
+        }
+
+        if (!modClone) {
+          // === CRÉATION du module + tous ses enfants ===
+          const nouveauMod = await this.prisma.module.create({
+            data: {
+              formationId: clone.id,
+              titre: modSrc.titre,
+              ordre: modSrc.ordre,
+              coefficient: modSrc.coefficient,
+            },
+          });
+          stats.modulesCrees++;
+          modulesConservesClone.add(nouveauMod.id);
+
+          // Créer tous les cours source dans ce nouveau module
+          if (modSrc.cours && modSrc.cours.length > 0) {
+            await this.prisma.cours.createMany({
+              data: modSrc.cours.map((c) => ({
+                moduleId: nouveauMod.id,
+                titre: c.titre,
+                contenu: c.contenu,
+                fileUrl: c.fileUrl,
+              })),
+            });
+            stats.coursCrees += modSrc.cours.length;
+          }
+          // Évaluations
+          if (modSrc.evaluations && modSrc.evaluations.length > 0) {
+            await this.prisma.evaluation.createMany({
+              data: modSrc.evaluations.map((e) => ({
+                moduleId: nouveauMod.id,
+                titre: e.titre,
+                noteMaximale: e.noteMaximale,
+              })),
+            });
+            stats.evaluationsCrees += modSrc.evaluations.length;
+          }
+          // Quiz + questions
+          if (modSrc.quiz && modSrc.quiz.length > 0) {
+            for (const q of modSrc.quiz) {
+              const nouvQ = await this.prisma.quiz.create({
+                data: {
+                  moduleId: nouveauMod.id,
+                  titre: q.titre,
+                  dureeMinutes: q.dureeMinutes,
+                },
+              });
+              stats.quizCrees++;
+              if (q.questions && q.questions.length > 0) {
+                await this.prisma.questionQuiz.createMany({
+                  data: q.questions.map((qq) => ({
+                    quizId: nouvQ.id,
+                    enonce: qq.enonce,
+                    ordre: qq.ordre,
+                    options: (qq.options as any) ?? [],
+                  })),
+                });
+              }
+            }
+          }
+          // Devoirs
+          if (modSrc.devoirs && modSrc.devoirs.length > 0) {
+            await this.prisma.devoir.createMany({
+              data: modSrc.devoirs.map((d) => ({
+                moduleId: nouveauMod.id,
+                titre: d.titre,
+                consignes: d.consignes,
+                dateLimite: d.dateLimite,
+              })),
+            });
+            stats.devoirsCrees += modSrc.devoirs.length;
+          }
+        } else {
+          // === MODULE EXISTE : MàJ + synchro enfants ===
+          modulesConservesClone.add(modClone.id);
+
+          // MàJ module lui-même si contenu différent
+          const needUpdate =
+            modClone.titre !== modSrc.titre ||
+            Number(modClone.ordre) !== Number(modSrc.ordre) ||
+            String(modClone.coefficient ?? '') !== String(modSrc.coefficient ?? '');
+
+          if (needUpdate) {
+            await this.prisma.module.update({
+              where: { id: modClone.id },
+              data: {
+                titre: modSrc.titre,
+                ordre: modSrc.ordre,
+                coefficient: modSrc.coefficient,
+              },
+            });
+            stats.modulesMisAJour++;
+          }
+
+          // ---- Enfants : COURS ----
+          await this.synchroniserEnfantsParTitre(
+            'cours',
+            modSrc.cours ?? [],
+            modClone.cours ?? [],
+            modClone.id,
+            (items) => this.prisma.cours.createMany({ data: items }),
+            async (id, item) => {
+              const existant = await this.prisma.cours.findUnique({ where: { id } });
+              if (!existant) return;
+              if (existant.titre !== item.titre ||
+                  existant.contenu !== item.contenu ||
+                  existant.fileUrl !== item.fileUrl) {
+                await this.prisma.cours.update({
+                  where: { id },
+                  data: {
+                    titre: item.titre,
+                    contenu: item.contenu,
+                    fileUrl: item.fileUrl,
+                  },
+                });
+                stats.coursMisAJour++;
+              }
+            },
+            async (idsASuppr) => {
+              if (idsASuppr.length === 0) return;
+              // Vérifier userProgress pour éviter de détruire de la progression
+              const enCours = await this.prisma.userProgress.findMany({
+                where: { coursId: { in: idsASuppr } },
+                select: { coursId: true },
+              });
+              const idsProteges = new Set(enCours.map((p) => p.coursId));
+              const idsOk = idsASuppr.filter((i) => !idsProteges.has(i));
+              if (idsOk.length > 0) {
+                // Détacher séances avant
+                await this.prisma.seanceFormation.updateMany({
+                  where: { coursId: { in: idsOk } },
+                  data: { coursId: null },
+                });
+                await this.prisma.cours.deleteMany({ where: { id: { in: idsOk } } });
+                stats.coursSupprimes += idsOk.length;
+              }
+              if (idsProteges.size > 0) {
+                this.logger.warn(`[SYNC] Cours protégés (progression existante) non supprimés : ${Array.from(idsProteges).length}`);
+              }
+            },
+            (src) => ({ moduleId: modClone.id, titre: src.titre, contenu: src.contenu, fileUrl: src.fileUrl }),
+            (c) => c.titre.trim().toLowerCase(),
+            (c) => c.id,
+          );
+
+          // ---- Enfants : ÉVALUATIONS ----
+          await this.synchroniserEnfantsParTitre(
+            'evaluations',
+            modSrc.evaluations ?? [],
+            modClone.evaluations ?? [],
+            modClone.id,
+            (items) => this.prisma.evaluation.createMany({ data: items }),
+            async (id, item) => {
+              const existant = await this.prisma.evaluation.findUnique({ where: { id } });
+              if (!existant) return;
+              if (existant.titre !== item.titre ||
+                  String(existant.noteMaximale ?? '') !== String(item.noteMaximale ?? '')) {
+                await this.prisma.evaluation.update({
+                  where: { id },
+                  data: { titre: item.titre, noteMaximale: item.noteMaximale },
+                });
+                stats.evaluationsMisAJour++;
+              }
+            },
+            async (idsASuppr) => {
+              if (idsASuppr.length === 0) return;
+              const notes = await this.prisma.note.findMany({
+                where: { evaluationId: { in: idsASuppr } },
+                select: { evaluationId: true },
+              });
+              const proteges = new Set(notes.map((n) => n.evaluationId));
+              const ok = idsASuppr.filter((i) => !proteges.has(i));
+              if (ok.length > 0) {
+                await this.prisma.evaluation.deleteMany({ where: { id: { in: ok } } });
+                stats.evaluationsSupprimes += ok.length;
+              }
+            },
+            (src) => ({ moduleId: modClone.id, titre: src.titre, noteMaximale: src.noteMaximale }),
+            (e) => e.titre.trim().toLowerCase(),
+            (e) => e.id,
+          );
+
+          // ---- Enfants : QUIZ ----
+          const quizCloneMap = new Map<string, any>();
+          for (const qc of (modClone.quiz ?? [])) {
+            quizCloneMap.set(qc.titre.trim().toLowerCase(), qc);
+          }
+          const quizConserves = new Set<string>();
+          for (const qSrc of (modSrc.quiz ?? [])) {
+            const key = qSrc.titre.trim().toLowerCase();
+            const qClone = quizCloneMap.get(key);
+            if (!qClone) {
+              const nouvQ = await this.prisma.quiz.create({
+                data: {
+                  moduleId: modClone.id,
+                  titre: qSrc.titre,
+                  dureeMinutes: qSrc.dureeMinutes,
+                },
+              });
+              stats.quizCrees++;
+              quizConserves.add(nouvQ.id);
+              if (qSrc.questions && qSrc.questions.length > 0) {
+                await this.prisma.questionQuiz.createMany({
+                  data: qSrc.questions.map((qq) => ({
+                    quizId: nouvQ.id,
+                    enonce: qq.enonce,
+                    ordre: qq.ordre,
+                    options: (qq.options as any) ?? [],
+                  })),
+                });
+              }
+            } else {
+              quizConserves.add(qClone.id);
+              // MàJ métadonnées quiz
+              const needQuizUpd =
+                qClone.titre !== qSrc.titre ||
+                Number(qClone.dureeMinutes ?? 0) !== Number(qSrc.dureeMinutes ?? 0);
+              if (needQuizUpd) {
+                await this.prisma.quiz.update({
+                  where: { id: qClone.id },
+                  data: { titre: qSrc.titre, dureeMinutes: qSrc.dureeMinutes },
+                });
+                stats.quizMisAJour++;
+              }
+              // Synchroniser les questions (par ordre)
+              const questSrcByOrdre = new Map<number, any>();
+              for (const qq of (qSrc.questions ?? [])) questSrcByOrdre.set(Number(qq.ordre), qq);
+              const questCloneByOrdre = new Map<number, any>();
+              for (const qq of (qClone.questions ?? [])) questCloneByOrdre.set(Number(qq.ordre), qq);
+              // Upsert par ordre
+              for (const [ordre, qSrcQuest] of questSrcByOrdre.entries()) {
+                const qCloneQuest = questCloneByOrdre.get(ordre);
+                if (!qCloneQuest) {
+                  await this.prisma.questionQuiz.create({
+                    data: {
+                      quizId: qClone.id,
+                      enonce: qSrcQuest.enonce,
+                      ordre,
+                      options: (qSrcQuest.options as any) ?? [],
+                    },
+                  });
+                } else {
+                  if (qCloneQuest.enonce !== qSrcQuest.enonce ||
+                      JSON.stringify(qCloneQuest.options) !== JSON.stringify(qSrcQuest.options)) {
+                    await this.prisma.questionQuiz.update({
+                      where: { id: qCloneQuest.id },
+                      data: {
+                        enonce: qSrcQuest.enonce,
+                        options: (qSrcQuest.options as any) ?? [],
+                      },
+                    });
+                  }
+                }
+              }
+              // Supprimer les questions clone en trop
+              const questIdsSuppr: string[] = [];
+              for (const [ordre, qCloneQuest] of questCloneByOrdre.entries()) {
+                if (!questSrcByOrdre.has(ordre)) questIdsSuppr.push(qCloneQuest.id);
+              }
+              if (questIdsSuppr.length > 0) {
+                await this.prisma.questionQuiz.deleteMany({ where: { id: { in: questIdsSuppr } } });
+              }
+            }
+          }
+          // Quiz en trop côté clone
+          const quizIdsASuppr: string[] = [];
+          for (const qc of (modClone.quiz ?? [])) {
+            if (!quizConserves.has(qc.id)) quizIdsASuppr.push(qc.id);
+          }
+          if (quizIdsASuppr.length > 0) {
+            // On ne supprime que les quiz sans tentatives
+            const tenta = await this.prisma.tentativeQuiz.findMany({
+              where: { quizId: { in: quizIdsASuppr } },
+              select: { quizId: true },
+            });
+            const proteges = new Set(tenta.map((t) => t.quizId));
+            const ok = quizIdsASuppr.filter((i) => !proteges.has(i));
+            if (ok.length > 0) {
+              await this.prisma.questionQuiz.deleteMany({ where: { quizId: { in: ok } } });
+              await this.prisma.quiz.deleteMany({ where: { id: { in: ok } } });
+              stats.quizSupprimes += ok.length;
+            }
+          }
+
+          // ---- Enfants : DEVOIRS ----
+          await this.synchroniserEnfantsParTitre(
+            'devoirs',
+            modSrc.devoirs ?? [],
+            modClone.devoirs ?? [],
+            modClone.id,
+            (items) => this.prisma.devoir.createMany({ data: items }),
+            async (id, item) => {
+              const existant = await this.prisma.devoir.findUnique({ where: { id } });
+              if (!existant) return;
+              if (existant.titre !== item.titre ||
+                  existant.consignes !== item.consignes ||
+                  String(existant.dateLimite ?? '') !== String(item.dateLimite ?? '')) {
+                await this.prisma.devoir.update({
+                  where: { id },
+                  data: {
+                    titre: item.titre,
+                    consignes: item.consignes,
+                    dateLimite: item.dateLimite,
+                  },
+                });
+                stats.devoirsMisAJour++;
+              }
+            },
+            async (idsASuppr) => {
+              if (idsASuppr.length === 0) return;
+              // Vérifier les soumissions attachées
+              const soum = await this.prisma.soumissionDevoir.findMany({
+                where: { devoirId: { in: idsASuppr } },
+                select: { devoirId: true },
+              });
+              const proteges = new Set(soum.map((s) => s.devoirId));
+              const ok = idsASuppr.filter((i) => !proteges.has(i));
+              if (ok.length > 0) {
+                await this.prisma.devoir.deleteMany({ where: { id: { in: ok } } });
+                stats.devoirsSupprimes += ok.length;
+              }
+            },
+            (src) => ({
+              moduleId: modClone.id,
+              titre: src.titre,
+              consignes: src.consignes,
+              dateLimite: src.dateLimite,
+            }),
+            (d) => d.titre.trim().toLowerCase(),
+            (d) => d.id,
+          );
+        }
+      }
+
+      // === Supprimer les modules clone en trop ===
+      const modulesASupprimer = clone.modules
+        .filter((m) => !modulesConservesClone.has(m.id))
+        .map((m) => m.id);
+      if (modulesASupprimer.length > 0) {
+        // Avant suppression : vérifier si modules ont des enfants avec progression attachée
+        // On tente la suppression, Prisma va empêcher via FK si notes/progression existent.
+        const idsOk: string[] = [];
+        for (const mId of modulesASupprimer) {
+          try {
+            // Test safe : vérifier s'il y a des notes/soumissions/tentatives/userProgress
+            const mod = await this.prisma.module.findUnique({
+              where: { id: mId },
+              include: {
+                cours: { include: { _count: { select: { userProgress: true } } } },
+                evaluations: { include: { _count: { select: { notes: true } } } },
+                quiz: { include: { _count: { select: { tentatives: true } } } },
+                devoirs: { include: { _count: { select: { soumissions: true } } } },
+              },
+            });
+            if (!mod) continue;
+            let protege = false;
+            for (const c of mod.cours) if ((c as any)._count.userProgress > 0) { protege = true; break; }
+            if (!protege) for (const e of mod.evaluations) if ((e as any)._count.notes > 0) { protege = true; break; }
+            if (!protege) for (const q of mod.quiz) if ((q as any)._count.tentatives > 0) { protege = true; break; }
+            if (!protege) for (const d of mod.devoirs) if ((d as any)._count.soumissions > 0) { protege = true; break; }
+            if (!protege) idsOk.push(mId);
+          } catch (e) {
+            this.logger.warn(`[SYNC] Impossible de vérifier module ${mId}: ${(e as any).message}`);
+          }
+        }
+        if (idsOk.length > 0) {
+          // Suppression en cascade implicite via Prisma (relations module -> cours/quiz/etc.)
+          await this.prisma.module.deleteMany({ where: { id: { in: idsOk } } });
+          stats.modulesSupprimes += idsOk.length;
+        }
+        if (modulesASupprimer.length - idsOk.length > 0) {
+          this.logger.warn(`[SYNC] ${modulesASupprimer.length - idsOk.length} module(s) clone(s) protégés par des données de progression (non supprimés).`);
+        }
+      }
+
+      stats.synchronisees++;
+
+      // Notification temps réel à l'établissement cible
+      this.notifications.emit({
+        type: 'FORMATION_UPDATE',
+        recipientEtablissementId: clone.etablissementId,
+        title: 'Formation synchronisée',
+        message: `La formation "${clone.titre}" a été mise à jour (contenu pédagogique harmonisé par l'Administration Centrale).`,
+        data: { formationId: clone.id, etablissementId: clone.etablissementId, action: 'SYNC' },
+      });
+
+      this.invalidateFormationsCache(clone.id);
+    }
+
+    // === Invalidation cohérente des caches ===
+    this.invalidateFormationsCache();
+    ApprenantCache.invalidateParEtablissement(
+      stats.etablissementsCibles.length ? stats.etablissementsCibles : [source.etablissementId],
+    );
+
+    const duree = Date.now() - debut;
+    this.logger.log(`[SYNC] Terminée en ${duree}ms — ${stats.synchronisees} formations, ${stats.modulesCrees}+${stats.modulesMisAJour}Δ${stats.modulesSupprimes}- modules, ${stats.coursCrees}+${stats.coursMisAJour}Δ${stats.coursSupprimes}- cours, ${stats.quizCrees}+${stats.quizMisAJour}Δ${stats.quizSupprimes}- quiz, ${stats.devoirsCrees}+${stats.devoirsMisAJour}Δ${stats.devoirsSupprimes}- devoirs, ${stats.evaluationsCrees}+${stats.evaluationsMisAJour}Δ${stats.evaluationsSupprimes}- évaluations.`);
+
+    return { ...stats, dureeMs: duree };
+  }
+
+  /**
+   * Helper générique pour synchroniser des entités enfants (Cours / Évaluations / Devoirs)
+   * par leur titre dans un module donné.
+   */
+  private async synchroniserEnfantsParTitre(
+    _kind: string,
+    srcItems: any[],
+    cloneItems: any[],
+    cloneModuleId: string,
+    createManyFn: (items: any[]) => Promise<any>,
+    updateFn: (id: string, src: any) => Promise<void>,
+    deleteFn: (ids: string[]) => Promise<void>,
+    srcToPayload: (src: any) => any,
+    keyFn: (item: any) => string,
+    idFn: (item: any) => string,
+  ) {
+    const cloneMap = new Map<string, any>();
+    for (const c of cloneItems) cloneMap.set(keyFn(c), c);
+
+    const conservesClone = new Set<string>();
+    const creer: any[] = [];
+
+    for (const src of srcItems) {
+      const k = keyFn(src);
+      const trouvé = cloneMap.get(k);
+      if (!trouvé) {
+        creer.push(srcToPayload(src));
+      } else {
+        conservesClone.add(idFn(trouvé));
+        await updateFn(idFn(trouvé), src);
+      }
+    }
+
+    if (creer.length > 0) {
+      await createManyFn(creer);
+    }
+
+    // Enfants clone en trop
+    const aSuppr: string[] = [];
+    for (const c of cloneItems) {
+      if (!conservesClone.has(idFn(c))) aSuppr.push(idFn(c));
+    }
+    await deleteFn(aSuppr);
   }
 
   // ====================================

@@ -86,10 +86,39 @@ export class InscriptionsService {
     }
 
     // Résolution de l'apprenant : soit apprenantId direct, soit via utilisateurId
-    let apprenant: any = await this.prisma.apprenant.findUnique({
-      where: { id: dto.apprenantId },
-      include: { utilisateur: true },
-    });
+    // NOTE : select + include explicites pour ne pas dépendre des colonnes de migration
+    // 20260921 (filierePrincipaleId, etc.) qui ne seraient pas encore appliquées en DB.
+    let apprenant: any = null;
+    try {
+      apprenant = await this.prisma.apprenant.findUnique({
+        where: { id: dto.apprenantId },
+        select: {
+          id: true, matricule: true, nom: true, prenom: true, email: true,
+          telephone: true, utilisateurId: true, etablissementOrigineId: true,
+          utilisateur: {
+            select: { id: true, nom: true, prenom: true, email: true, role: true, etablissementId: true, actif: true },
+          },
+        },
+      });
+    } catch {
+      try {
+        apprenant = await this.prisma.apprenant.findUnique({
+          where: { id: dto.apprenantId },
+          select: {
+            id: true, matricule: true, nom: true, prenom: true, email: true,
+            telephone: true, utilisateurId: true, etablissementOrigineId: true,
+          },
+        });
+        if (apprenant && apprenant.utilisateurId) {
+          apprenant.utilisateur = await this.prisma.utilisateur.findUnique({
+            where: { id: apprenant.utilisateurId },
+            select: { id: true, nom: true, prenom: true, email: true, role: true, etablissementId: true, actif: true },
+          });
+        }
+      } catch {
+        apprenant = null;
+      }
+    }
 
     if (!apprenant) {
       // Vérifier si l'identifiant passé est un utilisateurId

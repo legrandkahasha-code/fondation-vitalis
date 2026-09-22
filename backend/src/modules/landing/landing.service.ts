@@ -249,6 +249,186 @@ export class LandingService {
     return payloadWithEtag;
   }
 
+  // --- CATALOGUE PUBLIC FORMATIONS ---
+  async getPublicFilieres() {
+    return this.prisma.filiere.findMany({
+      where: { actif: true },
+      select: {
+        id: true,
+        libelle: true,
+        code: true,
+        description: true,
+      },
+      orderBy: [{ ordre: 'asc' }, { libelle: 'asc' }],
+    });
+  }
+
+  async getPublicNiveaux() {
+    return this.prisma.niveau.findMany({
+      where: { actif: true },
+      select: {
+        id: true,
+        libelle: true,
+        code: true,
+      },
+      orderBy: [{ ordre: 'asc' }, { libelle: 'asc' }],
+    });
+  }
+
+  async getPublicFormationsCatalogue(params: {
+    search?: string;
+    filiereId?: string;
+    niveauId?: string;
+    etablissementId?: string;
+    page?: number;
+    take?: number;
+  }) {
+    const { search, filiereId, niveauId, etablissementId, page = 1, take = 20 } = params;
+    const realTake = Math.min(Math.max(1, Number(take) || 20), 100);
+    const realPage = Math.max(1, Number(page) || 1);
+    const skip = (realPage - 1) * realTake;
+
+    const where: any = {
+      actif: true,
+      publieSurLanding: true,
+    };
+
+    if (etablissementId) {
+      where.etablissementId = etablissementId;
+    }
+
+    const andClauses: any[] = [];
+
+    if (search) {
+      andClauses.push({
+        OR: [
+          { titre: { contains: search, mode: 'insensitive' } },
+          { code: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (filiereId) {
+      const sessionsWithFiliere = await this.prisma.sessionAdmission.findMany({
+        where: { filiereId },
+        select: { formationId: true },
+      });
+      const sessionFormationIds = sessionsWithFiliere
+        .map((s: any) => s.formationId)
+        .filter((x: any) => typeof x === 'string');
+
+      andClauses.push({
+        OR: [
+          { formationReferentiel: { filiereId } },
+          { id: { in: sessionFormationIds } },
+        ],
+      });
+    }
+
+    if (niveauId) {
+      const sessionsWithNiveau = await this.prisma.sessionAdmission.findMany({
+        where: { niveauId },
+        select: { formationId: true },
+      });
+      const sessionFormationIdsNiv = sessionsWithNiveau
+        .map((s: any) => s.formationId)
+        .filter((x: any) => typeof x === 'string');
+
+      andClauses.push({
+        OR: [
+          { formationReferentiel: { niveauId } },
+          { id: { in: sessionFormationIdsNiv } },
+        ],
+      });
+    }
+
+    if (andClauses.length > 0) {
+      where.AND = andClauses;
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.formation.findMany({
+        where,
+        skip,
+        take: realTake,
+        orderBy: [
+          { aLaUne: 'desc' },
+          { ordre: 'asc' },
+          { createdAt: 'desc' },
+        ],
+        include: {
+          _count: { select: { modules: true } },
+          formationReferentiel: {
+            include: {
+              filiere: true,
+              niveau: true,
+            },
+          },
+        },
+      }),
+      this.prisma.formation.count({ where }),
+    ]);
+
+    const formations = items.map((f: any) => {
+      const ref = f.formationReferentiel;
+      const filiere = ref?.filiere;
+      const niveau = ref?.niveau;
+
+      let categorieCode: string = f.categorie || 'tech';
+      const fCode = (filiere?.code || '').toUpperCase();
+      const fLib = (filiere?.libelle || '').toLowerCase();
+      const titreLower = (f.titre || '').toLowerCase();
+
+      if (!f.categorie) {
+        if (
+          fCode.includes('GEST') || fCode.includes('MGT') ||
+          fLib.includes('gestion') || fLib.includes('management') || fLib.includes('finance') ||
+          titreLower.includes('gestion') || titreLower.includes('marché') ||
+          titreLower.includes('compta') || titreLower.includes('management')
+        ) {
+          categorieCode = 'gestion';
+        } else if (
+          fCode.includes('TECH') || fCode.includes('ELEC') || fCode.includes('BTP') ||
+          fLib.includes('technique') || fLib.includes('électric') ||
+          titreLower.includes('électric') || titreLower.includes('btp') ||
+          titreLower.includes('énergie') || titreLower.includes('mécanique')
+        ) {
+          categorieCode = 'technique';
+        }
+      }
+
+      return {
+        id: f.id,
+        titre: f.titre,
+        code: f.code,
+        description: f.description || '',
+        duree: f.duree || '40 Heures',
+        debouches: f.debouches || '',
+        prerequis: f.prerequis || '',
+        aLaUne: Boolean(f.aLaUne),
+        modulesCount: f._count?.modules || 0,
+        visibilite: f.visibilite || 'INSCRITS_SEULEMENT',
+        filiereId: filiere?.id || null,
+        filiereCode: filiere?.code || null,
+        filiereNom: filiere?.libelle || null,
+        niveauId: niveau?.id || null,
+        niveauCode: niveau?.code || null,
+        niveauNom: niveau?.libelle || null,
+        categorieOfficielle: categorieCode,
+        createdAt: f.createdAt,
+      };
+    });
+
+    return {
+      items: formations,
+      total,
+      page: realPage,
+      take: realTake,
+      pages: Math.ceil(total / realTake),
+    };
+  }
+
   // --- SETTINGS ---
   async getSettings() {
     let settings = await this.db.landingPageSettings.findFirst();

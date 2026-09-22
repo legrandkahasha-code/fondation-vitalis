@@ -406,8 +406,19 @@ export class ApprenantService {
         this.getAllQuiz().subscribe({ error: () => {} });
         break;
       case 'COURS_PUBLIE':
+      case 'FORMATION_UPDATE':
+        // Purge explicite de TOUS les caches qui contiennent des formations
+        // (le bootstrap contient formations + formationsFiliere en un bundle)
+        localStorage.removeItem(this.CACHE_KEYS.BOOTSTRAP);
+        localStorage.removeItem(this.CACHE_KEYS.DASHBOARD);
         localStorage.removeItem(this.CACHE_KEYS.FORMATIONS);
+        localStorage.removeItem(this.CACHE_KEYS.FORMATIONS_FILIERE);
+        localStorage.removeItem(this.CACHE_KEYS.CERTIFICATS);
         this.invalidateModulesCache();
+        // Rechargements en arrière-plan : les deux onglets du tableau de bord apprenant
+        this.getFormations().subscribe({ error: () => {} });
+        this.getFormationsFiliere().subscribe({ error: () => {} });
+        this.getCertificats().subscribe({ error: () => {} });
         break;
       case 'CERTIFICAT_EMIS':
         localStorage.removeItem(this.CACHE_KEYS.CERTIFICATS);
@@ -606,11 +617,13 @@ export class ApprenantService {
       if (targetKeys && targetKeys.length > 0) {
         targetKeys.forEach((k) => localStorage.removeItem(k));
         localStorage.removeItem(this.CACHE_KEYS.BOOTSTRAP);
+        localStorage.removeItem(this.CACHE_KEYS.FORMATIONS_FILIERE);
         return;
       }
       localStorage.removeItem(this.CACHE_KEYS.BOOTSTRAP);
       localStorage.removeItem(this.CACHE_KEYS.DASHBOARD);
       localStorage.removeItem(this.CACHE_KEYS.FORMATIONS);
+      localStorage.removeItem(this.CACHE_KEYS.FORMATIONS_FILIERE);
       localStorage.removeItem(this.CACHE_KEYS.CERTIFICATS);
       localStorage.removeItem(this.CACHE_KEYS.DEVOIRS);
       localStorage.removeItem(this.CACHE_KEYS.QUIZ_LIST);

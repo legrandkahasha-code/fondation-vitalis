@@ -1,20 +1,24 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '../../common/enums/role.enum';
+import {
+  AuthorizationService,
+  ResourceAction,
+  EnrollmentScope,
+} from '../../common/services/authorization.service';
 
 @Injectable()
 export class QuizService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private authz: AuthorizationService,
+  ) {}
 
   private async assertModuleAccess(moduleId: string, user: any) {
-    const mod = await this.prisma.module.findUnique({
-      where: { id: moduleId },
-      include: { formation: true },
-    });
-    if (!mod) throw new NotFoundException('Module introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE && mod.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
+    const scope = user.role === Role.APPRENANT
+      ? EnrollmentScope.CANDIDATURE_OU_INSCRIPTION
+      : EnrollmentScope.ETABLISSEMENT_ONLY;
+    const { module: mod } = await this.authz.canAccessModule(user, moduleId, ResourceAction.READ, scope);
     return mod;
   }
 
@@ -40,28 +44,32 @@ export class QuizService {
 
   async findByModule(moduleId: string, user: any) {
     await this.assertModuleAccess(moduleId, user);
-    return this.prisma.quiz.findMany({
+    const base = await this.prisma.quiz.findMany({
       where: { moduleId },
       include: { _count: { select: { questions: true, tentatives: true } } },
     });
+    if (user.role === Role.APPRENANT) {
+      for (const q of base) {
+        await this.authz.canAccessQuiz(user, q.id, ResourceAction.READ);
+      }
+    }
+    return base;
   }
 
   async findOne(id: string, user: any, forApprenant = false) {
-    const quiz = await this.prisma.quiz.findUnique({
+    const { quiz } = await this.authz.canAccessQuiz(user, id, ResourceAction.READ);
+    const full = await this.prisma.quiz.findUnique({
       where: { id },
       include: {
         module: { include: { formation: true } },
         questions: { orderBy: { ordre: 'asc' } },
       },
     });
-    if (!quiz) throw new NotFoundException('Quiz introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE && quiz.module.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
-    if (forApprenant) {
+    if (!full) throw new NotFoundException('Quiz introuvable.');
+    if (forApprenant || user.role === Role.APPRENANT) {
       return {
-        ...quiz,
-        questions: quiz.questions.map(q => ({
+        ...full,
+        questions: full.questions.map(q => ({
           id: q.id,
           enonce: q.enonce,
           ordre: q.ordre,
@@ -69,19 +77,17 @@ export class QuizService {
         })),
       };
     }
-    return quiz;
+    return full;
   }
 
   async submit(quizId: string, reponses: { questionId: string; selectedIndex: number }[], user: any) {
     if (user.role !== Role.APPRENANT) throw new ForbiddenException('Réservé aux apprenants.');
-    const quiz = await this.prisma.quiz.findUnique({
+    const { quiz } = await this.authz.canAccessQuiz(user, quizId, ResourceAction.WRITE);
+    const full = await this.prisma.quiz.findUnique({
       where: { id: quizId },
       include: { questions: true, module: { include: { formation: true } } },
     });
-    if (!quiz) throw new NotFoundException('Quiz introuvable.');
-    if (quiz.module.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
+    if (!full) throw new NotFoundException('Quiz introuvable.');
 
     const existing = await this.prisma.tentativeQuiz.findUnique({
       where: { quizId_apprenantId: { quizId, apprenantId: user.id } },
@@ -89,8 +95,8 @@ export class QuizService {
     if (existing) throw new BadRequestException('Vous avez déjà passé ce quiz.');
 
     let correct = 0;
-    const total = quiz.questions.length;
-    for (const q of quiz.questions) {
+    const total = full.questions.length;
+    for (const q of full.questions) {
       const rep = reponses.find(r => r.questionId === q.id);
       const opts = q.options as { text: string; correct: boolean }[];
       if (rep && opts[rep.selectedIndex]?.correct) correct++;
@@ -116,14 +122,7 @@ export class QuizService {
   }
 
   async update(id: string, data: { titre?: string; dureeMinutes?: number }, user: any) {
-    const quiz = await this.prisma.quiz.findUnique({
-      where: { id },
-      include: { module: { include: { formation: true } } },
-    });
-    if (!quiz) throw new NotFoundException('Quiz introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE && quiz.module.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
+    const { } = await this.authz.canAccessQuiz(user, id, ResourceAction.UPDATE);
     return this.prisma.quiz.update({
       where: { id },
       data: {
@@ -134,14 +133,7 @@ export class QuizService {
   }
 
   async delete(id: string, user: any) {
-    const quiz = await this.prisma.quiz.findUnique({
-      where: { id },
-      include: { module: { include: { formation: true } } },
-    });
-    if (!quiz) throw new NotFoundException('Quiz introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE && quiz.module.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
+    const { } = await this.authz.canAccessQuiz(user, id, ResourceAction.DELETE);
     return this.prisma.quiz.delete({ where: { id } });
   }
 }

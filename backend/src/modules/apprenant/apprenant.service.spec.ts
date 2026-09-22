@@ -7,6 +7,9 @@ import { CertificationService } from '../certification/certification.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Role } from '../../common/enums/role.enum';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { IdentityService } from '../admission/identity.service';
+import { CandidatureService } from '../admission/candidature.service';
+import { AuthorizationService } from '../../common/services/authorization.service';
 
 describe('ApprenantService (Performance & BR-03)', () => {
   let service: ApprenantService;
@@ -44,6 +47,7 @@ describe('ApprenantService (Performance & BR-03)', () => {
     },
     apprenant: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       count: jest.fn(),
       create: jest.fn(),
     },
@@ -55,12 +59,15 @@ describe('ApprenantService (Performance & BR-03)', () => {
     },
     candidature: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
     },
     cours: {
       findUnique: jest.fn(),
     },
     quiz: {
       findUnique: jest.fn(),
+      findFirst: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     documentDossier: {
       create: jest.fn(),
@@ -91,7 +98,35 @@ describe('ApprenantService (Performance & BR-03)', () => {
     emit: jest.fn(),
   };
 
+  const mockIdentityService = {
+    ensureProfileFromUser: jest.fn().mockResolvedValue({
+      id: 'ap-1',
+      utilisateurId: 'u-apprenant-1',
+      matricule: 'VIT-2026-000001',
+    }),
+  };
+
+  const mockCandidatureService = {
+    listMine: jest.fn().mockResolvedValue([]),
+  };
+
+  const mockAuthz = {
+    canAccessFormation: jest.fn().mockResolvedValue({ inscription: { id: 'ins-1', statut: 'ACTIVE' } }),
+    grantPedagogicalAccessFromCandidature: jest.fn().mockResolvedValue(['f-1']),
+    getFilieresApprenant: jest.fn().mockResolvedValue([]),
+  };
+
   beforeEach(async () => {
+    mockPrisma.inscription.findMany.mockResolvedValue([
+      { formationId: 'f-1', formation: { etablissementId: 'e-1' } },
+    ]);
+    mockPrisma.certificat.findMany.mockResolvedValue([]);
+    mockPrisma.candidature.findMany.mockResolvedValue([]);
+    mockPrisma.apprenant.findFirst.mockResolvedValue({
+      id: 'ap-1',
+      utilisateurId: 'u-apprenant-1',
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ApprenantService,
@@ -100,6 +135,9 @@ describe('ApprenantService (Performance & BR-03)', () => {
         { provide: PedagogieService, useValue: mockPedagogieService },
         { provide: CertificationService, useValue: mockCertificationService },
         { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: IdentityService, useValue: mockIdentityService },
+        { provide: CandidatureService, useValue: mockCandidatureService },
+        { provide: AuthorizationService, useValue: mockAuthz },
       ],
     }).compile();
 

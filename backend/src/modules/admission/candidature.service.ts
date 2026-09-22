@@ -6,6 +6,8 @@ import { StorageService } from '../../common/services/storage.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { IdentityService } from './identity.service';
 import { Role } from '../../common/enums/role.enum';
+import { AuthorizationService } from '../../common/services/authorization.service';
+import { ApprenantCache } from '../apprenant/apprenant-cache';
 import { CreateCandidatureDto, DecisionCandidatureDto } from './dto/admission.dto';
 import {
   statut_candidature,
@@ -51,6 +53,7 @@ export class CandidatureService implements OnModuleInit {
     private identity: IdentityService,
     private storage: StorageService,
     private notifications: NotificationsService,
+    private authz: AuthorizationService,
   ) {}
 
   onModuleInit() {
@@ -191,6 +194,15 @@ export class CandidatureService implements OnModuleInit {
         include: { session: { include: { filiere: true, niveau: true, etablissement: true } }, apprenant: true },
       });
 
+      try {
+        await this.prisma.apprenant.update({
+          where: { id: profile.id },
+          data: { filierePrincipaleId: session.filiereId },
+        });
+      } catch (e: any) {
+        this.logger.warn(`filierePrincipaleId à la création du vœu: ${e?.message}`);
+      }
+
       // Émission temps réel réseau (visible par l'Admin Central et l'Établissement)
       try {
         this.notifications.emit({
@@ -271,9 +283,32 @@ export class CandidatureService implements OnModuleInit {
       }
     }
 
-    return this.applyTransition(c.id, c.statut, statut_candidature.SOUMISE, user.id, 'Soumission du dossier', {
+    const updated = await this.applyTransition(c.id, c.statut, statut_candidature.SOUMISE, user.id, 'Soumission du dossier', {
       dateSoumission: new Date(),
     });
+
+    try {
+      await this.authz.grantPedagogicalAccessFromCandidature(
+        c.apprenantId,
+        {
+          id: c.session.id,
+          formationId: c.session.formationId ?? (c.session as any).formation?.id ?? null,
+          filiereId: c.session.filiereId,
+          niveauId: c.session.niveauId,
+          etablissementId: c.session.etablissementId,
+          etablissementsPartages: (c.session as any).etablissementsPartages,
+        },
+        c.id,
+      );
+    } catch (e: any) {
+      this.logger.warn(`Accès pédagogique post-soumission: ${e?.message}`);
+    }
+
+    if (user?.id) {
+      ApprenantCache.invalidateParUtilisateur(user.id);
+    }
+
+    return updated;
   }
 
   async confirm(id: string, user: any) {

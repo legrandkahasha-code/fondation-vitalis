@@ -106,6 +106,16 @@ export class PedagogieController {
     return this.service.deployerFormationVersEtablissements(id, etablissementIds, req.user);
   }
 
+  @Post('formations/:id/sync')
+  @Roles(Role.ADMIN_CENTRE)
+  synchroniserFormation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: any,
+  ) {
+    void req; // pas utilisé directement (rôle déjà validé par le guard)
+    return this.service.synchroniserFormationSourceVersClones(id);
+  }
+
   @Delete('formations/:id')
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
   deleteFormation(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {

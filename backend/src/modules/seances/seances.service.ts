@@ -5,6 +5,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Role } from '../../common/enums/role.enum';
 import { CreateSeanceDto, UpdateSeanceDto, EmargementDto } from './dto/seances.dto';
+import {
+  AuthorizationService,
+  ResourceAction,
+  EnrollmentScope,
+} from '../../common/services/authorization.service';
 
 @Injectable()
 export class SeancesService {
@@ -16,6 +21,7 @@ export class SeancesService {
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
+    private authz: AuthorizationService,
   ) {}
 
   private invalidateCache(etablissementId?: string) {
@@ -31,14 +37,10 @@ export class SeancesService {
   }
 
   private async assertModuleAccess(moduleId: string, user: any) {
-    const mod = await this.prisma.module.findUnique({
-      where: { id: moduleId },
-      include: { formation: true },
-    });
-    if (!mod) throw new NotFoundException('Module introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE && mod.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit à ce module.');
-    }
+    const scope = user.role === Role.APPRENANT
+      ? EnrollmentScope.CANDIDATURE_OU_INSCRIPTION
+      : EnrollmentScope.ETABLISSEMENT_ONLY;
+    const { module: mod } = await this.authz.canAccessModule(user, moduleId, ResourceAction.READ, scope);
     return mod;
   }
 
@@ -78,7 +80,7 @@ export class SeancesService {
 
   async findByModule(moduleId: string, user: any) {
     await this.assertModuleAccess(moduleId, user);
-    return this.prisma.seanceFormation.findMany({
+    const liste = await this.prisma.seanceFormation.findMany({
       where: { moduleId },
       include: {
         formateur: { select: { nom: true, prenom: true } },
@@ -86,6 +88,12 @@ export class SeancesService {
       },
       orderBy: { dateHeureDebut: 'asc' },
     });
+    if (user.role === Role.APPRENANT) {
+      for (const s of liste) {
+        await this.authz.canAccessSeance(user, s.id, ResourceAction.READ);
+      }
+    }
+    return liste;
   }
 
   async findByEtablissement(user: any) {
@@ -114,6 +122,7 @@ export class SeancesService {
   }
 
   async findOne(id: string, user: any) {
+    const { seance: s } = await this.authz.canAccessSeance(user, id, ResourceAction.READ);
     const seance = await this.prisma.seanceFormation.findUnique({
       where: { id },
       include: {
@@ -125,14 +134,11 @@ export class SeancesService {
       },
     });
     if (!seance) throw new NotFoundException('Séance introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE &&
-        seance.module.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
     return seance;
   }
 
   async update(id: string, dto: UpdateSeanceDto, user: any) {
+    const { seance: s } = await this.authz.canAccessSeance(user, id, ResourceAction.UPDATE);
     const seance = await this.findOne(id, user);
     if (user.role === Role.FORMATEUR && seance.formateurId !== user.id) {
       throw new ForbiddenException('Seul le formateur assigné peut modifier cette séance.');
@@ -162,6 +168,7 @@ export class SeancesService {
   }
 
   async remove(id: string, user: any) {
+    const { } = await this.authz.canAccessSeance(user, id, ResourceAction.DELETE);
     const seance = await this.findOne(id, user);
     const etabId = seance.module.formation.etablissementId;
     const deleted = await this.prisma.seanceFormation.delete({ where: { id } });

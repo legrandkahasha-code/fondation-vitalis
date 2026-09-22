@@ -3,6 +3,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../../common/services/storage.service';
 import { Role } from '../../common/enums/role.enum';
 import { NotificationsService } from '../notifications/notifications.service';
+import {
+  AuthorizationService,
+  ResourceAction,
+  EnrollmentScope,
+} from '../../common/services/authorization.service';
 
 @Injectable()
 export class DevoirsService {
@@ -10,17 +15,14 @@ export class DevoirsService {
     private prisma: PrismaService,
     private storage: StorageService,
     private notifications: NotificationsService,
+    private authz: AuthorizationService,
   ) {}
 
   private async assertModuleAccess(moduleId: string, user: any) {
-    const mod = await this.prisma.module.findUnique({
-      where: { id: moduleId },
-      include: { formation: true },
-    });
-    if (!mod) throw new NotFoundException('Module introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE && mod.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
+    const scope = user.role === Role.APPRENANT
+      ? EnrollmentScope.CANDIDATURE_OU_INSCRIPTION
+      : EnrollmentScope.ETABLISSEMENT_ONLY;
+    const { module: mod } = await this.authz.canAccessModule(user, moduleId, ResourceAction.READ, scope);
     return mod;
   }
 
@@ -38,14 +40,21 @@ export class DevoirsService {
 
   async findByModule(moduleId: string, user: any) {
     await this.assertModuleAccess(moduleId, user);
-    return this.prisma.devoir.findMany({
+    const base = await this.prisma.devoir.findMany({
       where: { moduleId },
       include: { _count: { select: { soumissions: true } } },
       orderBy: { createdAt: 'desc' },
     });
+    if (user.role === Role.APPRENANT) {
+      for (const d of base) {
+        await this.authz.canAccessDevoir(user, d.id, ResourceAction.READ);
+      }
+    }
+    return base;
   }
 
   async findOne(id: string, user: any) {
+    const { } = await this.authz.canAccessDevoir(user, id, ResourceAction.READ);
     const devoir = await this.prisma.devoir.findUnique({
       where: { id },
       include: {
@@ -56,9 +65,6 @@ export class DevoirsService {
       },
     });
     if (!devoir) throw new NotFoundException('Devoir introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE && devoir.module.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
 
     if (user.role === Role.APPRENANT) {
       return {
@@ -72,6 +78,7 @@ export class DevoirsService {
 
   async submit(devoirId: string, file: Express.Multer.File, user: any) {
     if (user.role !== Role.APPRENANT) throw new ForbiddenException('Réservé aux apprenants.');
+    const { } = await this.authz.canAccessDevoir(user, devoirId, ResourceAction.WRITE);
     const devoir = await this.findOne(devoirId, user);
     if (devoir.dateLimite && new Date() > devoir.dateLimite) {
       throw new BadRequestException('La date limite de dépôt est dépassée.');
@@ -85,6 +92,7 @@ export class DevoirsService {
   }
 
   async noter(devoirId: string, apprenantId: string, note: number, commentaire: string, user: any) {
+    const { } = await this.authz.canAccessDevoir(user, devoirId, ResourceAction.UPDATE);
     const devoir = await this.findOne(devoirId, user);
     const soumission = await this.prisma.soumissionDevoir.update({
       where: { devoirId_apprenantId: { devoirId, apprenantId } },
@@ -112,14 +120,7 @@ export class DevoirsService {
   }
 
   async update(id: string, data: { titre?: string; consignes?: string; dateLimite?: string }, user: any) {
-    const devoir = await this.prisma.devoir.findUnique({
-      where: { id },
-      include: { module: { include: { formation: true } } },
-    });
-    if (!devoir) throw new NotFoundException('Devoir introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE && devoir.module.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
+    const { } = await this.authz.canAccessDevoir(user, id, ResourceAction.UPDATE);
     return this.prisma.devoir.update({
       where: { id },
       data: {
@@ -131,14 +132,7 @@ export class DevoirsService {
   }
 
   async delete(id: string, user: any) {
-    const devoir = await this.prisma.devoir.findUnique({
-      where: { id },
-      include: { module: { include: { formation: true } } },
-    });
-    if (!devoir) throw new NotFoundException('Devoir introuvable.');
-    if (user.role !== Role.ADMIN_CENTRE && devoir.module.formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit.');
-    }
+    const { } = await this.authz.canAccessDevoir(user, id, ResourceAction.DELETE);
     return this.prisma.devoir.delete({ where: { id } });
   }
 }

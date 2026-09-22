@@ -113,6 +113,41 @@ export class LandingController {
     return this.service.submitContact(dto);
   }
 
+  @Get('public/filieres')
+  @Public()
+  @Header('Cache-Control', 'public, max-age=300')
+  getPublicFilieres() {
+    return this.service.getPublicFilieres();
+  }
+
+  @Get('public/niveaux')
+  @Public()
+  @Header('Cache-Control', 'public, max-age=300')
+  getPublicNiveaux() {
+    return this.service.getPublicNiveaux();
+  }
+
+  @Get('public/formations-catalogue')
+  @Public()
+  @Header('Cache-Control', 'public, max-age=60')
+  getPublicFormationsCatalogue(
+    @Query('search') search?: string,
+    @Query('filiereId') filiereId?: string,
+    @Query('niveauId') niveauId?: string,
+    @Query('etablissementId') etablissementId?: string,
+    @Query('page') page?: string,
+    @Query('take') take?: string,
+  ) {
+    return this.service.getPublicFormationsCatalogue({
+      search,
+      filiereId,
+      niveauId,
+      etablissementId,
+      page: page ? parseInt(page, 10) : undefined,
+      take: take ? parseInt(take, 10) : undefined,
+    });
+  }
+
   @Get('contacts')
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.PERSONNEL_ADMINISTRATIF)
   getContactMessages() {

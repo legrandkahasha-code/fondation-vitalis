@@ -31,6 +31,7 @@ model Cours {
   titre        String            @db.VarChar(255)
   contenu      String?           @map("contenu_text")
   fileUrl      String?           @map("url_document_s3") @db.VarChar(512)
+  visibilite   String               @default("PRE_ADMISSION") @db.Text
   createdAt    DateTime?         @default(now()) @map("created_at") @db.Timestamptz(6)
   module       Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   userProgress UserProgress[]
@@ -73,6 +74,7 @@ model Evaluation {
   moduleId     String    @map("module_id") @db.Uuid
   titre        String    @db.VarChar(255)
   noteMaximale Decimal?  @default(20.00) @map("note_maximale") @db.Decimal(4, 2)
+  visibilite   String               @default("PRE_ADMISSION") @db.Text
   createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   module       Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   notes        Note[]
@@ -119,6 +121,7 @@ model Module {
   titre       String            @db.VarChar(255)
   ordre       Int
   coefficient Decimal?          @default(1.00) @db.Decimal(4, 2)
+  visibilite  String               @default("PRE_ADMISSION") @db.Text
   createdAt   DateTime?         @default(now()) @map("created_at") @db.Timestamptz(6)
   cours       Cours[]
   evaluations Evaluation[]
@@ -284,6 +287,7 @@ model Quiz {
   moduleId     String          @map("module_id") @db.Uuid
   titre        String          @db.VarChar(255)
   dureeMinutes Int?            @map("duree_minutes")
+  visibilite   String               @default("PRE_ADMISSION") @db.Text
   createdAt    DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
   module       Module          @relation(fields: [moduleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   questions    QuestionQuiz[]
@@ -324,6 +328,7 @@ model Devoir {
   titre       String             @db.VarChar(255)
   consignes   String?
   dateLimite  DateTime?          @map("date_limite") @db.Timestamptz(6)
+  visibilite  String               @default("PRE_ADMISSION") @db.Text
   createdAt   DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
   module      Module             @relation(fields: [moduleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   soumissions SoumissionDevoir[]
@@ -488,6 +493,9 @@ enum statut_inscription {
   ANNULEE
 }
 
+// visibilite_ressource: stored as TEXT in DB (not a native PG ENUM)
+// Valid values: PUBLIQUE | PRE_ADMISSION | INSCRITS_SEULEMENT | ADMIN
+
 enum politique_candidature_concurrente {
   BLOCAGE_STRICT
   AUTORISATION_ALERTE
@@ -528,6 +536,8 @@ model Filiere {
   formationsReferentiel FormationReferentiel[]
   sessionsAdmission     SessionAdmission[]
   validationsNiveau     ValidationNiveau[]
+  apprenantsPrincipaux  Apprenant[]
+  apprenantsIntentions  ApprenantFiliereIntention[]
 
   @@map("filieres")
 }
@@ -586,19 +596,42 @@ model Apprenant {
   dateNaissance          DateTime? @map("date_naissance") @db.Date
   numeroIdentite         String?   @map("numero_identite") @db.VarChar(50)
   paysOrigine            String?   @map("pays_origine") @db.VarChar(3)
+  filierePrincipaleId    String?   @map("filiere_principale_id") @db.Uuid
   utilisateurId          String?   @unique @map("utilisateur_id") @db.Uuid
   etablissementOrigineId String?   @map("etablissement_origine_id") @db.Uuid
   createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  utilisateur          Utilisateur?       @relation(fields: [utilisateurId], references: [id], onUpdate: NoAction)
-  etablissementOrigine Etablissement?     @relation(fields: [etablissementOrigineId], references: [id], onUpdate: NoAction)
+  utilisateur          Utilisateur?            @relation(fields: [utilisateurId], references: [id], onUpdate: NoAction)
+  etablissementOrigine Etablissement?          @relation(fields: [etablissementOrigineId], references: [id], onUpdate: NoAction)
+  filierePrincipale    Filiere?                @relation(fields: [filierePrincipaleId], references: [id], onUpdate: NoAction, onDelete: SetNull)
   candidatures         Candidature[]
   inscriptions         Inscription[]
   validationsNiveau    ValidationNiveau[]
+  filieresIntention    ApprenantFiliereIntention[]
 
   @@index([numeroIdentite], map: "idx_apprenants_identite")
+  @@index([filierePrincipaleId], map: "idx_apprenants_filiere_principale")
   @@map("apprenants")
+}
+
+model ApprenantFiliereIntention {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  apprenantId String   @map("apprenant_id") @db.Uuid
+  filiereId   String   @map("filiere_id") @db.Uuid
+  statut      String   @default("ENVISAGEE") @db.VarChar(50)
+  ordrePref   Int      @default(1) @map("ordre_pref")
+  commentaire String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  apprenant Apprenant @relation(fields: [apprenantId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  filiere   Filiere   @relation(fields: [filiereId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([apprenantId, filiereId], map: "unique_apprenant_filiere_intention")
+  @@index([apprenantId], map: "idx_intentions_apprenant")
+  @@index([filiereId], map: "idx_intentions_filiere")
+  @@map("apprenant_filiere_intentions")
 }
 
 model ValidationNiveau {

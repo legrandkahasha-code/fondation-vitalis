@@ -534,6 +534,8 @@ export class CandidatureComponent implements OnInit, OnDestroy {
         this.voeux = this.voeux.map((item) => item.id === updated.id ? { ...item, ...updated } : item);
         this.busy = '';
         this.toast.success('Dossier de candidature complet soumis pour évaluation.');
+        this.apprenantService.invalidateCache();
+        this.apprenantService.getBootstrap(true).subscribe({ error: () => {} });
       },
       error: (error) => {
         this.error = error.error?.message || 'Impossible de soumettre le dossier.';

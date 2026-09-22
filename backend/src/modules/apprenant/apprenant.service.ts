@@ -7,12 +7,16 @@ import { CertificationService } from '../certification/certification.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { IdentityService } from '../admission/identity.service';
 import { CandidatureService } from '../admission/candidature.service';
+import { ApprenantCache } from './apprenant-cache';
+import {
+  AuthorizationService,
+  ResourceAction,
+  EnrollmentScope,
+} from '../../common/services/authorization.service';
 
 @Injectable()
 export class ApprenantService {
   private readonly logger = new Logger(ApprenantService.name);
-  private static readonly cache = new Map<string, { data: any; expiry: number }>();
-  private static readonly DEFAULT_TTL_MS = 60 * 1000; // 60s TTL
 
   constructor(
     private prisma: PrismaService,
@@ -22,31 +26,22 @@ export class ApprenantService {
     private notifications: NotificationsService,
     private identityService: IdentityService,
     private candidatureService: CandidatureService,
+    private authz: AuthorizationService,
   ) {}
 
   /**
    * Helper pour gérer le cache mémoire ultra-rapide (< 1ms)
    */
   private getFromCache<T>(key: string): T | null {
-    const entry = ApprenantService.cache.get(key);
-    if (entry && entry.expiry > Date.now()) {
-      return entry.data as T;
-    }
-    ApprenantService.cache.delete(key);
-    return null;
+    return ApprenantCache.get<T>(key);
   }
 
-  private setCache<T>(key: string, data: T, ttlMs = ApprenantService.DEFAULT_TTL_MS): T {
-    ApprenantService.cache.set(key, { data, expiry: Date.now() + ttlMs });
-    return data;
+  private setCache<T>(key: string, data: T, ttlMs?: number): T {
+    return ApprenantCache.set<T>(key, data, ttlMs);
   }
 
   public invalidateUserCache(userId: string) {
-    for (const key of ApprenantService.cache.keys()) {
-      if (key.includes(userId)) {
-        ApprenantService.cache.delete(key);
-      }
-    }
+    ApprenantCache.invalidateParUtilisateur(userId);
   }
 
   /**
@@ -60,59 +55,151 @@ export class ApprenantService {
 
   /**
    * Garantit qu'un profil Apprenant existe pour cet utilisateur avec son matricule officiel
+   * (SÉCURISÉ : select explicites pour fonctionner même si colonnes migration 20260921 pas appliquées)
    */
   public async ensureApprenantProfile(user: any) {
     if (this.identityService) {
-      return this.identityService.ensureProfileFromUser(user);
+      try {
+        return await this.identityService.ensureProfileFromUser(user);
+      } catch {
+        // IdentityService a échoué → fallback en requêtes minimales ci-dessous
+      }
     }
-    const existing = await this.prisma.apprenant.findFirst({
-      where: { OR: [{ utilisateurId: user.id }, { email: user.email }] },
-    });
+    const APPRENANT_MIN_SELECT = {
+      id: true, createdAt: true, matricule: true, nom: true, prenom: true,
+      email: true, telephone: true, dateNaissance: true, numeroIdentite: true,
+      paysOrigine: true, utilisateurId: true, etablissementOrigineId: true, updatedAt: true,
+    } as const;
+    let existing: any = null;
+    try {
+      existing = await this.prisma.apprenant.findFirst({
+        where: { OR: [{ utilisateurId: user.id }, { email: user.email }] },
+        select: APPRENANT_MIN_SELECT,
+      });
+    } catch {
+      try {
+        existing = await this.prisma.apprenant.findFirst({
+          where: { OR: [{ utilisateurId: user.id }, { email: user.email }] },
+          select: { id: true, nom: true, prenom: true, email: true, utilisateurId: true, matricule: true },
+        });
+      } catch {
+        existing = null;
+      }
+    }
     if (existing) {
       if (!existing.utilisateurId) {
-        return this.prisma.apprenant.update({
-          where: { id: existing.id },
-          data: { utilisateurId: user.id },
-        });
+        try {
+          return await this.prisma.apprenant.update({
+            where: { id: existing.id },
+            data: { utilisateurId: user.id },
+            select: APPRENANT_MIN_SELECT,
+          });
+        } catch {
+          return existing;
+        }
       }
       return existing;
     }
     const count = await this.prisma.apprenant.count();
     const matricule = `VIT-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
-    return this.prisma.apprenant.create({
-      data: {
-        matricule,
-        nom: user.nom || 'Apprenant',
-        prenom: user.prenom || '',
-        email: user.email,
-        utilisateurId: user.id,
-        etablissementOrigineId: user.etablissementId,
-      },
-    });
+    try {
+      return await this.prisma.apprenant.create({
+        data: {
+          matricule,
+          nom: user.nom || 'Apprenant',
+          prenom: user.prenom || '',
+          email: user.email,
+          utilisateurId: user.id,
+          etablissementOrigineId: user.etablissementId,
+        },
+        select: APPRENANT_MIN_SELECT,
+      });
+    } catch (createErr: any) {
+      const fallback = await this.prisma.apprenant.findFirst({
+        where: { OR: [{ utilisateurId: user.id }, { email: user.email }] },
+        select: { id: true, nom: true, prenom: true, email: true, utilisateurId: true, matricule: true },
+      });
+      if (fallback) return fallback;
+      throw createErr;
+    }
   }
 
   private async getEnrolledFormationIds(user: any): Promise<string[]> {
+    const STATUTS_CANDIDATURE_LECTURE = [
+      'SOUMISE',
+      'EN_EVALUATION',
+      'ADMISE',
+      'LISTE_ATTENTE',
+      'CONFIRMEE',
+      'INSCRITE',
+    ] as const;
     const profile = await this.ensureApprenantProfile(user);
     if (!profile) return [];
+
+    const ids = new Set<string>();
+
     const inscriptions = await this.prisma.inscription.findMany({
       where: {
         apprenantId: profile.id,
         statut: { in: ['ACTIVE', 'RESERVEE', 'TERMINEE'] },
-        formation: { etablissementId: user.etablissementId },
       },
-      select: { formationId: true },
+      select: { formationId: true, formation: { select: { etablissementId: true } } },
     });
+    for (const i of inscriptions) {
+      ids.add(i.formationId);
+    }
+
     const certifs = await this.prisma.certificat.findMany({
-      where: {
-        utilisateurId: user.id,
-        formation: { etablissementId: user.etablissementId },
-      },
+      where: { utilisateurId: user.id },
       select: { formationId: true },
     });
-    return Array.from(new Set([
-      ...inscriptions.map((i) => i.formationId),
-      ...certifs.map((c) => c.formationId),
-    ]));
+    for (const c of certifs) ids.add(c.formationId);
+
+    const candidaturesActives = await this.prisma.candidature.findMany({
+      where: {
+        apprenantId: profile.id,
+        statut: { in: STATUTS_CANDIDATURE_LECTURE as unknown as any[] },
+      },
+      select: {
+        id: true,
+        sessionId: true,
+        session: {
+          select: {
+            id: true,
+            formationId: true,
+            filiereId: true,
+            niveauId: true,
+            etablissementId: true,
+            etablissementsPartages: true,
+          },
+        },
+      },
+    });
+
+    for (const cand of candidaturesActives) {
+      if (!cand.session) continue;
+      const granted = await this.authz.grantPedagogicalAccessFromCandidature(
+        profile.id,
+        cand.session,
+        cand.id,
+      );
+      for (const fId of granted) ids.add(fId);
+      if (cand.session.formationId) ids.add(cand.session.formationId);
+    }
+
+    if (ids.size === 0) return [];
+
+    const formationsOk = await this.prisma.formation.findMany({
+      where: {
+        id: { in: Array.from(ids) },
+        ...(user.etablissementId ? { etablissementId: user.etablissementId } : {}),
+      },
+      select: { id: true },
+    });
+    const etabIds = new Set(formationsOk.map((f) => f.id));
+    if (etabIds.size > 0) return Array.from(etabIds);
+
+    return Array.from(ids);
   }
 
   private async formationFilterForUser(user: any): Promise<any> {
@@ -128,90 +215,25 @@ export class ApprenantService {
     return { id: { in: ['00000000-0000-0000-0000-000000000000'] } };
   }
 
-  private async assertFormationAccess(formationId: string, user: any, preloadedFormation?: any) {
-    const accessKey = `access:${formationId}:${user.id}`;
-    if (this.getFromCache(accessKey)) return;
+  private async assertFormationAccess(
+    formationId: string,
+    user: any,
+    preloadedFormation?: any,
+    action: ResourceAction = ResourceAction.READ,
+    scope: EnrollmentScope = EnrollmentScope.CANDIDATURE_OU_INSCRIPTION,
+  ): Promise<{ inscription?: any; candidature?: any; sessionId?: string }> {
+    const accessKey = `access:${formationId}:${user.id}:${action}`;
+    const cached = this.getFromCache<{ inscription?: any; candidature?: any; sessionId?: string }>(accessKey);
+    if (cached) return cached;
 
-    // 1. Isolation multi-tenant stricte : l'apprenant ne peut pas accéder aux formations d'un autre établissement
-    const formation = preloadedFormation || await this.prisma.formation.findUnique({
-      where: { id: formationId },
-      select: { id: true, etablissementId: true },
-    });
-    if (!formation) {
-      throw new NotFoundException('Formation introuvable.');
-    }
-
-    if (user.etablissementId && formation.etablissementId && formation.etablissementId !== user.etablissementId) {
-      throw new ForbiddenException('BR-02 : Accès interdit à une formation hors de votre établissement.');
-    }
-
-    // 2. Chemin rapide : inscription active déjà existante (1 seule requête SQL ultra-rapide)
-    const existingInscription = await this.prisma.inscription.findFirst({
-      where: {
-        formationId,
-        apprenant: { utilisateurId: user.id },
-        statut: { in: ['ACTIVE', 'RESERVEE', 'TERMINEE'] },
-      },
-      select: { id: true },
-    });
-    if (existingInscription) {
-      this.setCache(accessKey, true, 300_000);
-      return;
-    }
-
-    // 3. Chemin rapide : certificat officiel déjà obtenu
-    const cert = await this.prisma.certificat.findFirst({
-      where: { formationId, utilisateurId: user.id },
-      select: { id: true },
-    });
-    if (cert) {
-      this.setCache(accessKey, true, 300_000);
-      return;
-    }
-
-    // 4. Vérifier si l'apprenant dispose d'une candidature formellement admise ou confirmée
-    const profile = await this.prisma.apprenant.findUnique({ where: { utilisateurId: user.id } });
-    if (profile) {
-      const candidatureValidee = await this.prisma.candidature.findFirst({
-        where: {
-          apprenantId: profile.id,
-          session: { formationId },
-          statut: { in: ['CONFIRMEE', 'INSCRITE', 'ADMISE'] },
-        },
-        select: { id: true, sessionId: true },
-      });
-
-      if (candidatureValidee) {
-        try {
-          await this.prisma.inscription.upsert({
-            where: {
-              apprenantId_formationId: {
-                apprenantId: profile.id,
-                formationId,
-              },
-            },
-            update: { statut: 'ACTIVE' },
-            create: {
-              apprenantId: profile.id,
-              formationId,
-              candidatureId: candidatureValidee.id,
-              sessionId: candidatureValidee.sessionId,
-              statut: 'ACTIVE',
-            },
-          });
-          this.invalidateUserCache(user.id);
-          this.setCache(accessKey, true, 300_000);
-          return;
-        } catch (err) {
-          this.setCache(accessKey, true, 300_000);
-          return;
-        }
-      }
-    }
-
-    throw new ForbiddenException(
-      "Accès non autorisé : vous devez être officiellement inscrit ou admis à cette formation pour accéder à son contenu pédagogique. Veuillez soumettre ou confirmer votre candidature via l'espace Candidatures.",
-    );
+    const result = await this.authz.canAccessFormation(user, formationId, action, scope, preloadedFormation);
+    const payload = {
+      inscription: result.inscription,
+      candidature: result.candidature,
+      sessionId: result.sessionId,
+    };
+    this.setCache(accessKey, payload, 300_000);
+    return payload;
   }
 
   /**
@@ -229,13 +251,18 @@ export class ApprenantService {
     const formationFilter = await this.formationFilterForUser(user);
 
     // 1. Exécution en parallèle des requêtes principales indépendantes
+    // NOTE : select + include EXPLICITES partout. Aucun SELECT * implicite sur
+    // Module/Cours/Quiz/Devoir car ils possèdent une colonne "visibilite" qui n'existe
+    // potentiellement pas en DB si migration 20260921 pas appliquée.
     const [formations, devoirsSoumis, prochaineSeance, nbQuizPasses, nbCertificats] =
       await Promise.all([
         this.prisma.formation.findMany({
           where: formationFilter,
-          include: {
+          select: {
+            id: true, titre: true, description: true, actif: true, etablissementId: true,
             modules: {
-              include: {
+              select: {
+                id: true, titre: true, ordre: true, coefficient: true, formationId: true,
                 cours: { select: { id: true } },
               },
             },
@@ -254,8 +281,15 @@ export class ApprenantService {
             dateHeureDebut: { gte: now },
             module: { formation: formationFilter },
           },
-          include: {
-            module: { include: { formation: { select: { titre: true } } } },
+          select: {
+            id: true, moduleId: true, titreActivite: true, typeSession: true,
+            dateHeureDebut: true, dateHeureFin: true, salleOuLien: true,
+            module: {
+              select: {
+                id: true, titre: true,
+                formation: { select: { id: true, titre: true } },
+              },
+            },
             formateur: { select: { nom: true, prenom: true } },
           },
           orderBy: { dateHeureDebut: 'asc' },
@@ -270,7 +304,7 @@ export class ApprenantService {
 
     // 2. Extraire tous les coursIds et moduleIds de toutes les formations
     const moduleIds = formations.flatMap((f) => f.modules.map((m) => m.id));
-    const coursIds = formations.flatMap((f) => f.modules.flatMap((m) => m.cours.map((c) => c.id)));
+    const coursIds = formations.flatMap((f) => f.modules.flatMap((m) => (m as any).cours.map((c: any) => c.id)));
     const devoirsSoumisIds = devoirsSoumis.map((s) => s.devoirId);
     const totalCours = coursIds.length;
 
@@ -293,9 +327,13 @@ export class ApprenantService {
               id: { notIn: devoirsSoumisIds },
               dateLimite: { gte: now },
             },
-            include: {
+            select: {
+              id: true, moduleId: true, titre: true, consignes: true, dateLimite: true,
               module: {
-                include: { formation: { select: { id: true, titre: true } } },
+                select: {
+                  id: true,
+                  formation: { select: { id: true, titre: true } },
+                },
               },
             },
             orderBy: { dateLimite: 'asc' },
@@ -309,11 +347,11 @@ export class ApprenantService {
 
     // 5. Calcul des progressions par formation en mémoire (0ms CPU)
     const formationsResume = formations.map((f) => {
-      const fCoursIds = f.modules.flatMap((m) => m.cours.map((c) => c.id));
+      const fCoursIds = f.modules.flatMap((m) => (m as any).cours.map((c: any) => c.id));
       const fTotal = fCoursIds.length;
-      const fCompleted = fCoursIds.filter((id) => completedSet.has(id)).length;
+      const fCompleted = fCoursIds.filter((id: string) => completedSet.has(id)).length;
       const fPourcentage = fTotal > 0 ? Math.round((fCompleted / fTotal) * 100) : 0;
-      const certif = f.certificats[0] || null;
+      const certif = (f as any).certificats[0] || null;
 
       return {
         id: f.id,
@@ -335,7 +373,7 @@ export class ApprenantService {
         type: 'devoir',
         id: prochainDevoir.id,
         titre: prochainDevoir.titre,
-        formationTitre: prochainDevoir.module.formation.titre,
+        formationTitre: (prochainDevoir as any).module.formation.titre,
         dateLimite: prochainDevoir.dateLimite,
       };
     } else if (prochaineSeance) {
@@ -343,7 +381,7 @@ export class ApprenantService {
         type: 'seance',
         id: prochaineSeance.id,
         titre: prochaineSeance.titreActivite,
-        formationTitre: prochaineSeance.module.formation.titre,
+        formationTitre: (prochaineSeance as any).module.formation.titre,
         dateLimite: prochaineSeance.dateHeureDebut,
       };
     } else if (moduleIds.length > 0) {
@@ -352,8 +390,14 @@ export class ApprenantService {
           moduleId: { in: moduleIds },
           tentatives: { none: { apprenantId: user.id } },
         },
-        include: {
-          module: { include: { formation: { select: { titre: true } } } },
+        select: {
+          id: true, moduleId: true, titre: true,
+          module: {
+            select: {
+              id: true,
+              formation: { select: { id: true, titre: true } },
+            },
+          },
         },
       });
       if (prochainQuiz) {
@@ -361,7 +405,7 @@ export class ApprenantService {
           type: 'quiz',
           id: prochainQuiz.id,
           titre: prochainQuiz.titre,
-          formationTitre: prochainQuiz.module.formation.titre,
+          formationTitre: (prochainQuiz as any).module.formation.titre,
           dateLimite: null,
         };
       }
@@ -404,16 +448,53 @@ export class ApprenantService {
       dossier,
       formationsFiliere,
     ] = await Promise.all([
-      this.getDashboard(user),
-      this.getFormations(user),
-      this.getAllDevoirs(user),
-      this.getAllQuiz(user),
-      this.getSeances(user),
-      this.getAssiduite(user),
-      this.getCertificats(user),
-      this.candidatureService ? this.candidatureService.listMine(user) : [],
-      this.getDossier(user),
-      this.getFormationsFiliere(user),
+      this.getDashboard(user).catch((e) => {
+        this.logger.warn(`bootstrap dashboard: ${e?.message}`);
+        return null;
+      }),
+      this.getFormations(user).catch((e) => {
+        this.logger.warn(`bootstrap formations: ${e?.message}`);
+        return [];
+      }),
+      this.getAllDevoirs(user).catch((e) => {
+        this.logger.warn(`bootstrap devoirs: ${e?.message}`);
+        return [];
+      }),
+      this.getAllQuiz(user).catch((e) => {
+        this.logger.warn(`bootstrap quiz: ${e?.message}`);
+        return [];
+      }),
+      this.getSeances(user).catch((e) => {
+        this.logger.warn(`bootstrap seances: ${e?.message}`);
+        return [];
+      }),
+      this.getAssiduite(user).catch((e) => {
+        this.logger.warn(`bootstrap assiduite: ${e?.message}`);
+        return { total: 0, presents: 0, retards: 0, absents: 0, justifies: 0, tauxAssiduite: 0 };
+      }),
+      this.getCertificats(user).catch((e) => {
+        this.logger.warn(`bootstrap certificats: ${e?.message}`);
+        return [];
+      }),
+      this.candidatureService
+        ? this.candidatureService.listMine(user).catch((e) => {
+            this.logger.warn(`bootstrap candidatures: ${e?.message}`);
+            return [];
+          })
+        : Promise.resolve([]),
+      this.getDossier(user).catch((e) => {
+        this.logger.warn(`bootstrap dossier: ${e?.message}`);
+        return { documents: [], regularisations: [] };
+      }),
+      this.getFormationsFiliere(user).catch((e) => {
+        this.logger.warn(`bootstrap formationsFiliere: ${e?.message}`);
+        return {
+          filieresChoisies: [],
+          hasFiliereChoisie: false,
+          totalFormations: 0,
+          formations: [],
+        };
+      }),
     ]);
 
     const result = {
@@ -454,13 +535,15 @@ export class ApprenantService {
 
     const formations = await this.prisma.formation.findMany({
       where: await this.formationFilterForUser(user),
-      include: {
+      select: {
+        id: true, titre: true, description: true, createdAt: true, actif: true, etablissementId: true,
         etablissement: {
           select: { id: true, nom: true, codeAntenne: true },
         },
         modules: {
           orderBy: { ordre: 'asc' },
-          include: {
+          select: {
+            id: true, titre: true, ordre: true, coefficient: true, formationId: true, createdAt: true,
             cours: { select: { id: true } },
             quiz: { select: { id: true } },
             devoirs: { select: { id: true } },
@@ -468,6 +551,7 @@ export class ApprenantService {
         },
         certificats: {
           where: { utilisateurId: user.id },
+          select: { id: true, numeroSerie: true, dateEmission: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -476,7 +560,7 @@ export class ApprenantService {
     const allCoursIds: string[] = [];
     for (const f of formations) {
       for (const m of f.modules) {
-        allCoursIds.push(...m.cours.map((c) => c.id));
+        allCoursIds.push(...(m as any).cours.map((c: any) => c.id));
       }
     }
 
@@ -493,13 +577,13 @@ export class ApprenantService {
     const completedSet = new Set(completedProgress.map((p) => p.coursId));
 
     const result = formations.map((f) => {
-      const fCoursIds = f.modules.flatMap((m) => m.cours.map((c) => c.id));
+      const fCoursIds = f.modules.flatMap((m) => (m as any).cours.map((c: any) => c.id));
       const fTotal = fCoursIds.length;
-      const fCompleted = fCoursIds.filter((id) => completedSet.has(id)).length;
-      const certif = f.certificats[0] || null;
+      const fCompleted = fCoursIds.filter((id: string) => completedSet.has(id)).length;
+      const certif = (f as any).certificats[0] || null;
       const fPourcentage = certif ? 100 : (fTotal > 0 ? Math.round((fCompleted / fTotal) * 100) : 0);
-      const totalQuiz = f.modules.reduce((acc, m) => acc + (m.quiz?.length || 0), 0);
-      const totalDevoirs = f.modules.reduce((acc, m) => acc + (m.devoirs?.length || 0), 0);
+      const totalQuiz = f.modules.reduce((acc, m) => acc + ((m as any).quiz?.length || 0), 0);
+      const totalDevoirs = f.modules.reduce((acc, m) => acc + ((m as any).devoirs?.length || 0), 0);
 
       return {
         id: f.id,
@@ -529,7 +613,12 @@ export class ApprenantService {
 
   /**
    * Récupère toutes les formations de l'établissement rattachées à la filière
-   * choisie par l'apprenant lors de sa candidature
+   * choisie par l'apprenant :
+   *   1. Filière principale (si renseignée sur Apprenant)
+   *   2. Intentions déclarées (ApprenantFiliereIntention)
+   *   3. Candidatures actives (hors REJETEE/EXPIREE/RETIREE)
+   * Fallback : si 0 filière résolue, on renvoie TOUTES les formations actives de l'établissement
+   * (évite écran vide pour nouveaux apprenants sans aucun vœu encore)
    */
   async getFormationsFiliere(user: any) {
     this.assertApprenant(user);
@@ -540,36 +629,71 @@ export class ApprenantService {
     const profile = await this.ensureApprenantProfile(user);
     const userEtabId = user.etablissementId;
 
-    // 1. Détecter les filières choisies par l'apprenant via ses candidatures
-    const candidatures = await this.prisma.candidature.findMany({
-      where: { apprenantId: profile.id },
-      include: {
-        session: {
-          include: {
-            filiere: true,
-            niveau: true,
-            etablissement: { select: { id: true, nom: true, codeAntenne: true } },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
+    // 1. Obtenir les filières de l'apprenant via le service d'authorisation centralisé
+    //    (Politique : filierePrincipale → intentions → candidatures actives)
+    const rawFilieres = await this.authz.getFilieresApprenant(user.id);
     const filieresMap = new Map<string, { id: string; libelle: string; code: string; description?: string | null }>();
-    for (const c of candidatures) {
-      if (c.session?.filiere) {
-        filieresMap.set(c.session.filiere.id, {
-          id: c.session.filiere.id,
-          libelle: c.session.filiere.libelle,
-          code: c.session.filiere.code,
-          description: c.session.filiere.description,
+    for (const f of rawFilieres) {
+      filieresMap.set(f.id, {
+        id: f.id,
+        libelle: f.libelle,
+        code: f.code,
+        description: f.description,
+      });
+    }
+    const filiereIds = Array.from(filieresMap.keys());
+
+    // 2. Récupérer depuis les SessionsAdmission les formations explicitement rattachées
+    //    à ces filières (chemin Session.formationId + Session.filiereId).
+    //    Ce chemin complète le lien nullable FormationReferentiel.
+    let sessionFormationIds: string[] = [];
+    let niveauByFormation = new Map<string, { id: string; libelle: string; code: string } | null>();
+    let filiereByFormationSession = new Map<string, { id: string; libelle: string; code: string; description?: string | null }>();
+
+    if (filiereIds.length > 0) {
+      try {
+        const sessionsAvecFormation = await this.prisma.sessionAdmission.findMany({
+          where: {
+            filiereId: { in: filiereIds },
+            ...(userEtabId
+              ? {
+                  OR: [
+                    { etablissementId: userEtabId },
+                    { etablissementsPartages: { has: userEtabId } },
+                  ],
+                }
+              : {}),
+          },
+          include: { filiere: true, niveau: true },
         });
+        sessionFormationIds = sessionsAvecFormation
+          .map((s) => s.formationId)
+          .filter((id): id is string => !!id);
+        for (const s of sessionsAvecFormation) {
+          if (s.formationId) {
+            filiereByFormationSession.set(s.formationId, {
+              id: s.filiere.id,
+              libelle: s.filiere.libelle,
+              code: s.filiere.code,
+              description: s.filiere.description,
+            });
+            niveauByFormation.set(s.formationId, {
+              id: s.niveau.id,
+              libelle: s.niveau.libelle,
+              code: s.niveau.code,
+            });
+          }
+        }
+      } catch (e: any) {
+        this.logger.warn(`getFormationsFiliere sessions: ${e?.message}`);
       }
     }
 
-    const filiereIds = Array.from(filieresMap.keys());
-
-    // 2. Filtre des formations de l'établissement
+    // 3. Filtre des formations :
+    //    - Soit rattachées via FormationReferentiel.filiereId (chemin classique)
+    //    - Soit rattachées via SessionAdmission.formationId (chemin session directe)
+    //    Si aucune filière n'est détectée, on affiche TOUTES les formations actives
+    //    de l'établissement pour éviter un catalogue vide au premier démarrage.
     const whereFormation: any = {
       actif: true,
     };
@@ -579,36 +703,94 @@ export class ApprenantService {
     }
 
     if (filiereIds.length > 0) {
-      whereFormation.formationReferentiel = {
-        filiereId: { in: filiereIds },
-      };
+      whereFormation.OR = [
+        { formationReferentiel: { filiereId: { in: filiereIds } } },
+        { sessionsAdmission: { some: { filiereId: { in: filiereIds } } } },
+        ...(sessionFormationIds.length > 0 ? [{ id: { in: sessionFormationIds } }] : []),
+      ];
     }
 
-    // 3. Récupérer les formations
-    const formations = await this.prisma.formation.findMany({
+    // 4. Récupérer les formations
+    // NOTE : select + include EXPLICITES. Aucun SELECT * implicite pour Module
+    // (colonne visibilite potentiellement absente si migration 20260921 pas appliquée en DB).
+    let formations: any[] = [];
+    try {
+      formations = await this.prisma.formation.findMany({
       where: whereFormation,
-      include: {
+      select: {
+        id: true, etablissementId: true, actif: true, aLaUne: true, ordre: true,
+        titre: true, code: true, description: true, duree: true, createdAt: true,
+        formationReferentielId: true,
         etablissement: { select: { id: true, nom: true, codeAntenne: true } },
         formationReferentiel: {
-          include: {
-            filiere: true,
-            niveau: true,
+          select: {
+            id: true,
+            libelle: true,
+            description: true,
+            filiereId: true,
+            niveauId: true,
+            filiere: { select: { id: true, libelle: true, code: true, description: true } },
+            niveau: { select: { id: true, libelle: true, code: true } },
           },
         },
         modules: {
           select: {
-            id: true,
-            titre: true,
-            ordre: true,
+            id: true, titre: true, ordre: true, coefficient: true,
             _count: { select: { cours: true, quiz: true, devoirs: true } },
           },
           orderBy: { ordre: 'asc' },
         },
       },
       orderBy: [{ aLaUne: 'desc' }, { ordre: 'asc' }, { titre: 'asc' }],
-    });
+      });
+    } catch (e: any) {
+      this.logger.warn(`getFormationsFiliere query: ${e?.message}`);
+      formations = [];
+    }
 
-    // 4. Charger les inscriptions actives ou réservées de l'apprenant
+    // 4-bis. Sécurité de fallback :
+    // Si l'apprenant a bien une/plusieurs filières choisies MAIS que
+    // la clause OR (referentiel + sessions) n'a raméné AUCUNE formation
+    // (cas typique : formationReferentielId pas encore résolu + session.formationId null)
+    // alors on revient au catalogue complet pour ne pas afficher un écran vide.
+    if (filiereIds.length > 0 && formations.length === 0) {
+      this.logger.warn(
+        `getFormationsFiliere fallback : filieres [${filiereIds.join(',')}] ` +
+        `n'ont remonté aucune formation via referentiel/session → retour catalogue complet (user ${user.id})`,
+      );
+      const whereFallback: any = { actif: true };
+      if (userEtabId) whereFallback.etablissementId = userEtabId;
+      formations = await this.prisma.formation.findMany({
+        where: whereFallback,
+        select: {
+          id: true, etablissementId: true, actif: true, aLaUne: true, ordre: true,
+          titre: true, code: true, description: true, duree: true, createdAt: true,
+          formationReferentielId: true,
+          etablissement: { select: { id: true, nom: true, codeAntenne: true } },
+          formationReferentiel: {
+            select: {
+              id: true,
+              libelle: true,
+              description: true,
+              filiereId: true,
+              niveauId: true,
+              filiere: { select: { id: true, libelle: true, code: true, description: true } },
+              niveau: { select: { id: true, libelle: true, code: true } },
+            },
+          },
+          modules: {
+            select: {
+              id: true, titre: true, ordre: true, coefficient: true,
+              _count: { select: { cours: true, quiz: true, devoirs: true } },
+            },
+            orderBy: { ordre: 'asc' },
+          },
+        },
+        orderBy: [{ aLaUne: 'desc' }, { ordre: 'asc' }, { titre: 'asc' }],
+      });
+    }
+
+    // 5. Charger les inscriptions actives ou réservées de l'apprenant
     const mesInscriptions = await this.prisma.inscription.findMany({
       where: {
         apprenantId: profile.id,
@@ -624,11 +806,14 @@ export class ApprenantService {
 
     const inscriptionMap = new Map(mesInscriptions.map((i) => [i.formationId, i]));
 
-    // 5. Annoter le statut de chaque formation pour l'apprenant
+    // 6. Annoter le statut de chaque formation pour l'apprenant
     const result = formations.map((f) => {
       const insc = inscriptionMap.get(f.id);
-      const filiereId = f.formationReferentiel?.filiereId;
-      const filiereInfo = filiereId ? filieresMap.get(filiereId) : null;
+      const filiereRefId = f.formationReferentiel?.filiereId;
+      const filiereInfo = filiereRefId
+        ? filieresMap.get(filiereRefId) ?? null
+        : (filiereByFormationSession.get(f.id) ?? null);
+      const niveauInfo = f.formationReferentiel?.niveau ?? niveauByFormation.get(f.id) ?? null;
       const totalCours = f.modules.reduce((acc, m) => acc + (m._count?.cours || 0), 0);
       const totalQuiz = f.modules.reduce((acc, m) => acc + (m._count?.quiz || 0), 0);
       const totalDevoirs = f.modules.reduce((acc, m) => acc + (m._count?.devoirs || 0), 0);
@@ -645,8 +830,8 @@ export class ApprenantService {
         objectifs: f.objectifs,
         fraisInscription: f.fraisInscription,
         etablissement: f.etablissement,
-        filiere: f.formationReferentiel?.filiere || filiereInfo || null,
-        niveau: f.formationReferentiel?.niveau || null,
+        filiere: f.formationReferentiel?.filiere ?? filiereInfo ?? null,
+        niveau: niveauInfo,
         nbModules: f.modules.length,
         totalCours,
         totalQuiz,
@@ -680,11 +865,20 @@ export class ApprenantService {
 
     const formation = await this.prisma.formation.findUnique({
       where: { id: formationId },
-      include: {
+      select: {
+        id: true,
+        titre: true,
+        description: true,
+        etablissementId: true,
+        actif: true,
         etablissement: { select: { id: true, nom: true, codeAntenne: true } },
         modules: {
           orderBy: { ordre: 'asc' },
-          include: {
+          select: {
+            id: true,
+            titre: true,
+            ordre: true,
+            coefficient: true,
             cours: {
               orderBy: { createdAt: 'asc' },
               select: {
@@ -725,7 +919,10 @@ export class ApprenantService {
               },
             },
             evaluations: {
-              include: {
+              select: {
+                id: true,
+                titre: true,
+                noteMaximale: true,
                 notes: {
                   where: { utilisateurId: user.id },
                   select: { valeur: true, dateNotation: true },
@@ -932,9 +1129,15 @@ export class ApprenantService {
 
     const cours = await this.prisma.cours.findUnique({
       where: { id: coursId },
-      include: {
+      select: {
+        id: true,
+        titre: true,
+        contenu: true,
+        fileUrl: true,
         module: {
-          include: {
+          select: {
+            id: true,
+            titre: true,
             formation: { select: { id: true, titre: true, etablissementId: true } },
           },
         },
@@ -973,7 +1176,16 @@ export class ApprenantService {
 
     const cours = await this.prisma.cours.findUnique({
       where: { id: coursId },
-      include: { module: { select: { id: true, formationId: true, formation: true } } },
+      select: {
+        id: true,
+        module: {
+          select: {
+            id: true,
+            formationId: true,
+            formation: { select: { id: true, titre: true, etablissementId: true, actif: true } },
+          },
+        },
+      },
     });
 
     if (!cours) throw new NotFoundException('Cours introuvable.');
@@ -1046,9 +1258,18 @@ export class ApprenantService {
 
     const quiz = await this.prisma.quiz.findUnique({
       where: { id: quizId },
-      include: {
-        module: { include: { formation: true } },
-        questions: { orderBy: { ordre: 'asc' } },
+      select: {
+        id: true,
+        titre: true,
+        dureeMinutes: true,
+        moduleId: true,
+        module: {
+          select: {
+            id: true,
+            formation: { select: { id: true, titre: true, etablissementId: true, actif: true } },
+          },
+        },
+        questions: { orderBy: { ordre: 'asc' }, select: { id: true, enonce: true, ordre: true, options: true } },
         tentatives: {
           where: { apprenantId: user.id },
           select: { id: true, score: true, datePassage: true, reponses: true },
@@ -1107,14 +1328,20 @@ export class ApprenantService {
 
     const quiz = await this.prisma.quiz.findUnique({
       where: { id: quizId },
-      include: {
-        questions: { orderBy: { ordre: 'asc' } },
-        module: { include: { formation: true } },
+      select: {
+        id: true,
+        module: {
+          select: {
+            formationId: true,
+            formation: { select: { id: true, titre: true, etablissementId: true, actif: true } },
+          },
+        },
+        questions: { orderBy: { ordre: 'asc' }, select: { id: true, enonce: true, ordre: true, options: true } },
       },
     });
 
     if (!quiz) throw new NotFoundException('Quiz introuvable.');
-    await this.assertFormationAccess(quiz.module.formation.id, user, quiz.module.formation);
+    await this.assertFormationAccess(quiz.module.formation.id, user, quiz.module.formation, ResourceAction.WRITE);
 
     const existing = await this.prisma.tentativeQuiz.findUnique({
       where: { quizId_apprenantId: { quizId, apprenantId: user.id } },
@@ -1157,7 +1384,10 @@ export class ApprenantService {
     });
 
     // Déclenchement automatique de la certification BR-03 si conditions remplies
-    const autoCert = await this.triggerAutoCertification(quiz.module.formationId, user.id);
+    const autoCert = await this.triggerAutoCertification(
+      quiz.module.formationId || quiz.module.formation.id,
+      user.id,
+    );
 
     // Invalider le cache pour actualiser le dashboard et les modules
     this.invalidateUserCache(user.id);
@@ -1186,11 +1416,19 @@ export class ApprenantService {
 
     const devoir = await this.prisma.devoir.findUnique({
       where: { id: devoirId },
-      include: { module: { include: { formation: true } } },
+      select: {
+        id: true,
+        dateLimite: true,
+        module: {
+          select: {
+            formation: { select: { id: true, titre: true, etablissementId: true, actif: true } },
+          },
+        },
+      },
     });
 
     if (!devoir) throw new NotFoundException('Devoir introuvable.');
-    await this.assertFormationAccess(devoir.module.formation.id, user);
+    await this.assertFormationAccess(devoir.module.formation.id, user, undefined, ResourceAction.WRITE);
 
     if (devoir.dateLimite && new Date() > devoir.dateLimite) {
       throw new BadRequestException('La date limite pour déposer ce devoir est dépassée.');
@@ -1287,7 +1525,11 @@ export class ApprenantService {
           formation: formationWhere,
         },
       },
-      include: {
+      select: {
+        id: true,
+        titre: true,
+        consignes: true,
+        dateLimite: true,
         module: {
           select: {
             id: true,
@@ -1357,7 +1599,10 @@ export class ApprenantService {
           formation: formationWhere,
         },
       },
-      include: {
+      select: {
+        id: true,
+        titre: true,
+        dureeMinutes: true,
         module: {
           select: {
             id: true,
