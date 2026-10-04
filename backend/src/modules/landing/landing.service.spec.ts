@@ -74,6 +74,30 @@ describe('LandingService', () => {
     categorieFormation: {
       findMany: jest.fn().mockResolvedValue([]),
     },
+    landingPageFormateur: {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(1),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    landingPageCampus: {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(1),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    landingPagePartenaire: {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(1),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
   };
 
   const mockNotificationsService = {

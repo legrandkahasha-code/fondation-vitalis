@@ -33,7 +33,7 @@ export class QuizService {
           create: data.questions.map((q, i) => ({
             enonce: q.enonce,
             ordre: i + 1,
-            options: q.options,
+            options: q.options as any,
           })),
         },
       },
