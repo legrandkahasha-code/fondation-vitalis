@@ -111,16 +111,22 @@ async function bootstrap() {
         return callback(null, true);
       }
 
-      // En mode développement uniquement : tolérance pour localhost, 127.0.0.1, et previews cloud
-      if (!isProd) {
-        const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin);
-        const isRender = /^https:\/\/[\w-]+(\.[\w-]+)*\.onrender\.com$/.test(cleanOrigin);
-        const isVercel = /^https:\/\/[\w-]+(\.[\w-]+)*\.vercel\.app$/.test(cleanOrigin);
-        const isNetlify = /^https:\/\/[\w-]+(\.[\w-]+)*\.netlify\.app$/.test(cleanOrigin);
+      // Autoriser les domaines cloud officiels (Render, Vercel, Netlify) et le domaine de production
+      const isCloudFrontend =
+        /^https:\/\/[\w-]+(\.[\w-]+)*\.onrender\.com$/.test(cleanOrigin) ||
+        /^https:\/\/[\w-]+(\.[\w-]+)*\.vercel\.app$/.test(cleanOrigin) ||
+        /^https:\/\/[\w-]+(\.[\w-]+)*\.netlify\.app$/.test(cleanOrigin) ||
+        cleanOrigin === 'https://vitalis-center.cd' ||
+        cleanOrigin === 'https://www.vitalis-center.cd';
 
-        if (isLocalhost || isRender || isVercel || isNetlify) {
-          return callback(null, true);
-        }
+      if (isCloudFrontend) {
+        return callback(null, true);
+      }
+
+      // Tolérance pour localhost et développement local
+      const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin);
+      if (isLocalhost) {
+        return callback(null, true);
       }
 
       // Rejet propre sans lever d'exception 500
