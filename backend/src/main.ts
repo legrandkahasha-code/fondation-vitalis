@@ -54,10 +54,12 @@ async function bootstrap() {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"], // Sécurité ANSSI/OWASP : interdiction absolue de 'unsafe-inline' pour les scripts
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
           connectSrc: ["'self'", 'https:', 'wss:'],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
           frameAncestors: ["'none'"], // Protection anti-Clickjacking totale
         },
       },
@@ -208,6 +210,16 @@ async function bootstrap() {
       .addBearerAuth()
       .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
+
+    // Middleware spécifique Swagger UI pour ne pas affaiblir la CSP globale de l'API
+    app.use('/api/docs', (req, res, next) => {
+      res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self';",
+      );
+      next();
+    });
+
     // Optional protection for Swagger UI: require header `x-swagger-token` equal to SWAGGER_TOKEN
     try {
       app.use('/api/docs', swaggerProtect);

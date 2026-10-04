@@ -9,6 +9,7 @@ import { Role } from '../../common/enums/role.enum';
 import { addDays } from 'date-fns';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { StorageService } from '../../common/services/storage.service';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class UtilisateursService {
@@ -21,7 +22,90 @@ export class UtilisateursService {
     private notificationsService: NotificationsService,
     private identity: IdentityService,
     private storage: StorageService,
-  ) {}
+  ) {
+    // Purge automatique périodique (toutes les 6 heures) des tokens expirés et des logs anciens (Conformité RGPD)
+    if (process.env.NODE_ENV !== 'test') {
+      setInterval(() => {
+        this.purgeExpiredTokensAndAttempts().catch((err) => {
+          this.logger.warn(`Erreur lors de la purge automatique en arrière-plan: ${err?.message || err}`);
+        });
+      }, 6 * 60 * 60 * 1000);
+    }
+  }
+
+  /**
+   * Récupère les tentatives infructueuses depuis la base de données (avec cache mémoire ultra-rapide)
+   */
+  private async getFailedAttempts(email: string): Promise<{ count: number; lockedUntil?: Date | null }> {
+    const emailNorm = email.toLowerCase().trim();
+    try {
+      const record = await (this.prisma as any).loginAttempt.findUnique({
+        where: { email: emailNorm },
+      });
+      if (record) {
+        UtilisateursService.failedAttempts.set(emailNorm, {
+          count: record.count,
+          lockedUntil: record.lockedUntil ? new Date(record.lockedUntil) : undefined,
+        });
+        return { count: record.count, lockedUntil: record.lockedUntil };
+      }
+    } catch (e: any) {
+      // Fallback mémoire si table non migrée
+    }
+    const mem = UtilisateursService.failedAttempts.get(emailNorm);
+    return { count: mem?.count || 0, lockedUntil: mem?.lockedUntil || null };
+  }
+
+  /**
+   * Enregistre un échec de connexion (Persistance DB + cache mémoire)
+   */
+  private async recordFailedAttempt(email: string): Promise<{ count: number; lockedUntil?: Date }> {
+    const emailNorm = email.toLowerCase().trim();
+    const current = await this.getFailedAttempts(emailNorm);
+    const newCount = current.count + 1;
+    let lockedUntil: Date | undefined;
+
+    if (newCount >= 5) {
+      lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes (Norme ANSSI)
+    }
+
+    UtilisateursService.failedAttempts.set(emailNorm, { count: newCount, lockedUntil });
+
+    try {
+      await (this.prisma as any).loginAttempt.upsert({
+        where: { email: emailNorm },
+        create: {
+          email: emailNorm,
+          count: newCount,
+          lockedUntil: lockedUntil || null,
+        },
+        update: {
+          count: newCount,
+          lockedUntil: lockedUntil || null,
+          updatedAt: new Date(),
+        },
+      });
+    } catch (e: any) {
+      this.logger.warn(`Impossible de persister loginAttempt en base: ${e?.message || e}`);
+    }
+
+    return { count: newCount, lockedUntil };
+  }
+
+  /**
+   * Réinitialise les tentatives infructueuses (Succès de connexion ou Déverrouillage Admin)
+   */
+  private async clearFailedAttempts(email: string): Promise<void> {
+    const emailNorm = email.toLowerCase().trim();
+    UtilisateursService.failedAttempts.delete(emailNorm);
+    try {
+      await (this.prisma as any).loginAttempt.deleteMany({
+        where: { email: emailNorm },
+      });
+    } catch (e: any) {
+      // Ignorer si absent
+    }
+  }
 
   async register(dto: RegisterDto, ipAdresse: string = '0.0.0.0', auteurId?: string) {
     // BR-01 : Vérifier que l'établissement existe et est actif
@@ -109,12 +193,13 @@ export class UtilisateursService {
 
   async login(dto: LoginDto, ipAdresse: string = '0.0.0.0') {
     const emailNorm = dto.email.toLowerCase().trim();
-    const attempts = UtilisateursService.failedAttempts.get(emailNorm);
+    const attempts = await this.getFailedAttempts(emailNorm);
     const now = new Date();
 
     // Vérification du verrouillage temporaire (Règle ANSSI)
-    if (attempts?.lockedUntil && attempts.lockedUntil > now) {
-      const minutesRemaining = Math.ceil((attempts.lockedUntil.getTime() - now.getTime()) / 60000);
+    if (attempts?.lockedUntil && new Date(attempts.lockedUntil) > now) {
+      const lockDate = new Date(attempts.lockedUntil);
+      const minutesRemaining = Math.max(1, Math.ceil((lockDate.getTime() - now.getTime()) / 60000));
       throw new ForbiddenException(
         `Compte temporairement verrouillé pour des raisons de sécurité suite à 5 tentatives infructueuses. Veuillez réessayer dans ${minutesRemaining} minute(s). (Norme ANSSI)`,
       );
@@ -128,12 +213,9 @@ export class UtilisateursService {
     const isPasswordValid = user ? await bcrypt.compare(dto.password, user.password) : false;
 
     if (!user || !isPasswordValid) {
-      const curCount = (attempts?.count || 0) + 1;
-      let lockedUntil: Date | undefined;
-      if (curCount >= 5) {
-        lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // Verrouillage 15 minutes
-      }
-      UtilisateursService.failedAttempts.set(emailNorm, { count: curCount, lockedUntil });
+      const recorded = await this.recordFailedAttempt(emailNorm);
+      const curCount = recorded.count;
+      const lockedUntil = recorded.lockedUntil;
 
       // Journalisation de sécurité dans AuditLog
       try {
@@ -160,7 +242,7 @@ export class UtilisateursService {
     }
 
     // Réinitialisation du compteur après succès
-    UtilisateursService.failedAttempts.delete(emailNorm);
+    await this.clearFailedAttempts(emailNorm);
 
     // Vérifier si le compte utilisateur est actif
     if (!user.actif) {
@@ -614,8 +696,8 @@ export class UtilisateursService {
 
     // Statut de sécurité ANSSI
     const emailNorm = user.email.toLowerCase().trim();
-    const attempts = UtilisateursService.failedAttempts.get(emailNorm);
-    const estVerrouille = !!(attempts?.lockedUntil && attempts.lockedUntil > new Date());
+    const attempts = await this.getFailedAttempts(emailNorm);
+    const estVerrouille = !!(attempts?.lockedUntil && new Date(attempts.lockedUntil) > new Date());
 
     return {
       ...safeUser,
@@ -644,9 +726,9 @@ export class UtilisateursService {
       data: { password: hashedPassword },
     });
 
-    // Déverrouiller le compte si verrouillé
+    // Déverrouiller le compte si verrouillé (Persistant DB)
     const emailNorm = user.email.toLowerCase().trim();
-    UtilisateursService.failedAttempts.delete(emailNorm);
+    await this.clearFailedAttempts(emailNorm);
     this.invalidateUserValidateCache(userId);
 
     try {
@@ -687,7 +769,7 @@ export class UtilisateursService {
     }
 
     const emailNorm = user.email.toLowerCase().trim();
-    UtilisateursService.failedAttempts.delete(emailNorm);
+    await this.clearFailedAttempts(emailNorm);
 
     try {
       await this.prisma.auditLog.create({
@@ -1009,7 +1091,147 @@ export class UtilisateursService {
 
     return { success: true, document: doc, message: 'Document soumis avec succès, en attente de validation.' };
   }
+
+  /**
+   * Purge automatique des tokens expirés/révoqués et des logs de tentatives obsolètes (RGPD & ANSSI)
+   */
+  async purgeExpiredTokensAndAttempts(): Promise<{ purgedTokens: number; purgedAttempts: number }> {
+    const now = new Date();
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    let purgedTokens = 0;
+    let purgedAttempts = 0;
+
+    try {
+      const tokenRes = await (this.prisma as any).refreshToken.deleteMany({
+        where: {
+          OR: [
+            { revoked: true },
+            { expiresAt: { lt: now } },
+          ],
+        },
+      });
+      purgedTokens = tokenRes.count;
+      if (purgedTokens > 0) {
+        this.logger.log(`Purge de sécurité : ${purgedTokens} refresh token(s) expirés ou révoqués supprimés.`);
+      }
+    } catch (e: any) {
+      this.logger.warn(`Erreur lors de la purge des refresh tokens: ${e?.message || e}`);
+    }
+
+    try {
+      const attemptRes = await (this.prisma as any).loginAttempt.deleteMany({
+        where: {
+          lockedUntil: null,
+          updatedAt: { lt: oneDayAgo },
+        },
+      });
+      purgedAttempts = attemptRes.count;
+    } catch (e: any) {
+      // Table non existante ou erreur mineure
+    }
+
+    return { purgedTokens, purgedAttempts };
+  }
+
+  /**
+   * Droit à la portabilité des données personnelles (Article 20 RGPD)
+   * Exporte un dossier complet structuré des données de l'utilisateur
+   */
+  async exportUserData(userId: string) {
+    const user = await this.prisma.utilisateur.findUnique({
+      where: { id: userId },
+      include: {
+        etablissement: { select: { id: true, nom: true, codeAntenne: true } },
+        apprenantProfile: true,
+        notesApprenant: { include: { evaluation: { select: { id: true, titre: true } } } },
+        presences: { include: { seance: { select: { id: true, dateHeureDebut: true, dateHeureFin: true } } } },
+        certificats: true,
+        progress: true,
+        documentsDossier: { select: { id: true, titre: true, typeDocument: true, statut: true, createdAt: true } },
+        auditLogs: {
+          take: 50,
+          orderBy: { timestamp: 'desc' },
+          select: { id: true, timestamp: true, action: true, ipAdresse: true },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable.');
+    }
+
+    const { password, ...safeUser } = user;
+
+    return {
+      rgpdConformite: 'Article 20 - Droit à la portabilité des données',
+      dateExport: new Date().toISOString(),
+      utilisateur: safeUser,
+    };
+  }
+
+  /**
+   * Droit à l'effacement / Droit à l'oubli (Article 17 RGPD)
+   * Anonymise irréversiblement les données personnelles tout en préservant l'intégrité référentielle
+   */
+  async anonymizeUserData(userId: string, auteurId?: string, ipAdresse: string = '0.0.0.0') {
+    const user = await this.prisma.utilisateur.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable.');
+    }
+
+    // 1. Révoquer et supprimer immédiatement tous les refresh tokens
+    try {
+      await (this.prisma as any).refreshToken.deleteMany({
+        where: { utilisateurId: userId },
+      });
+    } catch {}
+
+    // 2. Nettoyer les tentatives de connexion
+    await this.clearFailedAttempts(user.email);
+    this.invalidateUserValidateCache(userId);
+
+    // 3. Anonymisation irréversible des champs PII
+    const anonymousEmail = `anonymized_${user.id.slice(0, 8)}_${Date.now()}@rgpd.vitalis.internal`;
+    const randomHash = await bcrypt.hash(randomUUID(), 12);
+
+    const anonymized = await this.prisma.utilisateur.update({
+      where: { id: userId },
+      data: {
+        nom: 'Anonymisé',
+        prenom: 'Utilisateur',
+        email: anonymousEmail,
+        password: randomHash,
+        photoUrl: null,
+        actif: false,
+      },
+    });
+
+    // 4. Trace légale dans l'Audit Log
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          auteurId: auteurId || userId,
+          action: 'RGPD_DROIT_EFFACEMENT_ANONYMISATION',
+          tableCible: 'utilisateurs',
+          details: {
+            userId,
+            action: 'ANONYMISATION_IRREVERSIBLE',
+            date: new Date().toISOString(),
+          },
+          ipAdresse,
+        },
+      });
+    } catch {}
+
+    return {
+      success: true,
+      message: 'Les données personnelles de cet utilisateur ont été anonymisées conformément à l’Article 17 du RGPD.',
+      userId,
+    };
+  }
 }
+
 
 
 

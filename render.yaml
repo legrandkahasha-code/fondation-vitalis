@@ -31,7 +31,13 @@ services:
       - key: SWAGGER_ENABLED
         value: "false"
       - key: STORAGE_MODE
-        value: local
+        value: supabase
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: vitalis-media
 
   # -------------------------------------------------------------
   # 2. FRONTEND (Angular SPA Static Site)

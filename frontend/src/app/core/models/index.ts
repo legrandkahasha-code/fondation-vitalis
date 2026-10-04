@@ -44,6 +44,9 @@ export interface Formation {
   fraisInscription?: number | null;
   etablissementId: string;
   formationReferentielId?: string | null;
+  syllabusUrl?: string | null;
+  syllabusNomFichier?: string | null;
+  imageUrl?: string | null;
   createdAt?: string;
   modules?: Module[];
   etablissement?: { id?: string; nom: string; codeAntenne?: string; typeEtablissement?: string };
@@ -105,6 +108,7 @@ export interface Cours {
   titre: string;
   contenu?: string;
   fileUrl?: string;
+  dureeMinutes?: number | null;
   moduleId?: string;
   complete?: boolean;
   module?: { formation?: Formation };
@@ -210,6 +214,26 @@ export interface LandingPageSettings {
   contactWhatsapp?: string;
   whatsappMessage?: string;
   whatsappActif?: boolean;
+  videoActif?: boolean;
+  videoSousTitre?: string;
+  videoTitre?: string;
+  videoDescription?: string;
+  videoBoutonPrincipal?: string;
+  videoBoutonSecondaire?: string;
+  videoBoutonSecondaireUrl?: string;
+  videoPresentationUrl?: string;
+  videoPosterUrl?: string;
+  videoBadgeHaut?: string;
+  videoBadgeBas?: string;
+  videoTitreOverlay?: string;
+  videoSousTitreOverlay?: string;
+  videoLegende?: string;
+  videoDuree?: string;
+  socialLinkedin?: string;
+  socialFacebook?: string;
+  socialYoutube?: string;
+  mapEmbedUrl?: string;
+  liveActivityTexte?: string;
   footerDescription?: string;
   footerTutelleTexte?: string;
   footerCopyright?: string;
@@ -229,6 +253,7 @@ export interface LandingPageSection {
   titre: string;
   sousTitre?: string;
   description?: string;
+  categorie?: string;
   ordre: number;
   couleur?: string;
   icone?: string;
@@ -239,11 +264,20 @@ export interface LandingPageSection {
 
 export interface LandingPageTemoignage {
   id?: string;
-  nom: string;
-  initiales: string;
-  role: string;
-  promotion?: string;
-  citation: string;
+  // Champs originaux (rétrocompatibilité)
+  nom?: string;
+  initiales?: string;
+  role?: string;
+  citation?: string;
+  // Champs enrichis (touche humaine réelle)
+  nomPrenom?: string;    // Prénom + Nom complet
+  photo?: string;         // URL photo portrait réelle
+  photoUrl?: string;
+  fonction?: string;      // Poste actuel
+  entreprise?: string;    // Employeur actuel
+  texte?: string;         // Citation longue humanisée
+  note?: number;          // Note sur 5
+  promotion?: string;     // Ex: "Promotion 2024 — Dev Web"
   couleur?: string;
   ordre: number;
   actif?: boolean;
@@ -269,6 +303,55 @@ export interface LandingPageActualite {
   updatedAt?: string;
 }
 
+export interface LandingPageFormateur {
+  id?: string;
+  nom: string;
+  titre: string;
+  specialite: string;
+  experience: string;
+  photoUrl?: string;
+  photo?: string;
+  linkedin?: string;
+  ordre?: number;
+  actif?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LandingPageCampus {
+  id?: string;
+  titre: string;
+  description: string;
+  photoUrl?: string;
+  photo?: string;
+  badge?: string;
+  equipements: string;
+  ordre?: number;
+  actif?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LandingPagePartenaire {
+  id?: string;
+  nom: string;
+  logoUrl?: string;
+  logo?: string;
+  secteur?: string;
+  siteWeb?: string;
+  ordre?: number;
+  actif?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LandingNewsletterAbonne {
+  id: string;
+  email: string;
+  actif: boolean;
+  createdAt: string;
+}
+
 export interface PublicLandingData {
   settings: LandingPageSettings;
   sections: {
@@ -280,6 +363,9 @@ export interface PublicLandingData {
   };
   temoignages?: LandingPageTemoignage[];
   actualites?: LandingPageActualite[];
+  formateurs?: LandingPageFormateur[];
+  campus?: LandingPageCampus[];
+  partenaires?: LandingPagePartenaire[];
   categories?: CategorieFormation[];
   formations: Array<{
     id: string;

@@ -27,6 +27,10 @@ export class UpdateCoursDto {
   @IsOptional()
   @IsString()
   fileUrl?: string;
+
+  @IsOptional()
+  @IsNumber()
+  dureeMinutes?: number;
 }
 
 export class UpdateEvaluationDto {

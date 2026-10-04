@@ -19,15 +19,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     if (!PrismaService.pool) {
-      const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+      const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
       if (!connectionString) {
         throw new Error('DATABASE_URL or DIRECT_URL must be defined in the environment.');
       }
       PrismaService.pool = new Pool({
         connectionString,
-        connectionTimeoutMillis: 20000,
-        idleTimeoutMillis: 30000,
-        max: 20,
+        connectionTimeoutMillis: 15000,
+        idleTimeoutMillis: 20000,
+        max: 8,
         keepAlive: true,
         ssl: { rejectUnauthorized: false },
       });

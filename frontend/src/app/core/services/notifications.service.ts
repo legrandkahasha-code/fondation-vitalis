@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, NgZone } from '@angular/core';
-import { ReplaySubject, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
@@ -44,6 +44,7 @@ export interface NotificationPayload {
   data?: Record<string, any>;
   timestamp?: string;
   event?: string;
+  link?: string;
   [key: string]: any;
 }
 
@@ -73,7 +74,7 @@ function isTokenExpired(token: string, bufferSec = 30): boolean {
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsService implements OnDestroy {
-  private subject = new ReplaySubject<NotificationPayload>(1);
+  private subject = new Subject<NotificationPayload>();
   private es: EventSource | null = null;
   private reconnectAttempts = 0;
   private reconnectTimer: any = null;
@@ -148,7 +149,12 @@ export class NotificationsService implements OnDestroy {
     this.es.onmessage = (e) => {
       this.ngZone.run(() => {
         try {
-          this.subject.next(JSON.parse(e.data) as NotificationPayload);
+          const payload = JSON.parse(e.data) as NotificationPayload;
+          // Filtre strict : Ne jamais propager les heartbeats/keepalives techniques vers l'interface utilisateur
+          if (!payload || payload.type === 'HEARTBEAT' || (payload as any).type === 'heartbeat') {
+            return;
+          }
+          this.subject.next(payload);
         } catch {
           // Ignorer les messages malformés
         }

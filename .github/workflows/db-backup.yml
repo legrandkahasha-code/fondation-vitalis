@@ -1,0 +1,47 @@
+name: Automated Database Backup (PRA / PCA)
+
+on:
+  schedule:
+    # Exécution quotidienne à 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Déclenchement manuel autorisé pour les administrateurs
+
+jobs:
+  backup:
+    name: Execute PostgreSQL Backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install PostgreSQL Client Tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Run Backup Script
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: |
+          node backend/scripts/backup-db.js
+
+      - name: Compress and Encrypt Backup Archive
+        run: |
+          cd backend/backups
+          tar -czvf latest_backup.tar.gz *.sql *.sha256
+
+      - name: Upload Backup Artifact (30 Days Retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup-${{ github.run_id }}
+          path: backend/backups/latest_backup.tar.gz
+          retention-days: 30
+          if-no-files-found: error

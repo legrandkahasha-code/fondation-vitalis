@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription, filter } from 'rxjs';
 import { ApprenantService, ApprenantCertificat, ApprenantFormation } from '../../../core/services/apprenant.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -356,12 +357,12 @@ import { ToastService } from '../../../core/services/toast.service';
 
                 <!-- ── Actions Bar (100% Fonctionnelle & Responsive) ── -->
                 <div class="px-5 pb-5">
-                  <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 pt-4 border-t border-[#D7DBDE]">
+                  <div class="grid grid-cols-2 sm:flex sm:items-center sm:flex-wrap gap-2 pt-4 border-t border-[#D7DBDE]">
                     
                     <!-- 1. Aperçu Officiel (Modal) -->
                     <button
                       type="button"
-                      (click)="ouvrirApercu(c)"
+                      (click)="ouvrirApercu(c, 'diplome')"
                       class="px-3 py-2.5 rounded-xs bg-[#E7F1FA] hover:bg-[#1C75BC] text-[#1C75BC] hover:text-white border border-[#1C75BC]/30 hover:border-[#1C75BC] text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       title="Aperçu officiel et impression"
                     >
@@ -377,21 +378,57 @@ import { ToastService } from '../../../core/services/toast.service';
                       type="button"
                       (click)="telechargerPdf(c)"
                       [disabled]="downloadingId === c.id"
-                      class="col-span-2 sm:flex-1 px-4 py-2.5 rounded-xs bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold text-center shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                      class="px-3 py-2.5 rounded-xs bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold text-center shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
                       title="Télécharger le document PDF original"
                     >
                       @if (downloadingId === c.id) {
-                        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Génération...</span>
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>PDF...</span>
                       } @else {
                         <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        <span>Télécharger PDF</span>
+                        <span>PDF</span>
                       }
                     </button>
 
-                    <!-- 3. Vérifier en ligne sur le registre -->
+                    <!-- 3. Ajouter à LinkedIn (Coursera / Credly benchmark) -->
+                    <button
+                      type="button"
+                      (click)="ajouterALinkedIn(c)"
+                      class="px-3 py-2.5 rounded-xs bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      title="Ajouter ce certificat officiel à votre profil LinkedIn"
+                    >
+                      <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
+                        <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z"/>
+                      </svg>
+                      <span>LinkedIn</span>
+                    </button>
+
+                    <!-- 4. Copier le lien direct de vérification -->
+                    <button
+                      type="button"
+                      (click)="copierLienVerification(c)"
+                      class="px-3 py-2.5 rounded-xs text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border"
+                      [class]="copiedLinkId === c.id
+                        ? 'bg-[#E7F1EA] border-[#276B44] text-[#276B44]'
+                        : 'bg-[#F5F6F7] border-[#D7DBDE] text-[#4B5157] hover:bg-[#D7DBDE] hover:text-[#1B1D1F]'"
+                      title="Copier le lien public de vérification"
+                    >
+                      @if (copiedLinkId === c.id) {
+                        <svg class="w-4 h-4 shrink-0 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Copié !</span>
+                      } @else {
+                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        <span>Copier lien</span>
+                      }
+                    </button>
+
+                    <!-- 5. Vérifier en ligne sur le registre -->
                     <a
                       [routerLink]="['/certificats/verifier', c.numeroSerie]"
                       class="px-3 py-2.5 rounded-xs bg-[#F5F6F7] hover:bg-[#D7DBDE] text-[#1B1D1F] border border-[#D7DBDE] text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
@@ -403,30 +440,7 @@ import { ToastService } from '../../../core/services/toast.service';
                       <span>Vérifier</span>
                     </a>
 
-                    <!-- 4. Partager (Web Share API ou Copier lien) -->
-                    <button
-                      type="button"
-                      (click)="partagerCertificat(c)"
-                      class="px-3 py-2.5 rounded-xs text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border"
-                      [class]="copiedLinkId === c.id
-                        ? 'bg-[#E7F1EA] border-[#276B44] text-[#276B44]'
-                        : 'bg-[#F5F6F7] border-[#D7DBDE] text-[#4B5157] hover:bg-[#D7DBDE] hover:text-[#1B1D1F]'"
-                      title="Partager le lien de vérification officiel"
-                    >
-                      @if (copiedLinkId === c.id) {
-                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>Copié</span>
-                      } @else {
-                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                        </svg>
-                        <span>Partager</span>
-                      }
-                    </button>
-
-                    <!-- 5. Retour vers formation liée -->
+                    <!-- 6. Retour vers formation liée -->
                     <a
                       [routerLink]="['/apprenant/formations', c.formation.id]"
                       class="px-3 py-2.5 rounded-xs bg-[#F5F6F7] hover:bg-[#D7DBDE] text-[#4B5157] hover:text-[#1B1D1F] border border-[#D7DBDE] text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
@@ -447,15 +461,15 @@ import { ToastService } from '../../../core/services/toast.service';
         }
       }
 
-      <!-- ══════════ MODAL D'APERÇU OFFICIEL DU CERTIFICAT ══════════ -->
+      <!-- ══════════ MODAL D'APERÇU OFFICIEL DU CERTIFICAT (DIPLÔME + PDF IN-APP) ══════════ -->
       @if (certificatApercu) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
           <div
-            class="bg-white border-2 border-[#1C75BC] rounded-xs shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
+            class="bg-white border-2 border-[#1C75BC] rounded-xs shadow-2xl max-w-3xl w-full overflow-hidden flex flex-col max-h-[92vh]"
             (click)="$event.stopPropagation()"
           >
-            <!-- Header du Modal -->
-            <div class="px-6 py-4 bg-[#124F80] text-white flex items-center justify-between border-b-2 border-[#F0791E]">
+            <!-- Header du Modal avec Sélecteur d'Onglet (Diplôme / PDF Direct) -->
+            <div class="px-6 py-4 bg-[#124F80] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-[#F0791E]">
               <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-xs bg-[#F0791E] flex items-center justify-center text-white font-bold">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -467,77 +481,143 @@ import { ToastService } from '../../../core/services/toast.service';
                   <p class="text-[11px] text-[#E7F1FA] font-mono">N° {{ certificatApercu.numeroSerie }}</p>
                 </div>
               </div>
-              <button
-                type="button"
-                (click)="fermerApercu()"
-                class="text-white/80 hover:text-white text-lg font-bold p-1 cursor-pointer"
-                title="Fermer"
-              >
-                ✕
-              </button>
+
+              <!-- Onglets de bascule Diplôme / PDF In-App -->
+              <div class="flex items-center gap-2 self-end sm:self-center">
+                <div class="flex items-center bg-white/10 rounded-xs p-0.5 border border-white/20">
+                  <button
+                    type="button"
+                    (click)="basculerOnglet('diplome')"
+                    class="px-2.5 py-1 text-[11px] font-bold rounded-xs transition-all cursor-pointer"
+                    [class]="apercuOnglet === 'diplome' ? 'bg-[#F0791E] text-white shadow-xs' : 'text-white/80 hover:text-white'"
+                  >
+                    Diplôme
+                  </button>
+                  <button
+                    type="button"
+                    (click)="basculerOnglet('pdf')"
+                    class="px-2.5 py-1 text-[11px] font-bold rounded-xs transition-all cursor-pointer flex items-center gap-1"
+                    [class]="apercuOnglet === 'pdf' ? 'bg-[#F0791E] text-white shadow-xs' : 'text-white/80 hover:text-white'"
+                  >
+                    <span>PDF In-App</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  (click)="fermerApercu()"
+                  class="text-white/80 hover:text-white text-lg font-bold p-1 cursor-pointer"
+                  title="Fermer"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
-            <!-- Corps du Diplôme (Rendu Précieux) -->
-            <div class="p-6 sm:p-8 overflow-y-auto space-y-6 bg-radial from-white to-[#F5F6F7]">
-              <!-- En-tête officiel Ministère -->
-              <div class="text-center space-y-1 pb-4 border-b border-[#D7DBDE]">
-                <p class="text-[10px] font-bold tracking-widest text-[#4B5157] uppercase">RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</p>
-                <p class="text-xs font-bold text-[#1B1D1F] uppercase">Ministère de la Formation Professionnelle</p>
-                <p class="text-[11px] font-semibold text-[#1C75BC]">{{ certificatApercu.formation.etablissement.nom || 'Vitalis Center EUP' }}</p>
-              </div>
-
-              <div class="text-center space-y-3">
-                <p class="text-xs italic text-[#4B5157]">Il est officiellement certifié que les compétences du programme :</p>
-                <h4 class="text-lg sm:text-xl font-extrabold text-[#124F80] font-heading px-4">
-                  « {{ certificatApercu.formation.titre }} »
-                </h4>
-                <p class="text-xs text-[#4B5157]">ont été validées avec succès conformément aux exigences réglementaires BR-03.</p>
-              </div>
-
-              <!-- Cartouche Note & Mention -->
-              <div class="grid grid-cols-2 gap-4 p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center">
-                <div>
-                  <p class="text-[10px] font-bold text-[#4B5157] uppercase">Moyenne Pondérée</p>
-                  <p class="text-xl font-black font-mono mt-0.5" [class]="getMoyenneColor(certificatApercu.moyenneGenerale)">
-                    {{ certificatApercu.moyenneGenerale }} / 20
-                  </p>
-                  <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-xs bg-[#E7F1EA] text-[#276B44]">
-                    Mention {{ getMentionLabel(certificatApercu.moyenneGenerale) }}
-                  </span>
+            <!-- CONTENU DE L'ONGLET SÉLECTIONNÉ -->
+            @if (apercuOnglet === 'diplome') {
+              <!-- Corps du Diplôme (Rendu Calligraphié Précieux) -->
+              <div class="p-6 sm:p-8 overflow-y-auto space-y-6 bg-radial from-white to-[#F5F6F7]">
+                <!-- En-tête officiel Ministère -->
+                <div class="text-center space-y-1 pb-4 border-b border-[#D7DBDE]">
+                  <p class="text-[10px] font-bold tracking-widest text-[#4B5157] uppercase">RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</p>
+                  <p class="text-xs font-bold text-[#1B1D1F] uppercase">Ministère de la Formation Professionnelle</p>
+                  <p class="text-[11px] font-semibold text-[#1C75BC]">{{ certificatApercu.formation.etablissement.nom || 'Vitalis Center EUP' }}</p>
                 </div>
-                <div>
-                  <p class="text-[10px] font-bold text-[#4B5157] uppercase">Date de Délivrance</p>
-                  <p class="text-sm font-bold text-[#1B1D1F] mt-1 font-mono">
-                    {{ formatDateFR(certificatApercu.dateEmission) }}
-                  </p>
-                  <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-xs bg-[#E7F1FA] text-[#1C75BC]">
-                    Registre EUP Actif
-                  </span>
-                </div>
-              </div>
 
-              <!-- Empreinte numérique anti-fraude -->
-              <div class="p-3 bg-[#E6F6F5] border border-[#2AA9A0] rounded-xs space-y-1 text-center sm:text-left">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-bold uppercase tracking-wider" style="color:#1B6B62">Sceau Cryptographique SHA-256</span>
-                  <span class="text-[10px] font-mono text-[#276B44] font-bold">✓ Intégrité Vérifiée</span>
+                <div class="text-center space-y-3">
+                  <p class="text-xs italic text-[#4B5157]">Il est officiellement certifié que les compétences du programme :</p>
+                  <h4 class="text-lg sm:text-xl font-extrabold text-[#124F80] font-heading px-4">
+                    « {{ certificatApercu.formation.titre }} »
+                  </h4>
+                  <p class="text-xs text-[#4B5157]">ont été validées avec succès conformément aux exigences réglementaires BR-03.</p>
                 </div>
-                <p class="font-mono text-[9px] break-all" style="color:#1B6B62">{{ certificatApercu.hashVerification }}</p>
+
+                <!-- Cartouche Note & Mention -->
+                <div class="grid grid-cols-2 gap-4 p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center">
+                  <div>
+                    <p class="text-[10px] font-bold text-[#4B5157] uppercase">Moyenne Pondérée</p>
+                    <p class="text-xl font-black font-mono mt-0.5" [class]="getMoyenneColor(certificatApercu.moyenneGenerale)">
+                      {{ certificatApercu.moyenneGenerale }} / 20
+                    </p>
+                    <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-xs bg-[#E7F1EA] text-[#276B44]">
+                      Mention {{ getMentionLabel(certificatApercu.moyenneGenerale) }}
+                    </span>
+                  </div>
+                  <div>
+                    <p class="text-[10px] font-bold text-[#4B5157] uppercase">Date de Délivrance</p>
+                    <p class="text-sm font-bold text-[#1B1D1F] mt-1 font-mono">
+                      {{ formatDateFR(certificatApercu.dateEmission) }}
+                    </p>
+                    <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-xs bg-[#E7F1FA] text-[#1C75BC]">
+                      Registre EUP Actif
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Empreinte numérique anti-fraude -->
+                <div class="p-3 bg-[#E6F6F5] border border-[#2AA9A0] rounded-xs space-y-1 text-center sm:text-left">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold uppercase tracking-wider" style="color:#1B6B62">Sceau Cryptographique SHA-256</span>
+                    <span class="text-[10px] font-mono text-[#276B44] font-bold">✓ Intégrité Vérifiée</span>
+                  </div>
+                  <p class="font-mono text-[9px] break-all" style="color:#1B6B62">{{ certificatApercu.hashVerification }}</p>
+                </div>
               </div>
-            </div>
+            } @else {
+              <!-- Corps PDF In-App Direct (Coursera / Canvas style) -->
+              <div class="p-4 bg-[#F5F6F7] flex-1 overflow-hidden min-h-[500px] flex flex-col justify-center items-center">
+                @if (pdfPreviewLoading) {
+                  <div class="text-center py-16 space-y-3">
+                    <div class="inline-block w-8 h-8 border-3 border-[#1C75BC] border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-xs font-semibold text-[#4B5157]">Chargement sécurisé du document PDF officiel...</p>
+                  </div>
+                } @else if (pdfPreviewUrl) {
+                  <iframe
+                    [src]="pdfPreviewUrl"
+                    class="w-full h-[520px] rounded-xs border border-[#D7DBDE] bg-white shadow-inner"
+                    title="Aperçu du certificat PDF officiel"
+                  ></iframe>
+                } @else {
+                  <div class="text-center py-16 space-y-3">
+                    <p class="text-xs text-[#ED1C24] font-semibold">Le flux PDF n'a pas pu être prévisualisé directement.</p>
+                    <button
+                      type="button"
+                      (click)="chargerPdfApercu(certificatApercu)"
+                      class="px-4 py-2 rounded-xs bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold cursor-pointer"
+                    >
+                      Réessayer le chargement
+                    </button>
+                  </div>
+                }
+              </div>
+            }
 
             <!-- Footer d'actions du Modal -->
             <div class="p-4 bg-[#F5F6F7] border-t border-[#D7DBDE] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-              <button
-                type="button"
-                (click)="imprimerCertificat()"
-                class="px-4 py-2 rounded-xs bg-white hover:bg-[#D7DBDE] text-[#1B1D1F] border border-[#D7DBDE] text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <svg class="w-4 h-4 text-[#4B5157]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                <span>Imprimer</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="imprimerCertificat()"
+                  class="px-4 py-2 rounded-xs bg-white hover:bg-[#D7DBDE] text-[#1B1D1F] border border-[#D7DBDE] text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <svg class="w-4 h-4 text-[#4B5157]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  <span>Imprimer</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="ajouterALinkedIn(certificatApercu)"
+                  class="px-3 py-2 rounded-xs bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z"/>
+                  </svg>
+                  <span>LinkedIn</span>
+                </button>
+              </div>
 
               <div class="flex items-center gap-2">
                 <button
@@ -601,6 +681,10 @@ export class MesCertificatsComponent implements OnInit, OnDestroy {
   downloadingId: string | null = null;
   generatingId: string | null = null;
   certificatApercu: ApprenantCertificat | null = null;
+  apercuOnglet: 'diplome' | 'pdf' = 'diplome';
+  pdfPreviewUrl: SafeResourceUrl | null = null;
+  pdfPreviewRawUrl: string | null = null;
+  pdfPreviewLoading = false;
 
   private liveSub: Subscription | null = null;
   private bootstrapSub: Subscription | null = null;
@@ -608,6 +692,7 @@ export class MesCertificatsComponent implements OnInit, OnDestroy {
   constructor(
     private apprenantService: ApprenantService,
     private toast: ToastService,
+    private sanitizer: DomSanitizer,
   ) {}
 
   get formationsEligiblesSansCertificat(): ApprenantFormation[] {
@@ -764,12 +849,76 @@ export class MesCertificatsComponent implements OnInit, OnDestroy {
     });
   }
 
-  ouvrirApercu(c: ApprenantCertificat) {
+  ouvrirApercu(c: ApprenantCertificat, initialTab: 'diplome' | 'pdf' = 'diplome') {
     this.certificatApercu = c;
+    this.apercuOnglet = initialTab;
+    if (initialTab === 'pdf') {
+      this.chargerPdfApercu(c);
+    }
   }
 
   fermerApercu() {
     this.certificatApercu = null;
+    if (this.pdfPreviewRawUrl) {
+      window.URL.revokeObjectURL(this.pdfPreviewRawUrl);
+      this.pdfPreviewRawUrl = null;
+    }
+    this.pdfPreviewUrl = null;
+    this.pdfPreviewLoading = false;
+    this.apercuOnglet = 'diplome';
+  }
+
+  basculerOnglet(tab: 'diplome' | 'pdf') {
+    this.apercuOnglet = tab;
+    if (tab === 'pdf' && !this.pdfPreviewUrl && this.certificatApercu) {
+      this.chargerPdfApercu(this.certificatApercu);
+    }
+  }
+
+  chargerPdfApercu(c: ApprenantCertificat) {
+    if (this.pdfPreviewUrl) return;
+    this.pdfPreviewLoading = true;
+    this.apprenantService.telechargerCertificat(c.id).subscribe({
+      next: (blob: Blob) => {
+        this.pdfPreviewLoading = false;
+        if (!blob || blob.size === 0) {
+          this.toast.error('Le document PDF est vide.');
+          return;
+        }
+        this.pdfPreviewRawUrl = window.URL.createObjectURL(blob);
+        this.pdfPreviewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfPreviewRawUrl);
+      },
+      error: (err) => {
+        this.pdfPreviewLoading = false;
+        console.error('Erreur chargement PDF apercu:', err);
+        if (c.urlPdfS3) {
+          this.pdfPreviewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(c.urlPdfS3);
+        } else {
+          this.toast.error('Impossible de charger le document PDF.');
+        }
+      },
+    });
+  }
+
+  ajouterALinkedIn(c: ApprenantCertificat) {
+    const orgName = c.formation.etablissement?.nom || 'Vitalis Center EUP';
+    const certName = c.formation.titre;
+    const issueDate = new Date(c.dateEmission);
+    const certUrl = `${window.location.origin}/certificats/verifier/${c.numeroSerie}`;
+    const linkedInUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(certName)}&organizationName=${encodeURIComponent(orgName)}&issueYear=${issueDate.getFullYear()}&issueMonth=${issueDate.getMonth() + 1}&certUrl=${encodeURIComponent(certUrl)}&certId=${encodeURIComponent(c.numeroSerie)}`;
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  async copierLienVerification(c: ApprenantCertificat) {
+    const url = `${window.location.origin}/certificats/verifier/${c.numeroSerie}`;
+    try {
+      await this.copyToClipboard(url);
+      this.copiedLinkId = c.id;
+      setTimeout(() => { this.copiedLinkId = null; }, 2500);
+      this.toast.success('Lien de vérification copié dans le presse-papiers !');
+    } catch {
+      this.toast.error('Impossible de copier le lien.');
+    }
   }
 
   imprimerCertificat() {

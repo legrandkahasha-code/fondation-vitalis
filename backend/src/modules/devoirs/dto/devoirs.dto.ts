@@ -11,6 +11,9 @@ export class CreateDevoirDto {
   @IsOptional()
   @IsDateString()
   dateLimite?: string;
+
+  @IsOptional()
+  criteresEvaluation?: any;
 }
 
 export class NoterDevoirDto {
@@ -35,4 +38,7 @@ export class UpdateDevoirDto {
   @IsOptional()
   @IsDateString()
   dateLimite?: string;
+
+  @IsOptional()
+  criteresEvaluation?: any;
 }

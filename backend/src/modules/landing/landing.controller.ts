@@ -34,21 +34,30 @@ import {
   UpdateLandingTemoignageDto,
   CreateLandingActualiteDto,
   UpdateLandingActualiteDto,
+  CreateLandingFormateurDto,
+  UpdateLandingFormateurDto,
+  CreateLandingCampusDto,
+  UpdateLandingCampusDto,
+  CreateLandingPartenaireDto,
+  UpdateLandingPartenaireDto,
+  NewsletterSubscribeDto,
   ContactMessageDto,
 } from './dto/landing.dto';
 
-// Types MIME acceptés pour les médias d'actualités
+// Types MIME acceptés pour les médias d'actualités et assets vitrine
 const ACTUALITE_MEDIA_MIME_TYPES = [
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
+  'image/svg+xml',
   'video/mp4',
   'video/webm',
+  'video/ogg',
   'video/quicktime',
 ];
 
-const MAX_MEDIA_SIZE = 100 * 1024 * 1024; // 100 MB
+const MAX_MEDIA_SIZE = 200 * 1024 * 1024; // 200 MB (vidéos de présentation incluses)
 
 function actualiteMediaFilter(
   _req: any,
@@ -57,7 +66,7 @@ function actualiteMediaFilter(
 ) {
   if (!ACTUALITE_MEDIA_MIME_TYPES.includes(file.mimetype)) {
     return callback(
-      new Error('Type de fichier non supporté. Formats acceptés : JPG, PNG, WebP, GIF, MP4, WebM, MOV.'),
+      new Error('Type de fichier non supporté. Formats acceptés : JPG, PNG, WebP, GIF, SVG, MP4, WebM, MOV.'),
       false,
     );
   }
@@ -111,6 +120,12 @@ export class LandingController {
   @Public()
   submitContact(@Body() dto: ContactMessageDto) {
     return this.service.submitContact(dto);
+  }
+
+  @Post('newsletter')
+  @Public()
+  subscribeNewsletter(@Body() dto: NewsletterSubscribeDto) {
+    return this.service.subscribeNewsletter(dto);
   }
 
   @Get('public/filieres')
@@ -230,7 +245,7 @@ export class LandingController {
   }
 
   /**
-   * Upload d'un média (image ou vidéo) pour une actualité.
+   * Upload d'un média (image ou vidéo) pour une actualité ou asset vitrine.
    * Retourne l'URL publique du fichier téléversé.
    */
   @Post('actualites/upload-media')
@@ -285,5 +300,102 @@ export class LandingController {
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   deleteTemoignage(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.deleteTemoignage(id);
+  }
+
+  // --- ADMIN FORMATEURS ---
+  @Get('formateurs')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  getFormateurs() {
+    return this.service.getFormateurs();
+  }
+
+  @Post('formateurs')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  createFormateur(@Body() dto: CreateLandingFormateurDto) {
+    return this.service.createFormateur(dto);
+  }
+
+  @Put('formateurs/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  updateFormateur(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateLandingFormateurDto,
+  ) {
+    return this.service.updateFormateur(id, dto);
+  }
+
+  @Delete('formateurs/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  deleteFormateur(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.deleteFormateur(id);
+  }
+
+  // --- ADMIN CAMPUS ESPACES ---
+  @Get('campus')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  getCampus() {
+    return this.service.getCampus();
+  }
+
+  @Post('campus')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  createCampus(@Body() dto: CreateLandingCampusDto) {
+    return this.service.createCampus(dto);
+  }
+
+  @Put('campus/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  updateCampus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateLandingCampusDto,
+  ) {
+    return this.service.updateCampus(id, dto);
+  }
+
+  @Delete('campus/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  deleteCampus(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.deleteCampus(id);
+  }
+
+  // --- ADMIN PARTENAIRES ---
+  @Get('partenaires')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  getPartenaires() {
+    return this.service.getPartenaires();
+  }
+
+  @Post('partenaires')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  createPartenaire(@Body() dto: CreateLandingPartenaireDto) {
+    return this.service.createPartenaire(dto);
+  }
+
+  @Put('partenaires/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  updatePartenaire(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateLandingPartenaireDto,
+  ) {
+    return this.service.updatePartenaire(id, dto);
+  }
+
+  @Delete('partenaires/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  deletePartenaire(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.deletePartenaire(id);
+  }
+
+  // --- ADMIN NEWSLETTER ABONNÉS ---
+  @Get('newsletter/abonnes')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  getNewsletterAbonnes() {
+    return this.service.getNewsletterAbonnes();
+  }
+
+  @Delete('newsletter/abonnes/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  deleteNewsletterAbonne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.deleteNewsletterAbonne(id);
   }
 }

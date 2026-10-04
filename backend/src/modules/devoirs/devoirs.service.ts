@@ -26,7 +26,7 @@ export class DevoirsService {
     return mod;
   }
 
-  async create(moduleId: string, data: { titre: string; consignes?: string; dateLimite?: string }, user: any) {
+  async create(moduleId: string, data: { titre: string; consignes?: string; dateLimite?: string; criteresEvaluation?: any }, user: any) {
     await this.assertModuleAccess(moduleId, user);
     return this.prisma.devoir.create({
       data: {
@@ -34,6 +34,7 @@ export class DevoirsService {
         titre: data.titre,
         consignes: data.consignes,
         dateLimite: data.dateLimite ? new Date(data.dateLimite) : undefined,
+        criteresEvaluation: data.criteresEvaluation ?? undefined,
       },
     });
   }
@@ -119,7 +120,7 @@ export class DevoirsService {
     });
   }
 
-  async update(id: string, data: { titre?: string; consignes?: string; dateLimite?: string }, user: any) {
+  async update(id: string, data: { titre?: string; consignes?: string; dateLimite?: string; criteresEvaluation?: any }, user: any) {
     const { } = await this.authz.canAccessDevoir(user, id, ResourceAction.UPDATE);
     return this.prisma.devoir.update({
       where: { id },
@@ -127,6 +128,7 @@ export class DevoirsService {
         titre: data.titre,
         consignes: data.consignes,
         dateLimite: data.dateLimite ? new Date(data.dateLimite) : undefined,
+        criteresEvaluation: data.criteresEvaluation !== undefined ? data.criteresEvaluation : undefined,
       },
     });
   }

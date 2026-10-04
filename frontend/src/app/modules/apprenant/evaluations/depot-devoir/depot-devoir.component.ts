@@ -8,11 +8,18 @@ import { ApprenantService, ApprenantQuizItem } from '../../../../core/services/a
 import { DevoirsService } from '../../../../core/services/devoirs.service';
 import { ToastService } from '../../../../core/services/toast.service';
 
+export interface DevoirHistoriqueItem {
+  version: number;
+  fileUrl: string;
+  dateDepot: string;
+}
+
 interface DevoirItem {
   id: string;
   titre: string;
   consignes: string | null;
   dateLimite: string | null;
+  criteresEvaluation?: string | null;
   moduleTitre: string;
   formationTitre: string;
   soumission: {
@@ -21,6 +28,8 @@ interface DevoirItem {
     note: number | null;
     commentaire: string | null;
     dateDepot: string;
+    version?: number;
+    historique?: DevoirHistoriqueItem[];
   } | null;
 }
 
@@ -263,10 +272,17 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
                   [class]="selectedDevoir?.id === d.id ? 'bg-[#E7F1FA] border-[#1C75BC] border-l-4 border-l-[#F0791E]' : 'bg-white border-[#D7DBDE] hover:bg-[#F5F6F7] hover:border-[#1C75BC]'"
                 >
                   <div class="flex items-center justify-between gap-2">
-                    <span class="px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase tracking-wider shrink-0"
-                          [class]="d.soumission?.note !== null && d.soumission?.note !== undefined ? 'bg-[#E7F1EA] text-[#276B44] border border-[#276B44]' : d.soumission ? 'bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC]' : isOverdue(d.dateLimite) ? 'bg-[#FDE6E6] text-[#ED1C24] border border-[#ED1C24]' : 'bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]'">
-                      {{ d.soumission?.note !== null && d.soumission?.note !== undefined ? 'Noté : ' + d.soumission?.note + '/20' : d.soumission ? 'Déposé' : isOverdue(d.dateLimite) ? 'En retard' : 'À rendre' }}
-                    </span>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span class="px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase tracking-wider"
+                            [class]="d.soumission?.note !== null && d.soumission?.note !== undefined ? 'bg-[#E7F1EA] text-[#276B44] border border-[#276B44]' : d.soumission ? 'bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC]' : isOverdue(d.dateLimite) ? 'bg-[#FDE6E6] text-[#ED1C24] border border-[#ED1C24]' : 'bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]'">
+                        {{ d.soumission?.note !== null && d.soumission?.note !== undefined ? 'Noté : ' + d.soumission?.note + '/20' : d.soumission ? 'Déposé' : isOverdue(d.dateLimite) ? 'En retard' : 'À rendre' }}
+                      </span>
+                      @if ((d.soumission?.version ?? 0) > 1) {
+                        <span class="px-1.5 py-0.5 rounded-2xs bg-[#1C75BC] text-white text-[9px] font-mono font-bold" title="Version soumise">
+                          v{{ d.soumission?.version }}
+                        </span>
+                      }
+                    </div>
                     <span class="text-[10px] text-[#4B5157] font-mono shrink-0" [title]="d.dateLimite ? 'Date limite : ' + (d.dateLimite | date:'dd/MM/yyyy HH:mm') : ''">
                       {{ getTimeRemaining(d.dateLimite) }}
                     </span>
@@ -274,6 +290,12 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
 
                   <h3 class="text-xs font-bold text-[#1B1D1F] mt-2 line-clamp-1 group-hover:text-[#1C75BC] transition-colors">{{ d.titre }}</h3>
                   <p class="text-[11px] text-[#4B5157] mt-0.5 truncate">{{ d.formationTitre }} · {{ d.moduleTitre }}</p>
+
+                  @if (d.criteresEvaluation) {
+                    <div class="mt-1.5 flex items-center gap-1 text-[10px] text-[#1C75BC] font-semibold">
+                      <span>⚖️ Barème défini</span>
+                    </div>
+                  }
 
                   <div class="mt-2.5 pt-2 border-t border-[#D7DBDE]/60 flex items-center justify-between text-[11px]">
                     <span class="font-medium" [class]="selectedDevoir?.id === d.id ? 'text-[#F0791E] font-bold' : 'text-[#71787E]'">
@@ -401,6 +423,43 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
                   </div>
                 </div>
 
+                <!-- GRILLE & CRITÈRES D'ÉVALUATION (BARÈME TRANSPARENT COURSERA / CANVAS LMS) -->
+                <div class="space-y-2">
+                  <h4 class="text-xs font-bold text-[#4B5157] uppercase tracking-wider flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    <span>Grille de Notation & Critères d'Évaluation Transparents</span>
+                  </h4>
+                  <div class="p-4 sm:p-5 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs text-xs text-[#1B1D1F] leading-relaxed shadow-2xs space-y-2">
+                    @if (selectedDevoir.criteresEvaluation) {
+                      <div class="flex items-start gap-2.5">
+                        <div class="w-7 h-7 rounded-xs bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC] flex items-center justify-center shrink-0 text-sm font-bold shadow-2xs">
+                          ⚖️
+                        </div>
+                        <div class="flex-1 space-y-1.5">
+                          <div class="flex items-center justify-between gap-2">
+                            <p class="font-bold text-[#1C75BC] text-[11px] uppercase tracking-wider">Barème et attentes fixés par le formateur :</p>
+                            <span class="text-[10px] px-2 py-0.5 rounded-xs bg-white text-[#276B44] border border-[#276B44] font-semibold">Grille certifiée</span>
+                          </div>
+                          <div class="bg-white p-3.5 rounded-xs border border-[#D7DBDE] font-mono text-[11px] whitespace-pre-line text-[#1B1D1F] leading-relaxed shadow-inner">
+                            {{ selectedDevoir.criteresEvaluation }}
+                          </div>
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="flex items-center gap-2.5 text-[#4B5157]">
+                        <div class="w-7 h-7 rounded-xs bg-white text-[#4B5157] border border-[#D7DBDE] flex items-center justify-center shrink-0 text-sm shadow-2xs">
+                          ℹ️
+                        </div>
+                        <p class="text-[11px] leading-relaxed">
+                          <strong>Barème général institutionnel :</strong> Évaluation notée sur 20 points, pondérée selon la conformité aux consignes, la rigueur technique et la qualité de la synthèse.
+                        </p>
+                      </div>
+                    }
+                  </div>
+                </div>
+
                 <!-- SECTION RETOUR FORMATEUR & NOTE ATTRIBUÉE (SI NOTÉ) -->
                 @if (selectedDevoir.soumission && selectedDevoir.soumission.note !== null) {
                   <div class="p-5 sm:p-6 rounded-xs bg-[#E7F1EA] border border-[#276B44] border-l-4 border-l-[#276B44] space-y-4 shadow-xs">
@@ -415,7 +474,12 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
                           <span class="inline-block px-2 py-0.5 rounded-xs text-[10px] font-bold bg-[#276B44] text-white uppercase tracking-wider">
                             Mention : {{ getMention(selectedDevoir.soumission.note) }}
                           </span>
-                          <h4 class="text-sm font-bold text-[#1B1D1F] mt-1">Évaluation Validée</h4>
+                          <div class="flex items-center gap-2 mt-1">
+                            <h4 class="text-sm font-bold text-[#1B1D1F]">Évaluation Validée</h4>
+                            <span class="px-2 py-0.5 rounded-xs bg-[#276B44] text-white text-[10px] font-bold font-mono">
+                              v{{ selectedDevoir.soumission.version || 1 }}
+                            </span>
+                          </div>
                           <p class="text-[11px] text-[#4B5157]">Enregistrée le {{ selectedDevoir.soumission.dateDepot | date:'dd/MM/yyyy à HH:mm' }}</p>
                         </div>
                       </div>
@@ -456,6 +520,47 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
                         </p>
                       </div>
                     }
+
+                    <!-- HISTORIQUE DES VERSIONS ANTÉRIEURES (SI EXISTANT) -->
+                    @if (selectedDevoir.soumission.historique && selectedDevoir.soumission.historique.length > 0) {
+                      <div class="pt-3 border-t border-[#276B44]/20 space-y-2">
+                        <button
+                          type="button"
+                          (click)="showHistoriqueVersions = !showHistoriqueVersions"
+                          class="text-xs font-bold text-[#276B44] hover:underline flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <svg class="w-3.5 h-3.5 transition-transform" [class.rotate-90]="showHistoriqueVersions" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                          <span>Historique des versions antérieures ({{ selectedDevoir.soumission.historique.length }})</span>
+                        </button>
+
+                        @if (showHistoriqueVersions) {
+                          <div class="mt-2.5 space-y-2 pl-3 border-l-2 border-[#276B44]/30">
+                            @for (h of selectedDevoir.soumission.historique; track h.version) {
+                              <div class="p-2.5 bg-white rounded-xs border border-[#D7DBDE] flex items-center justify-between text-xs shadow-2xs">
+                                <div class="flex items-center gap-2">
+                                  <span class="px-1.5 py-0.5 rounded-2xs bg-[#71787E] text-white text-[9px] font-mono font-bold">v{{ h.version }}</span>
+                                  <span class="text-[11px] text-[#4B5157] font-mono">Remis le {{ h.dateDepot | date:'dd/MM/yyyy à HH:mm' }}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    (click)="openFilePreview(h.fileUrl, selectedDevoir.titre + ' (v' + h.version + ')')"
+                                    class="text-[11px] font-bold text-[#1C75BC] hover:underline cursor-pointer"
+                                  >
+                                    Aperçu
+                                  </button>
+                                  <a [href]="h.fileUrl" target="_blank" class="text-[11px] font-bold text-[#4B5157] hover:underline">
+                                    Télécharger
+                                  </a>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
                   </div>
                 }
 
@@ -470,7 +575,12 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
                           </svg>
                         </div>
                         <div>
-                          <h4 class="text-xs sm:text-sm font-bold text-[#1B1D1F]">Travail déposé · En cours d'évaluation</h4>
+                          <div class="flex items-center gap-2">
+                            <h4 class="text-xs sm:text-sm font-bold text-[#1B1D1F]">Travail déposé · En cours d'évaluation</h4>
+                            <span class="px-2 py-0.5 rounded-xs bg-[#1C75BC] text-white text-[10px] font-bold font-mono">
+                              v{{ selectedDevoir.soumission.version || 1 }}
+                            </span>
+                          </div>
                           <p class="text-[11px] text-[#4B5157] mt-0.5 font-mono">Remis le {{ selectedDevoir.soumission.dateDepot | date:'dd/MM/yyyy à HH:mm' }}</p>
                         </div>
                       </div>
@@ -502,6 +612,47 @@ type EvaluationTab = 'DEVOIRS' | 'QUIZ';
                     <p class="text-xs text-[#4B5157] leading-relaxed">
                       Votre document est enregistré. Dès que l'évaluation sera effectuée, la note et les observations apparaîtront ici et vous recevrez une alerte en direct. Vous pouvez le remplacer ci-dessous si nécessaire avant la notation.
                     </p>
+
+                    <!-- HISTORIQUE DES VERSIONS ANTÉRIEURES (SI EXISTANT) -->
+                    @if (selectedDevoir.soumission.historique && selectedDevoir.soumission.historique.length > 0) {
+                      <div class="pt-3 border-t border-[#1C75BC]/20 space-y-2">
+                        <button
+                          type="button"
+                          (click)="showHistoriqueVersions = !showHistoriqueVersions"
+                          class="text-xs font-bold text-[#1C75BC] hover:underline flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <svg class="w-3.5 h-3.5 transition-transform" [class.rotate-90]="showHistoriqueVersions" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                          <span>Historique des versions antérieures ({{ selectedDevoir.soumission.historique.length }})</span>
+                        </button>
+
+                        @if (showHistoriqueVersions) {
+                          <div class="mt-2.5 space-y-2 pl-3 border-l-2 border-[#1C75BC]/30">
+                            @for (h of selectedDevoir.soumission.historique; track h.version) {
+                              <div class="p-2.5 bg-white rounded-xs border border-[#D7DBDE] flex items-center justify-between text-xs shadow-2xs">
+                                <div class="flex items-center gap-2">
+                                  <span class="px-1.5 py-0.5 rounded-2xs bg-[#71787E] text-white text-[9px] font-mono font-bold">v{{ h.version }}</span>
+                                  <span class="text-[11px] text-[#4B5157] font-mono">Remis le {{ h.dateDepot | date:'dd/MM/yyyy à HH:mm' }}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    (click)="openFilePreview(h.fileUrl, selectedDevoir.titre + ' (v' + h.version + ')')"
+                                    class="text-[11px] font-bold text-[#1C75BC] hover:underline cursor-pointer"
+                                  >
+                                    Aperçu
+                                  </button>
+                                  <a [href]="h.fileUrl" target="_blank" class="text-[11px] font-bold text-[#4B5157] hover:underline">
+                                    Télécharger
+                                  </a>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
                   </div>
                 }
 
@@ -884,6 +1035,8 @@ export class DepotDevoirComponent implements OnInit, OnDestroy {
   loadingQuiz = true;
   quizFilterStatus: 'TOUS' | 'A_PASSER' | 'VALIDES' = 'TOUS';
   quizSearchQuery = '';
+
+  showHistoriqueVersions = false;
 
   private liveSub?: Subscription;
   private bootstrapSub?: Subscription;
@@ -1270,12 +1423,15 @@ export class DepotDevoirComponent implements OnInit, OnDestroy {
         this.uploading = false;
         this.toast.success('Devoir déposé avec succès !');
         if (this.selectedDevoir) {
-          const soum = {
+          const prevSoum = this.selectedDevoir.soumission;
+          const soum: NonNullable<DevoirItem['soumission']> = {
             id: res.soumissionId,
             fileUrl: res.fileUrl,
             note: null,
             commentaire: null,
             dateDepot: res.dateDepot || new Date().toISOString(),
+            version: res.version || (prevSoum ? (prevSoum.version || 1) + 1 : 1),
+            historique: res.historique || prevSoum?.historique || [],
           };
           this.selectedDevoir.soumission = soum;
           const found = this.devoirs.find((d) => d.id === this.selectedDevoir?.id);
@@ -1284,6 +1440,7 @@ export class DepotDevoirComponent implements OnInit, OnDestroy {
           }
         }
         this.selectedFile = null;
+        this.loadAllDevoirs(false, this.selectedDevoir?.id);
       },
       error: (err) => {
         this.uploading = false;

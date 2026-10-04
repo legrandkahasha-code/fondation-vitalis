@@ -19,6 +19,21 @@ import {
 } from '../../core/models';
 import { buildWhatsappUrl, buildWhatsappUrlLenient, DEFAULT_WHATSAPP_MESSAGE, subscribeLandingSettingsChanged, isWhatsappEnabled } from '../../core/utils/whatsapp.util';
 
+export interface FormateurItem {
+  nom: string;
+  titre: string;
+  specialite: string;
+  experience: string;
+  photo: string;
+  linkedin?: string;
+}
+
+export interface LogoPartenaire {
+  nom: string;
+  logo: string; // chemin asset ou URL
+  secteur: string;
+}
+
 export interface FormationDisplayItem {
   id: string;
   titre: string;
@@ -35,13 +50,16 @@ export interface FormationDisplayItem {
   prerequis: string;
   aLaUne?: boolean;
   badgeTexte?: string;
+  imageUrl?: string | null;
 }
 
 export interface FaqDisplayItem {
   question: string;
   reponse: string;
   ouvert: boolean;
+  categorie?: string;
 }
+
 
 @Component({
   selector: 'app-landing',
@@ -143,14 +161,16 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   faqList: FaqDisplayItem[] = [
-    { question: 'Les formations de Vitalis Center sont-elles reconnues par l\'État congolais ?', reponse: 'Oui, sans équivoque. Vitalis Center est un Établissement d\'Utilité Publique agréé par le Ministère de la Formation Professionnelle sous le numéro officiel CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026. Tous nos certificats confèrent une reconnaissance institutionnelle immédiate.', ouvert: true },
-    { question: 'Quel est le mode d\'évaluation pour obtenir la certification ?', reponse: 'Nous appliquons rigoureusement l\'Approche par Compétences (APC) préconisée par les normes nationales et internationales. Chaque apprenant est évalué sur des projets réels, des études de cas et des ateliers pratiques garantissant sa maîtrise technique avant l\'émission du certificat.', ouvert: false },
-    { question: 'Comment vérifier l\'authenticité d\'un certificat délivré ?', reponse: 'Chaque certificat comporte un numéro de série unique inaltérable et un QR code officiel. Tout employeur ou institution peut vérifier la validité d\'un titre en quelques secondes sur notre plateforme publique de vérification en ligne.', ouvert: false },
-    { question: 'Des sessions en cours du soir ou en ligne sont-elles disponibles ?', reponse: 'Absolument. Nous proposons des créneaux flexibles : sessions intensives en journée, cours du soir pour professionnels en poste, et parcours hybrides combinant e-learning et ateliers présentiels.', ouvert: false },
-    { question: 'Vitalis Center propose-t-il des formations sur mesure pour entreprises ?', reponse: 'Oui. Notre pôle Formations Sur Mesure accompagne les ministères, régies financières, ONGs et entreprises privées dans la conception de plans de renforcement de capacités adaptés à leurs enjeux spécifiques.', ouvert: false },
+    { question: 'Les formations de Vitalis Center sont-elles reconnues par l\'État congolais ?', reponse: 'Oui, sans équivoque. Vitalis Center est un Établissement d\'Utilité Publique agréé par le Ministère de la Formation Professionnelle sous le numéro officiel CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026. Tous nos certificats confèrent une reconnaissance institutionnelle immédiate et légale.', ouvert: true, categorie: 'CERTIFICATS' },
+    { question: 'Quel est le mode d\'évaluation pour obtenir la certification ?', reponse: 'Nous appliquons rigoureusement l\'Approche par Compétences (APC) préconisée par les normes nationales et internationales. Chaque apprenant est évalué sur des projets réels, des études de cas et des ateliers pratiques garantissant sa maîtrise technique avant l\'émission du certificat.', ouvert: false, categorie: 'PEDAGOGIE' },
+    { question: 'Comment vérifier l\'authenticité d\'un certificat délivré ?', reponse: 'Chaque certificat comporte un numéro de série unique inaltérable et un QR code officiel. Tout employeur ou institution peut vérifier la validité d\'un titre en quelques secondes sur notre plateforme publique de vérification en ligne.', ouvert: false, categorie: 'CERTIFICATS' },
+    { question: 'Des sessions en cours du soir ou en ligne sont-elles disponibles ?', reponse: 'Absolument. Nous proposons des créneaux flexibles : sessions intensives en journée, cours du soir pour professionnels en poste, et parcours hybrides combinant e-learning et ateliers présentiels.', ouvert: false, categorie: 'ADMISSIONS' },
+    { question: 'Vitalis Center propose-t-il des formations sur mesure pour entreprises ?', reponse: 'Oui. Notre pôle Formations Sur Mesure accompagne les ministères, régies financières, ONGs et entreprises privées dans la conception de plans de renforcement de capacités adaptés à leurs enjeux spécifiques.', ouvert: false, categorie: 'ENTREPRISES' },
+    { question: 'Quels sont les prérequis pour candidater à une session certifiante ?', reponse: 'L\'accès est ouvert aux titulaires d\'un diplôme d\'État (secondaire) ou à toute personne justifiant d\'une expérience professionnelle équivalente, validée par un test de positionnement technique gratuit.', ouvert: false, categorie: 'ADMISSIONS' },
+    { question: 'Des stages pratiques en entreprise sont-ils organisés ?', reponse: 'Oui. Grâce à nos conventions-cadres avec des employeurs majeurs en RDC (banques, télécoms, régies publiques, mines), les apprenants bénéficient de stages d\'immersion professionnelle encadrés menant directement à l\'embauche.', ouvert: false, categorie: 'ENTREPRISES' },
   ];
 
-  // Actualités du Centre
+  // Actualités du Centre — Visuels institutionnels localisés
   actualitesList: LandingPageActualite[] = [
     {
       id: '1',
@@ -159,7 +179,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       contenu: 'Sous la tutelle du Ministère de la Formation Professionnelle, Vitalis Center franchit une étape historique dans la modernisation des dispositifs d\'apprentissage. La plateforme permet désormais un suivi individualisé des compétences, une évaluation rigoureuse par approche APC, et une authentification publique instantanée des attestations délivrées.',
       categorie: 'INNOVATION',
       badgeCouleur: '#1C75BC',
-      imageUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop',
+      imageUrl: 'assets/actualites/actu-lms-deploiement.jpg',
       auteur: 'Direction Générale & Innovation',
       aLaUne: true,
       ordre: 1,
@@ -173,7 +193,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       contenu: 'Les candidats, cadres et professionnels en reconversion peuvent dès maintenant formuler leurs vœux d\'orientation. Les directions pédagogiques de chaque antenne assurent des entretiens d\'admission personnalisés afin d\'orienter chaque profil vers la filière la plus adaptée à ses ambitions.',
       categorie: 'ADMISSIONS',
       badgeCouleur: '#F0791E',
-      imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1200&auto=format&fit=crop',
+      imageUrl: 'assets/actualites/actu-campagne-admission.jpg',
       auteur: 'Secrétariat Général aux Admissions',
       aLaUne: false,
       ordre: 2,
@@ -187,7 +207,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       contenu: 'Dans le cadre de sa mission d\'utilité publique, Vitalis Center a consolidé des partenariats avec les fédérations d\'entreprises et les régies publiques. Ces conventions garantissent des immersions sur le terrain dès le deuxième semestre de formation et des opportunités d\'embauche directe pour les meilleurs apprenants.',
       categorie: 'PARTENARIAT',
       badgeCouleur: '#276B44',
-      imageUrl: 'https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?q=80&w=1200&auto=format&fit=crop',
+      imageUrl: 'assets/actualites/actu-partenariat-entreprises.jpg',
       auteur: 'Direction des Relations Extérieures',
       aLaUne: false,
       ordre: 3,
@@ -201,7 +221,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       contenu: 'Durant 5 jours, l\'ensemble du corps enseignant et des directeurs de filière ont participé au séminaire d\'harmonisation des maquettes de cours et des critères d\'évaluation. Cette standardisation garantit un niveau d\'excellence homogène dans toutes les antennes satellites du pays.',
       categorie: 'PEDAGOGIE',
       badgeCouleur: '#124F80',
-      imageUrl: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1200&auto=format&fit=crop',
+      imageUrl: 'assets/actualites/actu-atelier-apc.jpg',
       auteur: 'Inspection Pédagogique Nationale',
       aLaUne: false,
       ordre: 4,
@@ -350,7 +370,254 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.toast.info('Titre de l\'actualité copié dans le presse-papier.');
   }
 
-  temoignagesList: LandingPageTemoignage[] = [];
+  temoignagesList: LandingPageTemoignage[] = [
+    {
+      id: '1',
+      nomPrenom: 'Grace Mutombo Kabongo',
+      fonction: 'Responsable Informatique',
+      entreprise: 'Rawbank S.A.',
+      promotion: 'Promotion 2024 — Développement Web & Systèmes',
+      texte: "Grâce à Vitalis Center, j'ai obtenu les compétences concrètes qui m'ont ouvert les portes de Rawbank. Les ateliers pratiques m'ont permis de résoudre de vrais problèmes dès le premier jour en entreprise. C'est une formation qui forme vraiment.",
+      note: 5,
+      photo: 'assets/temoignages/grace-mutombo.jpg',
+      actif: true,
+      ordre: 1,
+    },
+    {
+      id: '2',
+      nomPrenom: 'Christian Luzolo Makiese',
+      fonction: 'Chef Comptable',
+      entreprise: 'Gécamines — Direction Financière',
+      promotion: 'Promotion 2023 — Gestion Comptable & Audit',
+      texte: "La rigueur de la méthode APC de Vitalis m'a appris à aller au-delà des théories. Mes formateurs avaient une vraie expérience de terrain. Aujourd'hui je manage une équipe de 7 comptables. Le certificat officiel a été décisif pour ma promotion interne.",
+      note: 5,
+      photo: 'assets/temoignages/christian-luzolo.jpg',
+      actif: true,
+      ordre: 2,
+    },
+    {
+      id: '3',
+      nomPrenom: 'Esperance Nzinga Mfumu',
+      fonction: 'Technicienne Réseaux',
+      entreprise: 'Vodacom Congo',
+      promotion: 'Promotion 2025 — Réseaux & Cybersécurité',
+      texte: "En tant que femme dans un secteur technique, Vitalis Center m'a donné la confiance et les compétences pour réussir. Les labs réseau sont identiques à ceux qu'on retrouve en entreprise. Je recommande cette formation à toutes les jeunes femmes qui veulent s'affirmer dans le numérique.",
+      note: 5,
+      photo: 'assets/temoignages/esperance-nzinga.jpg',
+      actif: true,
+      ordre: 3,
+    },
+  ];
+
+  // --- FORMATEURS ---
+  formateursList: FormateurItem[] = [
+    {
+      nom: 'Prof. Jean-Baptiste Mbemba',
+      titre: 'Expert Réseaux & Cybersécurité',
+      specialite: 'Cisco CCNA · Sécurité Systèmes · Cloud AWS',
+      experience: '14 ans · Ex-Vodacom Congo',
+      photo: 'assets/formateurs/formateur-1.jpg',
+    },
+    {
+      nom: 'Mme Fatou Diallo-Kasongo',
+      titre: "Experte Gestion & Finance d'Entreprise",
+      specialite: 'Comptabilité OHADA · Audit · Contrôle de Gestion',
+      experience: '11 ans · Ex-Trust Merchant Bank',
+      photo: 'assets/formateurs/formateur-2.jpg',
+    },
+    {
+      nom: 'Ing. Patrick Tshimanga',
+      titre: 'Formateur Génie Électrique & BTP',
+      specialite: 'Installations industrielles · Énergie solaire · Maintenance',
+      experience: '9 ans · Ex-SNEL / Projets BEI',
+      photo: 'assets/formateurs/formateur-3.jpg',
+    },
+  ];
+
+  // --- LOGOS PARTENAIRES EMPLOYEURS ---
+  logosPartenaires: LogoPartenaire[] = [
+    { nom: 'Rawbank', logo: 'assets/partenaires/rawbank.png', secteur: 'Finance' },
+    { nom: 'Vodacom Congo', logo: 'assets/partenaires/vodacom.png', secteur: 'Télécom' },
+    { nom: 'Gécamines', logo: 'assets/partenaires/gecamines.png', secteur: 'Mines' },
+    { nom: 'SNEL', logo: 'assets/partenaires/snel.png', secteur: 'Énergie' },
+    { nom: 'Trust Merchant Bank', logo: 'assets/partenaires/tmb.png', secteur: 'Finance' },
+    { nom: 'Airtel Congo', logo: 'assets/partenaires/airtel.png', secteur: 'Télécom' },
+    { nom: 'REGIDESO', logo: 'assets/partenaires/regideso.png', secteur: 'Service public' },
+  ];
+
+  // --- ESPACES DU CAMPUS & ATELIERS TECHNIQUES (POINT 4.2 AUDIT) ---
+  campusEspacesList = [
+    {
+      titre: 'Laboratoire Systèmes & Développement Cloud',
+      description: 'Équipé de serveurs dédiés, postes haute performance et environnement d\'intégration continue pour l\'apprentissage pratique du code et de l\'administration réseau.',
+      photo: 'assets/campus/lab-informatique.jpg',
+      badge: 'Tech & Télécoms',
+      equipements: '35 postes connectés · Racks Cisco · Fibre dédiée',
+    },
+    {
+      titre: 'Atelier Électrotechnique & Énergie Solaire',
+      description: 'Bancs d\'essais réels, onduleurs industriels, simulateurs de réseau et kits photovoltaïques aux normes de sécurité électrique.',
+      photo: 'assets/campus/atelier-energie.jpg',
+      badge: 'Génie & Énergie',
+      equipements: 'Bancs Schneider Electric · Panneaux solaires · Outillage pro',
+    },
+    {
+      titre: 'Espace Collaboratif & Études de Cas',
+      description: 'Salles modulaires dédiées au management agile, simulations d\'entreprises, analyse financière et revues de projets d\'affaires.',
+      photo: 'assets/campus/salle-conferences.jpg',
+      badge: 'Management',
+      equipements: 'Vidéoprojection HD · Tableaux interactifs · Coworking',
+    },
+    {
+      titre: 'Centre d\'Examen Agréé & Registre Officiel',
+      description: 'Postes sécurisés pour les évaluations formelles, commissions de délibération et délivrance certifiée des attestations sous supervision ministérielle.',
+      photo: 'assets/campus/centre-examen.jpg',
+      badge: 'Accréditation',
+      equipements: 'Postes d\'évaluation isolés · Supervision APC · Registre',
+    },
+  ];
+
+  // --- MODALE VIDÉO INSTITUTIONNELLE (POINT 4.5 AUDIT) ---
+  videoModalOpen: boolean = false;
+  videoPresentationSafeUrl: SafeResourceUrl | null = null;
+  videoPresentationLocalUrl: string = '';
+  videoPresentationIsLocal: boolean = false;
+
+  openVideoModal(): void {
+    const storedUrl = this.settings?.videoPresentationUrl;
+    let rawUrl = storedUrl && storedUrl.trim() ? storedUrl.trim() : 'https://www.youtube-nocookie.com/embed/9No-FiEInLA?rel=0';
+    console.log('[Vitalis] openVideoModal — videoPresentationUrl =', storedUrl, '→ rawUrl =', rawUrl);
+
+    // Détecte si c'est une vidéo locale (téléversée depuis l'admin)
+    if (this.isVideoLocal(rawUrl)) {
+      this.videoPresentationIsLocal = true;
+      this.videoPresentationLocalUrl = this.getMediaUrl(rawUrl);
+      this.videoPresentationSafeUrl = null;
+      console.log('[Vitalis] Vidéo locale détectée → lecteur natif HTML5, URL =', this.videoPresentationLocalUrl);
+    } else {
+      this.videoPresentationIsLocal = false;
+      this.videoPresentationLocalUrl = '';
+      // Format YouTube watch?v=ID ou youtu.be
+      const ytWatchMatch = rawUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+      if (ytWatchMatch && ytWatchMatch[1]) {
+        rawUrl = `https://www.youtube-nocookie.com/embed/${ytWatchMatch[1]}?rel=0&autoplay=1`;
+      } else if (rawUrl.includes('youtube-nocookie.com/embed/') || rawUrl.includes('youtube.com/embed/')) {
+        if (!rawUrl.includes('autoplay=1')) {
+          rawUrl += (rawUrl.includes('?') ? '&' : '?') + 'autoplay=1';
+        }
+      } else if (rawUrl.includes('vimeo.com/') && !rawUrl.includes('player.vimeo.com')) {
+        const vimeoMatch = rawUrl.match(/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)(?:$|\/|\?)/);
+        if (vimeoMatch && vimeoMatch[3]) {
+          rawUrl = `https://player.vimeo.com/video/${vimeoMatch[3]}?autoplay=1`;
+        }
+      }
+      this.videoPresentationSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(rawUrl);
+    }
+    this.videoModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeVideoModal(): void {
+    this.videoModalOpen = false;
+    this.videoPresentationSafeUrl = null;
+    this.videoPresentationLocalUrl = '';
+    this.videoPresentationIsLocal = false;
+    this.cdr.markForCheck();
+  }
+
+  // --- NEWSLETTER / ALERTES ADMISSION (POINT 3.8 AUDIT) ---
+  newsletterEmail: string = '';
+  submittingNewsletter: boolean = false;
+
+  inscrireNewsletter(): void {
+    if (!this.newsletterEmail || !this.newsletterEmail.includes('@')) {
+      this.toast.error('Veuillez saisir une adresse email valide.');
+      return;
+    }
+    this.submittingNewsletter = true;
+    this.landingService.subscribeNewsletter(this.newsletterEmail.trim()).subscribe({
+      next: (res: any) => {
+        this.submittingNewsletter = false;
+        this.toast.success(res?.message || 'Merci ! Vous recevrez désormais les alertes officielles d\'ouverture des sessions.');
+        this.newsletterEmail = '';
+        this.cdr.markForCheck();
+      },
+      error: (err: any) => {
+        this.submittingNewsletter = false;
+        const msg = err?.error?.message || 'Erreur lors de l\'enregistrement à la newsletter.';
+        this.toast.error(msg);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  // --- FAQ AVEC CATÉGORIES (POINT 4.6 AUDIT) ---
+  selectedFaqCategory: string = 'TOUTES';
+  faqCategories = [
+    { id: 'TOUTES', label: 'Toutes les questions' },
+    { id: 'ADMISSIONS', label: 'Admissions & Inscriptions' },
+    { id: 'PEDAGOGIE', label: 'Pédagogie & Cours' },
+    { id: 'CERTIFICATS', label: 'Titres & Reconnaissance' },
+    { id: 'ENTREPRISES', label: 'Entreprises & Stages' },
+  ];
+
+  get faqFiltrees(): FaqDisplayItem[] {
+    if (this.selectedFaqCategory === 'TOUTES') return this.faqList;
+    return this.faqList.filter((f) => (f.categorie || 'ADMISSIONS').toUpperCase() === this.selectedFaqCategory);
+  }
+
+  setFaqCategory(cat: string): void {
+    this.selectedFaqCategory = cat;
+    this.cdr.markForCheck();
+  }
+
+  toggleFaq(indexOrItem: number | FaqDisplayItem): void {
+    if (typeof indexOrItem === 'number') {
+      const item = this.faqFiltrees[indexOrItem] || this.faqList[indexOrItem];
+      if (item) item.ouvert = !item.ouvert;
+    } else if (indexOrItem) {
+      indexOrItem.ouvert = !indexOrItem.ouvert;
+    }
+    this.cdr.markForCheck();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.videoModalOpen) {
+      this.closeVideoModal();
+    }
+    if (this.selectedArticle) {
+      this.closeArticleModal();
+    }
+  }
+
+  getFormationDescription(f: any): string {
+    if (f.description && !f.description.includes('validée sous la tutelle') && f.description.length > 25) {
+      return f.description;
+    }
+    const t = (f.titre || '').toLowerCase();
+    if (t.includes('réseau') || t.includes('cisco') || t.includes('cyber')) {
+      return 'Maîtrise des architectures réseaux d\'entreprise, routage Cisco, sécurité des périmètres et administration cloud.';
+    }
+    if (t.includes('dév') || t.includes('web') || t.includes('logiciel') || t.includes('fullstack')) {
+      return 'Conception d\'applications web et mobiles modernes, architectures microservices, bases de données et bonnes pratiques DevOps.';
+    }
+    if (t.includes('compt') || t.includes('ohada') || t.includes('audit') || t.includes('financ')) {
+      return 'Pratique approfondie du système comptable OHADA révisé, élaboration des états financiers et conformité fiscale en RDC.';
+    }
+    if (t.includes('gest') || t.includes('projet') || t.includes('manag') || t.includes('admin')) {
+      return 'Pilotage stratégique de projets, méthodes agiles, coordination des équipes et optimisation de la performance opérationnelle.';
+    }
+    if (t.includes('électr') || t.includes('solair') || t.includes('énerg')) {
+      return 'Installation et maintenance des réseaux électriques industriels, dimensionnement photovoltaïque et normes de sécurité.';
+    }
+    if (t.includes('btp') || t.includes('chantier') || t.includes('génie')) {
+      return 'Gestion technique de chantier, métré, résistance des matériaux et coordination des corps d\'état du bâtiment.';
+    }
+    return 'Formation certifiante d\'excellence axée sur les compétences pratiques, ateliers de terrain et insertion professionnelle directe.';
+  }
+
+  private barresObserver?: IntersectionObserver;
 
   // Transform 3D pour le widget Hero
   heroWidgetTransform: string = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
@@ -448,8 +715,9 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.notifSub = this.notifications.messages().subscribe({
       next: (msg) => {
         if (!msg || typeof msg !== 'object') return;
-        if (msg.type === 'LANDING_UPDATE') {
-          this.chargerWhatsappWidget();
+        if (msg.type === 'LANDING_UPDATE' || msg.type === 'FORMATION_UPDATE') {
+          // Rechargement complet pour récupérer les nouvelles images, suppressions, etc.
+          this.chargerDonneesLanding();
         } else if (msg.type === 'ACTUALITE_UPDATE') {
           this.chargerDonneesLanding();
         }
@@ -484,8 +752,9 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       this.publicEvents.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
-          if (payload?.type === 'LANDING_UPDATE') {
-            this.chargerWhatsappWidget();
+          if (payload?.type === 'LANDING_UPDATE' || payload?.type === 'FORMATION_UPDATE') {
+            // Rechargement complet des données de la vitrine
+            this.chargerDonneesLanding();
           } else if (payload?.type === 'ACTUALITE_UPDATE') {
             this.chargerDonneesLanding();
           }
@@ -580,11 +849,14 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
           this.pedagogieList = data.sections.pedagogie || [];
           this.admissionList = data.sections.admission || [];
           this.secteursList = data.sections.secteurs || [];
-          this.faqList = (data.sections.faq || []).map((f, idx) => ({
-            question: f.titre,
-            reponse: f.description || '',
-            ouvert: idx === 0,
-          }));
+          if (data.sections.faq && data.sections.faq.length > 0) {
+            this.faqList = data.sections.faq.map((f, idx) => ({
+              question: f.titre,
+              reponse: f.description || '',
+              ouvert: idx === 0,
+              categorie: (f.categorie || 'ADMISSIONS').toUpperCase(),
+            }));
+          }
         }
 
         if (data.actualites && data.actualites.length > 0) {
@@ -593,7 +865,53 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         if (data.temoignages && data.temoignages.length > 0) {
-          this.temoignagesList = data.temoignages;
+          this.temoignagesList = data.temoignages.map((t: any) => ({
+            id: t.id,
+            nomPrenom: t.nomPrenom || t.nom || 'Diplômé Vitalis',
+            nom: t.nom || t.nomPrenom || 'Diplômé Vitalis',
+            initiales: t.initiales || '',
+            role: t.role || t.fonction || 'Lauréat certifié',
+            fonction: t.fonction || t.role || 'Lauréat certifié',
+            entreprise: t.entreprise || 'Entreprise Partenaire',
+            promotion: t.promotion || '',
+            texte: t.texte || t.citation || '',
+            citation: t.citation || t.texte || '',
+            note: t.note || 5,
+            photo: t.photoUrl || t.photo || 'assets/temoignages/grace-mutombo.jpg',
+            photoUrl: t.photoUrl || t.photo || 'assets/temoignages/grace-mutombo.jpg',
+            couleur: t.couleur || '#1C75BC',
+            ordre: t.ordre || 1,
+            actif: t.actif !== false,
+          }));
+        }
+
+        if (data.formateurs && data.formateurs.length > 0) {
+          this.formateursList = data.formateurs.map((f: any) => ({
+            nom: f.nom,
+            titre: f.titre,
+            specialite: f.specialite,
+            experience: f.experience,
+            photo: f.photoUrl || f.photo || 'assets/formateurs/formateur-1.jpg',
+            linkedin: f.linkedin || undefined,
+          }));
+        }
+
+        if (data.campus && data.campus.length > 0) {
+          this.campusEspacesList = data.campus.map((c: any) => ({
+            titre: c.titre,
+            description: c.description,
+            photo: c.photoUrl || c.photo || 'assets/campus/lab-informatique.jpg',
+            badge: c.badge || 'Campus & Labs',
+            equipements: c.equipements,
+          }));
+        }
+
+        if (data.partenaires && data.partenaires.length > 0) {
+          this.logosPartenaires = data.partenaires.map((p: any) => ({
+            nom: p.nom,
+            logo: p.logoUrl || p.logo || '',
+            secteur: p.secteur || 'Partenaire',
+          }));
         }
 
         if (data.categories && data.categories.length > 0) {
@@ -616,7 +934,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
               categorie: catCode,
               categorieNom: catNom,
               couleur: couleur,
-              description: f.description || 'Formation certifiante d\'excellence validée sous la tutelle du Ministère de la Formation Professionnelle.',
+              description: this.getFormationDescription(f),
               duree: f.duree || '40 Heures',
               modulesCount: f.modulesCount || 4,
               badgeClass: badge,
@@ -625,6 +943,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
               prerequis: f.prerequis || f.niveauNom || 'Niveau secondaire ou test de positionnement',
               aLaUne: Boolean(f.aLaUne),
               badgeTexte: f.badgeTexte || 'Session ouverte',
+              imageUrl: f.imageUrl || null,
             };
           });
         }
@@ -646,6 +965,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.initStatsObserver();
+    this.initBarresObserver();
   }
 
   ngOnDestroy(): void {
@@ -660,6 +980,55 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.stopSliderLoop();
     if (this.statsObserver) {
       this.statsObserver.disconnect();
+    }
+    if (this.barresObserver) {
+      this.barresObserver.disconnect();
+    }
+  }
+
+  /** Active la classe .visible sur chaque .barre dès qu'elle entre dans le viewport */
+  private initBarresObserver(): void {
+    if (typeof IntersectionObserver === 'undefined') {
+      // Fallback : tout rendre visible immédiatement
+      document.querySelectorAll('.barre').forEach(el => el.classList.add('visible'));
+      return;
+    }
+    this.barresObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            this.barresObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    document.querySelectorAll('.barre').forEach(el => this.barresObserver!.observe(el));
+  }
+
+  /** Rating visuel pour les cartes formation (basé sur la durée & popularité) */
+  getFormationRating(formation: FormationDisplayItem): number {
+    return formation.aLaUne ? 4.9 : 4.7;
+  }
+
+  /** Libellé de demande pour les cartes formation */
+  getFormationDemande(formation: FormationDisplayItem): string {
+    if (formation.aLaUne) return '🔥 Très demandée';
+    return '';
+  }
+
+  /** Gestion des images de formation cassées : masquer l'img et afficher le placeholder */
+  onFormationImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.style.display = 'none';
+      // Afficher le conteneur parent comme bannière de remplacement
+      const container = img.parentElement;
+      if (container) {
+        container.style.background = 'linear-gradient(135deg, #1C75BC22 0%, #1C75BC44 100%)';
+        container.innerHTML = `<div style="text-align:center;padding:1rem"><div style="font-size:2.5rem;opacity:.6">📚</div><p style="font-size:0.7rem;font-weight:600;opacity:.7;color:#1C75BC">Formation</p></div>`;
+      }
     }
   }
 
@@ -815,10 +1184,6 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.filtrerFormations();
   }
 
-  toggleFaq(index: number): void {
-    this.faqList[index].ouvert = !this.faqList[index].ouvert;
-  }
-
   verifierCertificat(): void {
     if (!this.searchCertNumero?.trim()) return;
     const num = this.searchCertNumero.trim().toUpperCase();
@@ -900,4 +1265,28 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     });
   }
+
+  getMapEmbedSafeUrl(): SafeResourceUrl {
+    const raw = this.settings?.mapEmbedUrl || 'https://www.openstreetmap.org/export/embed.html?bbox=15.27%2C-4.37%2C15.35%2C-4.29&layer=mapnik';
+    return this.sanitizer.bypassSecurityTrustResourceUrl(raw);
+  }
+
+  cleanWhatsappNumber(phone?: string): string {
+    if (!phone) return '243843010337';
+    return phone.replace(/[^0-9]/g, '');
+  }
+
+  onLogoError(event: Event, nom?: string): void {
+    const img = event.target as HTMLImageElement;
+    if (!img) return;
+    img.style.display = 'none';
+    const parent = img.parentElement;
+    if (parent && !parent.querySelector('.logo-text-fallback')) {
+      const fallback = document.createElement('span');
+      fallback.className = 'logo-text-fallback font-bold text-xs text-[#4B5157] px-2 py-1 bg-white border border-[#D7DBDE] rounded';
+      fallback.textContent = nom || 'Partenaire';
+      parent.appendChild(fallback);
+    }
+  }
 }
+

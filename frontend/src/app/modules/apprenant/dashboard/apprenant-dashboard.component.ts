@@ -49,9 +49,50 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
       </div>
 
-      <!-- KPI METRICS (5 CARDS) ADAPTIVES MOBILE / TABLETTE / DESKTOP -->
+      <!-- BANNIÈRE SÉANCE EN DIRECT (Canvas / Coursera Benchmark) -->
+      @if (dashboard?.seanceEnDirect; as seance) {
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-[#124F80] via-[#1C75BC] to-[#276B44] text-white rounded-xs shadow-md border-l-4 border-[#F0791E] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-3.5">
+            <div class="relative shrink-0 mt-0.5">
+              <div class="w-10 h-10 rounded-xs bg-white/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ED1C24] opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-[#ED1C24]"></span>
+              </span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded-xs bg-[#ED1C24] text-white text-[10px] font-black tracking-wider uppercase">
+                  ● EN DIRECT MAINTENANT
+                </span>
+                <span class="text-xs font-bold text-white">{{ seance.titre }}</span>
+              </div>
+              <p class="text-xs text-white/90 mt-1">
+                Formation : <strong>{{ seance.formationTitre }}</strong> · Formateur : {{ seance.formateurNom || 'Équipe pédagogique' }}
+              </p>
+              <p class="text-[11px] text-white/80 mt-0.5">
+                Horaire : {{ seance.dateHeureDebut | date:'HH:mm' }} - {{ seance.dateHeureFin | date:'HH:mm' }}
+                @if (seance.salleOuLien) { · Salle / Lien : <strong>{{ seance.salleOuLien }}</strong> }
+              </p>
+            </div>
+          </div>
+          <a
+            routerLink="/apprenant/seances"
+            class="px-4 py-2.5 rounded-xs bg-[#F0791E] hover:bg-[#d96612] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          >
+            <span>Rejoindre la séance</span>
+            <span>→</span>
+          </a>
+        </div>
+      }
+
+      <!-- KPI METRICS (6 CARDS) ADAPTIVES MOBILE / TABLETTE / DESKTOP -->
       @if (dashboard) {
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
           <!-- KPI 1: Formations actives -->
           <a
             routerLink="/apprenant/formations"
@@ -81,6 +122,27 @@ import { AuthService } from '../../../core/services/auth.service';
             <div>
               <p class="text-xl sm:text-2xl font-bold text-[#276B44] font-mono leading-none">{{ dashboard.completionGlobale }}%</p>
               <p class="text-[11px] sm:text-xs font-semibold text-[#4B5157] mt-1 truncate group-hover:text-[#276B44] transition-colors">Complétion moyenne →</p>
+            </div>
+          </a>
+
+          <!-- KPI 3: Assiduité (Canvas LMS Benchmark) -->
+          <a
+            routerLink="/apprenant/seances"
+            class="p-3.5 sm:p-5 bg-white border border-[#D7DBDE] hover:border-[#276B44] hover:bg-[#F5F6F7] rounded-xs shadow-xs flex flex-col justify-between transition-all group cursor-pointer"
+          >
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xs bg-[#E7F1EA] text-[#276B44] flex items-center justify-center mb-2.5 sm:mb-3 border border-[#276B44]/20 group-hover:scale-105 transition-transform">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p
+                class="text-xl sm:text-2xl font-bold font-mono leading-none"
+                [class]="(dashboard.tauxAssiduite ?? 100) >= 80 ? 'text-[#276B44]' : (dashboard.tauxAssiduite ?? 100) >= 60 ? 'text-[#F0791E]' : 'text-[#ED1C24]'"
+              >
+                {{ dashboard.tauxAssiduite !== undefined ? dashboard.tauxAssiduite : 100 }}%
+              </p>
+              <p class="text-[11px] sm:text-xs font-semibold text-[#4B5157] mt-1 truncate group-hover:text-[#276B44] transition-colors">Assiduité →</p>
             </div>
           </a>
 
@@ -229,36 +291,63 @@ import { AuthService } from '../../../core/services/auth.service';
 
         <!-- RIGHT: PROCHAINE ÉCHÉANCE & RÈGLE BR-03 -->
         <div class="space-y-6">
-          <!-- PROCHAINE ÉCHÉANCE -->
+          <!-- PROCHAINES ÉCHÉANCES (CANVAS / COURSERA STYLE) -->
           <div class="p-6 bg-white border border-[#D7DBDE] rounded-xs space-y-4 shadow-xs">
-            <div>
-              <h2 class="text-sm font-bold text-[#1B1D1F] font-heading">
-                Prochaine Échéance
-              </h2>
-              <div class="barre"></div>
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-sm font-bold text-[#1B1D1F] font-heading">
+                  Prochaines Échéances
+                </h2>
+                <div class="barre"></div>
+              </div>
+              @if (echeances.length > 0) {
+                <span class="px-2 py-0.5 rounded-xs bg-[#E7F1FA] text-[#1C75BC] text-[10px] font-bold font-mono">
+                  {{ echeances.length }} à venir
+                </span>
+              }
             </div>
 
-            @if (dashboard?.prochaineEcheance; as ech) {
-              <div class="p-4 bg-[#E7F1FA] border-l-4 border-[#1C75BC] space-y-2 rounded-xs">
-                <div class="flex items-center justify-between">
-                  <span class="px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase" [class]="ech.type === 'devoir' ? 'bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]' : ech.type === 'quiz' ? 'bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC]' : 'bg-[#E7F1EA] text-[#276B44] border border-[#276B44]'">
-                    {{ ech.type === 'devoir' ? 'Devoir à rendre' : ech.type === 'quiz' ? 'Quiz à passer' : 'Séance programmée' }}
-                  </span>
-                  <span class="text-[11px] font-semibold text-[#4B5157] font-mono">
-                    {{ ech.dateLimite | date:'dd MMM yyyy à HH:mm' }}
-                  </span>
-                </div>
-                <h3 class="text-xs font-bold text-[#1B1D1F]">{{ ech.titre }}</h3>
-                <p class="text-[11px] text-[#4B5157]">{{ ech.formationTitre }}</p>
-                <div class="pt-2">
-                  <a
-                    [routerLink]="ech.type === 'seance' ? '/apprenant/seances' : ech.type === 'quiz' ? '/apprenant/evaluations/depot-devoir' : '/apprenant/evaluations/depot-devoir'"
-                    [queryParams]="ech.type === 'quiz' ? { tab: 'quiz' } : null"
-                    class="inline-block text-xs font-bold text-[#1C75BC] hover:underline"
+            @if (echeances.length > 0) {
+              <div class="space-y-3">
+                @for (ech of echeances; track ech.id + ech.type) {
+                  <div
+                    class="p-3.5 bg-[#F5F6F7] hover:bg-[#E7F1FA]/40 border-l-4 transition-colors rounded-xs space-y-1.5"
+                    [class]="ech.type === 'devoir' ? 'border-[#F0791E]' : ech.type === 'quiz' ? 'border-[#1C75BC]' : 'border-[#276B44]'"
                   >
-                    {{ ech.type === 'seance' ? 'Consulter le planning →' : ech.type === 'quiz' ? 'Passer le quiz en ligne →' : 'Accéder à l\'épreuve →' }}
-                  </a>
-                </div>
+                    <div class="flex items-center justify-between gap-2">
+                      <span
+                        class="px-2 py-0.5 rounded-xs text-[9px] font-bold uppercase tracking-wider"
+                        [class]="ech.type === 'devoir' ? 'bg-[#FDECDD] text-[#F0791E]' : ech.type === 'quiz' ? 'bg-[#E7F1FA] text-[#1C75BC]' : 'bg-[#E7F1EA] text-[#276B44]'"
+                      >
+                        {{ ech.type === 'devoir' ? 'Devoir' : ech.type === 'quiz' ? 'Quiz' : 'Séance' }}
+                      </span>
+                      @if (ech.dateLimite) {
+                        <span class="text-[10px] font-semibold text-[#4B5157] font-mono">
+                          {{ ech.dateLimite | date:'dd MMM à HH:mm' }}
+                        </span>
+                      } @else {
+                        <span class="text-[10px] font-semibold text-[#1C75BC]">
+                          {{ ech.extra || 'À tout moment' }}
+                        </span>
+                      }
+                    </div>
+
+                    <h3 class="text-xs font-bold text-[#1B1D1F] leading-snug line-clamp-1">{{ ech.titre }}</h3>
+                    <p class="text-[10px] text-[#4B5157] line-clamp-1">{{ ech.formationTitre }}</p>
+
+                    <div class="pt-1 flex items-center justify-between">
+                      <a
+                        [routerLink]="ech.type === 'seance' ? '/apprenant/seances' : ech.type === 'quiz' ? '/apprenant/evaluations/depot-devoir' : '/apprenant/evaluations/depot-devoir'"
+                        [queryParams]="ech.type === 'quiz' ? { tab: 'quiz' } : ech.type === 'devoir' ? { tab: 'devoirs' } : null"
+                        class="text-[11px] font-bold hover:underline flex items-center gap-1"
+                        [class]="ech.type === 'devoir' ? 'text-[#F0791E]' : ech.type === 'quiz' ? 'text-[#1C75BC]' : 'text-[#276B44]'"
+                      >
+                        <span>{{ ech.type === 'seance' ? 'Planning' : ech.type === 'quiz' ? 'Passer le quiz' : 'Déposer mon devoir' }}</span>
+                        <span>→</span>
+                      </a>
+                    </div>
+                  </div>
+                }
               </div>
             } @else {
               <div class="p-6 text-center text-[#4B5157] bg-[#F5F6F7] rounded-xs space-y-1">
@@ -313,6 +402,17 @@ export class ApprenantDashboardComponent implements OnInit, OnDestroy {
     private apprenantService: ApprenantService,
     private auth: AuthService,
   ) {}
+
+  get echeances(): any[] {
+    if (!this.dashboard) return [];
+    if (this.dashboard.prochainesEcheances && this.dashboard.prochainesEcheances.length > 0) {
+      return this.dashboard.prochainesEcheances;
+    }
+    if (this.dashboard.prochaineEcheance) {
+      return [this.dashboard.prochaineEcheance];
+    }
+    return [];
+  }
 
   ngOnInit() {
     this.user = this.auth.currentUser;

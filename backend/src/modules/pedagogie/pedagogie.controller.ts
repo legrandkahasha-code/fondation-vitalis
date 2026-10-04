@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Patch, Delete, Param, Body, Req, Query, UseGuards, UseInterceptors, UploadedFile, ParseUUIDPipe,
+  Controller, Get, Post, Put, Patch, Delete, Param, Body, Req, Query, UseGuards, UseInterceptors, UploadedFile, ParseUUIDPipe, BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -120,6 +120,89 @@ export class PedagogieController {
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
   deleteFormation(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.deleteFormation(id, req.user);
+  }
+
+  // ====================================
+  // SYLLABUS OFFICIEL (Upload / Suppression)
+  // ====================================
+  @Post('formations/:id/syllabus')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: uploadFileFilter,
+      limits: { fileSize: MAX_UPLOAD_FILE_SIZE },
+    }),
+  )
+  async uploadSyllabus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
+  ) {
+    const url = await this.storage.uploadFile(file.buffer, file.originalname, file.mimetype, 'syllabus');
+    return this.service.uploadSyllabus(id, url, file.originalname, req.user);
+  }
+
+  @Delete('formations/:id/syllabus')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  deleteSyllabus(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.deleteSyllabus(id, req.user);
+  }
+
+  // ====================================
+  // IMAGE DE COUVERTURE FORMATION
+  // ====================================
+  @Post('formations/upload-image')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: (_req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+        if (!allowed.includes(file.mimetype)) {
+          return cb(new BadRequestException('Format d\'image non supporté (JPEG, PNG, WebP, GIF, SVG autorisés).'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 10 * 1024 * 1024 },
+    }),
+  )
+  async uploadFormationImageDirect(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Aucun fichier fourni.');
+    }
+    const url = await this.storage.uploadFile(file.buffer, file.originalname, file.mimetype, 'formations/images');
+    return { url, originalName: file.originalname, mimeType: file.mimetype };
+  }
+
+  @Post('formations/:id/image')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: (_req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+        if (!allowed.includes(file.mimetype)) {
+          return cb(new BadRequestException('Format d\'image non supporté (JPEG, PNG, WebP, GIF, SVG autorisés).'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 10 * 1024 * 1024 },
+    }),
+  )
+  async uploadFormationImage(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Aucun fichier fourni.');
+    }
+    const url = await this.storage.uploadFile(file.buffer, file.originalname, file.mimetype, 'formations/images');
+    return this.service.uploadImage(id, url, req.user);
+  }
+
+  @Delete('formations/:id/image')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  deleteFormationImage(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.deleteImage(id, req.user);
   }
 
   @Post('formations/:formationId/modules')

@@ -106,6 +106,7 @@ export class FormationsComponent implements OnInit, OnDestroy {
     fraisInscription?: number | null;
     etablissementId: string;
     formationReferentielId?: string;
+    imageUrl?: string;
   } = {
     titre: '',
     code: '',
@@ -123,6 +124,7 @@ export class FormationsComponent implements OnInit, OnDestroy {
     fraisInscription: null,
     etablissementId: '',
     formationReferentielId: '',
+    imageUrl: '',
   };
 
   private sseSub?: Subscription;
@@ -206,6 +208,7 @@ export class FormationsComponent implements OnInit, OnDestroy {
       fraisInscription: null,
       etablissementId: userEtab,
       formationReferentielId: '',
+      imageUrl: '',
     };
   }
 
@@ -395,6 +398,7 @@ export class FormationsComponent implements OnInit, OnDestroy {
       fraisInscription: f.fraisInscription ?? null,
       etablissementId: f.etablissementId || this.auth?.currentUser?.etablissementId || '',
       formationReferentielId: f.formationReferentielId || '',
+      imageUrl: f.imageUrl || '',
     };
     this.modalActiveTab = 'identite';
     this.showModal = true;
@@ -403,6 +407,32 @@ export class FormationsComponent implements OnInit, OnDestroy {
   closeModal() {
     this.showModal = false;
     this.saving = false;
+    this.uploadingImage = false;
+  }
+
+  uploadingImage = false;
+  onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploadingImage = true;
+    this.pedagogie.uploadImageDirect(file).subscribe({
+      next: (res) => {
+        this.formData.imageUrl = res.url;
+        this.uploadingImage = false;
+        this.toast.success('Image téléversée avec succès.');
+      },
+      error: (err) => {
+        this.uploadingImage = false;
+        this.toast.error(err?.error?.message || 'Erreur lors du téléversement de l\'image.');
+      },
+    });
+    input.value = '';
+  }
+
+  removeImage() {
+    this.formData.imageUrl = '';
   }
 
   saveFormation() {
@@ -441,6 +471,7 @@ export class FormationsComponent implements OnInit, OnDestroy {
       actif: raw.actif ?? true,
       etablissementId: raw.etablissementId || undefined,
       formationReferentielId: raw.formationReferentielId?.trim() || undefined,
+      imageUrl: raw.imageUrl?.trim() || null,
     };
     if (raw.fraisInscription !== null && raw.fraisInscription !== undefined && (raw.fraisInscription as any) !== '') {
       payload.fraisInscription = Number(raw.fraisInscription);

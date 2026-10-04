@@ -16,3 +16,15 @@ export class SubmitApprenantQuizDto {
   @Type(() => QuizReponseItemDto)
   reponses: QuizReponseItemDto[];
 }
+
+export class SauvegarderNotesDto {
+  @IsString()
+  notes: string;
+}
+
+export class PoserQuestionDto {
+  @IsString()
+  @IsNotEmpty()
+  question: string;
+}
+

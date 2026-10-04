@@ -215,6 +215,40 @@ export class PedagogieService {
     );
   }
 
+  uploadSyllabus(formationId: string, file: File): Observable<Formation> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<Formation>(`${this.url}/formations/${formationId}/syllabus`, formData).pipe(
+      tap(() => this.invalidateCache())
+    );
+  }
+
+  deleteSyllabus(formationId: string): Observable<Formation> {
+    return this.http.delete<Formation>(`${this.url}/formations/${formationId}/syllabus`).pipe(
+      tap(() => this.invalidateCache())
+    );
+  }
+
+  uploadImage(formationId: string, file: File): Observable<Formation> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<Formation>(`${this.url}/formations/${formationId}/image`, formData).pipe(
+      tap(() => this.invalidateCache())
+    );
+  }
+
+  deleteImage(formationId: string): Observable<Formation> {
+    return this.http.delete<Formation>(`${this.url}/formations/${formationId}/image`).pipe(
+      tap(() => this.invalidateCache())
+    );
+  }
+
+  uploadImageDirect(file: File): Observable<{ url: string; originalName: string; mimeType: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ url: string; originalName: string; mimeType: string }>(`${this.url}/formations/upload-image`, formData);
+  }
+
   getReferentielFilieres(all = true): Observable<FiliereReferentiel[]> {
     return this.http.get<FiliereReferentiel[]>(`${environment.apiUrl}/referentiel/filieres?all=${all}`);
   }

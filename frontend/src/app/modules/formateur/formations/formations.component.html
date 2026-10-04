@@ -317,6 +317,13 @@
                 [style.background-color]="getCategorieColor(f.categorie)"
               ></div>
 
+              <!-- Image de couverture si définie -->
+              @if (f.imageUrl) {
+                <div class="h-36 w-full overflow-hidden bg-slate-100 relative border-b border-[#D7DBDE]">
+                  <img [src]="f.imageUrl" alt="Image de présentation de la formation" [alt]="f.titre || 'Image de présentation de la formation'" title="Image de présentation de la formation" [title]="f.titre || 'Image de présentation de la formation'" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                </div>
+              }
+
               <div class="p-5 flex-1 flex flex-col">
                 <!-- Ligne supérieure : Catégorie, Étoile "À la une", Toggle Vitrine -->
                 <div class="flex items-center justify-between gap-2 mb-2.5">
@@ -488,11 +495,20 @@
                 <tr class="hover:bg-slate-50 transition-colors">
                   <!-- Code & Titre -->
                   <td class="py-3 px-4">
-                    <div class="font-bold text-[#1B1D1F] hover:text-[#1C75BC] transition-colors cursor-pointer" (click)="openEditModal(f)">
-                      {{ f.titre }}
-                    </div>
-                    <div class="font-mono text-[10px] text-[#4B5157] mt-0.5">
-                      {{ f.code || 'FORM-OFFICIELLE' }}
+                    <div class="flex items-center gap-3">
+                      @if (f.imageUrl) {
+                        <div class="w-9 h-9 rounded-xs overflow-hidden border border-[#D7DBDE] bg-slate-100 shrink-0">
+                          <img [src]="f.imageUrl" alt="Vignette de la formation" [alt]="f.titre || 'Vignette de la formation'" title="Vignette de la formation" [title]="f.titre || 'Vignette de la formation'" class="w-full h-full object-cover" />
+                        </div>
+                      }
+                      <div>
+                        <div class="font-bold text-[#1B1D1F] hover:text-[#1C75BC] transition-colors cursor-pointer" (click)="openEditModal(f)">
+                          {{ f.titre }}
+                        </div>
+                        <div class="font-mono text-[10px] text-[#4B5157] mt-0.5">
+                          {{ f.code || 'FORM-OFFICIELLE' }}
+                        </div>
+                      </div>
                     </div>
                   </td>
 
@@ -945,6 +961,57 @@
                   </div>
                 </div>
 
+                <!-- Image de Couverture / Vitrine Publique -->
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xs space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <span class="font-bold text-[#1B1D1F] flex items-center gap-1.5">
+                        <span>🖼️</span> Image de Couverture / Vitrine
+                      </span>
+                      <p class="text-[10px] text-slate-500 mt-0.5">
+                        Affichée en tête de carte sur la Landing Page et le catalogue officiel.
+                      </p>
+                    </div>
+
+                    @if (formData.imageUrl) {
+                      <button
+                        type="button"
+                        (click)="removeImage()"
+                        class="text-xs text-[#ED1C24] hover:underline cursor-pointer font-bold"
+                      >
+                        Retirer l'image
+                      </button>
+                    }
+                  </div>
+
+                  <div class="flex items-center gap-3">
+                    @if (formData.imageUrl) {
+                      <div class="w-14 h-14 rounded-xs border border-slate-300 overflow-hidden bg-slate-200 shrink-0 shadow-2xs">
+                        <img [src]="formData.imageUrl" alt="Aperçu de l'image de couverture" title="Aperçu de l'image de couverture" class="w-full h-full object-cover" />
+                      </div>
+                    }
+
+                    <div class="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        [(ngModel)]="formData.imageUrl"
+                        placeholder="URL de l'image (ex: https://...)"
+                        aria-label="URL de l'image de couverture"
+                        title="URL de l'image de couverture"
+                        class="w-full px-3 py-1.5 border border-[#D7DBDE] rounded-xs focus:border-[#1C75BC] focus:outline-none text-xs"
+                      />
+
+                      <div class="flex items-center gap-2">
+                        <label class="px-2.5 py-1 rounded-xs bg-[#1C75BC] hover:bg-[#124F80] text-white text-[11px] font-bold transition-all shadow-2xs cursor-pointer flex items-center gap-1">
+                          <span>{{ uploadingImage ? 'Téléversement en cours...' : '📁 Choisir un fichier local' }}</span>
+                          <input type="file" (change)="onImageSelected($event)" accept="image/png,image/jpeg,image/webp,image/jpg" class="hidden" [disabled]="uploadingImage" />
+                        </label>
+                        <span class="text-[10px] text-slate-400">PNG, JPG, WebP max 5Mo</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             }
 
@@ -1007,6 +1074,13 @@
                 class="h-2 w-full transition-all"
                 [style.background-color]="getCategorieColor(formData.categorie)"
               ></div>
+
+              <!-- Image dans Live Preview si définie -->
+              @if (formData.imageUrl) {
+                <div class="h-32 w-full overflow-hidden bg-slate-100 relative border-b border-[#D7DBDE]">
+                  <img [src]="formData.imageUrl" alt="Aperçu en direct de la formation" [alt]="formData.titre || 'Aperçu en direct de la formation'" title="Aperçu en direct de la formation" [title]="formData.titre || 'Aperçu en direct de la formation'" class="w-full h-full object-cover" />
+                </div>
+              }
 
               <div class="p-4 sm:p-5">
                 <!-- En-tête : Badge Catégorie & Badge Statut -->

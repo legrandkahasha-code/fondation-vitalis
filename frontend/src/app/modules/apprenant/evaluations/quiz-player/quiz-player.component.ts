@@ -28,11 +28,17 @@ import { ToastService } from '../../../../core/services/toast.service';
         </a>
 
         @if (quiz && !quiz.tentative && !result && timeLeftSeconds > 0) {
-          <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xs bg-[#124F80] text-white text-xs font-bold font-mono shadow-xs">
-            <svg class="w-4 h-4 text-[#F0791E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <div
+            class="flex items-center gap-2 px-3.5 py-1.5 rounded-xs text-xs font-bold font-mono shadow-xs transition-colors"
+            [class]="timeLeftSeconds <= 300 ? 'bg-[#ED1C24] text-white animate-pulse' : 'bg-[#124F80] text-white'"
+          >
+            <svg class="w-4 h-4" [class.text-[#F0791E]]="timeLeftSeconds > 300" [class.text-white]="timeLeftSeconds <= 300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{{ formatTime(timeLeftSeconds) }}</span>
+            @if (timeLeftSeconds <= 300) {
+              <span class="text-[10px] uppercase font-bold tracking-wider">(&lt; 5 min !)</span>
+            }
           </div>
         }
       </div>
@@ -464,6 +470,9 @@ export class QuizPlayerComponent implements OnInit, OnDestroy {
     this.timerInterval = setInterval(() => {
       if (this.timeLeftSeconds > 0) {
         this.timeLeftSeconds--;
+        if (this.timeLeftSeconds === 300) {
+          this.toast.info('Attention : il ne vous reste plus que 5 minutes pour terminer l\'évaluation !');
+        }
       } else {
         clearInterval(this.timerInterval);
         this.toast.error('Temps écoulé ! Soumission automatique...');

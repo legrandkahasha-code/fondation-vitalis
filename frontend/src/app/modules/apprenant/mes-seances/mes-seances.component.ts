@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ApprenantService, ApprenantSeanceItem, ApprenantAssiduite } from '../../../core/services/apprenant.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -7,7 +8,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-mes-seances',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="space-y-8 animate-fade-in pb-12">
       <!-- TOP HEADER & REFRESH -->
@@ -53,6 +54,21 @@ import { ToastService } from '../../../core/services/toast.service';
               <span>Calendrier Hebdo</span>
             </button>
           </div>
+
+          <!-- BOUTON EXPORT .ICS (Canvas / Coursera Benchmark) -->
+          <button
+            type="button"
+            (click)="exporterIcs()"
+            [disabled]="seances.length === 0"
+            class="px-3.5 py-2 rounded-xs bg-[#276B44] hover:bg-[#1e5234] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+            title="Exporter tout mon emploi du temps au format iCalendar (.ics)"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="hidden sm:inline">Exporter .ics</span>
+            <span class="sm:hidden">.ics</span>
+          </button>
 
           <button
             type="button"
@@ -131,28 +147,46 @@ import { ToastService } from '../../../core/services/toast.service';
 
       <!-- BARRE DE COMMANDE & FILTRES (LISTE OU CALENDRIER) -->
       @if (viewMode === 'list') {
-        <div class="flex items-center gap-2 border-b border-[#D7DBDE] pb-2">
-          <button
-            (click)="filter = 'all'"
-            class="px-3.5 py-1.5 text-xs font-bold rounded-xs transition-all cursor-pointer"
-            [class]="filter === 'all' ? 'bg-[#124F80] text-white shadow-2xs' : 'bg-white text-[#4B5157] hover:text-[#1B1D1F] border border-[#D7DBDE]'"
-          >
-            Toutes ({{ seances.length }})
-          </button>
-          <button
-            (click)="filter = 'upcoming'"
-            class="px-3.5 py-1.5 text-xs font-bold rounded-xs transition-all cursor-pointer"
-            [class]="filter === 'upcoming' ? 'bg-[#124F80] text-white shadow-2xs' : 'bg-white text-[#4B5157] hover:text-[#1B1D1F] border border-[#D7DBDE]'"
-          >
-            À venir ({{ nbUpcoming }})
-          </button>
-          <button
-            (click)="filter = 'past'"
-            class="px-3.5 py-1.5 text-xs font-bold rounded-xs transition-all cursor-pointer"
-            [class]="filter === 'past' ? 'bg-[#124F80] text-white shadow-2xs' : 'bg-white text-[#4B5157] hover:text-[#1B1D1F] border border-[#D7DBDE]'"
-          >
-            Passées ({{ nbPast }})
-          </button>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#D7DBDE] pb-2.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              (click)="filter = 'all'"
+              class="px-3.5 py-1.5 text-xs font-bold rounded-xs transition-all cursor-pointer"
+              [class]="filter === 'all' ? 'bg-[#124F80] text-white shadow-2xs' : 'bg-white text-[#4B5157] hover:text-[#1B1D1F] border border-[#D7DBDE]'"
+            >
+              Toutes ({{ seances.length }})
+            </button>
+            <button
+              (click)="filter = 'upcoming'"
+              class="px-3.5 py-1.5 text-xs font-bold rounded-xs transition-all cursor-pointer"
+              [class]="filter === 'upcoming' ? 'bg-[#124F80] text-white shadow-2xs' : 'bg-white text-[#4B5157] hover:text-[#1B1D1F] border border-[#D7DBDE]'"
+            >
+              À venir ({{ nbUpcoming }})
+            </button>
+            <button
+              (click)="filter = 'past'"
+              class="px-3.5 py-1.5 text-xs font-bold rounded-xs transition-all cursor-pointer"
+              [class]="filter === 'past' ? 'bg-[#124F80] text-white shadow-2xs' : 'bg-white text-[#4B5157] hover:text-[#1B1D1F] border border-[#D7DBDE]'"
+            >
+              Passées ({{ nbPast }})
+            </button>
+          </div>
+
+          <!-- Filtre déroulant par formation (Coursera / Canvas Benchmark) -->
+          @if (formationsDisponibles.length > 1) {
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <span class="text-xs text-[#4B5157] font-semibold hidden md:inline">Filtrer par formation :</span>
+              <select
+                [(ngModel)]="selectedFormationId"
+                class="px-2.5 py-1.5 bg-white border border-[#D7DBDE] rounded-xs text-xs text-[#1B1D1F] focus:outline-none focus:border-[#1C75BC] transition-all cursor-pointer font-sans shadow-2xs"
+              >
+                <option value="all">Toutes les formations ({{ seances.length }})</option>
+                @for (f of formationsDisponibles; track f.id) {
+                  <option [value]="f.id">{{ f.titre }} ({{ countSeancesByFormation(f.id) }})</option>
+                }
+              </select>
+            </div>
+          }
         </div>
       } @else {
         <!-- NAVIGATION CALENDRIER HEBDOMADAIRE -->
@@ -506,27 +540,189 @@ import { ToastService } from '../../../core/services/toast.service';
             </div>
 
             <!-- Actions Modal -->
-            <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#D7DBDE]">
+            <div class="flex items-center justify-between gap-2 pt-3 border-t border-[#D7DBDE]">
+              <div>
+                @if ((selectedSeanceModal.presence?.statut === 'ABSENT' || selectedSeanceModal.presence?.statut === 'RETARD') && !selectedSeanceModal.presence?.remarqueJustification) {
+                  <button
+                    type="button"
+                    (click)="openJustificationModal(selectedSeanceModal)"
+                    class="px-4 py-2 rounded-xs bg-[#F0791E] hover:bg-[#d96612] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5 transition-all"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Justifier mon absence</span>
+                  </button>
+                }
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="closeSeanceModal()"
+                  class="px-4 py-2 rounded-xs border border-[#D7DBDE] text-xs font-semibold text-[#4B5157] hover:bg-[#F5F6F7] cursor-pointer"
+                >
+                  Fermer
+                </button>
+                @if (isVisio(selectedSeanceModal) && selectedSeanceModal.salleOuLien) {
+                  <a
+                    [href]="selectedSeanceModal.salleOuLien"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="px-5 py-2 rounded-xs bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <span>Rejoindre la visio</span>
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ─── MODAL JUSTIFICATION D'ABSENCE (Canvas LMS-Inspired) ──────── -->
+      @if (justificationModal) {
+        <div
+          class="fixed inset-0 bg-[#1B1D1F]/60 backdrop-blur-xs z-[60] flex items-center justify-center p-4 animate-fade-in"
+          (click)="closeJustificationModal()"
+        >
+          <div
+            class="bg-white border border-[#D7DBDE] rounded-xs max-w-md w-full shadow-2xl animate-scale-up"
+            (click)="$event.stopPropagation()"
+          >
+            <!-- Header -->
+            <div class="p-5 border-b border-[#D7DBDE]">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-xs bg-[#F0791E]/10 border border-[#F0791E]/30 flex items-center justify-center">
+                      <svg class="w-4 h-4 text-[#F0791E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </span>
+                    <div>
+                      <h3 class="text-sm font-bold text-[#1B1D1F]">Justifier mon absence</h3>
+                      <p class="text-[10px] text-[#71787E] mt-0.5">{{ justificationSeance?.titreActivite }} · {{ justificationSeance?.dateHeureDebut | date:'dd/MM/yyyy' }}</p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  (click)="closeJustificationModal()"
+                  class="w-7 h-7 rounded-xs bg-[#F5F6F7] hover:bg-[#D7DBDE] text-[#1B1D1F] flex items-center justify-center text-sm font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Form Body -->
+            <div class="p-5 space-y-4">
+              <!-- Motif Selector -->
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold text-[#1B1D1F] block">Motif de l'absence <span class="text-[#ED1C24]">*</span></label>
+                <select
+                  [(ngModel)]="justificationMotif"
+                  class="w-full px-3 py-2.5 border border-[#D7DBDE] rounded-xs text-xs font-medium text-[#1B1D1F] bg-white focus:border-[#1C75BC] focus:ring-1 focus:ring-[#1C75BC] outline-none transition-all cursor-pointer"
+                >
+                  <option value="">— Sélectionner un motif —</option>
+                  <option value="MEDICAL">Raison médicale (certificat médical)</option>
+                  <option value="FAMILIAL">Raison familiale</option>
+                  <option value="ADMINISTRATIF">Convocation administrative ou judiciaire</option>
+                  <option value="TRANSPORT">Problème de transport</option>
+                  <option value="PROFESSIONNEL">Obligation professionnelle</option>
+                  <option value="AUTRE">Autre motif</option>
+                </select>
+              </div>
+
+              <!-- Commentaire -->
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold text-[#1B1D1F] block">Commentaire explicatif</label>
+                <textarea
+                  [(ngModel)]="justificationCommentaire"
+                  rows="3"
+                  placeholder="Expliquez brièvement les raisons de votre absence..."
+                  class="w-full px-3 py-2.5 border border-[#D7DBDE] rounded-xs text-xs font-medium text-[#1B1D1F] bg-white focus:border-[#1C75BC] focus:ring-1 focus:ring-[#1C75BC] outline-none transition-all resize-none placeholder-[#9AA1A8]"
+                ></textarea>
+              </div>
+
+              <!-- File Upload Zone -->
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold text-[#1B1D1F] block">Pièce justificative (certificat médical, attestation, etc.)</label>
+                <div
+                  class="relative border-2 border-dashed rounded-xs p-5 text-center transition-all cursor-pointer"
+                  [class]="justificationFile ? 'border-[#276B44] bg-[#E7F1EA]/30' : 'border-[#D7DBDE] bg-[#F9FAFB] hover:border-[#1C75BC] hover:bg-[#E7F1FA]/20'"
+                  (click)="fileInput.click()"
+                  (dragover)="$event.preventDefault()"
+                  (drop)="onFileDrop($event)"
+                >
+                  <input
+                    #fileInput
+                    type="file"
+                    (change)="onFileSelected($event)"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    class="hidden"
+                  />
+                  @if (!justificationFile) {
+                    <svg class="w-8 h-8 mx-auto text-[#9AA1A8] mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p class="text-[11px] font-semibold text-[#4B5157]">Glissez-déposez votre fichier ou <span class="text-[#1C75BC] underline">parcourir</span></p>
+                    <p class="text-[10px] text-[#9AA1A8] mt-1">PDF, JPG, PNG, DOC · Max 5 Mo</p>
+                  } @else {
+                    <div class="flex items-center justify-center gap-2">
+                      <svg class="w-5 h-5 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span class="text-xs font-bold text-[#276B44]">{{ justificationFile.name }}</span>
+                      <button
+                        type="button"
+                        (click)="removeJustificationFile($event)"
+                        class="ml-2 w-5 h-5 rounded-full bg-[#ED1C24] text-white flex items-center justify-center text-[10px] font-bold cursor-pointer hover:bg-[#c9181f]"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <p class="text-[10px] text-[#71787E] mt-1">{{ (justificationFile.size / 1024).toFixed(0) }} Ko</p>
+                  }
+                </div>
+              </div>
+
+              @if (justificationError) {
+                <div class="p-2.5 bg-[#FDE8E8] border border-[#ED1C24] rounded-xs">
+                  <p class="text-[11px] text-[#ED1C24] font-semibold">{{ justificationError }}</p>
+                </div>
+              }
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="p-5 border-t border-[#D7DBDE] flex items-center justify-end gap-2">
               <button
                 type="button"
-                (click)="closeSeanceModal()"
-                class="px-4 py-2 rounded-xs border border-[#D7DBDE] text-xs font-semibold text-[#4B5157] hover:bg-[#F5F6F7] cursor-pointer"
+                (click)="closeJustificationModal()"
+                [disabled]="justificationSubmitting"
+                class="px-4 py-2 rounded-xs border border-[#D7DBDE] text-xs font-semibold text-[#4B5157] hover:bg-[#F5F6F7] cursor-pointer disabled:opacity-50"
               >
-                Fermer
+                Annuler
               </button>
-              @if (isVisio(selectedSeanceModal) && selectedSeanceModal.salleOuLien) {
-                <a
-                  [href]="selectedSeanceModal.salleOuLien"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="px-5 py-2 rounded-xs bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
-                >
-                  <span>Rejoindre la visio</span>
+              <button
+                type="button"
+                (click)="submitJustification()"
+                [disabled]="justificationSubmitting || !justificationMotif"
+                class="px-5 py-2 rounded-xs bg-[#F0791E] hover:bg-[#d96612] text-white text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                @if (justificationSubmitting) {
+                  <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Envoi en cours...</span>
+                } @else {
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
-                </a>
-              }
+                  <span>Transmettre le justificatif</span>
+                }
+              </button>
             </div>
           </div>
         </div>
@@ -539,9 +735,19 @@ export class MesSeancesComponent implements OnInit, OnDestroy {
   seances: ApprenantSeanceItem[] = [];
   assiduite: ApprenantAssiduite | null = null;
   filter: 'all' | 'upcoming' | 'past' = 'all';
+  selectedFormationId = 'all';
   viewMode: 'list' | 'calendar' = 'list';
   currentWeekMonday: Date = this.getMonday(new Date());
   selectedSeanceModal: ApprenantSeanceItem | null = null;
+
+  // --- Justification d'absence ---
+  justificationModal = false;
+  justificationSeance: ApprenantSeanceItem | null = null;
+  justificationMotif = '';
+  justificationCommentaire = '';
+  justificationFile: File | null = null;
+  justificationSubmitting = false;
+  justificationError = '';
 
   private liveSub?: Subscription;
   private bootstrapSub?: Subscription;
@@ -677,6 +883,82 @@ export class MesSeancesComponent implements OnInit, OnDestroy {
     this.selectedSeanceModal = null;
   }
 
+  // --- Justification d'absence (Canvas LMS-Inspired) ---
+  openJustificationModal(seance: ApprenantSeanceItem): void {
+    this.justificationSeance = seance;
+    this.justificationMotif = '';
+    this.justificationCommentaire = '';
+    this.justificationFile = null;
+    this.justificationError = '';
+    this.justificationSubmitting = false;
+    this.justificationModal = true;
+  }
+
+  closeJustificationModal(): void {
+    if (this.justificationSubmitting) return;
+    this.justificationModal = false;
+    this.justificationSeance = null;
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        this.justificationError = 'Le fichier dépasse la taille maximale autorisée (5 Mo).';
+        return;
+      }
+      this.justificationFile = file;
+      this.justificationError = '';
+    }
+  }
+
+  onFileDrop(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
+      const file = event.dataTransfer.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        this.justificationError = 'Le fichier dépasse la taille maximale autorisée (5 Mo).';
+        return;
+      }
+      this.justificationFile = file;
+      this.justificationError = '';
+    }
+  }
+
+  removeJustificationFile(event: Event): void {
+    event.stopPropagation();
+    this.justificationFile = null;
+  }
+
+  submitJustification(): void {
+    if (!this.justificationSeance || !this.justificationMotif) {
+      this.justificationError = 'Veuillez sélectionner un motif d\'absence.';
+      return;
+    }
+    this.justificationSubmitting = true;
+    this.justificationError = '';
+
+    this.apprenantService.justifierAbsenceSeance(
+      this.justificationSeance.id,
+      this.justificationFile,
+      this.justificationMotif,
+      this.justificationCommentaire,
+    ).subscribe({
+      next: () => {
+        this.justificationSubmitting = false;
+        this.justificationModal = false;
+        this.selectedSeanceModal = null;
+        this.toast.success('Votre justificatif a été transmis avec succès à la direction pédagogique.');
+        this.loadData(false);
+      },
+      error: (err) => {
+        this.justificationSubmitting = false;
+        this.justificationError = err.error?.message || 'Une erreur est survenue lors de l\'envoi du justificatif.';
+      },
+    });
+  }
+
   isVisio(s: ApprenantSeanceItem): boolean {
     return s.typeSession === 'VISIO' || (!!s.salleOuLien && (s.salleOuLien.startsWith('http://') || s.salleOuLien.startsWith('https://')));
   }
@@ -694,13 +976,90 @@ export class MesSeancesComponent implements OnInit, OnDestroy {
     return this.seances.filter((s) => !this.isUpcoming(s.dateHeureDebut)).length;
   }
 
+  get formationsDisponibles(): Array<{ id: string; titre: string }> {
+    const map = new Map<string, string>();
+    for (const s of this.seances) {
+      if (s.formationId && s.formationTitre) {
+        map.set(s.formationId, s.formationTitre);
+      }
+    }
+    return Array.from(map.entries()).map(([id, titre]) => ({ id, titre }));
+  }
+
+  countSeancesByFormation(formationId: string): number {
+    return this.seances.filter((s) => s.formationId === formationId).length;
+  }
+
   get filteredSeances(): ApprenantSeanceItem[] {
+    let list = this.seances;
+    if (this.selectedFormationId !== 'all') {
+      list = list.filter((s) => s.formationId === this.selectedFormationId);
+    }
     if (this.filter === 'upcoming') {
-      return this.seances.filter((s) => this.isUpcoming(s.dateHeureDebut));
+      return list.filter((s) => this.isUpcoming(s.dateHeureDebut));
     }
     if (this.filter === 'past') {
-      return this.seances.filter((s) => !this.isUpcoming(s.dateHeureDebut));
+      return list.filter((s) => !this.isUpcoming(s.dateHeureDebut));
     }
-    return this.seances;
+    return list;
+  }
+
+  exporterIcs(): void {
+    if (!this.seances.length) {
+      this.toast.error('Aucune séance à exporter.');
+      return;
+    }
+
+    const formatIcsDate = (dateStr: string | Date): string => {
+      const d = new Date(dateStr);
+      return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    const escapeIcs = (str: string): string => {
+      return (str || '').replace(/[,;\\]/g, '\\$&').replace(/\n/g, '\\n');
+    };
+
+    const events = this.seances.map((s) => {
+      const start = formatIcsDate(s.dateHeureDebut);
+      const end = formatIcsDate(s.dateHeureFin);
+      const summary = escapeIcs(`${s.titreActivite} - ${s.formationTitre}`);
+      const description = escapeIcs(`Module : ${s.moduleTitre}\\nFormateur : ${s.formateurNom}\\nType : ${s.typeSession}`);
+      const location = escapeIcs(s.salleOuLien || 'Vitalis Center EUP');
+      const uid = `${s.id}@vitalis-center.com`;
+
+      return [
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${formatIcsDate(new Date())}`,
+        `DTSTART:${start}`,
+        `DTEND:${end}`,
+        `SUMMARY:${summary}`,
+        `DESCRIPTION:${description}`,
+        `LOCATION:${location}`,
+        'STATUS:CONFIRMED',
+        'END:VEVENT',
+      ].join('\r\n');
+    });
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Vitalis Center EUP//Emploi du Temps Apprenant//FR',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      ...events,
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `planning-vitalis-${new Date().toISOString().slice(0, 10)}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    this.toast.success(`${this.seances.length} séance(s) exportée(s) au format .ics !`);
   }
 }

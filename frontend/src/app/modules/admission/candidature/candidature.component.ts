@@ -164,6 +164,63 @@ import { ToastService } from '../../../core/services/toast.service';
                     </span>
                   </div>
 
+                  <!-- STEPPER VISUEL DU DOSSIER (PIPELINE DE SÉLECTION BENCHMARK MONDIAL) -->
+                  <div class="p-3 sm:p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs space-y-2">
+                    <div class="flex items-center justify-between text-[11px] text-[#4B5157]">
+                      <span class="font-bold text-[#1B1D1F] uppercase tracking-wider">Avancement de la sélection :</span>
+                      <button
+                        type="button"
+                        (click)="imprimerRecepisse(voeu)"
+                        class="text-[11px] font-bold text-[#1C75BC] hover:underline flex items-center gap-1 cursor-pointer"
+                        title="Télécharger l'attestation officielle de vœu d'admission"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        <span>Attestation & Récépissé Officiel</span>
+                      </button>
+                    </div>
+
+                    <!-- Steps pipeline -->
+                    <div class="grid grid-cols-5 gap-1 pt-1">
+                      <div class="flex flex-col items-center text-center">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                             [ngClass]="getStepIndex(voeu.statut) >= 0 ? 'bg-[#1C75BC] text-white shadow-2xs' : 'bg-gray-200 text-gray-500'">
+                          1
+                        </div>
+                        <span class="text-[9px] mt-1 font-semibold text-[#1B1D1F] hidden sm:block">Dossier Déposé</span>
+                      </div>
+                      <div class="flex flex-col items-center text-center">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                             [ngClass]="getStepIndex(voeu.statut) >= 1 ? 'bg-[#1C75BC] text-white shadow-2xs' : 'bg-gray-200 text-gray-500'">
+                          2
+                        </div>
+                        <span class="text-[9px] mt-1 font-semibold text-[#1B1D1F] hidden sm:block">Vérif. Pièces</span>
+                      </div>
+                      <div class="flex flex-col items-center text-center">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                             [ngClass]="getStepIndex(voeu.statut) >= 2 ? 'bg-[#1C75BC] text-white shadow-2xs' : 'bg-gray-200 text-gray-500'">
+                          3
+                        </div>
+                        <span class="text-[9px] mt-1 font-semibold text-[#1B1D1F] hidden sm:block">Commission</span>
+                      </div>
+                      <div class="flex flex-col items-center text-center">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                             [ngClass]="getStepIndex(voeu.statut) >= 3 ? 'bg-[#276B44] text-white shadow-2xs' : 'bg-gray-200 text-gray-500'">
+                          4
+                        </div>
+                        <span class="text-[9px] mt-1 font-semibold text-[#1B1D1F] hidden sm:block">Décision</span>
+                      </div>
+                      <div class="flex flex-col items-center text-center">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                             [ngClass]="getStepIndex(voeu.statut) >= 4 ? 'bg-[#276B44] text-white shadow-2xs' : 'bg-gray-200 text-gray-500'">
+                          5
+                        </div>
+                        <span class="text-[9px] mt-1 font-semibold text-[#1B1D1F] hidden sm:block">Inscription</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- ========================================================================= -->
                   <!-- SECTION DROIT AUX EXPLICATIONS & AVIS OFFICIEL DES DIRIGEANTS              -->
                   <!-- ========================================================================= -->
@@ -364,12 +421,149 @@ import { ToastService } from '../../../core/services/toast.service';
               }
             </div>
           }
+      <!-- MODAL RÉCÉPISSÉ OFFICIEL DE DÉPÔT DE CANDIDATURE (PDF / PRINT) -->
+      @if (selectedVoeuRecepisse) {
+        <div
+          (click)="fermerRecepisse()"
+          class="fixed inset-0 z-50 bg-[#1B1D1F]/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 animate-fade-in"
+        >
+          <div
+            (click)="$event.stopPropagation()"
+            class="bg-white w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-[#D7DBDE] shadow-2xl rounded-xs"
+          >
+            <!-- Header bar -->
+            <div class="px-5 py-4 border-b border-[#D7DBDE] bg-[#124F80] text-white flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xs bg-white text-[#124F80] font-bold flex items-center justify-center text-xs shadow-xs font-heading">
+                  VC
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white font-heading leading-tight">Récépissé Officiel de Dépôt de Candidature</h3>
+                  <p class="text-[10px] text-[#C6D2E3] font-mono">Commission Nationale d'Admission · Vitalis Center EUP</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="imprimerPage()"
+                  class="px-3 py-1 rounded-xs bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  <span>Imprimer</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="fermerRecepisse()"
+                  class="w-7 h-7 rounded-xs hover:bg-white/20 text-white flex items-center justify-center text-sm font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Body printable -->
+            <div id="recepisse-printable" class="p-6 md:p-8 overflow-y-auto space-y-6 text-[#1B1D1F]">
+              <!-- Official Top Header -->
+              <div class="flex items-center justify-between pb-4 border-b-2 border-[#124F80] gap-4">
+                <div>
+                  <h2 class="text-base font-bold text-[#124F80] font-heading">RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</h2>
+                  <p class="text-[10px] text-[#4B5157] font-semibold">MINISTÈRE DE LA FORMATION PROFESSIONNELLE</p>
+                  <p class="text-[9px] text-[#4B5157]">Établissement d'Utilité Publique VITALIS CENTER · CFP 00095</p>
+                </div>
+                <div class="text-right font-mono text-[11px] text-[#4B5157]">
+                  <p class="font-bold text-[#1B1D1F]">Réf : REC-{{ selectedVoeuRecepisse.id.substring(0, 8).toUpperCase() }}</p>
+                  <p>Date : {{ (selectedVoeuRecepisse.dateSoumission || selectedVoeuRecepisse.createdAt) | date:'dd/MM/yyyy à HH:mm' }}</p>
+                </div>
+              </div>
+
+              <!-- Title -->
+              <div class="text-center py-2 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-[#124F80]">Attestation Officielle de Dépôt de Vœu d'Admission</h3>
+                <p class="text-[11px] text-[#4B5157]">Document officiel scellé électroniquement par la plateforme nationale</p>
+              </div>
+
+              <!-- Details Grid -->
+              <div class="grid grid-cols-2 gap-4 text-xs">
+                <div class="p-3 bg-white border border-[#D7DBDE] rounded-xs space-y-1">
+                  <span class="text-[10px] uppercase font-bold text-[#71787E] block">Candidat</span>
+                  <p class="font-bold text-[#1B1D1F] text-sm">{{ currentUserNom }}</p>
+                  <p class="text-[#4B5157] font-mono text-[11px]">{{ currentUserEmail }}</p>
+                </div>
+                <div class="p-3 bg-white border border-[#D7DBDE] rounded-xs space-y-1">
+                  <span class="text-[10px] uppercase font-bold text-[#71787E] block">Établissement / Antenne</span>
+                  <p class="font-bold text-[#1B1D1F]">{{ selectedVoeuRecepisse.session.etablissement.nom }}</p>
+                  <p class="text-[#4B5157] text-[11px]">Code : {{ selectedVoeuRecepisse.session.etablissement.codeAntenne }}</p>
+                </div>
+              </div>
+
+              <div class="p-4 bg-[#E7F1FA] border border-[#1C75BC] rounded-xs space-y-2 text-xs">
+                <span class="text-[10px] uppercase font-bold text-[#124F80] block">Formation & Session Sollicitée</span>
+                <p class="font-bold text-[#1B1D1F] text-sm">{{ selectedVoeuRecepisse.session.filiere.libelle }}</p>
+                <div class="flex items-center gap-4 text-[11px] text-[#4B5157]">
+                  <span>Niveau : <strong>{{ selectedVoeuRecepisse.session.niveau.libelle }}</strong></span>
+                  <span>Session : <strong>{{ selectedVoeuRecepisse.session.libelle }}</strong></span>
+                </div>
+              </div>
+
+              <!-- Pieces summary -->
+              <div class="space-y-2 text-xs">
+                <span class="text-[11px] font-bold text-[#1B1D1F] uppercase tracking-wider block">Pièces justificatives versées au dossier :</span>
+                <ul class="divide-y divide-[#D7DBDE] border border-[#D7DBDE] rounded-xs">
+                  @for (p of selectedVoeuRecepisse.pieces; track p.id) {
+                    <li class="p-2.5 flex items-center justify-between text-[11px]">
+                      <span class="font-semibold text-[#1B1D1F]">{{ formatPieceType(p.type) }} ({{ p.nomFichier }})</span>
+                      <span class="px-2 py-0.5 rounded-xs bg-[#E7F1EA] text-[#276B44] text-[10px] font-bold">✓ Enregistré</span>
+                    </li>
+                  }
+                  @if (!selectedVoeuRecepisse.pieces || selectedVoeuRecepisse.pieces.length === 0) {
+                    <li class="p-2.5 text-[#71787E] italic text-center">Aucune pièce numérique versée pour le moment.</li>
+                  }
+                </ul>
+              </div>
+
+              <!-- Signatures & Legal Watermark -->
+              <div class="pt-4 border-t border-[#D7DBDE] flex items-center justify-between text-[10px] text-[#4B5157]">
+                <div>
+                  <p class="font-bold text-[#124F80]">Commission Pédagogique d'Admission</p>
+                  <p>Signature numérique sécurisée SHA-256</p>
+                </div>
+                <div class="text-right font-mono">
+                  <p class="font-bold text-[#276B44]">✓ Vœu Officiellement Déposé</p>
+                  <p>Certifié conforme par Vitalis Center EUP</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+      }
     </div>
   `,
+  styles: [`
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #recepisse-printable, #recepisse-printable * {
+        visibility: visible !important;
+      }
+      #recepisse-printable {
+        position: fixed !important;
+        left: 50% !important;
+        top: 25% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 100% !important;
+        max-width: 600px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-shadow: none !important;
+      }
+    }
+  `]
 })
 export class CandidatureComponent implements OnInit, OnDestroy {
+  selectedVoeuRecepisse: Candidature | null = null;
   sessions: SessionAdmission[] = [];
   voeux: Candidature[] = [];
   selectedPieceTypes: Record<string, string> = {};
@@ -657,5 +851,38 @@ export class CandidatureComponent implements OnInit, OnDestroy {
       RETIREE: '🚫 Retiré(e)',
     };
     return labels[statut] || statut;
+  }
+
+  getStepIndex(statut: string): number {
+    switch (statut) {
+      case 'BROUILLON': return 0;
+      case 'SOUMISE': return 1;
+      case 'EN_EVALUATION': return 2;
+      case 'ADMISE':
+      case 'CONFIRMEE': return 3;
+      case 'INSCRITE': return 4;
+      default: return 1;
+    }
+  }
+
+  get currentUserNom(): string {
+    const u = this.auth.currentUser;
+    return u ? `${u.prenom || ''} ${u.nom || ''}`.trim() : 'Candidat';
+  }
+
+  get currentUserEmail(): string {
+    return this.auth.currentUser?.email || '';
+  }
+
+  imprimerRecepisse(voeu: Candidature): void {
+    this.selectedVoeuRecepisse = voeu;
+  }
+
+  imprimerPage(): void {
+    window.print();
+  }
+
+  fermerRecepisse(): void {
+    this.selectedVoeuRecepisse = null;
   }
 }

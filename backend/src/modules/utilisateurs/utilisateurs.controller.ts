@@ -231,4 +231,34 @@ export class UtilisateursController {
     const ip = req.ip || '0.0.0.0';
     return this.utilisateursService.adminUnlockAccount(id, req.user.id, ip);
   }
+
+  // ─── Conformité RGPD (Articles 17 et 20) ───────────────────────────────────
+
+  @Get('me/export')
+  @UseGuards(JwtAuthGuard)
+  async exportMyData(@Req() req: any) {
+    return this.utilisateursService.exportUserData(req.user.id);
+  }
+
+  @Post('me/anonymize')
+  @UseGuards(JwtAuthGuard)
+  async anonymizeMyAccount(@Req() req: any) {
+    const ip = req.ip || '0.0.0.0';
+    return this.utilisateursService.anonymizeUserData(req.user.id, req.user.id, ip);
+  }
+
+  @Post(':id/anonymiser')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN_CENTRE)
+  async adminAnonymizeUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    const ip = req.ip || '0.0.0.0';
+    return this.utilisateursService.anonymizeUserData(id, req.user.id, ip);
+  }
+
+  @Post('maintenance/purge-securite')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN_CENTRE)
+  async triggerSecurityPurge() {
+    return this.utilisateursService.purgeExpiredTokensAndAttempts();
+  }
 }

@@ -27,6 +27,7 @@ describe('ApprenantService (Performance & BR-03)', () => {
     },
     seanceFormation: {
       findFirst: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     tentativeQuiz: {
       count: jest.fn(),
@@ -44,6 +45,7 @@ describe('ApprenantService (Performance & BR-03)', () => {
     },
     devoir: {
       findFirst: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     apprenant: {
       findUnique: jest.fn(),
@@ -77,6 +79,9 @@ describe('ApprenantService (Performance & BR-03)', () => {
       findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+    },
+    presenceSeance: {
+      findMany: jest.fn().mockResolvedValue([]),
     },
   };
 

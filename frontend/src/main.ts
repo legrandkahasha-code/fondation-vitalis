@@ -3,6 +3,14 @@ import { appConfig } from './app/app.config';
 import { App } from './app/app';
 import { NotificationsService } from './app/core/services/notifications.service';
 
+// Injection dynamique de theme-color pour Chrome, Edge et Safari mobile (sans avertissement statique HTML)
+if (typeof document !== 'undefined') {
+  const metaTheme = document.createElement('meta');
+  metaTheme.name = 'theme-color';
+  metaTheme.content = '#124F80';
+  document.head.appendChild(metaTheme);
+}
+
 bootstrapApplication(App, appConfig)
   .then((ref) => {
     try {

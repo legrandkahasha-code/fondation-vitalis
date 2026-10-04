@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -32,6 +32,17 @@ import { ApprenantService, ApprenantDossierData } from '../../../core/services/a
             <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           <span>Vue d'ensemble</span>
+        </button>
+        <button
+          (click)="activeTab = 'carte'; loadDossier(false)"
+          class="px-3 sm:px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer flex items-center gap-2 shrink-0"
+          [class]="activeTab === 'carte' ? 'border-[#1C75BC] text-[#1C75BC]' : 'border-transparent text-[#4B5157] hover:text-[#1B1D1F]'"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+          </svg>
+          <span>Carte d'Apprenant Virtuelle</span>
+          <span class="px-1.5 py-0.2 bg-[#E7F1EA] text-[#276B44] border border-[#276B44] text-[9px] rounded-xs font-bold uppercase">e-Badge</span>
         </button>
         <button
           (click)="activeTab = 'edit'"
@@ -122,6 +133,163 @@ import { ApprenantService, ApprenantDossierData } from '../../../core/services/a
               </div>
               <p class="text-xs text-[#1B1D1F] leading-relaxed">
                 Vos évaluations et scores sont calculés et scellés directement sur les serveurs de Vitalis Center. L'obtention de chaque titre requiert le respect strict des critères d'assiduité et de notation (Règle BR-03).
+              </p>
+            </div>
+          </div>
+        }
+
+        <!-- TAB CARTE APPRENANT VIRTUELLE (E-BADGE OFFICIEL) -->
+        @if (activeTab === 'carte') {
+          <div class="space-y-6 animate-fade-in">
+            <!-- Header bar with print action -->
+            <div class="p-4 sm:p-5 bg-white border border-[#D7DBDE] rounded-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 class="text-sm sm:text-base font-bold text-[#1B1D1F] font-heading">Carte Numérique d'Apprenant (e-Badge Officiel)</h2>
+                <p class="text-xs text-[#4B5157] mt-0.5">
+                  Titre officiel attestant de votre inscription régulière pour l'accès aux ateliers, examens et sessions présentielles.
+                </p>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <label class="px-3.5 py-2 rounded-xs bg-white text-[#1C75BC] border border-[#1C75BC] hover:bg-[#E7F1FA] text-xs font-bold shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
+                  <svg class="w-4 h-4 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Changer photo d'identité</span>
+                  <input type="file" (change)="onPhotoFileSelected($event)" accept="image/png,image/jpeg,image/webp" class="hidden" />
+                </label>
+                <button
+                  type="button"
+                  (click)="imprimerBadge()"
+                  class="px-4 py-2 rounded-xs bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                >
+                  <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  <span>Imprimer / Exporter e-Badge</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- E-BADGE SMART CARD (RECTO) -->
+            <div id="badge-printable" class="max-w-md mx-auto bg-gradient-to-br from-[#124F80] via-[#1C75BC] to-[#0D3859] text-white rounded-xs p-6 shadow-2xl border-2 border-[#124F80] relative overflow-hidden">
+              <!-- Security Watermark & Hologram Accents -->
+              <div class="absolute -right-12 -top-12 w-40 h-40 bg-white/5 rounded-full pointer-events-none"></div>
+              <div class="absolute -left-12 -bottom-12 w-48 h-48 bg-white/5 rounded-full pointer-events-none"></div>
+              <div class="absolute top-2 right-4 text-[9px] font-mono text-white/50 tracking-widest uppercase">EUP · SÉCURISÉ</div>
+
+              <!-- Top National Header -->
+              <div class="flex items-center gap-3 border-b border-white/20 pb-3">
+                <div class="w-10 h-10 rounded-xs bg-white text-[#124F80] font-black text-sm flex items-center justify-center shadow-xs shrink-0 font-heading">
+                  VC
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-[9px] uppercase tracking-wider font-bold text-white/90 truncate">RÉPUBLIQUE DÉMOCRATIQUE DU CONGO</p>
+                  <p class="text-[8px] uppercase tracking-wider text-white/70 truncate">MINISTÈRE DE LA FORMATION PROFESSIONNELLE</p>
+                  <p class="text-[11px] font-bold tracking-tight text-white font-heading">VITALIS CENTER EUP</p>
+                </div>
+              </div>
+
+              <!-- Identity & Photo Body -->
+              <div class="grid grid-cols-12 gap-4 py-4 items-center">
+                <!-- Photo frame (cliquable avec rogneur Canvas) -->
+                <div class="col-span-4 flex flex-col items-center">
+                  <div class="relative cursor-pointer group" (click)="badgePhotoInput.click()" title="Cliquer pour changer ou recadrer la photo">
+                    @if (photoUrl) {
+                      <img [src]="photoUrl" alt="Photo Apprenant" class="w-24 h-28 object-cover rounded-xs border-2 border-white shadow-md bg-white group-hover:opacity-90 transition-opacity" />
+                    } @else {
+                      <div class="w-24 h-28 bg-white/20 border-2 border-white/60 rounded-xs flex flex-col items-center justify-center text-white shadow-md group-hover:bg-white/30 transition-colors">
+                        <span class="text-2xl font-black font-heading">{{ user.prenom?.charAt(0) }}{{ user.nom?.charAt(0) }}</span>
+                        <span class="text-[8px] uppercase mt-1 tracking-wider opacity-75">Photo</span>
+                      </div>
+                    }
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center rounded-xs transition-opacity text-white text-[9px] font-bold p-1 text-center">
+                      <svg class="w-4 h-4 mb-0.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span>Modifier</span>
+                    </div>
+                  </div>
+                  <input #badgePhotoInput type="file" (change)="onPhotoFileSelected($event)" accept="image/png,image/jpeg,image/webp" class="hidden" />
+                  <span class="mt-1.5 px-2 py-0.5 rounded-full bg-[#276B44] text-white text-[8px] font-bold tracking-wider uppercase shadow-2xs">
+                    ✓ Validé
+                  </span>
+                </div>
+
+                <!-- Info Column -->
+                <div class="col-span-8 space-y-1.5 text-xs">
+                  <div>
+                    <span class="text-[9px] uppercase tracking-wider text-white/70 block">Nom & Prénom</span>
+                    <p class="font-bold text-sm text-white tracking-wide font-heading leading-tight">
+                      {{ user.nom | uppercase }} {{ user.prenom }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span class="text-[9px] uppercase tracking-wider text-white/70 block">Matricule Officiel</span>
+                    <p class="font-mono font-bold text-xs text-[#FFF8E6] bg-white/10 px-2 py-0.5 rounded-xs inline-block border border-white/20">
+                      {{ matricule || ('VIT-2026-' + user.id.substring(0, 8).toUpperCase()) }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span class="text-[9px] uppercase tracking-wider text-white/70 block">Antenne de Rattachement</span>
+                    <p class="text-[11px] font-semibold text-white/95 truncate">
+                      {{ user.etablissement?.nom || 'Centre Principal Kinshasa' }}
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-3 pt-0.5">
+                    <div>
+                      <span class="text-[8px] uppercase tracking-wider text-white/70 block">Session</span>
+                      <span class="text-[10px] font-bold text-white font-mono">2025 - 2026</span>
+                    </div>
+                    <div>
+                      <span class="text-[8px] uppercase tracking-wider text-white/70 block">Qualité</span>
+                      <span class="text-[10px] font-bold text-emerald-300">Apprenant</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer with Barcode/QR and Smartchip -->
+              <div class="border-t border-white/20 pt-3 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                  <!-- Golden Smartchip illustration -->
+                  <div class="w-8 h-6 bg-gradient-to-tr from-amber-300 via-yellow-200 to-amber-400 rounded-xs border border-amber-600 shadow-2xs flex items-center justify-center shrink-0">
+                    <div class="w-5 h-4 border border-amber-700/40 rounded-xs grid grid-cols-2 gap-0.5 p-0.5">
+                      <div class="bg-amber-700/20"></div>
+                      <div class="bg-amber-700/20"></div>
+                    </div>
+                  </div>
+                  <div class="text-[9px] text-white/80 leading-tight">
+                    <p class="font-bold">E-BADGE NUMÉRIQUE</p>
+                    <p class="text-[8px] opacity-75">Vérifiable par QR Code</p>
+                  </div>
+                </div>
+
+                <!-- QR Code d'émargement -->
+                <div class="bg-white p-1 rounded-xs shadow-xs shrink-0">
+                  <img
+                    [src]="'https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=VITALIS-APP-' + user.id"
+                    alt="QR Code Carte"
+                    class="w-12 h-12"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Notice card -->
+            <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs text-xs text-[#4B5157] max-w-md mx-auto space-y-1">
+              <p class="font-bold text-[#1B1D1F] flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Usage & Consignes</span>
+              </p>
+              <p class="text-[11px] leading-relaxed">
+                Ce badge numérique est strictement personnel. Il doit être présenté lors de l'accès aux locaux de l'établissement, lors des séances d'ateliers pratiques et avant toute épreuve présentielle.
               </p>
             </div>
           </div>
@@ -551,14 +719,176 @@ import { ApprenantService, ApprenantDossierData } from '../../../core/services/a
             }
           </div>
         }
+      <!-- MODAL ROGNEUR DE PHOTO (CANVAS HTML5 & BIOMÉTRIE E-BADGE) -->
+      @if (showCropperModal) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div class="bg-white rounded-xs border border-[#D7DBDE] shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header modal -->
+            <div class="p-4 border-b border-[#D7DBDE] bg-[#F5F6F7] flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xs bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC] flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-[#1B1D1F] font-heading">Recadrage Photo d'Identité (e-Badge)</h3>
+                  <p class="text-[10px] text-[#4B5157]">Glissez et zoomez pour centrer le visage dans le repère officiel</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="cancelCrop()"
+                class="text-[#4B5157] hover:text-[#1B1D1F] p-1 rounded-xs cursor-pointer"
+              >
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Body : Canvas interactif -->
+            <div class="p-4 flex flex-col items-center bg-[#1B1D1F] select-none relative overflow-hidden">
+              <canvas
+                #cropperCanvas
+                width="320"
+                height="380"
+                (mousedown)="startCropDrag($event)"
+                (mousemove)="onCropDrag($event)"
+                (mouseup)="endCropDrag()"
+                (mouseleave)="endCropDrag()"
+                (touchstart)="startCropDrag($event)"
+                (touchmove)="onCropDrag($event)"
+                (touchend)="endCropDrag()"
+                class="cursor-grab active:cursor-grabbing border border-white/20 rounded-xs shadow-lg max-w-full"
+              ></canvas>
+              <p class="text-[10px] text-white/70 mt-2 font-mono">
+                Format Officiel 35×45 mm · Cadrage biométrique
+              </p>
+            </div>
+
+            <!-- Controls (Zoom, Rotation, Reset) -->
+            <div class="p-4 bg-white border-t border-[#D7DBDE] space-y-3">
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-[#4B5157] font-semibold shrink-0">Zoom :</span>
+                <button
+                  type="button"
+                  (click)="adjustZoom(-0.1)"
+                  class="w-7 h-7 rounded-xs border border-[#D7DBDE] bg-[#F5F6F7] hover:bg-[#E7F1FA] text-[#1B1D1F] text-xs font-bold flex items-center justify-center cursor-pointer"
+                >
+                  -
+                </button>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="3"
+                  step="0.05"
+                  [(ngModel)]="cropperZoom"
+                  (input)="redrawCanvas()"
+                  class="flex-1 accent-[#1C75BC] cursor-pointer"
+                />
+                <button
+                  type="button"
+                  (click)="adjustZoom(0.1)"
+                  class="w-7 h-7 rounded-xs border border-[#D7DBDE] bg-[#F5F6F7] hover:bg-[#E7F1FA] text-[#1B1D1F] text-xs font-bold flex items-center justify-center cursor-pointer"
+                >
+                  +
+                </button>
+                <span class="text-[11px] font-mono text-[#4B5157] w-12 text-right">
+                  {{ (cropperZoom * 100).toFixed(0) }}%
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between gap-2 pt-1 border-t border-[#F5F6F7]">
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    (click)="rotateCrop()"
+                    class="px-2.5 py-1.5 rounded-xs border border-[#D7DBDE] bg-[#F5F6F7] hover:bg-white text-xs font-semibold text-[#1B1D1F] flex items-center gap-1 cursor-pointer"
+                  >
+                    <svg class="w-3.5 h-3.5 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Pivoter 90°</span>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="resetCrop()"
+                    class="px-2.5 py-1.5 rounded-xs border border-[#D7DBDE] bg-[#F5F6F7] hover:bg-white text-xs font-semibold text-[#4B5157] cursor-pointer"
+                  >
+                    Réinitialiser
+                  </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    (click)="cancelCrop()"
+                    [disabled]="uploadingAvatar"
+                    class="px-3 py-1.5 rounded-xs border border-[#D7DBDE] bg-white hover:bg-[#F5F6F7] text-xs font-bold text-[#4B5157] cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    (click)="validerRecadrage()"
+                    [disabled]="uploadingAvatar"
+                    class="px-4 py-1.5 rounded-xs bg-[#276B44] hover:bg-[#1D5234] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    @if (uploadingAvatar) {
+                      <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Enregistrement...</span>
+                    } @else {
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Appliquer au e-Badge</span>
+                    }
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       }
-    </div>
+    }
+  </div>
   `,
+  styles: [`
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #badge-printable, #badge-printable * {
+        visibility: visible !important;
+      }
+      #badge-printable {
+        position: fixed !important;
+        left: 50% !important;
+        top: 25% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 440px !important;
+        max-width: 440px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-shadow: none !important;
+      }
+    }
+  `]
 })
 export class MonProfilComponent implements OnInit, OnDestroy {
   user: any = null;
   matricule: string | null = null;
-  activeTab: 'info' | 'edit' | 'password' | 'dossier' = 'info';
+  activeTab: 'info' | 'carte' | 'edit' | 'password' | 'dossier' = 'info';
+
+  get photoUrl(): string | null {
+    return this.user?.photoUrl || this.dossierData?.documents?.find(d => d.typeDocument === 'PHOTO')?.fileUrl || null;
+  }
+
+  imprimerBadge(): void {
+    window.print();
+  }
 
   editForm = {
     nom: '',
@@ -823,6 +1153,204 @@ export class MonProfilComponent implements OnInit, OnDestroy {
         this.toast.error(err.error?.message || 'Erreur lors de la transmission de la réponse.');
       },
     });
+  }
+
+  // ─── ROGNEUR DE PHOTO CANVAS HTML5 (E-BADGE BIOMÉTRIQUE) ─────────────
+  showCropperModal = false;
+  cropperZoom = 1;
+  cropperRotation = 0;
+  isDraggingCrop = false;
+  dragStartX = 0;
+  dragStartY = 0;
+  panX = 0;
+  panY = 0;
+  uploadingAvatar = false;
+  private cropperImg: HTMLImageElement | null = null;
+  @ViewChild('cropperCanvas') cropperCanvasRef?: ElementRef<HTMLCanvasElement>;
+
+  onPhotoFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      this.toast.error('Veuillez sélectionner un fichier image valide (JPG, PNG, WebP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        this.cropperImg = img;
+        this.resetCrop();
+        this.showCropperModal = true;
+        setTimeout(() => this.redrawCanvas(), 80);
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  redrawCanvas(): void {
+    if (!this.cropperCanvasRef?.nativeElement || !this.cropperImg) return;
+    const canvas = this.cropperCanvasRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Dessin de l'image transformée (rotation, zoom, déplacement)
+    ctx.save();
+    ctx.translate(cx + this.panX, cy + this.panY);
+    ctx.rotate((this.cropperRotation * Math.PI) / 180);
+    ctx.scale(this.cropperZoom, this.cropperZoom);
+
+    const iw = this.cropperImg.width;
+    const ih = this.cropperImg.height;
+    const baseScale = Math.max(220 / iw, 280 / ih);
+    const dw = iw * baseScale;
+    const dh = ih * baseScale;
+    ctx.drawImage(this.cropperImg, -dw / 2, -dh / 2, dw, dh);
+    ctx.restore();
+
+    // 2. Masque sombre externe et fenêtre de cadrage biométrique (220 x 280)
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+    ctx.beginPath();
+    ctx.rect(0, 0, w, h);
+    if (typeof (ctx as any).roundRect === 'function') {
+      (ctx as any).roundRect(50, 50, 220, 280, 8);
+    } else {
+      ctx.rect(50, 50, 220, 280);
+    }
+    ctx.fill('evenodd');
+
+    // 3. Bordure blanche du cadre officiel
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.stroke();
+
+    // 4. Repère biométrique ovale (visage) et repère des yeux
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 10, 70, 95, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(65, cy - 25);
+    ctx.lineTo(w - 65, cy - 25);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  startCropDrag(e: MouseEvent | TouchEvent): void {
+    this.isDraggingCrop = true;
+    const pt = 'touches' in e ? e.touches[0] : e;
+    this.dragStartX = pt.clientX - this.panX;
+    this.dragStartY = pt.clientY - this.panY;
+  }
+
+  onCropDrag(e: MouseEvent | TouchEvent): void {
+    if (!this.isDraggingCrop) return;
+    const pt = 'touches' in e ? e.touches[0] : e;
+    this.panX = pt.clientX - this.dragStartX;
+    this.panY = pt.clientY - this.dragStartY;
+    this.redrawCanvas();
+  }
+
+  endCropDrag(): void {
+    this.isDraggingCrop = false;
+  }
+
+  adjustZoom(delta: number): void {
+    this.cropperZoom = Math.max(0.5, Math.min(3, +(this.cropperZoom + delta).toFixed(2)));
+    this.redrawCanvas();
+  }
+
+  rotateCrop(): void {
+    this.cropperRotation = (this.cropperRotation + 90) % 360;
+    this.redrawCanvas();
+  }
+
+  resetCrop(): void {
+    this.cropperZoom = 1;
+    this.cropperRotation = 0;
+    this.panX = 0;
+    this.panY = 0;
+    this.redrawCanvas();
+  }
+
+  cancelCrop(): void {
+    this.showCropperModal = false;
+    this.cropperImg = null;
+    this.resetCrop();
+  }
+
+  validerRecadrage(): void {
+    if (!this.cropperImg) return;
+
+    // Création d'un canvas hors-écran haute résolution (350x450, ratio officiel 35:45)
+    const out = document.createElement('canvas');
+    out.width = 350;
+    out.height = 450;
+    const oCtx = out.getContext('2d');
+    if (!oCtx) return;
+
+    const ocx = 175;
+    const ocy = 225;
+    const ratio = 350 / 220;
+
+    oCtx.save();
+    oCtx.translate(ocx + this.panX * ratio, ocy + this.panY * ratio);
+    oCtx.rotate((this.cropperRotation * Math.PI) / 180);
+    oCtx.scale(this.cropperZoom * ratio, this.cropperZoom * ratio);
+
+    const iw = this.cropperImg.width;
+    const ih = this.cropperImg.height;
+    const baseScale = Math.max(220 / iw, 280 / ih);
+    const dw = iw * baseScale;
+    const dh = ih * baseScale;
+    oCtx.drawImage(this.cropperImg, -dw / 2, -dh / 2, dw, dh);
+    oCtx.restore();
+
+    out.toBlob((blob) => {
+      if (!blob) {
+        this.toast.error('Erreur lors du traitement de l\'image.');
+        return;
+      }
+
+      this.uploadingAvatar = true;
+      this.apprenantService.uploadAvatar(blob).subscribe({
+        next: (res) => {
+          this.uploadingAvatar = false;
+          this.toast.success('Photo officielle enregistrée avec succès sur votre e-Badge !');
+          if (this.user) {
+            this.user.photoUrl = res.photoUrl;
+          }
+          if (this.dossierData?.documents) {
+            const photoDoc = this.dossierData.documents.find(d => d.typeDocument === 'PHOTO');
+            if (photoDoc) {
+              photoDoc.fileUrl = res.photoUrl;
+            }
+          }
+          this.showCropperModal = false;
+          this.cropperImg = null;
+        },
+        error: (err) => {
+          this.uploadingAvatar = false;
+          this.toast.error(err.error?.message || 'Erreur lors de l\'enregistrement de la photo.');
+        },
+      });
+    }, 'image/png', 0.95);
   }
 }
 

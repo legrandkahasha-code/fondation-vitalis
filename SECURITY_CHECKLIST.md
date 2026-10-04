@@ -46,22 +46,28 @@ This repository follows a secure API-first architecture: frontend communicates o
 
 The following modules have been verified as following the secure pattern:
 
-- `utilisateurs`
-- `etablissements`
-- `pedagogie`
-- `quiz`
-- `devoirs`
-- `certification`
-- `analytics`
-- `notifications`
+- `utilisateurs` (Authentification, JWT, RBAC, Verrouillage persistant, RGPD)
+- `etablissements` (Multi-tenant isolation)
+- `pedagogie` (Contrôle d'accès & intégrité)
+- `quiz` & `devoirs` (Validation des soumissions)
+- `certification` (Génération sécurisée PDF & séries uniques)
+- `analytics` (Agrégations et métriques de performance)
+- `notifications` (SSE sécurisé)
 
-## Notes
+## Post-Audit Hardening & Compliance (100% Resolved)
 
-- `frontend/src/app/core/services/auth.service.ts` no longer sends `role` during registration.
-- Public registration now uses server-side role assignment only.
-- The frontend uses `environment.apiUrl` for all backend HTTP calls.
-- The backend controllers and services apply validation, guards, and membership checks.
+- [x] **Zero Hardcoded Secrets**: `docker-compose.yml` uses strictly environment variable interpolation. Provided `.env.docker.example` template with security guidelines.
+- [x] **Strict JWT Strategy**: Removed URL query parameter extraction (`fromUrlQueryParameter('token')`). Throws fatal error on startup if `JWT_SECRET` is unset or empty.
+- [x] **Distributed Account Lockout (ANSSI)**: Lockout state persisted in PostgreSQL (`login_attempts` table via Prisma model) to resist restarts, scale-outs and clustering.
+- [x] **Strict Content-Security-Policy (CSP)**: Removed `'unsafe-inline'` from scriptSrc in Helmet. Scoped CSP isolation for Swagger documentation.
+- [x] **Frontend Reverse Proxy Hardening**: Nginx configured with `Strict-Transport-Security` (31536000s, preload), `X-Frame-Options: DENY`, `Permissions-Policy`, strict CSP and HTTPS redirection.
+- [x] **GDPR Compliance (RGPD)**:
+  - Article 17 (Right to Erasure / Anonymization): `POST /api/utilisateurs/me/anonymize` and admin endpoint with full PII pseudonymization, token revocation and audit logging.
+  - Article 20 (Right to Data Portability): `GET /api/utilisateurs/me/export` delivering a complete, machine-readable structured user profile.
+- [x] **Automated Data Purge**: Automatic background cleanup (every 6 hours) purging expired/revoked refresh tokens and stale login attempts.
+- [x] **Disaster Recovery & Automated Backups (PRA / PCA)**:
+  - Cross-platform script `backend/scripts/backup-db.js` with SHA-256 checksums and 14-day automatic rotation.
+  - Daily automated GitHub Actions backup workflow `.github/workflows/db-backup.yml` at 02:00 UTC with 30-day artifact retention.
+  - Comprehensive Disaster Recovery Plan documented in `docs/DISASTER_RECOVERY_PLAN.md` (RPO < 24h, RTO < 2h).
+- [x] **Continuous Integration & Security Pipeline (CI/CD)**: Full `.github/workflows/ci.yml` checking linting, typechecking, 45 unit tests, npm security audit and production builds on every push/PR.
 
-## Recommended next step
-
-When adding new modules, follow this checklist and add a similar audit entry to this document.

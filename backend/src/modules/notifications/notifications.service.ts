@@ -42,6 +42,7 @@ export interface NotificationPayload {
   recipientEtablissementId?: string;
   title?: string;
   message?: string;
+  link?: string;
   data?: Record<string, any>;
   timestamp: string;
   /** Champs legacy admis pour rétrocompatibilité avec les anciens services. */

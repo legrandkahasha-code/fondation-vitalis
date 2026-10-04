@@ -62,7 +62,7 @@ export class FormationDetailComponent implements OnInit {
   isSavingCours = false;
   targetModuleForCours: Module | null = null;
   selectedCoursId = '';
-  coursFormData = { titre: '', contenu: '', fileUrl: '' };
+  coursFormData = { titre: '', contenu: '', fileUrl: '', dureeMinutes: 15 };
 
   // ─── MODALE 3 : ÉVALUATION ────────────────────────────────────────────────────
   showEvaluationModal = false;
@@ -89,12 +89,18 @@ export class FormationDetailComponent implements OnInit {
   showDevoirModal = false;
   isSavingDevoir = false;
   targetModuleForDevoir: Module | null = null;
-  devoirFormData = { titre: '', consignes: '', dateLimite: '' };
+  devoirFormData = { titre: '', consignes: '', dateLimite: '', criteresEvaluation: '' };
 
   // ─── MODALE 6 : MODIFIER FORMATION ────────────────────────────────────────────
   showEditFormationModal = false;
   isSavingFormationSettings = false;
   editFormationData: any = {};
+
+  // ─── SYLLABUS OFFICIEL ───────────────────────────────────────────────────────
+  uploadingSyllabus = false;
+
+  // ─── IMAGE DE FORMATION ─────────────────────────────────────────────────────
+  uploadingImage = false;
 
   // ─── MODALE 7 : SUPPRESSION SÉCURISÉE ─────────────────────────────────────────
   deleteModalState: {
@@ -444,7 +450,7 @@ export class FormationDetailComponent implements OnInit {
     this.isEditingCours = false;
     this.targetModuleForCours = mod;
     this.selectedCoursId = '';
-    this.coursFormData = { titre: '', contenu: '', fileUrl: '' };
+    this.coursFormData = { titre: '', contenu: '', fileUrl: '', dureeMinutes: 15 };
     this.showCoursModal = true;
   }
 
@@ -456,6 +462,7 @@ export class FormationDetailComponent implements OnInit {
       titre: cours.titre,
       contenu: cours.contenu || '',
       fileUrl: cours.fileUrl || '',
+      dureeMinutes: cours.dureeMinutes ?? 15,
     };
     this.showCoursModal = true;
   }
@@ -478,6 +485,7 @@ export class FormationDetailComponent implements OnInit {
       titre: this.coursFormData.titre.trim(),
       contenu: this.coursFormData.contenu?.trim() || undefined,
       fileUrl: this.coursFormData.fileUrl?.trim() || undefined,
+      dureeMinutes: Number(this.coursFormData.dureeMinutes) || undefined,
     };
 
     if (this.isEditingCours && this.selectedCoursId) {
@@ -635,7 +643,7 @@ export class FormationDetailComponent implements OnInit {
   // ─── CRUD 5 : DEVOIRS ────────────────────────────────────────────────────────
   openCreateDevoirModal(mod: Module) {
     this.targetModuleForDevoir = mod;
-    this.devoirFormData = { titre: '', consignes: '', dateLimite: '' };
+    this.devoirFormData = { titre: '', consignes: '', dateLimite: '', criteresEvaluation: '' };
     this.showDevoirModal = true;
   }
 
@@ -657,6 +665,7 @@ export class FormationDetailComponent implements OnInit {
       titre: this.devoirFormData.titre.trim(),
       consignes: this.devoirFormData.consignes?.trim() || undefined,
       dateLimite: this.devoirFormData.dateLimite ? new Date(this.devoirFormData.dateLimite).toISOString() : undefined,
+      criteresEvaluation: this.devoirFormData.criteresEvaluation?.trim() || undefined,
     }).subscribe({
       next: () => {
         this.toast.success('Devoir pratique ajouté au module.');
@@ -666,6 +675,96 @@ export class FormationDetailComponent implements OnInit {
       error: (err) => {
         this.isSavingDevoir = false;
         this.toast.error(err?.error?.message || 'Erreur lors de la création du devoir.');
+      },
+    });
+  }
+
+  // ─── GESTION DU SYLLABUS OFFICIEL ────────────────────────────────────────────
+  uploadSyllabus(event: Event) {
+    if (!this.formation) return;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploadingSyllabus = true;
+    this.toast.info('Téléversement du syllabus officiel en cours...');
+    this.pedagogie.uploadSyllabus(this.formation.id, file).subscribe({
+      next: (updated) => {
+        this.uploadingSyllabus = false;
+        if (this.formation) {
+          this.formation.syllabusUrl = updated.syllabusUrl;
+          this.formation.syllabusNomFichier = updated.syllabusNomFichier;
+        }
+        this.toast.success('Syllabus officiel mis en ligne avec succès.');
+        this.reloadFormation();
+      },
+      error: (err) => {
+        this.uploadingSyllabus = false;
+        this.toast.error(err?.error?.message || 'Erreur lors du téléversement du syllabus.');
+      },
+    });
+  }
+
+  deleteSyllabus() {
+    if (!this.formation) return;
+    if (!confirm('Êtes-vous sûr de vouloir retirer le syllabus officiel de cette formation ?')) return;
+
+    this.pedagogie.deleteSyllabus(this.formation.id).subscribe({
+      next: () => {
+        if (this.formation) {
+          this.formation.syllabusUrl = null;
+          this.formation.syllabusNomFichier = null;
+        }
+        this.toast.success('Syllabus officiel retiré.');
+        this.reloadFormation();
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Erreur lors de la suppression du syllabus.');
+      },
+    });
+  }
+
+  // ─── GESTION DE L'IMAGE DE LA FORMATION ──────────────────────────────────────
+  uploadImage(event: Event) {
+    if (!this.formation) return;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploadingImage = true;
+    this.toast.info('Téléversement de l\'image en cours...');
+    this.pedagogie.uploadImage(this.formation.id, file).subscribe({
+      next: (updated) => {
+        this.uploadingImage = false;
+        if (this.formation) {
+          this.formation.imageUrl = updated.imageUrl;
+        }
+        this.toast.success('Image de la formation mise en ligne avec succès.');
+        this.reloadFormation();
+      },
+      error: (err) => {
+        this.uploadingImage = false;
+        this.toast.error(err?.error?.message || 'Erreur lors du téléversement de l\'image.');
+      },
+    });
+    // Réinitialiser l'input pour permettre de re-sélectionner le même fichier
+    input.value = '';
+  }
+
+  deleteImage() {
+    if (!this.formation) return;
+    if (!confirm('Êtes-vous sûr de vouloir retirer l\'image de cette formation ?')) return;
+
+    this.pedagogie.deleteImage(this.formation.id).subscribe({
+      next: () => {
+        if (this.formation) {
+          this.formation.imageUrl = null;
+        }
+        this.toast.success('Image de la formation retirée.');
+        this.reloadFormation();
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Erreur lors de la suppression de l\'image.');
       },
     });
   }
@@ -688,6 +787,7 @@ export class FormationDetailComponent implements OnInit {
       debouches: this.formation.debouches || '',
       objectifs: this.formation.objectifs || '',
       prerequis: this.formation.prerequis || '',
+      imageUrl: this.formation.imageUrl || '',
     };
     this.showEditFormationModal = true;
   }
@@ -718,6 +818,7 @@ export class FormationDetailComponent implements OnInit {
       debouches: this.editFormationData.debouches?.trim() || undefined,
       objectifs: this.editFormationData.objectifs?.trim() || undefined,
       prerequis: this.editFormationData.prerequis?.trim() || undefined,
+      imageUrl: this.editFormationData.imageUrl?.trim() || null,
     };
 
     this.pedagogie.updateFormation(this.formation.id, payload).subscribe({

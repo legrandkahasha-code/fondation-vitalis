@@ -254,16 +254,26 @@ import { ToastService } from '../../../core/services/toast.service';
                       <span class="truncate max-w-[140px]">{{ f.etablissement?.nom || 'Vitalis Center' }}</span>
                     </span>
 
-                    <span
-                      class="px-2.5 py-0.5 rounded-xs text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border"
-                      [class]="f.estCertifie ? 'bg-[#E7F1EA] text-[#276B44] border-[#276B44]' : 'bg-[#E7F1FA] text-[#1C75BC] border-[#1C75BC]'"
-                    >
-                      @if (f.estCertifie) {
-                        <span>✓ Certifié</span>
-                      } @else {
-                        <span>En cours</span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      @if (f.syllabusUrl) {
+                        <span class="px-2 py-0.5 rounded-xs bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC] text-[10px] font-bold flex items-center gap-1" title="Syllabus officiel PDF disponible">
+                          <svg class="w-3 h-3 text-[#1C75BC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span>Syllabus</span>
+                        </span>
                       }
-                    </span>
+                      <span
+                        class="px-2.5 py-0.5 rounded-xs text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border"
+                        [class]="f.estCertifie ? 'bg-[#E7F1EA] text-[#276B44] border-[#276B44]' : 'bg-[#E7F1FA] text-[#1C75BC] border-[#1C75BC]'"
+                      >
+                        @if (f.estCertifie) {
+                          <span>✓ Certifié</span>
+                        } @else {
+                          <span>En cours</span>
+                        }
+                      </span>
+                    </div>
                   </div>
 
                   <div>

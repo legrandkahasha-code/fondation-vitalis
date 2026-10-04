@@ -6,6 +6,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { Role } from '../../common/enums/role.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { IdentityService } from '../admission/identity.service';
+import { StorageService } from '../../common/services/storage.service';
 
 describe('UtilisateursService (Business Rules)', () => {
   let service: UtilisateursService;
@@ -33,6 +34,11 @@ describe('UtilisateursService (Business Rules)', () => {
     stream: jest.fn(),
   };
 
+  const mockStorage = {
+    uploadFile: jest.fn().mockResolvedValue('/uploads/test.png'),
+    deleteFile: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -41,6 +47,7 @@ describe('UtilisateursService (Business Rules)', () => {
         { provide: JwtService, useValue: mockJwt },
         { provide: NotificationsService, useValue: mockNotifications },
         { provide: IdentityService, useValue: { ensureProfileFromUser: jest.fn().mockResolvedValue({}) } },
+        { provide: StorageService, useValue: mockStorage },
       ],
     }).compile();
 

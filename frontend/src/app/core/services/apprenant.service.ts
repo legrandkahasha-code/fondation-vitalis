@@ -13,8 +13,42 @@ export interface ApprenantProfileInfo {
   prenom: string;
   email: string;
   telephone: string | null;
+  photoUrl?: string | null;
   dateNaissance?: string | null;
   etablissement: { id: string; nom: string; codeAntenne: string } | null;
+}
+
+export interface QuestionForumItem {
+  id: string;
+  coursId: string;
+  auteurId: string;
+  question: string;
+  votes: number;
+  resolu: boolean;
+  createdAt: string;
+  auteur: {
+    id: string;
+    nom: string;
+    prenom: string;
+    role: string;
+    photoUrl?: string | null;
+  };
+  reponses: Array<{
+    id: string;
+    questionId: string;
+    auteurId: string;
+    reponse: string;
+    estCertifiee: boolean;
+    votes: number;
+    createdAt: string;
+    auteur: {
+      id: string;
+      nom: string;
+      prenom: string;
+      role: string;
+      photoUrl?: string | null;
+    };
+  }>;
 }
 
 export interface ApprenantBootstrapData {
@@ -48,6 +82,25 @@ export interface ApprenantDashboard {
   nbQuizPasses: number;
   nbDevoirsDeposes: number;
   nbCertificats: number;
+  tauxAssiduite?: number;
+  seanceEnDirect?: {
+    id: string;
+    titre: string;
+    typeSession: string;
+    dateHeureDebut: string;
+    dateHeureFin: string;
+    salleOuLien?: string | null;
+    formationTitre: string;
+    formateurNom?: string | null;
+  } | null;
+  prochainesEcheances?: Array<{
+    type: 'devoir' | 'seance' | 'quiz';
+    id: string;
+    titre: string;
+    formationTitre: string;
+    dateLimite: string | null;
+    extra?: string | null;
+  }>;
   prochaineEcheance: {
     type: 'devoir' | 'seance' | 'quiz';
     id: string;
@@ -93,6 +146,8 @@ export interface ApprenantFormation {
   id: string;
   titre: string;
   description: string;
+  syllabusUrl?: string | null;
+  syllabusNomFichier?: string | null;
   createdAt: string;
   etablissement?: { id: string; nom: string; codeAntenne: string };
   nbModules: number;
@@ -114,6 +169,8 @@ export interface FormationArborescence {
     id: string;
     titre: string;
     description: string;
+    syllabusUrl?: string | null;
+    syllabusNomFichier?: string | null;
     etablissement: { id: string; nom: string; codeAntenne: string };
     progressionGlobale: number;
     certificat: { id: string; numeroSerie: string; dateEmission: string } | null;
@@ -130,6 +187,7 @@ export interface FormationArborescence {
     cours: Array<{
       id: string;
       titre: string;
+      dureeMinutes?: number | null;
       hasMedia: boolean;
       hasText: boolean;
       complete: boolean;
@@ -148,6 +206,7 @@ export interface FormationArborescence {
       titre: string;
       consignes: string | null;
       dateLimite: string | null;
+      criteresEvaluation?: string | null;
       estEnRetard: boolean;
       soumis: boolean;
       note: number | null;
@@ -183,6 +242,8 @@ export interface CoursContenu {
   titre: string;
   contenu: string | null;
   fileUrl: string | null;
+  dureeMinutes?: number | null;
+  notesPersonnelles?: string;
   module: { id: string; titre: string };
   formation: { id: string; titre: string };
   complete: boolean;
@@ -650,6 +711,12 @@ export class ApprenantService {
 
   getFormations(): Observable<ApprenantFormation[]> {
     return this.http.get<ApprenantFormation[]>(`${this.apiUrl}/formations`).pipe(
+      map((list) =>
+        list.map((f) => ({
+          ...f,
+          syllabusUrl: f.syllabusUrl ? this.resolveFileUrl(f.syllabusUrl) : null,
+        })),
+      ),
       tap((data) => this.setLocal(this.CACHE_KEYS.FORMATIONS, data)),
       shareReplay(1),
     );
@@ -672,8 +739,92 @@ export class ApprenantService {
 
   getFormationModules(formationId: string): Observable<FormationArborescence> {
     return this.http.get<FormationArborescence>(`${this.apiUrl}/formations/${formationId}/modules`).pipe(
+      map((res) => ({
+        ...res,
+        formation: {
+          ...res.formation,
+          syllabusUrl: res.formation?.syllabusUrl ? this.resolveFileUrl(res.formation.syllabusUrl) : null,
+        },
+      })),
       tap((data) => this.setLocal(this.CACHE_KEYS.MODULES_PREFIX + formationId, data)),
       shareReplay(1),
+    );
+  }
+
+  /**
+   * Télécharge les métadonnées officielles du syllabus
+   */
+  telechargerSyllabus(formationId: string): Observable<{ syllabusUrl: string; syllabusNomFichier: string }> {
+    return this.http.get<{ syllabusUrl: string; syllabusNomFichier: string }>(
+      `${this.apiUrl}/formations/${formationId}/syllabus/telecharger`,
+    ).pipe(
+      map((res) => ({
+        ...res,
+        syllabusUrl: this.resolveFileUrl(res.syllabusUrl),
+      })),
+    );
+  }
+
+  /**
+   * Sauvegarde les notes personnelles d'étude d'un apprenant pour un cours
+   */
+  sauvegarderNotesPersonnelles(coursId: string, notes: string): Observable<{ success: boolean; notesPersonnelles: string }> {
+    return this.http.patch<{ success: boolean; notesPersonnelles: string }>(
+      `${this.apiUrl}/cours/${coursId}/notes-personnelles`,
+      { notes },
+    );
+  }
+
+  /**
+   * Pose une question à l'équipe pédagogique sur un cours
+   */
+  poserQuestionCours(coursId: string, question: string): Observable<{ success: boolean; message: string; question?: QuestionForumItem }> {
+    return this.http.post<{ success: boolean; message: string; question?: QuestionForumItem }>(
+      `${this.apiUrl}/cours/${coursId}/poser-question`,
+      { question },
+    );
+  }
+
+  /**
+   * Récupère le fil de discussion / questions-réponses d'une leçon
+   */
+  getQuestionsCours(coursId: string): Observable<QuestionForumItem[]> {
+    return this.http.get<QuestionForumItem[]>(`${this.apiUrl}/cours/${coursId}/questions`);
+  }
+
+  /**
+   * Répondre à une question du forum
+   */
+  repondreQuestionCours(questionId: string, reponse: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/questions/${questionId}/repondre`, { reponse });
+  }
+
+  /**
+   * Voter pour une question du forum
+   */
+  voterQuestionCours(questionId: string): Observable<{ success: boolean; votes: number }> {
+    return this.http.post<{ success: boolean; votes: number }>(`${this.apiUrl}/questions/${questionId}/vote`, {});
+  }
+
+  /**
+   * Téléverser l'avatar officiel (recadré avec Canvas HTML5)
+   */
+  uploadAvatar(file: Blob | File): Observable<{ success: boolean; photoUrl: string; message: string }> {
+    const formData = new FormData();
+    formData.append('avatar', file, 'avatar.png');
+    return this.http.post<{ success: boolean; photoUrl: string; message: string }>(`${this.apiUrl}/profil/avatar`, formData).pipe(
+      tap((res) => {
+        const snap = this.getProfileSnapshot();
+        if (snap) {
+          this.setLocal(this.CACHE_KEYS.PROFILE, { ...snap, photoUrl: res.photoUrl });
+        }
+        this.invalidateCache([this.CACHE_KEYS.BOOTSTRAP, this.CACHE_KEYS.PROFILE, this.CACHE_KEYS.DOSSIER]);
+        this.liveUpdates$.next({
+          type: 'AVATAR_UPDATE',
+          title: 'Avatar mis à jour',
+          message: 'Votre photo d\'identité officielle a été enregistrée.',
+        } as any);
+      }),
     );
   }
 
@@ -838,6 +989,27 @@ export class ApprenantService {
     return this.http.get<ApprenantAssiduite>(`${this.apiUrl}/assiduite`).pipe(
       tap((data) => this.setLocal(this.CACHE_KEYS.ASSIDUITE, data)),
       shareReplay(1),
+    );
+  }
+
+  /**
+   * Transmet une justification d'absence avec pièce justificative
+   */
+  justifierAbsenceSeance(seanceId: string, file: File | null, motif: string, commentaire: string): Observable<any> {
+    this.invalidateCache([this.CACHE_KEYS.SEANCES, this.CACHE_KEYS.ASSIDUITE, this.CACHE_KEYS.DOSSIER]);
+    const formData = new FormData();
+    if (file) formData.append('file', file);
+    formData.append('motif', motif);
+    if (commentaire) formData.append('commentaire', commentaire);
+    return this.http.post<any>(`${this.apiUrl}/seances/${seanceId}/justifier`, formData).pipe(
+      tap((res) => {
+        this.liveUpdates$.next({
+          type: 'ASSIDUITE_UPDATE',
+          title: 'Justificatif transmis',
+          message: 'Votre justificatif d\'absence a été envoyé à l\'administration.',
+          data: { seanceId, ...res },
+        } as any);
+      }),
     );
   }
 

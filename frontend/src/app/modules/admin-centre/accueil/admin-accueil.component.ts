@@ -13,6 +13,10 @@ import {
   LandingPageSection,
   LandingPageTemoignage,
   LandingPageActualite,
+  LandingPageFormateur,
+  LandingPageCampus,
+  LandingPagePartenaire,
+  LandingNewsletterAbonne,
   ContactMessageItem,
 } from '../../../core/models';
 import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } from '../../../core/utils/whatsapp.util';
@@ -30,14 +34,14 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div class="text-[12px] uppercase font-semibold tracking-[0.06em] text-[#4B5157]">
-                01 · Administration Centrale · CMS Landing Page
+                01 · Administration Centrale · CMS Landing Page 100% Dynamique
               </div>
               <h1 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 tracking-tight">
                 Gestion Intégrale de la Page d'Accueil
               </h1>
               <div class="barre"></div>
               <p class="text-[14px] text-[#4B5157] mt-3 max-w-2xl leading-relaxed">
-                Configurez l'ensemble des contenus, sections institutionnelles, garanties, chiffres clés, parcours d'admission, témoignages et mentions légales en direct.
+                Administrez en temps réel l'intégralité du portail public : Hero, Chiffres clés, Formateurs, Campus & Ateliers, Partenaires, Témoignages vérifiés, Actualités, Pédagogie APC, FAQ et Abonnés Newsletter.
               </p>
             </div>
 
@@ -70,7 +74,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
           </div>
         </div>
 
-        <!-- 1. ONGLET PARAMÈTRES GÉNÉRAUX & HERO & STATS -->
+        <!-- 1. ONGLET PARAMÈTRES GÉNÉRAUX & HERO & STATS & VIDÉO & RÉSEAUX -->
         <div *ngIf="activeTab === 'settings'" class="space-y-6 animate-fade-in-up">
           
           <div class="notice">
@@ -103,7 +107,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
             <div class="card border-t-[5px] border-t-[#1C75BC]">
               <div class="label">Section Principale (Hero) — Split Layout International</div>
               <p class="text-xs text-[#4B5157] mb-4">
-                Conforme aux standards internationaux (Coursera, OpenClassrooms, TAFE NSW) : texte institutionnel à gauche et composition visuelle humaine avec micro-badges à droite.
+                Conforme aux standards internationaux : texte institutionnel à gauche et composition visuelle humaine avec micro-badges à droite.
               </p>
               
               <div class="space-y-4">
@@ -177,7 +181,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                       </div>
 
                       <div class="field">
-                        <label for="heroImageUrlInput" class="text-[11px] text-[#4B5157]">Ou coller une URL d'image web directe (ex: Unsplash, CDN...)</label>
+                        <label for="heroImageUrlInput" class="text-[11px] text-[#4B5157]">Ou coller une URL d'image web directe</label>
                         <input 
                           id="heroImageUrlInput" 
                           type="url" 
@@ -215,13 +219,64 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               </div>
             </div>
 
+            <!-- Notification Live & Raccourci Vidéo -->
+            <div class="card border-t-[5px] border-t-[#2AA9A0]">
+              <div class="label">Flux Live Activity & Présentation Vidéo</div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="field">
+                  <label for="liveActivityTexte">Bandeau d'Activité / Notification d'Inscription en Temps Réel</label>
+                  <input id="liveActivityTexte" type="text" [(ngModel)]="settings.liveActivityTexte" name="liveActivityTexte" placeholder="Ex : 🚀 Session d'avril 2026 ouverte : 87 candidats déjà inscrits cette semaine !" />
+                  <div class="hint">Affiché en toast ou ticker dynamique pour stimuler l'urgence d'inscription.</div>
+                </div>
+
+                <div class="p-3 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[2px] flex flex-col justify-between">
+                  <div>
+                    <div class="font-bold text-xs text-[#124F80] flex items-center gap-1.5">
+                      <span>🎬</span>
+                      <span>Section Vidéo Institutionnelle Dédiée</span>
+                    </div>
+                    <p class="text-xs text-[#4B5157] mt-1 leading-snug">
+                      La présentation officielle dispose d'un onglet dédié complet avec aperçu visuel en direct, réglage des textes, miniature et badges.
+                    </p>
+                  </div>
+                  <button type="button" (click)="activeTab = 'video'" class="btn btn-secondary text-xs mt-2 py-1.5 px-3 self-start cursor-pointer font-semibold text-[#1C75BC]">
+                    Ouvrir l'onglet Vidéo Institutionnelle ↗
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Réseaux Sociaux & Géolocalisation Map -->
+            <div class="card border-t-[5px] border-t-[#0077B5]">
+              <div class="label">Réseaux Sociaux Officiels & Plan d'Accès Google Maps</div>
+              <div class="grid md:grid-cols-3 gap-4">
+                <div class="field">
+                  <label>Page LinkedIn</label>
+                  <input type="url" [(ngModel)]="settings.socialLinkedin" name="socialLinkedin" placeholder="https://linkedin.com/company/vitalis-center" />
+                </div>
+                <div class="field">
+                  <label>Page Facebook</label>
+                  <input type="url" [(ngModel)]="settings.socialFacebook" name="socialFacebook" placeholder="https://facebook.com/vitaliscenter" />
+                </div>
+                <div class="field">
+                  <label>Chaîne YouTube</label>
+                  <input type="url" [(ngModel)]="settings.socialYoutube" name="socialYoutube" placeholder="https://youtube.com/@vitaliscenter" />
+                </div>
+              </div>
+
+              <div class="field mt-4">
+                <label>URL d'Intégration Carte Interactive (Google Maps / OpenStreetMap Embed)</label>
+                <input type="url" [(ngModel)]="settings.mapEmbedUrl" name="mapEmbedUrl" placeholder="https://www.google.com/maps/embed?pb=..." />
+                <div class="hint">Permet d'afficher la carte géographique exacte du campus principal dans la section Contact.</div>
+              </div>
+            </div>
+
             <!-- Section Chiffres Clés (Stat-row) -->
             <div class="card border-t-[5px] border-t-[#F0791E]">
               <div class="label">Chiffres Clés & Indicateurs d'Impact</div>
               <p class="text-xs text-[#4B5157] mb-4">Ces valeurs alimentent l'animation de décompte progressif au scroll sur la page d'accueil.</p>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
                 <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[2px]">
                   <div class="field">
                     <label class="text-[#124F80]">Lauréats Certifiés</label>
@@ -253,7 +308,6 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                     <div class="hint">Vérification QR Code</div>
                   </div>
                 </div>
-
               </div>
             </div>
 
@@ -283,238 +337,223 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
 
         </div>
 
-        <!-- ONGLET VITRINE FORMATIONS & CATALOGUE OFFICIEL (PASSRELLE DIRECTE) -->
-        <div *ngIf="activeTab === 'formations'" class="space-y-6 animate-fade-in-up">
-          <div class="bg-white border border-[#D7DBDE] rounded-[2px] p-6 shadow-2xs space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#D7DBDE] pb-5">
-              <div>
-                <div class="text-[12px] font-bold text-[#1C75BC] uppercase tracking-wider flex items-center gap-1.5">
-                  <span>🎓</span> Section Vitrine Publique /#formations
-                </div>
-                <h2 class="text-xl sm:text-2xl font-bold text-[#1B1D1F] mt-1">
-                  Gouvernance des Formations Certifiantes du Portail
-                </h2>
-                <div class="w-12 h-1 bg-[#F0791E] mt-2 mb-2 rounded-xs"></div>
-                <p class="text-xs text-[#4B5157] mt-1 max-w-2xl leading-relaxed">
-                  Toutes les formations affichées sur la page d'accueil (<code class="bg-slate-100 text-[#124F80] px-1 py-0.5 rounded font-mono font-bold">http://localhost:4200/#formations</code>), leurs statuts en vitrine, badges vedettes, durées et débouchés sont administrés en temps réel depuis le sous-module officiel de l'Administration Centrale.
-                </p>
-              </div>
-
-              <a routerLink="/admin/formations" class="btn btn-primary text-xs py-2.5 px-5 font-bold shadow-xs flex items-center gap-2 shrink-0 cursor-pointer">
-                <span>📚</span>
-                <span>Ouvrir le Module Formations</span>
-                <span>➔</span>
-              </a>
-            </div>
-
-            <!-- Cartes récapitulatives des fonctionnalités -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div class="p-4 bg-[#E7F1FA] border border-[#1C75BC]/30 rounded-xs">
-                <div class="font-bold text-[#124F80] flex items-center gap-1.5 mb-1.5 text-sm">
-                  <span>🌐</span> Publication en 1-Clic
-                </div>
-                <p class="text-slate-600 leading-relaxed">
-                  Activez ou masquez instantanément n'importe quelle formation de la vitrine publique du portail grâce à l'interrupteur réactif sans rechargement.
-                </p>
-              </div>
-
-              <div class="p-4 bg-[#FDECDD] border border-[#F0791E]/30 rounded-xs">
-                <div class="font-bold text-[#F0791E] flex items-center gap-1.5 mb-1.5 text-sm">
-                  <span>⭐</span> Mise en Vedette "À la une"
-                </div>
-                <p class="text-slate-600 leading-relaxed">
-                  Définissez les programmes phares qui apparaissent en tête de liste avec le badge doré officiel et la priorité d'affichage marketing.
-                </p>
-              </div>
-
-              <div class="p-4 bg-[#E7F1EA] border border-[#276B44]/30 rounded-xs">
-                <div class="font-bold text-[#276B44] flex items-center gap-1.5 mb-1.5 text-sm">
-                  <span>👁️</span> Live Preview Immédiat
-                </div>
-                <p class="text-slate-600 leading-relaxed">
-                  Visualisez le rendu visuel exact de la carte de formation avant même de valider son enregistrement en base de données.
-                </p>
-              </div>
-            </div>
-
-            <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div class="text-xs text-[#4B5157]">
-                <strong class="text-[#1B1D1F]">Accès direct au tableau de bord :</strong>
-                Consultez les 5 compteurs KPIs réseau, gérez les référentiels de compétences et rattachez les modules pédagogiques.
-              </div>
-              <a routerLink="/admin/formations" class="btn bg-[#124F80] hover:bg-[#0d3b61] text-white text-xs py-2 px-4 font-bold flex items-center gap-1.5 shrink-0">
-                <span>Gérer les Programmes</span>
-                <span>➔</span>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. ONGLET VÉRIFICATION, FORMATIONS ENTREPRISE & CONTACT / FOOTER -->
-        <div *ngIf="activeTab === 'verif_contact'" class="space-y-6 animate-fade-in-up">
+        <!-- 1.BIS ONGLET DÉDIÉ : VIDÉO INSTITUTIONNELLE & IMMERSION -->
+        <div *ngIf="activeTab === 'video'" class="space-y-6 animate-fade-in-up">
           
-          <div class="notice">
-            <strong>Gestion du Module de Vérification, Contact & Pied de Page</strong>
-            Personnalisez les messages de vérification publique de diplômes, le bloc des formations sur mesure, les coordonnées du secrétariat et le texte légal du pied de page.
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[2px] border border-[#D7DBDE] shadow-2xs">
+            <div>
+              <div class="label" style="margin-bottom: 2px;">Section Multimédia Vitrine</div>
+              <h3 class="text-lg font-bold text-[#1B1D1F]">🎬 Vidéo Institutionnelle & Immersion</h3>
+              <p class="text-xs text-[#4B5157] mt-0.5">
+                Pilotez la présentation officielle affichée entre la visite des campus et le processus d'admission.
+              </p>
+            </div>
+
+            <!-- Interrupteur d'activation globale du bloc -->
+            <div class="flex items-center gap-3 bg-[#F5F6F7] border border-[#D7DBDE] px-4 py-2 rounded-[2px]">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" [(ngModel)]="settings.videoActif" (change)="sauvegarderSettings()" class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#276B44]"></div>
+              </label>
+              <div class="text-xs font-semibold" [ngClass]="settings.videoActif !== false ? 'text-[#276B44]' : 'text-[#7B838A]'">
+                {{ settings.videoActif !== false ? 'Section Activée sur le site' : 'Section Masquée' }}
+              </div>
+            </div>
           </div>
 
           <form (ngSubmit)="sauvegarderSettings()" class="space-y-6">
-            
-            <!-- Section Vérification de Certificats -->
-            <div class="card border-t-[5px] border-t-[#124F80]">
-              <div class="label">Module Public de Vérification d'Authenticité</div>
+
+            <div class="grid lg:grid-cols-12 gap-6">
               
-              <div class="space-y-4">
-                <div class="field">
-                  <label for="verifTitre">Titre de la Section Vérification</label>
-                  <input id="verifTitre" type="text" [(ngModel)]="settings.verifTitre" name="verifTitre" class="font-bold" placeholder="Vérifier l'Authenticité d'un Certificat" />
-                </div>
+              <!-- Volet Gauche : Textes & Liens d'action -->
+              <div class="lg:col-span-6 space-y-5">
+                
+                <div class="card border-t-[5px] border-t-[#124F80]">
+                  <div class="label">Textes & Boutons d'Action (Volet Gauche)</div>
+                  
+                  <div class="space-y-4">
+                    <div class="field">
+                      <label for="videoSousTitre">Badge Supérieur (Catégorie avec pastille orange)</label>
+                      <input id="videoSousTitre" type="text" [(ngModel)]="settings.videoSousTitre" name="videoSousTitre" placeholder="Vidéo Institutionnelle" />
+                      <div class="hint">Ex : Vidéo Institutionnelle, Présentation Officielle...</div>
+                    </div>
 
-                <div class="field">
-                  <label for="verifSousTitre">Instructions de Vérification pour le Public</label>
-                  <textarea id="verifSousTitre" rows="2" [(ngModel)]="settings.verifSousTitre" name="verifSousTitre" placeholder="Entrez le numéro de série officiel délivré par Vitalis Center pour vérifier son authenticité en temps réel..."></textarea>
-                </div>
+                    <div class="field">
+                      <label for="videoTitre">Grand Titre Principal *</label>
+                      <input id="videoTitre" type="text" [(ngModel)]="settings.videoTitre" name="videoTitre" class="font-bold text-base" placeholder="Découvrez Vitalis Center en Action" required />
+                    </div>
 
-                <div class="field">
-                  <label for="verifExempleNumero">Numéro d'Exemple / Démonstration</label>
-                  <input id="verifExempleNumero" type="text" [(ngModel)]="settings.verifExempleNumero" name="verifExempleNumero" class="font-mono text-[#1C75BC]" placeholder="Ex : CERT-2026-00001" />
-                  <div class="hint">Affiché en lien cliquable pour tester la vérification instantanée.</div>
-                </div>
-              </div>
-            </div>
+                    <div class="field">
+                      <label for="videoDescription">Description / Paragraphe de Présentation *</label>
+                      <textarea id="videoDescription" [(ngModel)]="settings.videoDescription" name="videoDescription" rows="4" placeholder="Visionnez la présentation officielle de notre établissement d'utilité publique : témoignages de formateurs, immersion en atelier et parcours des diplômés." required></textarea>
+                    </div>
 
-            <!-- Formations Sur Mesure (Pôle Entreprises) -->
-            <div class="card border-t-[5px] border-t-[#1C75BC]">
-              <div class="label">Encadré Formations Sur Mesure & Intra-Entreprise</div>
-              
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="field">
-                  <label>Titre de l'Encadré</label>
-                  <input type="text" [(ngModel)]="settings.formationsSurMesureTitre" name="formationsSurMesureTitre" class="font-bold" placeholder="Formations intra-entreprise & sur mesure" />
-                </div>
+                    <div class="grid sm:grid-cols-2 gap-4 pt-2">
+                      <div class="field">
+                        <label for="videoBoutonPrincipal">Bouton Principal (Ouvre le lecteur)</label>
+                        <input id="videoBoutonPrincipal" type="text" [(ngModel)]="settings.videoBoutonPrincipal" name="videoBoutonPrincipal" placeholder="Lancer la présentation (3 min)" />
+                      </div>
+                      <div class="field">
+                        <label for="videoBoutonSecondaire">Bouton Secondaire (Libellé)</label>
+                        <input id="videoBoutonSecondaire" type="text" [(ngModel)]="settings.videoBoutonSecondaire" name="videoBoutonSecondaire" placeholder="Prendre rendez-vous sur place" />
+                      </div>
+                    </div>
 
-                <div class="field">
-                  <label>Description de l'Encadré</label>
-                  <input type="text" [(ngModel)]="settings.formationsSurMesureDescription" name="formationsSurMesureDescription" placeholder="Nous concevons des programmes spécialisés pour les ministères et entreprises publiques et privées." />
-                </div>
-              </div>
-            </div>
-
-            <!-- Coordonnées & Horaires -->
-            <div class="card border-t-[5px] border-t-[#F0791E]">
-              <div class="label">Coordonnées Officielles & Horaires du Secrétariat</div>
-              
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="field">
-                  <label>Adresse du Siège & Ateliers Techniques</label>
-                  <input type="text" [(ngModel)]="settings.contactAdresse" name="contactAdresse" placeholder="Kinshasa, République Démocratique du Congo" />
-                </div>
-
-                <div class="field">
-                  <label>Courriel Institutionnel de Contact</label>
-                  <input type="email" [(ngModel)]="settings.contactEmail" name="contactEmail" placeholder="contact@vitalis-center.cd" />
-                </div>
-
-                <div class="field">
-                  <label>Téléphone Officiel</label>
-                  <input type="text" [(ngModel)]="settings.contactTelephone" name="contactTelephone" placeholder="+243 ..." />
-                </div>
-
-                <div class="field">
-                  <label>Horaires d'Ouverture du Secrétariat</label>
-                  <input type="text" [(ngModel)]="settings.contactHoraires" name="contactHoraires" placeholder="Lundi – Vendredi : 08h00 – 16h30 | Samedi : 08h30 – 12h30" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Bouton WhatsApp Flottant -->
-            <div class="card border-t-[5px] border-t-[#25D366]">
-              <div class="label">
-                <svg class="inline w-5 h-5 mr-1.5 -mt-0.5" fill="#25D366" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.07-2.148-.528-1.74-.716-2.859-2.483-2.946-2.599-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.42-.099.825z"/></svg>
-                Bouton WhatsApp Flottant — Configuration
-              </div>
-              <p class="text-xs text-[#4B5157] mb-4">Ce bouton apparaît sur la page d'accueil publique et permet aux visiteurs de contacter un conseiller. Le numéro d'appel du secrétariat n'est pas utilisé ici.</p>
-              
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="field">
-                  <label>Numéro WhatsApp officiel</label>
-                  <input type="text" [(ngModel)]="settings.contactWhatsapp" name="contactWhatsapp" maxlength="50" placeholder="+243 843 010 337" />
-                  <small class="text-[10px] text-[#4B5157] mt-1 block">Formats acceptés : +243…, 0843…, 9 chiffres locaux. Le lien wa.me est calculé automatiquement.</small>
-                </div>
-
-                <div class="field">
-                  <label>Activer le Bouton WhatsApp</label>
-                  <div class="flex items-center gap-3 mt-1">
-                    <label class="relative inline-flex items-center cursor-pointer" [class.opacity-50]="savingWhatsapp" [class.pointer-events-none]="savingWhatsapp">
-                      <input type="checkbox" [(ngModel)]="settings.whatsappActif" name="whatsappActif" class="sr-only peer" [disabled]="savingWhatsapp" (change)="basculerWhatsapp($any($event.target).checked)" />
-                      <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#25D366]"></div>
-                    </label>
-                    <span class="text-sm font-medium" [class.text-[#25D366]]="settings.whatsappActif === true" [class.text-[#4B5157]]="settings.whatsappActif !== true">
-                      {{ settings.whatsappActif === true ? 'Actif — Visible pour les visiteurs' : 'Désactivé — Masqué pour les visiteurs' }}
-                    </span>
-                  </div>
-                  <small class="text-[10px] text-[#4B5157] mt-1.5 block">{{ savingWhatsapp ? 'Application automatique en cours…' : 'L’interrupteur s’applique automatiquement aux visiteurs, sans autre enregistrement.' }}</small>
-                </div>
-              </div>
-
-              <div class="field mt-4">
-                <label>Message pré-rempli à l'ouverture de la conversation</label>
-                <textarea rows="2" [(ngModel)]="settings.whatsappMessage" name="whatsappMessage" maxlength="500" placeholder="Bonjour Vitalis Center EUP, je souhaite obtenir des informations sur vos formations professionnelles certifiées."></textarea>
-              </div>
-
-              <div class="mt-4 p-3 rounded-lg border" [class.bg-[#f0fdf4]]="!!whatsappPreviewUrl" [class.border-[#bbf7d0]]="!!whatsappPreviewUrl" [class.bg-[#fff7ed]]="!whatsappPreviewUrl" [class.border-[#fed7aa]]="!whatsappPreviewUrl">
-                <div class="text-xs font-semibold mb-1" [class.text-[#166534]]="!!whatsappPreviewUrl" [class.text-[#9a3412]]="!whatsappPreviewUrl">
-                  {{ whatsappPreviewUrl ? 'Aperçu du lien WhatsApp généré' : 'Numéro incomplet ou invalide — le bouton public restera masqué' }}
-                </div>
-                @if (whatsappPreviewUrl) {
-                  <code class="text-xs text-[#15803d] break-all">{{ whatsappPreviewUrl }}</code>
-                  <div class="mt-3">
-                    <a
-                      [href]="whatsappPreviewUrl"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="inline-flex items-center gap-2 text-xs font-semibold py-2 px-3 rounded-[2px] bg-[#25D366] text-white hover:bg-[#20ba59] no-underline"
-                    >
-                      Tester le lien WhatsApp
-                    </a>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Pied de Page & Mentions Légales -->
-            <div class="card border-t-[5px] border-t-[#4B5157]">
-              <div class="label">Pied de Page (Footer) & Mentions Institutionnelles</div>
-              
-              <div class="space-y-4">
-                <div class="field">
-                  <label>Présentation de l'Établissement (Colonne 1 du Footer)</label>
-                  <textarea rows="2" [(ngModel)]="settings.footerDescription" name="footerDescription" placeholder="Vitalis Center EUP (Établissement d'Utilité Publique)..."></textarea>
-                </div>
-
-                <div class="field">
-                  <label>Texte de Tutelle & Partenariat (Colonne 3 du Footer)</label>
-                  <textarea rows="2" [(ngModel)]="settings.footerTutelleTexte" name="footerTutelleTexte" placeholder="Supervision institutionnelle et contrôle de conformité des attestations et certifications nationales."></textarea>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-4">
-                  <div class="field">
-                    <label>Mention de Copyright</label>
-                    <input type="text" [(ngModel)]="settings.footerCopyright" name="footerCopyright" placeholder="© 2026 Vitalis Center EUP. Tous droits réservés." />
-                  </div>
-
-                  <div class="field">
-                    <label>Barre Inférieure du Footer</label>
-                    <input type="text" [(ngModel)]="settings.footerBarreTexte" name="footerBarreTexte" placeholder="Vitalis Center (EUP — Établissement d'Utilité Publique)..." />
+                    <div class="field">
+                      <label for="videoBoutonSecondaireUrl">Lien / Cible du Bouton Secondaire</label>
+                      <input id="videoBoutonSecondaireUrl" type="text" [(ngModel)]="settings.videoBoutonSecondaireUrl" name="videoBoutonSecondaireUrl" placeholder="#contact ou /candidature" />
+                      <div class="hint">Lien d'ancrage (#contact) ou URL interne/externe.</div>
+                    </div>
                   </div>
                 </div>
+
+              </div>
+
+              <!-- Volet Droit : Lecteur, Média et Habillage de la Vidéo -->
+              <div class="lg:col-span-6 space-y-5">
+                
+                <div class="card border-t-[5px] border-t-[#F0791E]">
+                  <div class="label">Média Vidéo & Habillage du Lecteur</div>
+
+                  <div class="space-y-4">
+                    <div class="field">
+                      <label for="videoUrlInput">Vidéo de Présentation (Lien ou Fichier Local)</label>
+                      <div class="flex gap-2 items-center">
+                        <input id="videoUrlInput" type="url" [(ngModel)]="settings.videoPresentationUrl" (blur)="formatVideoUrlInput()" name="videoPresentationUrl" placeholder="https://www.youtube.com/watch?v=... ou fichier téléversé" class="font-mono text-xs grow" />
+                        <label class="btn btn-secondary text-xs px-3 py-2 cursor-pointer flex items-center gap-1 shrink-0">
+                          <span>🎬 Téléverser vidéo</span>
+                          <input type="file" (change)="onVideoPresentationSelected($event)" accept="video/mp4,video/webm,video/ogg,video/quicktime" class="hidden" />
+                        </label>
+                      </div>
+                      <div *ngIf="uploadingVideoPresentation" class="text-xs text-[#F0791E] mt-1 font-semibold animate-pulse">
+                        ⏳ Téléversement de la vidéo en cours… Veuillez patienter.
+                      </div>
+                      <div class="hint">Accepte les liens YouTube (watch?v=…), courts (youtu.be), Vimeo — OU téléversez un fichier vidéo directement (MP4, WebM, MOV, max 200 Mo).</div>
+                    </div>
+
+                    <!-- Téléversement ou choix de la miniature -->
+                    <div class="field">
+                      <label>Image Miniature / Poster de Couverture</label>
+                      <div class="flex gap-2">
+                        <input type="text" [(ngModel)]="settings.videoPosterUrl" name="videoPosterUrl" placeholder="assets/actualites/actu-lms-deploiement.jpg ou URL" class="text-xs font-mono grow" />
+                        <label class="btn btn-secondary text-xs px-3 py-2 cursor-pointer flex items-center gap-1 shrink-0">
+                          <span>📁 Téléverser</span>
+                          <input type="file" (change)="onVideoPosterSelected($event)" accept="image/*" class="hidden" />
+                        </label>
+                      </div>
+                      <div *ngIf="uploadingVideoPoster" class="text-xs text-[#1C75BC] mt-1 font-semibold animate-pulse">
+                        Téléversement de la miniature en cours...
+                      </div>
+                    </div>
+
+                    <!-- Incrustations graphiques sur la miniature -->
+                    <div class="grid sm:grid-cols-2 gap-3 pt-2">
+                      <div class="field">
+                        <label class="text-[11px]">Badge Haut Gauche</label>
+                        <input type="text" [(ngModel)]="settings.videoBadgeHaut" name="videoBadgeHaut" placeholder="VITALIS CENTER EUP" class="text-xs" />
+                      </div>
+                      <div class="field">
+                        <label class="text-[11px] text-[#F0791E]">Badge Bas (Orange)</label>
+                        <input type="text" [(ngModel)]="settings.videoBadgeBas" name="videoBadgeBas" placeholder="INNOVATION NATIONALE" class="text-xs font-bold" />
+                      </div>
+                    </div>
+
+                    <div class="field">
+                      <label class="text-[11px]">Titre en Surimpression sur la Vidéo</label>
+                      <input type="text" [(ngModel)]="settings.videoTitreOverlay" name="videoTitreOverlay" placeholder="Déploiement National du Système Numérique..." class="text-xs font-semibold" />
+                    </div>
+
+                    <div class="field">
+                      <label class="text-[11px]">Sous-titre en Surimpression sur la Vidéo</label>
+                      <input type="text" [(ngModel)]="settings.videoSousTitreOverlay" name="videoSousTitreOverlay" placeholder="Centre de Formation Professionnelle Agréé · Kinshasa, RDC" class="text-xs" />
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-3">
+                      <div class="field">
+                        <label class="text-[11px]">Légende en Pied de Vidéo</label>
+                        <input type="text" [(ngModel)]="settings.videoLegende" name="videoLegende" placeholder="Reportage Ministère de la Formation Professionnelle" class="text-xs" />
+                      </div>
+                      <div class="field">
+                        <label class="text-[11px]">Durée Affichée</label>
+                        <input type="text" [(ngModel)]="settings.videoDuree" name="videoDuree" placeholder="03:15" class="text-xs font-mono" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+            <!-- APERÇU EN DIRECT (LIVE PREVIEW HAUTE FIDÉLITÉ) -->
+            <div class="card border-t-[5px] border-t-[#2AA9A0]">
+              <div class="flex items-center justify-between mb-3">
+                <div class="label" style="margin-bottom: 0;">👁️ Aperçu Visuel en Direct (Rendu Public pour les Visiteurs)</div>
+                <span class="text-xs text-[#4B5157] italic">Se met à jour en temps réel selon vos saisies ci-dessus</span>
+              </div>
+
+              <div class="bg-[#124F80] rounded-xl text-white p-5 sm:p-8 shadow-xl overflow-hidden relative">
+                <div class="grid lg:grid-cols-12 gap-6 items-center">
+                  <div class="lg:col-span-5 space-y-3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs text-[#C6D2E3]">
+                      <span class="w-2 h-2 rounded-full bg-[#F0791E]"></span>
+                      <span>{{ settings.videoSousTitre || 'Vidéo Institutionnelle' }}</span>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-bold leading-tight">{{ settings.videoTitre || 'Découvrez Vitalis Center en Action' }}</h3>
+                    <p class="text-xs sm:text-sm text-[#C6D2E3] leading-relaxed">
+                      {{ settings.videoDescription || 'Visionnez la présentation officielle de notre établissement d\'utilité publique...' }}
+                    </p>
+                    <div class="pt-2 flex flex-wrap gap-2.5">
+                      <span class="btn bg-[#F0791E] text-white py-2 px-4 font-bold text-xs shadow-md inline-flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <span>{{ settings.videoBoutonPrincipal || 'Lancer la présentation (3 min)' }}</span>
+                      </span>
+                      <span class="btn btn-secondary text-white border-white/30 py-2 px-3 text-xs font-semibold">
+                        {{ settings.videoBoutonSecondaire || 'Prendre rendez-vous sur place' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="lg:col-span-7">
+                    <div class="aspect-video bg-black/50 rounded-lg overflow-hidden border border-white/20 relative shadow-2xl">
+                      <img [src]="getMediaUrl(settings.videoPosterUrl) || 'assets/actualites/actu-lms-deploiement.jpg'" alt="Aperçu vidéo" class="w-full h-full object-cover opacity-80" />
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/30 flex flex-col justify-between p-3.5 sm:p-4">
+                        <div class="flex items-center justify-between">
+                          <span class="px-2 py-0.5 bg-white/20 rounded text-[10px] font-bold tracking-wide text-white uppercase">
+                            {{ settings.videoBadgeHaut || 'VITALIS CENTER EUP' }}
+                          </span>
+                        </div>
+                        <div class="flex items-center justify-center my-auto">
+                          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#F0791E] text-white flex items-center justify-center shadow-lg">
+                            <svg class="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                          </div>
+                        </div>
+                        <div class="space-y-1">
+                          <div *ngIf="settings.videoBadgeBas" class="inline-block px-1.5 py-0.5 bg-[#F0791E] text-white rounded text-[9px] font-bold uppercase">
+                            {{ settings.videoBadgeBas }}
+                          </div>
+                          <div *ngIf="settings.videoTitreOverlay" class="text-xs sm:text-sm font-bold text-white leading-tight">
+                            {{ settings.videoTitreOverlay }}
+                          </div>
+                          <div *ngIf="settings.videoSousTitreOverlay" class="text-[10px] text-white/80">
+                            {{ settings.videoSousTitreOverlay }}
+                          </div>
+                          <div class="pt-1.5 border-t border-white/20 flex justify-between items-center text-[10px] text-white/90">
+                            <span class="truncate">{{ settings.videoLegende || 'Reportage Ministère de la Formation Professionnelle' }}</span>
+                            <span class="bg-black/60 px-1.5 py-0.5 rounded font-mono">{{ settings.videoDuree || '03:15' }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Bouton d'enregistrement -->
-            <div class="flex justify-end pt-2">
+            <!-- Bouton d'enregistrement général pour la section vidéo -->
+            <div class="flex justify-end pt-3">
               <button type="submit" [disabled]="savingSettings" class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white border-none font-bold py-3 px-8 shadow-xs hover:scale-102 transition-transform cursor-pointer">
-                {{ savingSettings ? 'Enregistrement en cours...' : '💾 Enregistrer ces Paramètres' }}
+                {{ savingSettings ? 'Enregistrement en cours...' : '💾 Enregistrer les Modifications Vidéo' }}
               </button>
             </div>
 
@@ -522,66 +561,255 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
 
         </div>
 
-        <!-- 3. ONGLET SECTIONS MODULAIRES (Avantages, Pédagogie, Admission, Secteurs, FAQ) -->
-        <div *ngIf="activeTab !== 'settings' && activeTab !== 'verif_contact' && activeTab !== 'actualites' && activeTab !== 'messages'" class="space-y-6 animate-fade-in-up">
-          
+        <!-- 2. ONGLET FORMATEURS & EXPERTS MÉTIERS -->
+        <div *ngIf="activeTab === 'formateurs'" class="space-y-6 animate-fade-in-up">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[2px] border border-[#D7DBDE] shadow-2xs">
             <div>
-              <div class="label" style="margin-bottom: 2px;">Section Active</div>
-              <h3 class="text-lg font-bold text-[#1B1D1F]">{{ getNomSectionActive() }}</h3>
-              <p class="text-xs text-[#4B5157] mt-0.5">Gérez l'ordre d'apparition, les descriptions, les couleurs et la visibilité des blocs.</p>
+              <div class="label" style="margin-bottom: 2px;">Corps Pédagogique & Experts Métiers</div>
+              <h3 class="text-lg font-bold text-[#1B1D1F]">Formateurs, Mentors & Praticiens Certifiés</h3>
+              <p class="text-xs text-[#4B5157] mt-0.5">Mettez en avant l'excellence de votre équipe pédagogique et leur expérience industrielle.</p>
             </div>
-            <button (click)="ouvrirModalSection()" class="btn btn-primary text-xs py-2.5 px-5 font-semibold shadow-2xs cursor-pointer">
-              + Ajouter un élément
+            <button (click)="ouvrirModalFormateur()" class="btn btn-primary text-xs py-2.5 px-5 font-semibold shadow-2xs cursor-pointer flex items-center gap-1.5">
+              <span>+</span>
+              <span>Ajouter un formateur</span>
             </button>
           </div>
 
-          <!-- Grille des cartes modulaires -->
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div *ngFor="let sec of sectionsFiltrees" class="card border border-[#D7DBDE] flex flex-col justify-between hover:border-[#1C75BC] transition-all">
+            <div *ngFor="let f of formateursList" class="card border border-[#D7DBDE] flex flex-col justify-between hover:border-[#1C75BC] transition-all bg-white">
               <div>
-                <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-[#F5F6F7]">
-                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-[2px] text-white" [style.background-color]="sec.couleur || '#1C75BC'">
-                    Position #{{ sec.ordre }}
-                  </span>
-                  <span *ngIf="sec.icone" class="text-xs font-bold text-[#124F80] bg-[#E7F1FA] px-2 py-0.5 rounded-[2px]">
-                    {{ sec.icone }}
-                  </span>
-                  <span class="tag" [ngClass]="sec.actif ? 'valide' : 'attente'">
-                    {{ sec.actif ? 'Visible' : 'Masqué' }}
-                  </span>
+                <div class="flex items-start gap-3.5 mb-3 pb-3 border-b border-[#F5F6F7]">
+                  <img 
+                    [src]="getMediaUrl(f.photoUrl || f.photo) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop'" 
+                    [alt]="f.nom"
+                    class="w-14 h-14 rounded-full object-cover border-2 border-[#1C75BC] shrink-0"
+                    (error)="onImageError($event, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop')"
+                  />
+                  <div class="min-w-0">
+                    <h4 class="font-bold text-[#1B1D1F] text-sm truncate">{{ f.nom }}</h4>
+                    <div class="text-[11px] font-semibold text-[#1C75BC] truncate">{{ f.titre }}</div>
+                    <div class="text-[10px] text-[#276B44] font-medium mt-0.5">⏱️ {{ f.experience }}</div>
+                  </div>
                 </div>
 
-                <div *ngIf="sec.sousTitre" class="text-[11px] font-bold text-[#F0791E] uppercase tracking-wider mb-1">
-                  {{ sec.sousTitre }}
+                <div class="text-xs font-semibold text-[#F0791E] mb-1">
+                  🎓 Spécialité : {{ f.specialite }}
                 </div>
-                <h4 class="font-bold text-[#1B1D1F] text-[15px] mb-2 leading-snug">{{ sec.titre }}</h4>
-                <p *ngIf="sec.description" class="text-xs text-[#4B5157] leading-relaxed mb-4">
-                  {{ sec.description }}
-                </p>
+                <div *ngIf="f.linkedin" class="text-[11px] text-[#0077B5] flex items-center gap-1 mb-2">
+                  <span>🔗</span> <a [href]="f.linkedin" target="_blank" class="hover:underline truncate">{{ f.linkedin }}</a>
+                </div>
               </div>
 
-              <div class="pt-3 border-t border-[#F5F6F7] flex items-center justify-end gap-2">
-                <button (click)="toggleSectionActif(sec)" class="btn btn-ghost text-xs py-1 px-2.5" [title]="sec.actif ? 'Masquer' : 'Publier'">
-                  {{ sec.actif ? '👁️ Masquer' : '✅ Afficher' }}
-                </button>
-                <button (click)="editerSection(sec)" class="btn btn-ghost text-xs py-1 px-3">
-                  ✏️ Modifier
-                </button>
-                <button (click)="supprimerSection(sec.id!)" class="btn btn-ghost text-xs py-1 px-3 text-[#ED1C24] border-[#ED1C24] hover:bg-[#FDE6E6]">
-                  🗑️ Supprimer
-                </button>
+              <div class="pt-3 border-t border-[#F5F6F7] flex items-center justify-between gap-2">
+                <span class="tag" [ngClass]="f.actif !== false ? 'valide' : 'attente'">
+                  {{ f.actif !== false ? 'En ligne' : 'Masqué' }}
+                </span>
+                <div class="flex items-center gap-1">
+                  <button (click)="toggleFormateurActif(f)" class="btn btn-ghost text-xs py-1 px-2.5" [title]="f.actif !== false ? 'Masquer' : 'Afficher'">
+                    {{ f.actif !== false ? '👁️' : '✅' }}
+                  </button>
+                  <button (click)="editerFormateur(f)" class="btn btn-ghost text-xs py-1 px-2.5" title="Modifier">
+                    ✏️
+                  </button>
+                  <button (click)="supprimerFormateur(f.id!)" class="btn btn-ghost text-xs py-1 px-2.5 text-[#ED1C24] border-[#ED1C24]" title="Supprimer">
+                    🗑️
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div *ngIf="sectionsFiltrees.length === 0" class="p-10 text-center bg-white border border-[#D7DBDE] rounded-[2px] text-xs text-[#4B5157]">
-            Aucun élément n'est enregistré dans cette section. Cliquez sur « + Ajouter un élément » pour en créer un.
+          <div *ngIf="formateursList.length === 0" class="p-10 text-center bg-white border border-[#D7DBDE] rounded-[2px] text-xs text-[#4B5157]">
+            Aucun formateur enregistré. Cliquez sur « + Ajouter un formateur » pour créer votre première fiche.
           </div>
-
         </div>
 
-        <!-- 4. ONGLET ACTUALITÉS DU CENTRE VITALIS -->
+        <!-- 3. ONGLET CAMPUS, ATELIERS & ÉQUIPEMENTS -->
+        <div *ngIf="activeTab === 'campus'" class="space-y-6 animate-fade-in-up">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[2px] border border-[#D7DBDE] shadow-2xs">
+            <div>
+              <div class="label" style="margin-bottom: 2px;">Infrastructures & Espaces Techniques</div>
+              <h3 class="text-lg font-bold text-[#1B1D1F]">Campus, Ateliers Pratiques & Laboratoires</h3>
+              <p class="text-xs text-[#4B5157] mt-0.5">Présentez les installations, plateaux techniques et équipements professionnels du centre.</p>
+            </div>
+            <button (click)="ouvrirModalCampus()" class="btn btn-primary text-xs py-2.5 px-5 font-semibold shadow-2xs cursor-pointer flex items-center gap-1.5">
+              <span>+</span>
+              <span>Ajouter un espace campus</span>
+            </button>
+          </div>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div *ngFor="let c of campusList" class="card border border-[#D7DBDE] flex flex-col justify-between hover:border-[#1C75BC] transition-all bg-white p-0 overflow-hidden">
+              <div class="relative h-40 bg-slate-100">
+                <img 
+                  [src]="getMediaUrl(c.photoUrl || c.photo) || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop'" 
+                  [alt]="c.titre"
+                  class="w-full h-full object-cover"
+                  (error)="onImageError($event, 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop')"
+                />
+                <div class="absolute top-2.5 left-2.5">
+                  <span *ngIf="c.badge" class="px-2 py-0.5 text-[10px] font-bold bg-[#1C75BC] text-white uppercase rounded-2xs shadow-xs">
+                    {{ c.badge }}
+                  </span>
+                </div>
+                <div class="absolute top-2.5 right-2.5">
+                  <span class="tag" [ngClass]="c.actif !== false ? 'valide' : 'attente'">
+                    {{ c.actif !== false ? 'Visible' : 'Masqué' }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <h4 class="font-bold text-[#1B1D1F] text-sm mb-1">{{ c.titre }}</h4>
+                  <p class="text-xs text-[#4B5157] line-clamp-3 mb-2 leading-relaxed">{{ c.description }}</p>
+                  <div class="text-[11px] font-semibold text-[#124F80] bg-[#E7F1FA] p-2 rounded-2xs border border-[#1C75BC]/20">
+                    ⚙️ <strong>Équipements :</strong> {{ c.equipements }}
+                  </div>
+                </div>
+
+                <div class="pt-3 mt-3 border-t border-[#F5F6F7] flex items-center justify-end gap-1.5">
+                  <button (click)="toggleCampusActif(c)" class="btn btn-ghost text-xs py-1 px-2.5" [title]="c.actif !== false ? 'Masquer' : 'Afficher'">
+                    {{ c.actif !== false ? '👁️' : '✅' }}
+                  </button>
+                  <button (click)="editerCampus(c)" class="btn btn-ghost text-xs py-1 px-2.5" title="Modifier">
+                    ✏️
+                  </button>
+                  <button (click)="supprimerCampus(c.id!)" class="btn btn-ghost text-xs py-1 px-2.5 text-[#ED1C24] border-[#ED1C24]" title="Supprimer">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="campusList.length === 0" class="p-10 text-center bg-white border border-[#D7DBDE] rounded-[2px] text-xs text-[#4B5157]">
+            Aucun espace campus configuré. Cliquez sur « + Ajouter un espace campus » pour commencer.
+          </div>
+        </div>
+
+        <!-- 4. ONGLET PARTENAIRES & ENTREPRISES -->
+        <div *ngIf="activeTab === 'partenaires'" class="space-y-6 animate-fade-in-up">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[2px] border border-[#D7DBDE] shadow-2xs">
+            <div>
+              <div class="label" style="margin-bottom: 2px;">Alliance & Réseau Industriel</div>
+              <h3 class="text-lg font-bold text-[#1B1D1F]">Partenaires & Entreprises Recruteuses</h3>
+              <p class="text-xs text-[#4B5157] mt-0.5">Gérez les logos des entreprises partenaires et ministères affichés dans le carrousel institutionnel.</p>
+            </div>
+            <button (click)="ouvrirModalPartenaire()" class="btn btn-primary text-xs py-2.5 px-5 font-semibold shadow-2xs cursor-pointer flex items-center gap-1.5">
+              <span>+</span>
+              <span>Ajouter un partenaire</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div *ngFor="let p of partenairesList" class="card border border-[#D7DBDE] flex flex-col justify-between hover:border-[#1C75BC] transition-all bg-white p-4">
+              <div class="flex flex-col items-center text-center">
+                <div class="w-20 h-16 flex items-center justify-center mb-3 bg-[#F5F6F7] p-2 rounded-xs border border-[#D7DBDE]">
+                  <img 
+                    [src]="getMediaUrl(p.logoUrl || p.logo) || 'https://placehold.co/150x60?text=Logo'" 
+                    [alt]="p.nom"
+                    class="max-h-full max-w-full object-contain"
+                    (error)="onImageError($event, 'https://placehold.co/150x60?text=Logo')"
+                  />
+                </div>
+                <h4 class="font-bold text-xs text-[#1B1D1F] truncate w-full">{{ p.nom }}</h4>
+                <div class="text-[10px] text-[#4B5157] truncate w-full mt-0.5">{{ p.secteur || 'Partenaire Institutionnel' }}</div>
+              </div>
+
+              <div class="pt-3 mt-3 border-t border-[#F5F6F7] flex items-center justify-between gap-1">
+                <span class="tag" [ngClass]="p.actif !== false ? 'valide' : 'attente'">
+                  {{ p.actif !== false ? 'Visible' : 'Masqué' }}
+                </span>
+                <div class="flex items-center gap-1">
+                  <button (click)="editerPartenaire(p)" class="btn btn-ghost text-xs py-0.5 px-2" title="Modifier">
+                    ✏️
+                  </button>
+                  <button (click)="supprimerPartenaire(p.id!)" class="btn btn-ghost text-xs py-0.5 px-2 text-[#ED1C24] border-[#ED1C24]" title="Supprimer">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="partenairesList.length === 0" class="p-10 text-center bg-white border border-[#D7DBDE] rounded-[2px] text-xs text-[#4B5157]">
+            Aucun partenaire enregistré. Cliquez sur « + Ajouter un partenaire » pour charger un logo officiel.
+          </div>
+        </div>
+
+        <!-- 5. ONGLET TÉMOIGNAGES ENRICHIS & ALUMNI -->
+        <div *ngIf="activeTab === 'temoignages'" class="space-y-6 animate-fade-in-up">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[2px] border border-[#D7DBDE] shadow-2xs">
+            <div>
+              <div class="label" style="margin-bottom: 2px;">Preuve Sociale & Réussites Alumni</div>
+              <h3 class="text-lg font-bold text-[#1B1D1F]">Témoignages des Anciens Apprenants & Entreprises</h3>
+              <p class="text-xs text-[#4B5157] mt-0.5">Affichez des retours d'expérience authentiques avec photo, rôle, promotion et note d'évaluation.</p>
+            </div>
+            <button (click)="ouvrirModalTemoignageEnrichi()" class="btn btn-primary text-xs py-2.5 px-5 font-semibold shadow-2xs cursor-pointer flex items-center gap-1.5">
+              <span>+</span>
+              <span>Ajouter un témoignage</span>
+            </button>
+          </div>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div *ngFor="let t of temoignagesList" class="card border border-[#D7DBDE] flex flex-col justify-between hover:border-[#1C75BC] transition-all bg-white">
+              <div>
+                <div class="flex items-start gap-3 mb-3 pb-3 border-b border-[#F5F6F7]">
+                  <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-[#D7DBDE] bg-slate-100 flex items-center justify-center font-bold text-[#124F80]">
+                    <img 
+                      *ngIf="t.photoUrl || t.photo"
+                      [src]="getMediaUrl(t.photoUrl || t.photo)" 
+                      [alt]="t.nom || t.nomPrenom"
+                      class="w-full h-full object-cover"
+                      (error)="onImageError($event)"
+                    />
+                    <span *ngIf="!t.photoUrl && !t.photo">{{ t.initiales || getInitials(t.nom || t.nomPrenom || '') }}</span>
+                  </div>
+                  <div class="min-w-0">
+                    <h4 class="font-bold text-[#1B1D1F] text-sm truncate">{{ t.nom || t.nomPrenom }}</h4>
+                    <div class="text-[11px] text-[#1C75BC] font-medium truncate">{{ t.role || t.fonction }}</div>
+                    <div *ngIf="t.entreprise" class="text-[10px] text-[#4B5157] truncate">🏢 {{ t.entreprise }}</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1 text-[#F0791E] text-xs mb-2">
+                  <span *ngFor="let s of [1,2,3,4,5]">
+                    {{ s <= (t.note || 5) ? '★' : '☆' }}
+                  </span>
+                  <span class="text-[10px] text-[#4B5157] font-bold ml-1">{{ t.promotion || 'Alumni Certifié' }}</span>
+                </div>
+
+                <p class="text-xs text-[#4B5157] italic leading-relaxed mb-3">
+                  « {{ t.citation || t.texte }} »
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-[#F5F6F7] flex items-center justify-between gap-1">
+                <span class="tag" [ngClass]="t.actif !== false ? 'valide' : 'attente'">
+                  {{ t.actif !== false ? 'Visible' : 'Masqué' }}
+                </span>
+                <div class="flex items-center gap-1">
+                  <button (click)="toggleTemoignageActif(t)" class="btn btn-ghost text-xs py-1 px-2.5" [title]="t.actif !== false ? 'Masquer' : 'Afficher'">
+                    {{ t.actif !== false ? '👁️' : '✅' }}
+                  </button>
+                  <button (click)="editerTemoignageEnrichi(t)" class="btn btn-ghost text-xs py-1 px-2.5" title="Modifier">
+                    ✏️
+                  </button>
+                  <button (click)="supprimerTemoignage(t.id!)" class="btn btn-ghost text-xs py-1 px-2.5 text-[#ED1C24] border-[#ED1C24]" title="Supprimer">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="temoignagesList.length === 0" class="p-10 text-center bg-white border border-[#D7DBDE] rounded-[2px] text-xs text-[#4B5157]">
+            Aucun témoignage enregistré. Cliquez sur « + Ajouter un témoignage » pour créer le premier.
+          </div>
+        </div>
+
+        <!-- 6. ONGLET ACTUALITÉS DU CENTRE VITALIS -->
         <div *ngIf="activeTab === 'actualites'" class="space-y-6 animate-fade-in-up">
           
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[2px] border border-[#D7DBDE] shadow-2xs">
@@ -691,324 +919,376 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
 
         </div>
 
-        <!-- MODAL D'ÉDITION/CRÉATION DE SECTION -->
-        <div *ngIf="modalSectionVisible" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div class="bg-white rounded-[2px] shadow-2xl max-w-lg w-full p-6 border-2 border-[#1C75BC] animate-fade-in-up">
-            <div class="flex justify-between items-center border-b border-[#D7DBDE] pb-3 mb-4">
+        <!-- 7. ONGLET VITRINE FORMATIONS & CATALOGUE OFFICIEL -->
+        <div *ngIf="activeTab === 'formations'" class="space-y-6 animate-fade-in-up">
+          <div class="bg-white border border-[#D7DBDE] rounded-[2px] p-6 shadow-2xs space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#D7DBDE] pb-5">
               <div>
-                <div class="text-[11px] uppercase font-bold text-[#F0791E] tracking-wider">{{ getNomSectionActive() }}</div>
-                <h3 class="font-bold text-base text-[#124F80]">
-                  {{ sectionEnCours.id ? 'Modifier l\'élément' : 'Ajouter un nouvel élément' }}
-                </h3>
+                <div class="text-[12px] font-bold text-[#1C75BC] uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🎓</span> Section Vitrine Publique /#formations
+                </div>
+                <h2 class="text-xl sm:text-2xl font-bold text-[#1B1D1F] mt-1">
+                  Gouvernance des Formations Certifiantes du Portail
+                </h2>
+                <div class="w-12 h-1 bg-[#F0791E] mt-2 mb-2 rounded-xs"></div>
+                <p class="text-xs text-[#4B5157] mt-1 max-w-2xl leading-relaxed">
+                  Toutes les formations affichées sur la page d'accueil, leurs statuts en vitrine, badges vedettes, durées et débouchés sont administrés en temps réel depuis le sous-module officiel de l'Administration Centrale.
+                </p>
               </div>
-              <button (click)="modalSectionVisible = false" class="text-base font-bold text-[#4B5157] hover:text-[#ED1C24] cursor-pointer">✕</button>
+
+              <a routerLink="/admin/formations" class="btn btn-primary text-xs py-2.5 px-5 font-bold shadow-xs flex items-center gap-2 shrink-0 cursor-pointer">
+                <span>📚</span>
+                <span>Ouvrir le Module Formations</span>
+                <span>➔</span>
+              </a>
             </div>
 
-            <form (ngSubmit)="sauvegarderSectionModal()" class="space-y-4 text-xs">
-              <div class="field">
-                <label>Titre principal *</label>
-                <input type="text" [(ngModel)]="sectionEnCours.titre" name="titre" required class="font-bold" />
-              </div>
-
-              <div class="field">
-                <label>Sous-titre / Tag descriptif</label>
-                <input type="text" [(ngModel)]="sectionEnCours.sousTitre" name="sousTitre" placeholder="Ex : Agrément National ou Étape 01" />
-              </div>
-
-              <div class="field">
-                <label>Description / Texte de détail</label>
-                <textarea rows="3" [(ngModel)]="sectionEnCours.description" name="description"></textarea>
-              </div>
-
-              <div class="grid grid-cols-3 gap-3">
-                <div class="field">
-                  <label>Ordre</label>
-                  <input type="number" [(ngModel)]="sectionEnCours.ordre" name="ordre" />
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div class="p-4 bg-[#E7F1FA] border border-[#1C75BC]/30 rounded-xs">
+                <div class="font-bold text-[#124F80] flex items-center gap-1.5 mb-1.5 text-sm">
+                  <span>🌐</span> Publication en 1-Clic
                 </div>
-                <div class="field">
-                  <label>Icône / Badge</label>
-                  <input type="text" [(ngModel)]="sectionEnCours.icone" name="icone" placeholder="Ex : 🏢 ou 70 %" />
-                </div>
-                <div class="field">
-                  <label>Couleur</label>
-                  <input type="color" [(ngModel)]="sectionEnCours.couleur" name="couleur" class="h-10 p-0.5 cursor-pointer" />
-                </div>
+                <p class="text-slate-600 leading-relaxed">
+                  Activez ou masquez instantanément n'importe quelle formation de la vitrine publique du portail grâce à l'interrupteur réactif sans rechargement.
+                </p>
               </div>
 
-              <div class="flex items-center gap-2 pt-2 border-t border-[#F5F6F7]">
-                <input type="checkbox" [(ngModel)]="sectionEnCours.actif" name="actif" id="sectionActif" class="cursor-pointer w-4 h-4" />
-                <label for="sectionActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Rendre cet élément visible immédiatement</label>
+              <div class="p-4 bg-[#FDECDD] border border-[#F0791E]/30 rounded-xs">
+                <div class="font-bold text-[#F0791E] flex items-center gap-1.5 mb-1.5 text-sm">
+                  <span>⭐</span> Mise en Vedette "À la une"
+                </div>
+                <p class="text-slate-600 leading-relaxed">
+                  Définissez les programmes phares qui apparaissent en tête de liste avec le badge doré officiel et la priorité d'affichage marketing.
+                </p>
               </div>
 
-              <div class="flex justify-end gap-2 pt-4 border-t border-[#D7DBDE]">
-                <button type="button" (click)="modalSectionVisible = false" class="btn btn-ghost text-xs py-2 px-4">
-                  Annuler
-                </button>
-                <button type="submit" class="btn btn-primary text-xs py-2 px-6 font-semibold shadow-xs">
-                  Enregistrer
-                </button>
+              <div class="p-4 bg-[#E7F1EA] border border-[#276B44]/30 rounded-xs">
+                <div class="font-bold text-[#276B44] flex items-center gap-1.5 mb-1.5 text-sm">
+                  <span>👁️</span> Live Preview Immédiat
+                </div>
+                <p class="text-slate-600 leading-relaxed">
+                  Visualisez le rendu visuel exact de la carte de formation avant même de valider son enregistrement en base de données.
+                </p>
               </div>
-            </form>
+            </div>
+
+            <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="text-xs text-[#4B5157]">
+                <strong class="text-[#1B1D1F]">Accès direct au tableau de bord :</strong>
+                Consultez les 5 compteurs KPIs réseau, gérez les référentiels de compétences et rattachez les modules pédagogiques.
+              </div>
+              <a routerLink="/admin/formations" class="btn bg-[#124F80] hover:bg-[#0d3b61] text-white text-xs py-2 px-4 font-bold flex items-center gap-1.5 shrink-0">
+                <span>Gérer les Programmes</span>
+                <span>➔</span>
+              </a>
+            </div>
           </div>
         </div>
 
-        <!-- MODAL D'ÉDITION/CRÉATION D'ACTUALITÉ DU CENTRE -->
-        <div *ngIf="modalActualiteVisible" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div class="bg-white rounded-[2px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border-2 border-[#1C75BC] animate-fade-in-up">
-            <div class="flex justify-between items-center border-b border-[#D7DBDE] pb-3 mb-4">
+        <!-- 8. ONGLET SECTIONS MODULAIRES (Avantages, Pédagogie, Admission, Secteurs, FAQ) -->
+        <div *ngIf="isSectionTab(activeTab)" class="space-y-6 animate-fade-in-up">
+          
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[2px] border border-[#D7DBDE] shadow-2xs">
+            <div>
+              <div class="label" style="margin-bottom: 2px;">Section Active</div>
+              <h3 class="text-lg font-bold text-[#1B1D1F]">{{ getNomSectionActive() }}</h3>
+              <p class="text-xs text-[#4B5157] mt-0.5">Gérez l'ordre d'apparition, les descriptions, les couleurs et la visibilité des blocs.</p>
+            </div>
+            <button (click)="ouvrirModalSection()" class="btn btn-primary text-xs py-2.5 px-5 font-semibold shadow-2xs cursor-pointer">
+              + Ajouter un élément
+            </button>
+          </div>
+
+          <!-- Grille des cartes modulaires -->
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div *ngFor="let sec of sectionsFiltrees" class="card border border-[#D7DBDE] flex flex-col justify-between hover:border-[#1C75BC] transition-all">
               <div>
-                <div class="text-[11px] uppercase font-bold text-[#F0791E] tracking-wider">Communication & Presse</div>
-                <h3 class="font-bold text-base text-[#124F80]">
-                  {{ actualiteEnCours.id ? 'Modifier l\'Actualité' : 'Publier une Nouvelle Actualité' }}
-                </h3>
+                <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-[#F5F6F7]">
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-[2px] text-white" [style.background-color]="sec.couleur || '#1C75BC'">
+                    Position #{{ sec.ordre }}
+                  </span>
+                  <span *ngIf="sec.categorie" class="text-[10px] font-extrabold uppercase text-[#F0791E] bg-[#FDECDD] px-2 py-0.5 rounded-[2px]">
+                    {{ sec.categorie }}
+                  </span>
+                  <span *ngIf="sec.icone" class="text-xs font-bold text-[#124F80] bg-[#E7F1FA] px-2 py-0.5 rounded-[2px]">
+                    {{ sec.icone }}
+                  </span>
+                  <span class="tag" [ngClass]="sec.actif ? 'valide' : 'attente'">
+                    {{ sec.actif ? 'Visible' : 'Masqué' }}
+                  </span>
+                </div>
+
+                <div *ngIf="sec.sousTitre" class="text-[11px] font-bold text-[#F0791E] uppercase tracking-wider mb-1">
+                  {{ sec.sousTitre }}
+                </div>
+                <h4 class="font-bold text-[#1B1D1F] text-[15px] mb-2 leading-snug">{{ sec.titre }}</h4>
+                <p *ngIf="sec.description" class="text-xs text-[#4B5157] leading-relaxed mb-4">
+                  {{ sec.description }}
+                </p>
               </div>
-              <button (click)="modalActualiteVisible = false" class="text-base font-bold text-[#4B5157] hover:text-[#ED1C24] cursor-pointer">✕</button>
+
+              <div class="pt-3 border-t border-[#F5F6F7] flex items-center justify-end gap-2">
+                <button (click)="toggleSectionActif(sec)" class="btn btn-ghost text-xs py-1 px-2.5" [title]="sec.actif ? 'Masquer' : 'Publier'">
+                  {{ sec.actif ? '👁️ Masquer' : '✅ Afficher' }}
+                </button>
+                <button (click)="editerSection(sec)" class="btn btn-ghost text-xs py-1 px-3">
+                  ✏️ Modifier
+                </button>
+                <button (click)="supprimerSection(sec.id!)" class="btn btn-ghost text-xs py-1 px-3 text-[#ED1C24] border-[#ED1C24] hover:bg-[#FDE6E6]">
+                  🗑️ Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="sectionsFiltrees.length === 0" class="p-10 text-center bg-white border border-[#D7DBDE] rounded-[2px] text-xs text-[#4B5157]">
+            Aucun élément n'est enregistré dans cette section. Cliquez sur « + Ajouter un élément » pour en créer un.
+          </div>
+
+        </div>
+
+        <!-- 9. ONGLET VÉRIFICATION, FORMATIONS ENTREPRISE & CONTACT / FOOTER -->
+        <div *ngIf="activeTab === 'verif_contact'" class="space-y-6 animate-fade-in-up">
+          
+          <div class="notice">
+            <strong>Gestion du Module de Vérification, Contact & Pied de Page</strong>
+            Personnalisez les messages de vérification publique de diplômes, le bloc des formations sur mesure, les coordonnées du secrétariat et le texte légal du pied de page.
+          </div>
+
+          <form (ngSubmit)="sauvegarderSettings()" class="space-y-6">
+            
+            <!-- Section Vérification de Certificats -->
+            <div class="card border-t-[5px] border-t-[#124F80]">
+              <div class="label">Module Public de Vérification d'Authenticité</div>
+              
+              <div class="space-y-4">
+                <div class="field">
+                  <label for="verifTitre">Titre de la Section Vérification</label>
+                  <input id="verifTitre" type="text" [(ngModel)]="settings.verifTitre" name="verifTitre" class="font-bold" placeholder="Vérifier l'Authenticité d'un Certificat" />
+                </div>
+
+                <div class="field">
+                  <label for="verifSousTitre">Instructions de Vérification pour le Public</label>
+                  <textarea id="verifSousTitre" rows="2" [(ngModel)]="settings.verifSousTitre" name="verifSousTitre" placeholder="Entrez le numéro de série officiel délivré par Vitalis Center pour vérifier son authenticité en temps réel..."></textarea>
+                </div>
+
+                <div class="field">
+                  <label for="verifExempleNumero">Numéro d'Exemple / Démonstration</label>
+                  <input id="verifExempleNumero" type="text" [(ngModel)]="settings.verifExempleNumero" name="verifExempleNumero" class="font-mono text-[#1C75BC]" placeholder="Ex : CERT-2026-00001" />
+                  <div class="hint">Affiché en lien cliquable pour tester la vérification instantanée.</div>
+                </div>
+              </div>
             </div>
 
-            <form (ngSubmit)="sauvegarderActualiteModal()" class="space-y-4 text-xs">
-              <div class="field">
-                <label>Titre de l'Actualité / Annonce *</label>
-                <input type="text" [(ngModel)]="actualiteEnCours.titre" name="titre" required class="font-bold text-sm" placeholder="Ex : Cérémonie officielle de remise des diplômes..." />
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Formations Sur Mesure (Pôle Entreprises) -->
+            <div class="card border-t-[5px] border-t-[#1C75BC]">
+              <div class="label">Encadré Formations Sur Mesure & Intra-Entreprise</div>
+              
+              <div class="grid md:grid-cols-2 gap-4">
                 <div class="field">
-                  <label>Rubrique / Catégorie *</label>
-                  <select [(ngModel)]="actualiteEnCours.categorie" name="categorie" required class="font-semibold">
-                    <option value="INNOVATION">💡 Innovation & Tech</option>
-                    <option value="ADMISSIONS">📬 Admissions & Inscriptions</option>
-                    <option value="PARTENARIAT">🤝 Partenariats & Insertion</option>
-                    <option value="PEDAGOGIE">📚 Pédagogie & APC</option>
-                    <option value="VIE_DU_CENTRE">🏛️ Vie du Centre</option>
-                    <option value="COMMUNIQUE_OFFICIEL">📢 Communiqué Officiel</option>
-                  </select>
+                  <label>Titre de l'Encadré</label>
+                  <input type="text" [(ngModel)]="settings.formationsSurMesureTitre" name="formationsSurMesureTitre" class="font-bold" placeholder="Formations intra-entreprise & sur mesure" />
                 </div>
+
                 <div class="field">
-                  <label>Auteur / Direction Émettrice</label>
-                  <input type="text" [(ngModel)]="actualiteEnCours.auteur" name="auteur" placeholder="Ex : Direction Générale Vitalis" />
+                  <label>Description de l'Encadré</label>
+                  <input type="text" [(ngModel)]="settings.formationsSurMesureDescription" name="formationsSurMesureDescription" placeholder="Nous concevons des programmes spécialisés pour les ministères et entreprises publiques et privées." />
                 </div>
               </div>
+            </div>
 
-              <div class="field">
-                <label>Chapeau d'accroche / Résumé court *</label>
-                <textarea rows="2" [(ngModel)]="actualiteEnCours.chapeau" name="chapeau" required placeholder="Court résumé percutant affiché sur les cartes..."></textarea>
+            <!-- Coordonnées & Horaires -->
+            <div class="card border-t-[5px] border-t-[#F0791E]">
+              <div class="label">Coordonnées Officielles & Horaires du Secrétariat</div>
+              
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="field">
+                  <label>Adresse du Siège & Ateliers Techniques</label>
+                  <input type="text" [(ngModel)]="settings.contactAdresse" name="contactAdresse" placeholder="Kinshasa, République Démocratique du Congo" />
+                </div>
+
+                <div class="field">
+                  <label>Courriel Institutionnel de Contact</label>
+                  <input type="email" [(ngModel)]="settings.contactEmail" name="contactEmail" placeholder="contact@vitalis-center.cd" />
+                </div>
+
+                <div class="field">
+                  <label>Téléphone Officiel</label>
+                  <input type="text" [(ngModel)]="settings.contactTelephone" name="contactTelephone" placeholder="+243 ..." />
+                </div>
+
+                <div class="field">
+                  <label>Horaires d'Ouverture du Secrétariat</label>
+                  <input type="text" [(ngModel)]="settings.contactHoraires" name="contactHoraires" placeholder="Lundi – Vendredi : 08h00 – 16h30 | Samedi : 08h30 – 12h30" />
+                </div>
               </div>
+            </div>
 
-              <div class="field">
-                <label>Corps complet de l'article</label>
-                <textarea rows="6" [(ngModel)]="actualiteEnCours.contenu" name="contenu" placeholder="Texte intégral de l'article, détails, programme, déclarations officielles..."></textarea>
+            <!-- Bouton WhatsApp Flottant -->
+            <div class="card border-t-[5px] border-t-[#25D366]">
+              <div class="label">
+                <svg class="inline w-5 h-5 mr-1.5 -mt-0.5" fill="#25D366" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.07-2.148-.528-1.74-.716-2.859-2.483-2.946-2.599-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.42-.099.825z"/></svg>
+                Bouton WhatsApp Flottant — Configuration
               </div>
+              <p class="text-xs text-[#4B5157] mb-4">Ce bouton apparaît sur la page d'accueil publique et permet aux visiteurs de contacter un conseiller en direct.</p>
+              
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="field">
+                  <label>Numéro WhatsApp officiel</label>
+                  <input type="text" [(ngModel)]="settings.contactWhatsapp" name="contactWhatsapp" maxlength="50" placeholder="+243 843 010 337" />
+                  <small class="text-[10px] text-[#4B5157] mt-1 block">Formats acceptés : +243…, 0843…, 9 chiffres locaux.</small>
+                </div>
 
-              <!-- GESTION MULTIMÉDIA : IMAGE DE COUVERTURE & VIDÉO LOCALE/EXTERNE -->
-              <div class="space-y-4 pt-2 border-t border-[#EDEFF2]">
-                
-                <!-- 1. IMAGE DE COUVERTURE -->
-                <div class="p-3.5 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2.5">
-                  <div class="flex items-center justify-between">
-                    <label class="font-bold text-[#124F80] flex items-center gap-1.5 text-xs">
-                      <span>📷</span> Image de Couverture / Photo Officielle *
+                <div class="field">
+                  <label>Activer le Bouton WhatsApp</label>
+                  <div class="flex items-center gap-3 mt-1">
+                    <label class="relative inline-flex items-center cursor-pointer" [class.opacity-50]="savingWhatsapp" [class.pointer-events-none]="savingWhatsapp">
+                      <input type="checkbox" [(ngModel)]="settings.whatsappActif" name="whatsappActif" class="sr-only peer" [disabled]="savingWhatsapp" (change)="basculerWhatsapp($any($event.target).checked)" />
+                      <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#25D366]"></div>
                     </label>
-                    <span class="text-[11px] text-slate-500">JPG, PNG, WebP, GIF (Max 50 Mo)</span>
-                  </div>
-
-                  <!-- Zone d'aperçu si image existante -->
-                  <div *ngIf="actualiteEnCours.imageUrl" class="relative rounded-xs overflow-hidden border border-[#D7DBDE] bg-slate-900 group max-h-48 flex items-center justify-center">
-                    <img [src]="getMediaUrl(actualiteEnCours.imageUrl)" alt="Aperçu" class="w-full h-44 object-cover" />
-                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <button 
-                        type="button" 
-                        (click)="declencherInputImage()" 
-                        class="px-3 py-1.5 bg-[#1C75BC] text-white font-bold rounded-2xs text-[11px] hover:bg-[#124F80] transition-colors cursor-pointer shadow-xs"
-                      >
-                        🔄 Remplacer la photo
-                      </button>
-                      <button 
-                        type="button" 
-                        (click)="supprimerImageActuelle()" 
-                        class="px-3 py-1.5 bg-[#ED1C24] text-white font-bold rounded-2xs text-[11px] hover:bg-red-700 transition-colors cursor-pointer shadow-xs"
-                      >
-                        🗑️ Supprimer
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Zone de Téléversement Drag & Drop si pas d'image -->
-                  <div 
-                    *ngIf="!actualiteEnCours.imageUrl"
-                    (click)="declencherInputImage()"
-                    (dragover)="onDragOver($event)"
-                    (dragleave)="onDragLeave($event)"
-                    (drop)="onImageDropped($event)"
-                    class="border-2 border-dashed border-[#1C75BC]/40 hover:border-[#1C75BC] bg-white hover:bg-[#E7F1FA]/30 rounded-xs p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5"
-                  >
-                    <span class="text-2xl">🖼️</span>
-                    <span class="font-bold text-[#124F80] text-xs">
-                      Cliquez pour choisir une photo depuis votre appareil
+                    <span class="text-sm font-medium" [class.text-[#25D366]]="settings.whatsappActif === true" [class.text-[#4B5157]]="settings.whatsappActif !== true">
+                      {{ settings.whatsappActif === true ? 'Actif — Visible pour les visiteurs' : 'Désactivé — Masqué pour les visiteurs' }}
                     </span>
-                    <span class="text-[11px] text-slate-500">ou glissez-déposez votre image ici</span>
                   </div>
-
-                  <!-- Input file masqué -->
-                  <input 
-                    #fileInputImage 
-                    type="file" 
-                    accept="image/jpeg,image/png,image/webp,image/gif" 
-                    (change)="onImageSelected($event)" 
-                    class="hidden" 
-                  />
-
-                  <!-- Barre de progression d'upload image -->
-                  <div *ngIf="uploadingImage" class="flex items-center gap-2 text-xs font-bold text-[#1C75BC]">
-                    <span class="animate-spin text-base">⏳</span>
-                    <span>Téléversement de l'image en cours...</span>
-                  </div>
-
-                  <!-- Option URL externe alternative -->
-                  <details class="text-[11px] text-slate-500 pt-1">
-                    <summary class="cursor-pointer hover:text-[#1C75BC] font-semibold">Ou coller une URL d'image web directe</summary>
-                    <input type="url" [(ngModel)]="actualiteEnCours.imageUrl" name="imageUrl" placeholder="https://images.unsplash.com/..." class="mt-1.5 w-full bg-white p-2 border border-[#D7DBDE] rounded-2xs" />
-                  </details>
                 </div>
+              </div>
 
-                <!-- 2. VIDÉO DE REPORTAGE / ÉVÉNEMENT -->
-                <div class="p-3.5 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2.5">
-                  <div class="flex items-center justify-between flex-wrap gap-2">
-                    <label class="font-bold text-[#124F80] flex items-center gap-1.5 text-xs">
-                      <span>🎬</span> Vidéo Associée / Reportage (Optionnel)
-                    </label>
-                    
-                    <!-- Sélecteur de mode vidéo : Fichier Local vs Lien Externe -->
-                    <div class="inline-flex rounded-2xs border border-[#D7DBDE] bg-white p-0.5 text-[10px]">
-                      <button 
-                        type="button" 
-                        (click)="videoSourceType = 'upload'"
-                        [ngClass]="videoSourceType === 'upload' ? 'bg-[#1C75BC] text-white font-bold' : 'text-[#4B5157] font-medium hover:bg-slate-100'"
-                        class="px-2 py-0.5 rounded-2xs transition-colors cursor-pointer"
-                      >
-                        📁 Fichier Local (MP4/WebM)
-                      </button>
-                      <button 
-                        type="button" 
-                        (click)="videoSourceType = 'url'"
-                        [ngClass]="videoSourceType === 'url' ? 'bg-[#1C75BC] text-white font-bold' : 'text-[#4B5157] font-medium hover:bg-slate-100'"
-                        class="px-2 py-0.5 rounded-2xs transition-colors cursor-pointer"
-                      >
-                        🔗 Lien Web / YouTube
-                      </button>
-                    </div>
-                  </div>
+              <div class="field mt-4">
+                <label>Message pré-rempli à l'ouverture de la conversation</label>
+                <textarea rows="2" [(ngModel)]="settings.whatsappMessage" name="whatsappMessage" maxlength="500" placeholder="Bonjour Vitalis Center EUP, je souhaite obtenir des informations sur vos formations professionnelles certifiées."></textarea>
+              </div>
 
-                  <!-- Aperçu du Lecteur Vidéo si une vidéo est déjà renseignée -->
-                  <div *ngIf="actualiteEnCours.videoUrl" class="space-y-2">
-                    <div class="rounded-xs overflow-hidden border border-[#D7DBDE] bg-black shadow-xs">
-                      <div class="bg-[#124F80] text-white px-2.5 py-1 text-[10px] font-bold flex items-center justify-between">
-                        <span>▶️ Lecteur de Prévisualisation Officiel</span>
-                        <button type="button" (click)="supprimerVideoActuelle()" class="text-red-300 hover:text-white font-bold cursor-pointer">✕ Supprimer</button>
-                      </div>
-                      
-                      <!-- Si vidéo locale ou MP4 direct -->
-                      <video 
-                        *ngIf="isVideoLocal(actualiteEnCours.videoUrl)" 
-                        [src]="getMediaUrl(actualiteEnCours.videoUrl)" 
-                        controls 
-                        playsinline 
-                        class="w-full max-h-48 bg-black"
-                      ></video>
-
-                      <!-- Si lien externe (YouTube, etc.) -->
-                      <div *ngIf="!isVideoLocal(actualiteEnCours.videoUrl)" class="p-3 text-white text-xs flex items-center justify-between bg-slate-900">
-                        <span class="truncate">{{ actualiteEnCours.videoUrl }}</span>
-                        <a [href]="actualiteEnCours.videoUrl" target="_blank" class="px-2 py-1 bg-[#1C75BC] text-white rounded-2xs text-[10px] font-bold shrink-0">Tester ↗</a>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Mode 1 : Téléversement Vidéo Locale depuis l'appareil -->
-                  <div *ngIf="videoSourceType === 'upload' && !actualiteEnCours.videoUrl">
-                    <div 
-                      (click)="declencherInputVideo()"
-                      (dragover)="onDragOver($event)"
-                      (dragleave)="onDragLeave($event)"
-                      (drop)="onVideoDropped($event)"
-                      class="border-2 border-dashed border-[#F0791E]/40 hover:border-[#F0791E] bg-white hover:bg-[#FDECDD]/30 rounded-xs p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5"
+              <div class="mt-4 p-3 rounded-lg border" [class.bg-[#f0fdf4]]="!!whatsappPreviewUrl" [class.border-[#bbf7d0]]="!!whatsappPreviewUrl" [class.bg-[#fff7ed]]="!whatsappPreviewUrl" [class.border-[#fed7aa]]="!whatsappPreviewUrl">
+                <div class="text-xs font-semibold mb-1" [class.text-[#166534]]="!!whatsappPreviewUrl" [class.text-[#9a3412]]="!whatsappPreviewUrl">
+                  {{ whatsappPreviewUrl ? 'Aperçu du lien WhatsApp généré' : 'Numéro incomplet ou invalide — le bouton public restera masqué' }}
+                </div>
+                @if (whatsappPreviewUrl) {
+                  <code class="text-xs text-[#15803d] break-all">{{ whatsappPreviewUrl }}</code>
+                  <div class="mt-3">
+                    <a
+                      [href]="whatsappPreviewUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-2 text-xs font-semibold py-2 px-3 rounded-[2px] bg-[#25D366] text-white hover:bg-[#20ba59] no-underline"
                     >
-                      <span class="text-2xl">📹</span>
-                      <span class="font-bold text-[#F0791E] text-xs">
-                        Cliquez pour importer une vidéo depuis votre appareil
-                      </span>
-                      <span class="text-[11px] text-slate-500">MP4, WebM, MOV (jusqu'à 100 Mo)</span>
-                    </div>
+                      Tester le lien WhatsApp
+                    </a>
+                  </div>
+                }
+              </div>
+            </div>
 
-                    <!-- Input file vidéo masqué -->
-                    <input 
-                      #fileInputVideo 
-                      type="file" 
-                      accept="video/mp4,video/webm,video/quicktime" 
-                      (change)="onVideoSelected($event)" 
-                      class="hidden" 
-                    />
+            <!-- Pied de Page & Mentions Légales -->
+            <div class="card border-t-[5px] border-t-[#4B5157]">
+              <div class="label">Pied de Page (Footer) & Mentions Institutionnelles</div>
+              
+              <div class="space-y-4">
+                <div class="field">
+                  <label>Présentation de l'Établissement (Colonne 1 du Footer)</label>
+                  <textarea rows="2" [(ngModel)]="settings.footerDescription" name="footerDescription" placeholder="Vitalis Center EUP (Établissement d'Utilité Publique)..."></textarea>
+                </div>
 
-                    <!-- Barre de progression d'upload vidéo -->
-                    <div *ngIf="uploadingVideo" class="flex items-center gap-2 text-xs font-bold text-[#F0791E] mt-2">
-                      <span class="animate-spin text-base">⏳</span>
-                      <span>Téléversement du fichier vidéo en cours sur le serveur (cela peut prendre quelques secondes)...</span>
-                    </div>
+                <div class="field">
+                  <label>Texte de Tutelle & Partenariat (Colonne 3 du Footer)</label>
+                  <textarea rows="2" [(ngModel)]="settings.footerTutelleTexte" name="footerTutelleTexte" placeholder="Supervision institutionnelle et contrôle de conformité des attestations et certifications nationales."></textarea>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div class="field">
+                    <label>Mention de Copyright</label>
+                    <input type="text" [(ngModel)]="settings.footerCopyright" name="footerCopyright" placeholder="© 2026 Vitalis Center EUP. Tous droits réservés." />
                   </div>
 
-                  <!-- Mode 2 : Lien Vidéo Externe -->
-                  <div *ngIf="videoSourceType === 'url' && !actualiteEnCours.videoUrl" class="space-y-1">
-                    <input 
-                      type="url" 
-                      [(ngModel)]="actualiteEnCours.videoUrl" 
-                      name="videoUrl" 
-                      placeholder="Ex : https://www.youtube.com/watch?v=... ou https://vimeo.com/..." 
-                      class="w-full bg-white p-2 border border-[#D7DBDE] rounded-2xs text-xs font-medium" 
-                    />
-                    <p class="text-[10px] text-slate-500">Insérez l'adresse complète de la vidéo YouTube, Vimeo ou un lien MP4 direct.</p>
+                  <div class="field">
+                    <label>Barre Inférieure du Footer</label>
+                    <input type="text" [(ngModel)]="settings.footerBarreTexte" name="footerBarreTexte" placeholder="Vitalis Center (EUP — Établissement d'Utilité Publique)..." />
                   </div>
                 </div>
+              </div>
+            </div>
 
+            <!-- Bouton d'enregistrement -->
+            <div class="flex justify-end pt-2">
+              <button type="submit" [disabled]="savingSettings" class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white border-none font-bold py-3 px-8 shadow-xs hover:scale-102 transition-transform cursor-pointer">
+                {{ savingSettings ? 'Enregistrement en cours...' : '💾 Enregistrer ces Paramètres' }}
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+
+        <!-- 10. ONGLET ABONNÉS NEWSLETTER & ALERTES -->
+        <div *ngIf="activeTab === 'newsletter'" class="space-y-6 animate-fade-in-up">
+          <div class="card border-t-[5px] border-t-[#F0791E]">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#D7DBDE]">
+              <div>
+                <div class="text-[11px] uppercase font-bold tracking-[0.06em] text-[#F0791E]">
+                  Diffusion & Inscriptions aux Alertes
+                </div>
+                <h3 class="text-xl font-bold text-[#1B1D1F] mt-0.5">
+                  Abonnés à la Newsletter Institutionnelle
+                </h3>
+                <p class="text-xs text-[#4B5157] mt-1">
+                  Liste des adresses e-mails enregistrées via le pied de page pour recevoir les avis d'ouverture des sessions et concours.
+                </p>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="field">
-                  <label>Couleur du Badge</label>
-                  <input type="color" [(ngModel)]="actualiteEnCours.badgeCouleur" name="badgeCouleur" class="h-10 p-0.5 cursor-pointer w-full" />
-                </div>
-                <div class="field">
-                  <label>Ordre d'affichage</label>
-                  <input type="number" [(ngModel)]="actualiteEnCours.ordre" name="ordre" />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#F5F6F7]">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" [(ngModel)]="actualiteEnCours.aLaUne" name="aLaUne" id="actualiteALaUne" class="cursor-pointer w-4 h-4 text-[#ED1C24]" />
-                  <label for="actualiteALaUne" class="font-semibold cursor-pointer text-[#1B1D1F]">⭐ Mettre cet article à la une</label>
-                </div>
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" [(ngModel)]="actualiteEnCours.actif" name="actif" id="actualiteActif" class="cursor-pointer w-4 h-4" />
-                  <label for="actualiteActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Publier immédiatement</label>
-                </div>
-              </div>
-
-              <div class="flex justify-end gap-2 pt-4 border-t border-[#D7DBDE]">
-                <button type="button" (click)="modalActualiteVisible = false" class="btn btn-ghost text-xs py-2 px-4">
-                  Annuler
+              <div class="flex items-center gap-2">
+                <button type="button" (click)="chargerNewsletterAbonnes()" class="btn btn-secondary text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                  <span>🔄</span>
+                  <span>Actualiser la liste</span>
                 </button>
-                <button type="submit" class="btn btn-primary text-xs py-2 px-6 font-semibold shadow-xs">
-                  Enregistrer l'Actualité
-                </button>
               </div>
-            </form>
+            </div>
+
+            <div class="p-3.5 bg-[#FDECDD] border border-[#F0791E]/30 rounded-[2px] my-4 flex items-center justify-between">
+              <div class="text-xs font-bold text-[#F0791E]">
+                Total des abonnés inscrits : <span class="text-lg ml-1">{{ newsletterAbonnesList.length }}</span>
+              </div>
+            </div>
+
+            <div *ngIf="newsletterAbonnesList.length === 0" class="p-8 text-center bg-[#F5F6F7] border border-[#D7DBDE] rounded-[2px] text-xs text-[#4B5157]">
+              Aucun abonné enregistré pour le moment.
+            </div>
+
+            <div *ngIf="newsletterAbonnesList.length > 0" class="overflow-x-auto border border-[#D7DBDE] rounded-[2px]">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-[#F5F6F7] text-[11px] font-bold uppercase tracking-[0.05em] text-[#4B5157] border-b border-[#D7DBDE]">
+                  <tr>
+                    <th class="p-3.5">Date d'inscription</th>
+                    <th class="p-3.5">Adresse E-mail</th>
+                    <th class="p-3.5">Statut</th>
+                    <th class="p-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#D7DBDE] bg-white">
+                  <tr *ngFor="let ab of newsletterAbonnesList" class="hover:bg-[#F5F6F7]/60 transition">
+                    <td class="p-3.5 font-mono text-[#4B5157]">
+                      {{ ab.createdAt | date:'dd/MM/yyyy à HH:mm' }}
+                    </td>
+                    <td class="p-3.5 font-semibold text-[#1B1D1F]">
+                      {{ ab.email }}
+                    </td>
+                    <td class="p-3.5">
+                      <span class="tag valide">Actif</span>
+                    </td>
+                    <td class="p-3.5 text-right">
+                      <button (click)="supprimerNewsletterAbonne(ab.id)" class="btn btn-ghost text-[11px] py-1 px-2 text-[#ED1C24] border-[#ED1C24] hover:bg-[#FDE6E6] cursor-pointer" title="Supprimer">
+                        🗑️ Retirer
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <!-- 9. ONGLET DEMANDES D'ORIENTATION & DOLÉANCES -->
+        <!-- 11. ONGLET DEMANDES D'ORIENTATION & DOLÉANCES -->
         <div *ngIf="activeTab === 'messages'" class="space-y-6 animate-fade-in-up">
           <div class="card border-t-[5px] border-t-[#1C75BC]">
             
-            <!-- En-tête de section -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#D7DBDE]">
               <div>
                 <div class="text-[11px] uppercase font-bold tracking-[0.06em] text-[#1C75BC]">
@@ -1073,11 +1353,11 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                 {{ searchMessages ? 'Aucun message ne correspond à votre filtre.' : 'Aucune demande d\'orientation reçue pour le moment.' }}
               </p>
               <p class="mt-1">
-                {{ searchMessages ? 'Modifiez votre terme de recherche.' : 'Les nouvelles doléances et questions soumises sur la landing page apparaîtront instantanément ici.' }}
+                {{ searchMessages ? 'Modifiez votre terme de recherche.' : 'Les nouvelles doléances soumises sur la landing page apparaîtront instantanément ici.' }}
               </p>
             </div>
 
-            <!-- Tableau moderne & épuré -->
+            <!-- Tableau moderne -->
             <div *ngIf="filteredContactMessages.length > 0" class="overflow-x-auto border border-[#D7DBDE] rounded-[2px]">
               <table class="w-full text-left text-xs">
                 <thead class="bg-[#F5F6F7] text-[11px] font-bold uppercase tracking-[0.05em] text-[#4B5157] border-b border-[#D7DBDE]">
@@ -1152,8 +1432,490 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
         </div>
 
         <!-- ========================================================================================= -->
-        <!-- MODAL DÉTAILS : FICHE D'INSTRUCTION DE LA DEMANDE D'ORIENTATION (ADMIN ACCUEIL)           -->
+        <!-- MODALS D'ÉDITION & CRÉATION                                                               -->
         <!-- ========================================================================================= -->
+
+        <!-- MODAL FORMATEUR -->
+        <div *ngIf="modalFormateurVisible" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div class="bg-white rounded-[2px] shadow-2xl max-w-lg w-full p-6 border-2 border-[#1C75BC] animate-fade-in-up">
+            <div class="flex justify-between items-center border-b border-[#D7DBDE] pb-3 mb-4">
+              <div>
+                <div class="text-[11px] uppercase font-bold text-[#F0791E] tracking-wider">Pédagogie & Métiers</div>
+                <h3 class="font-bold text-base text-[#124F80]">
+                  {{ formateurEnCours.id ? 'Modifier le Formateur' : 'Ajouter un Formateur' }}
+                </h3>
+              </div>
+              <button (click)="modalFormateurVisible = false" class="text-base font-bold text-[#4B5157] hover:text-[#ED1C24] cursor-pointer">✕</button>
+            </div>
+
+            <form (ngSubmit)="sauvegarderFormateurModal()" class="space-y-3.5 text-xs">
+              <div class="field">
+                <label>Nom et Prénom *</label>
+                <input type="text" [(ngModel)]="formateurEnCours.nom" name="nom" required class="font-bold text-sm" placeholder="Ex : Dr. Marc KABAMBA" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="field">
+                  <label>Titre / Fonction *</label>
+                  <input type="text" [(ngModel)]="formateurEnCours.titre" name="titre" required placeholder="Ex : Chef de Département IA" />
+                </div>
+                <div class="field">
+                  <label>Expérience Professionnelle *</label>
+                  <input type="text" [(ngModel)]="formateurEnCours.experience" name="experience" required placeholder="Ex : 12 ans d'expérience" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Spécialité Principale *</label>
+                <input type="text" [(ngModel)]="formateurEnCours.specialite" name="specialite" required placeholder="Ex : Intelligence Artificielle & Génie Logiciel" />
+              </div>
+
+              <div class="field">
+                <label>Lien Profil LinkedIn</label>
+                <input type="url" [(ngModel)]="formateurEnCours.linkedin" name="linkedin" placeholder="https://linkedin.com/in/..." />
+              </div>
+
+              <!-- Upload Photo Formateur -->
+              <div class="p-3 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2">
+                <label class="font-bold text-[#124F80] block">📸 Photo Portrait du Formateur</label>
+                <div class="flex items-center gap-3">
+                  <img 
+                    [src]="getMediaUrl(formateurEnCours.photoUrl || formateurEnCours.photo) || 'https://placehold.co/80x80?text=Photo'" 
+                    alt="Aperçu"
+                    class="w-12 h-12 rounded-full object-cover border border-[#D7DBDE]"
+                  />
+                  <input type="file" accept="image/*" (change)="onFormateurPhotoSelected($event)" class="text-xs" />
+                </div>
+                <input type="url" [(ngModel)]="formateurEnCours.photoUrl" name="photoUrl" placeholder="Ou URL directe : https://images.unsplash.com/..." class="w-full bg-white p-1.5 border border-[#D7DBDE] rounded-2xs text-[11px]" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 pt-2">
+                <div class="field">
+                  <label>Ordre d'affichage</label>
+                  <input type="number" [(ngModel)]="formateurEnCours.ordre" name="ordre" />
+                </div>
+                <div class="flex items-center gap-2 pt-4">
+                  <input type="checkbox" [(ngModel)]="formateurEnCours.actif" name="actif" id="formateurActif" class="cursor-pointer w-4 h-4" />
+                  <label for="formateurActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Visible en vitrine</label>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-4 border-t border-[#D7DBDE]">
+                <button type="button" (click)="modalFormateurVisible = false" class="btn btn-ghost text-xs py-2 px-4">Annuler</button>
+                <button type="submit" class="btn btn-primary text-xs py-2 px-6 font-semibold shadow-xs">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL CAMPUS -->
+        <div *ngIf="modalCampusVisible" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div class="bg-white rounded-[2px] shadow-2xl max-w-lg w-full p-6 border-2 border-[#1C75BC] animate-fade-in-up">
+            <div class="flex justify-between items-center border-b border-[#D7DBDE] pb-3 mb-4">
+              <div>
+                <div class="text-[11px] uppercase font-bold text-[#F0791E] tracking-wider">Infrastructures & Ateliers</div>
+                <h3 class="font-bold text-base text-[#124F80]">
+                  {{ campusEnCours.id ? 'Modifier l\'Espace Campus' : 'Ajouter un Espace Campus' }}
+                </h3>
+              </div>
+              <button (click)="modalCampusVisible = false" class="text-base font-bold text-[#4B5157] hover:text-[#ED1C24] cursor-pointer">✕</button>
+            </div>
+
+            <form (ngSubmit)="sauvegarderCampusModal()" class="space-y-3.5 text-xs">
+              <div class="field">
+                <label>Nom / Titre de l'Espace *</label>
+                <input type="text" [(ngModel)]="campusEnCours.titre" name="titre" required class="font-bold text-sm" placeholder="Ex : Laboratoire Informatique & IA" />
+              </div>
+
+              <div class="field">
+                <label>Badge descriptif</label>
+                <input type="text" [(ngModel)]="campusEnCours.badge" name="badge" placeholder="Ex : 50 Postes Haute Performance" />
+              </div>
+
+              <div class="field">
+                <label>Description *</label>
+                <textarea rows="3" [(ngModel)]="campusEnCours.description" name="description" required placeholder="Détails des activités et travaux pratiques réalisés dans cet espace..."></textarea>
+              </div>
+
+              <div class="field">
+                <label>Équipements & Technologies Clés *</label>
+                <input type="text" [(ngModel)]="campusEnCours.equipements" name="equipements" required placeholder="Ex : Serveurs GPU, Fibre 1 Gbps, Casques VR, Écrans 4K" />
+              </div>
+
+              <!-- Upload Photo Campus -->
+              <div class="p-3 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2">
+                <label class="font-bold text-[#124F80] block">📸 Photo HD de l'Espace</label>
+                <input type="file" accept="image/*" (change)="onCampusPhotoSelected($event)" class="text-xs mb-1" />
+                <input type="url" [(ngModel)]="campusEnCours.photoUrl" name="photoUrl" placeholder="Ou URL directe : https://images.unsplash.com/..." class="w-full bg-white p-1.5 border border-[#D7DBDE] rounded-2xs text-[11px]" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 pt-2">
+                <div class="field">
+                  <label>Ordre d'affichage</label>
+                  <input type="number" [(ngModel)]="campusEnCours.ordre" name="ordre" />
+                </div>
+                <div class="flex items-center gap-2 pt-4">
+                  <input type="checkbox" [(ngModel)]="campusEnCours.actif" name="actif" id="campusActif" class="cursor-pointer w-4 h-4" />
+                  <label for="campusActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Visible en vitrine</label>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-4 border-t border-[#D7DBDE]">
+                <button type="button" (click)="modalCampusVisible = false" class="btn btn-ghost text-xs py-2 px-4">Annuler</button>
+                <button type="submit" class="btn btn-primary text-xs py-2 px-6 font-semibold shadow-xs">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL PARTENAIRE -->
+        <div *ngIf="modalPartenaireVisible" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div class="bg-white rounded-[2px] shadow-2xl max-w-lg w-full p-6 border-2 border-[#1C75BC] animate-fade-in-up">
+            <div class="flex justify-between items-center border-b border-[#D7DBDE] pb-3 mb-4">
+              <div>
+                <div class="text-[11px] uppercase font-bold text-[#F0791E] tracking-wider">Alliance Entreprise</div>
+                <h3 class="font-bold text-base text-[#124F80]">
+                  {{ partenaireEnCours.id ? 'Modifier le Partenaire' : 'Ajouter un Partenaire' }}
+                </h3>
+              </div>
+              <button (click)="modalPartenaireVisible = false" class="text-base font-bold text-[#4B5157] hover:text-[#ED1C24] cursor-pointer">✕</button>
+            </div>
+
+            <form (ngSubmit)="sauvegarderPartenaireModal()" class="space-y-3.5 text-xs">
+              <div class="field">
+                <label>Nom de l'Entreprise / Institution *</label>
+                <input type="text" [(ngModel)]="partenaireEnCours.nom" name="nom" required class="font-bold text-sm" placeholder="Ex : Vodacom RDC" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="field">
+                  <label>Secteur d'Activité</label>
+                  <input type="text" [(ngModel)]="partenaireEnCours.secteur" name="secteur" placeholder="Ex : Télécommunications" />
+                </div>
+                <div class="field">
+                  <label>Site Web Officiel</label>
+                  <input type="url" [(ngModel)]="partenaireEnCours.siteWeb" name="siteWeb" placeholder="https://..." />
+                </div>
+              </div>
+
+              <!-- Upload Logo Partenaire -->
+              <div class="p-3 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2">
+                <label class="font-bold text-[#124F80] block">🏷️ Logo Officiel (SVG, PNG fond transparent)</label>
+                <input type="file" accept="image/*" (change)="onPartenaireLogoSelected($event)" class="text-xs mb-1" />
+                <input type="url" [(ngModel)]="partenaireEnCours.logoUrl" name="logoUrl" placeholder="Ou URL directe : https://..." class="w-full bg-white p-1.5 border border-[#D7DBDE] rounded-2xs text-[11px]" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 pt-2">
+                <div class="field">
+                  <label>Ordre d'affichage</label>
+                  <input type="number" [(ngModel)]="partenaireEnCours.ordre" name="ordre" />
+                </div>
+                <div class="flex items-center gap-2 pt-4">
+                  <input type="checkbox" [(ngModel)]="partenaireEnCours.actif" name="actif" id="partenaireActif" class="cursor-pointer w-4 h-4" />
+                  <label for="partenaireActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Visible en vitrine</label>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-4 border-t border-[#D7DBDE]">
+                <button type="button" (click)="modalPartenaireVisible = false" class="btn btn-ghost text-xs py-2 px-4">Annuler</button>
+                <button type="submit" class="btn btn-primary text-xs py-2 px-6 font-semibold shadow-xs">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL TÉMOIGNAGE ENRICHI -->
+        <div *ngIf="modalTemoignageVisible" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div class="bg-white rounded-[2px] shadow-2xl max-w-lg w-full p-6 border-2 border-[#1C75BC] animate-fade-in-up">
+            <div class="flex justify-between items-center border-b border-[#D7DBDE] pb-3 mb-4">
+              <div>
+                <div class="text-[11px] uppercase font-bold text-[#F0791E] tracking-wider">Alumni & Réussites</div>
+                <h3 class="font-bold text-base text-[#124F80]">
+                  {{ temoignageEnCours.id ? 'Modifier le Témoignage' : 'Ajouter un Témoignage' }}
+                </h3>
+              </div>
+              <button (click)="modalTemoignageVisible = false" class="text-base font-bold text-[#4B5157] hover:text-[#ED1C24] cursor-pointer">✕</button>
+            </div>
+
+            <form (ngSubmit)="sauvegarderTemoignageEnrichiModal()" class="space-y-3.5 text-xs">
+              <div class="field">
+                <label>Nom et Prénom *</label>
+                <input type="text" [(ngModel)]="temoignageEnCours.nom" name="nom" required class="font-bold text-sm" placeholder="Ex : Sarah LUKUSA" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="field">
+                  <label>Poste / Rôle Actuel</label>
+                  <input type="text" [(ngModel)]="temoignageEnCours.role" name="role" placeholder="Ex : Développeuse Fullstack" />
+                </div>
+                <div class="field">
+                  <label>Entreprise Recruteuse</label>
+                  <input type="text" [(ngModel)]="temoignageEnCours.entreprise" name="entreprise" placeholder="Ex : Rawbank Tech Lab" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="field">
+                  <label>Promotion / Filière</label>
+                  <input type="text" [(ngModel)]="temoignageEnCours.promotion" name="promotion" placeholder="Ex : Promo 2024 · Dev Web" />
+                </div>
+                <div class="field">
+                  <label>Note d'Évaluation (1 à 5)</label>
+                  <select [(ngModel)]="temoignageEnCours.note" name="note" class="font-bold">
+                    <option [value]="5">⭐⭐⭐⭐⭐ (5/5 Exceptionnel)</option>
+                    <option [value]="4">⭐⭐⭐⭐ (4/5 Très bien)</option>
+                    <option [value]="3">⭐⭐⭐ (3/5 Bien)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Citation / Témoignage Authentique *</label>
+                <textarea rows="4" [(ngModel)]="temoignageEnCours.citation" name="citation" required placeholder="« Grâce à la pratique intensive sur les plateaux techniques de Vitalis Center, j'ai été recrutée dès la fin de ma formation... »"></textarea>
+              </div>
+
+              <!-- Photo Témoignage -->
+              <div class="p-3 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2">
+                <label class="font-bold text-[#124F80] block">📸 Photo Portrait du Diplômé</label>
+                <input type="file" accept="image/*" (change)="onTemoignagePhotoSelected($event)" class="text-xs mb-1" />
+                <input type="url" [(ngModel)]="temoignageEnCours.photoUrl" name="photoUrl" placeholder="Ou URL directe : https://images.unsplash.com/..." class="w-full bg-white p-1.5 border border-[#D7DBDE] rounded-2xs text-[11px]" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 pt-2">
+                <div class="field">
+                  <label>Ordre d'affichage</label>
+                  <input type="number" [(ngModel)]="temoignageEnCours.ordre" name="ordre" />
+                </div>
+                <div class="flex items-center gap-2 pt-4">
+                  <input type="checkbox" [(ngModel)]="temoignageEnCours.actif" name="actif" id="temoignageActif" class="cursor-pointer w-4 h-4" />
+                  <label for="temoignageActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Visible en vitrine</label>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-4 border-t border-[#D7DBDE]">
+                <button type="button" (click)="modalTemoignageVisible = false" class="btn btn-ghost text-xs py-2 px-4">Annuler</button>
+                <button type="submit" class="btn btn-primary text-xs py-2 px-6 font-semibold shadow-xs">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL D'ÉDITION/CRÉATION DE SECTION MODULAIRE / FAQ -->
+        <div *ngIf="modalSectionVisible" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div class="bg-white rounded-[2px] shadow-2xl max-w-lg w-full p-6 border-2 border-[#1C75BC] animate-fade-in-up">
+            <div class="flex justify-between items-center border-b border-[#D7DBDE] pb-3 mb-4">
+              <div>
+                <div class="text-[11px] uppercase font-bold text-[#F0791E] tracking-wider">{{ getNomSectionActive() }}</div>
+                <h3 class="font-bold text-base text-[#124F80]">
+                  {{ sectionEnCours.id ? 'Modifier l\'élément' : 'Ajouter un nouvel élément' }}
+                </h3>
+              </div>
+              <button (click)="modalSectionVisible = false" class="text-base font-bold text-[#4B5157] hover:text-[#ED1C24] cursor-pointer">✕</button>
+            </div>
+
+            <form (ngSubmit)="sauvegarderSectionModal()" class="space-y-4 text-xs">
+              <div class="field">
+                <label>Titre principal *</label>
+                <input type="text" [(ngModel)]="sectionEnCours.titre" name="titre" required class="font-bold" />
+              </div>
+
+              <div *ngIf="activeTab === 'faq'" class="field">
+                <label>Catégorie FAQ *</label>
+                <select [(ngModel)]="sectionEnCours.categorie" name="categorie" class="font-semibold">
+                  <option value="ADMISSIONS">📬 Inscriptions & Admissions</option>
+                  <option value="PEDAGOGIE">📚 Pédagogie & Titres Professionnels</option>
+                  <option value="CERTIFICATS">🛡️ Vérification & Certificats</option>
+                  <option value="ENTREPRISES">🏢 Entreprises & Stages</option>
+                  <option value="AUTRE">💡 Généralités</option>
+                </select>
+              </div>
+
+              <div *ngIf="activeTab !== 'faq'" class="field">
+                <label>Sous-titre / Tag descriptif</label>
+                <input type="text" [(ngModel)]="sectionEnCours.sousTitre" name="sousTitre" placeholder="Ex : Agrément National ou Étape 01" />
+              </div>
+
+              <div class="field">
+                <label>{{ activeTab === 'faq' ? 'Réponse détaillée *' : 'Description / Texte de détail' }}</label>
+                <textarea rows="4" [(ngModel)]="sectionEnCours.description" name="description" required></textarea>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3">
+                <div class="field">
+                  <label>Ordre</label>
+                  <input type="number" [(ngModel)]="sectionEnCours.ordre" name="ordre" />
+                </div>
+                <div class="field">
+                  <label>Icône / Badge</label>
+                  <input type="text" [(ngModel)]="sectionEnCours.icone" name="icone" placeholder="Ex : 🏢 ou 70 %" />
+                </div>
+                <div class="field">
+                  <label>Couleur</label>
+                  <input type="color" [(ngModel)]="sectionEnCours.couleur" name="couleur" class="h-10 p-0.5 cursor-pointer" />
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 pt-2 border-t border-[#F5F6F7]">
+                <input type="checkbox" [(ngModel)]="sectionEnCours.actif" name="actif" id="sectionActif" class="cursor-pointer w-4 h-4" />
+                <label for="sectionActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Rendre cet élément visible immédiatement</label>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-4 border-t border-[#D7DBDE]">
+                <button type="button" (click)="modalSectionVisible = false" class="btn btn-ghost text-xs py-2 px-4">
+                  Annuler
+                </button>
+                <button type="submit" class="btn btn-primary text-xs py-2 px-6 font-semibold shadow-xs">
+                  Enregistrer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL ACTUALITÉ DU CENTRE -->
+        <div *ngIf="modalActualiteVisible" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div class="bg-white rounded-[2px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border-2 border-[#1C75BC] animate-fade-in-up">
+            <div class="flex justify-between items-center border-b border-[#D7DBDE] pb-3 mb-4">
+              <div>
+                <div class="text-[11px] uppercase font-bold text-[#F0791E] tracking-wider">Communication & Presse</div>
+                <h3 class="font-bold text-base text-[#124F80]">
+                  {{ actualiteEnCours.id ? 'Modifier l\'Actualité' : 'Publier une Nouvelle Actualité' }}
+                </h3>
+              </div>
+              <button (click)="modalActualiteVisible = false" class="text-base font-bold text-[#4B5157] hover:text-[#ED1C24] cursor-pointer">✕</button>
+            </div>
+
+            <form (ngSubmit)="sauvegarderActualiteModal()" class="space-y-4 text-xs">
+              <div class="field">
+                <label>Titre de l'Actualité / Annonce *</label>
+                <input type="text" [(ngModel)]="actualiteEnCours.titre" name="titre" required class="font-bold text-sm" placeholder="Ex : Cérémonie officielle de remise des diplômes..." />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="field">
+                  <label>Rubrique / Catégorie *</label>
+                  <select [(ngModel)]="actualiteEnCours.categorie" name="categorie" required class="font-semibold">
+                    <option value="INNOVATION">💡 Innovation & Tech</option>
+                    <option value="ADMISSIONS">📬 Admissions & Inscriptions</option>
+                    <option value="PARTENARIAT">🤝 Partenariats & Insertion</option>
+                    <option value="PEDAGOGIE">📚 Pédagogie & APC</option>
+                    <option value="VIE_DU_CENTRE">🏛️ Vie du Centre</option>
+                    <option value="COMMUNIQUE_OFFICIEL">📢 Communiqué Officiel</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Auteur / Direction Émettrice</label>
+                  <input type="text" [(ngModel)]="actualiteEnCours.auteur" name="auteur" placeholder="Ex : Direction Générale Vitalis" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Chapeau d'accroche / Résumé court *</label>
+                <textarea rows="2" [(ngModel)]="actualiteEnCours.chapeau" name="chapeau" required placeholder="Court résumé percutant affiché sur les cartes..."></textarea>
+              </div>
+
+              <div class="field">
+                <label>Corps complet de l'article</label>
+                <textarea rows="6" [(ngModel)]="actualiteEnCours.contenu" name="contenu" placeholder="Texte intégral de l'article, détails, programme, déclarations officielles..."></textarea>
+              </div>
+
+              <!-- GESTION MULTIMÉDIA -->
+              <div class="space-y-4 pt-2 border-t border-[#EDEFF2]">
+                <!-- IMAGE DE COUVERTURE -->
+                <div class="p-3.5 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <label class="font-bold text-[#124F80] flex items-center gap-1.5 text-xs">
+                      <span>📷</span> Image de Couverture / Photo Officielle *
+                    </label>
+                    <span class="text-[11px] text-slate-500">JPG, PNG, WebP, GIF</span>
+                  </div>
+
+                  <div *ngIf="actualiteEnCours.imageUrl" class="relative rounded-xs overflow-hidden border border-[#D7DBDE] bg-slate-900 group max-h-48 flex items-center justify-center">
+                    <img [src]="getMediaUrl(actualiteEnCours.imageUrl)" alt="Aperçu" class="w-full h-44 object-cover" />
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <button 
+                        type="button" 
+                        (click)="declencherInputImage()" 
+                        class="px-3 py-1.5 bg-[#1C75BC] text-white font-bold rounded-2xs text-[11px] hover:bg-[#124F80] transition-colors cursor-pointer shadow-xs"
+                      >
+                        🔄 Remplacer la photo
+                      </button>
+                      <button 
+                        type="button" 
+                        (click)="supprimerImageActuelle()" 
+                        class="px-3 py-1.5 bg-[#ED1C24] text-white font-bold rounded-2xs text-[11px] hover:bg-red-700 transition-colors cursor-pointer shadow-xs"
+                      >
+                        🗑️ Supprimer
+                      </button>
+                    </div>
+                  </div>
+
+                  <div 
+                    *ngIf="!actualiteEnCours.imageUrl"
+                    (click)="declencherInputImage()"
+                    class="border-2 border-dashed border-[#1C75BC]/40 hover:border-[#1C75BC] bg-white hover:bg-[#E7F1FA]/30 rounded-xs p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5"
+                  >
+                    <span class="text-2xl">🖼️</span>
+                    <span class="font-bold text-[#124F80] text-xs">
+                      Cliquez pour choisir une photo depuis votre appareil
+                    </span>
+                  </div>
+
+                  <input 
+                    type="file" 
+                    accept="image/jpeg,image/png,image/webp,image/gif" 
+                    (change)="onImageSelected($event)" 
+                    class="hidden" 
+                    id="actualiteImgInput"
+                  />
+
+                  <div *ngIf="uploadingImage" class="flex items-center gap-2 text-xs font-bold text-[#1C75BC]">
+                    <span class="animate-spin text-base">⏳</span>
+                    <span>Téléversement de l'image en cours...</span>
+                  </div>
+
+                  <details class="text-[11px] text-slate-500 pt-1">
+                    <summary class="cursor-pointer hover:text-[#1C75BC] font-semibold">Ou coller une URL d'image web directe</summary>
+                    <input type="url" [(ngModel)]="actualiteEnCours.imageUrl" name="imageUrl" placeholder="https://images.unsplash.com/..." class="mt-1.5 w-full bg-white p-2 border border-[#D7DBDE] rounded-2xs" />
+                  </details>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="field">
+                  <label>Couleur du Badge</label>
+                  <input type="color" [(ngModel)]="actualiteEnCours.badgeCouleur" name="badgeCouleur" class="h-10 p-0.5 cursor-pointer w-full" />
+                </div>
+                <div class="field">
+                  <label>Ordre d'affichage</label>
+                  <input type="number" [(ngModel)]="actualiteEnCours.ordre" name="ordre" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#F5F6F7]">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" [(ngModel)]="actualiteEnCours.aLaUne" name="aLaUne" id="actualiteALaUne" class="cursor-pointer w-4 h-4 text-[#ED1C24]" />
+                  <label for="actualiteALaUne" class="font-semibold cursor-pointer text-[#1B1D1F]">⭐ Mettre cet article à la une</label>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" [(ngModel)]="actualiteEnCours.actif" name="actif" id="actualiteActif" class="cursor-pointer w-4 h-4" />
+                  <label for="actualiteActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Publier immédiatement</label>
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-4 border-t border-[#D7DBDE]">
+                <button type="button" (click)="modalActualiteVisible = false" class="btn btn-ghost text-xs py-2 px-4">
+                  Annuler
+                </button>
+                <button type="submit" class="btn btn-primary text-xs py-2 px-6 font-semibold shadow-xs">
+                  Enregistrer l'Actualité
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL DÉTAILS DEMANDE D'ORIENTATION -->
         <div *ngIf="selectedMessage" class="fixed inset-0 z-50 flex items-center justify-center bg-[#1B1D1F]/60 p-4 backdrop-blur-xs animate-fade-in">
           <div class="w-full max-w-2xl rounded-[2px] bg-white p-6 shadow-2xl border border-[#D7DBDE] border-t-[5px] border-t-[#1C75BC]">
             
@@ -1239,22 +2001,32 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   activeTab: string = 'settings';
 
   tabs = [
-    { id: 'settings', label: 'Paramètres Hero & Stats' },
-    { id: 'formations', label: 'Catalogue Formations (/#formations)' },
-    { id: 'messages', label: 'Demandes d\'Orientation & Doléances' },
+    { id: 'settings', label: 'Paramètres Hero & Réseaux' },
+    { id: 'video', label: '🎬 Vidéo Institutionnelle' },
+    { id: 'formateurs', label: 'Formateurs & Experts' },
+    { id: 'campus', label: 'Campus & Ateliers' },
+    { id: 'partenaires', label: 'Partenaires & Entreprises' },
+    { id: 'temoignages', label: 'Témoignages & Réussites' },
     { id: 'actualites', label: 'Actualités & Vie du Centre' },
+    { id: 'formations', label: 'Catalogue Formations (Vitrine)' },
     { id: 'avantage', label: 'Pourquoi Vitalis (Avantages)' },
     { id: 'pedagogie', label: 'Pédagogie APC' },
     { id: 'admission', label: 'Processus d\'Admission' },
     { id: 'secteur', label: 'Écosystème Professionnel' },
-    { id: 'verif_contact', label: 'Vérification, Contact & Footer' },
     { id: 'faq', label: 'Questions Fréquentes (FAQ)' },
+    { id: 'verif_contact', label: 'Vérification, Contact & Footer' },
+    { id: 'newsletter', label: 'Abonnés Newsletter' },
+    { id: 'messages', label: 'Demandes d\'Orientation' },
   ];
 
   settings: Partial<LandingPageSettings> = {};
   allSections: LandingPageSection[] = [];
   actualitesList: LandingPageActualite[] = [];
   temoignagesList: LandingPageTemoignage[] = [];
+  formateursList: LandingPageFormateur[] = [];
+  campusList: LandingPageCampus[] = [];
+  partenairesList: LandingPagePartenaire[] = [];
+  newsletterAbonnesList: LandingNewsletterAbonne[] = [];
   contactMessages: ContactMessageItem[] = [];
   selectedMessage: ContactMessageItem | null = null;
   searchMessages: string = '';
@@ -1268,6 +2040,21 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
 
   modalTemoignageVisible: boolean = false;
   temoignageEnCours: Partial<LandingPageTemoignage> = {};
+
+  modalFormateurVisible: boolean = false;
+  formateurEnCours: Partial<LandingPageFormateur> = {};
+
+  modalCampusVisible: boolean = false;
+  campusEnCours: Partial<LandingPageCampus> = {};
+
+  modalPartenaireVisible: boolean = false;
+  partenaireEnCours: Partial<LandingPagePartenaire> = {};
+
+  // Upload States
+  uploadingHeroImage: boolean = false;
+  uploadingVideoPoster: boolean = false;
+  uploadingVideoPresentation: boolean = false;
+  uploadingImage: boolean = false;
 
   private notifSub: Subscription | null = null;
 
@@ -1296,6 +2083,10 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     this.notifSub?.unsubscribe();
   }
 
+  isSectionTab(tabId: string): boolean {
+    return ['avantage', 'pedagogie', 'admission', 'secteur', 'faq'].includes(tabId);
+  }
+
   chargerDonnees(): void {
     this.loading = true;
 
@@ -1304,10 +2095,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
         this.settings = s;
         this.cdr.markForCheck();
       },
-      error: () => {
-        this.toast.error('Erreur lors du chargement des paramètres.');
-        this.cdr.markForCheck();
-      },
+      error: () => this.toast.error('Erreur lors du chargement des paramètres.'),
     });
 
     this.landingService.getSections().subscribe({
@@ -1315,17 +2103,24 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
         this.allSections = sec;
         this.cdr.markForCheck();
       },
-      error: () => {
-        this.toast.error('Erreur lors du chargement des sections.');
-        this.cdr.markForCheck();
-      },
+      error: () => this.toast.error('Erreur lors du chargement des sections.'),
     });
 
+    this.rechargerFormateurs();
+    this.rechargerCampus();
+    this.rechargerPartenaires();
+    this.rechargerTemoignages();
     this.rechargerActualites();
+    this.chargerNewsletterAbonnes();
   }
 
   get sectionsFiltrees(): LandingPageSection[] {
     return this.allSections.filter((s) => s.typeSection === this.activeTab);
+  }
+
+  getNomSectionActive(): string {
+    const t = this.tabs.find((tab) => tab.id === this.activeTab);
+    return t ? t.label : '';
   }
 
   get whatsappPreviewUrl(): string | null {
@@ -1359,11 +2154,6 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     });
   }
 
-  getNomSectionActive(): string {
-    const t = this.tabs.find((tab) => tab.id === this.activeTab);
-    return t ? t.label : '';
-  }
-
   sauvegarderSettings(): void {
     this.savingSettings = true;
     const payload: Partial<LandingPageSettings> = {
@@ -1393,6 +2183,26 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       contactWhatsapp: this.settings.contactWhatsapp || '',
       whatsappMessage: this.settings.whatsappMessage || '',
       whatsappActif: this.settings.whatsappActif === true,
+      videoActif: this.settings.videoActif !== false,
+      videoSousTitre: this.settings.videoSousTitre || '',
+      videoTitre: this.settings.videoTitre || '',
+      videoDescription: this.settings.videoDescription || '',
+      videoBoutonPrincipal: this.settings.videoBoutonPrincipal || '',
+      videoBoutonSecondaire: this.settings.videoBoutonSecondaire || '',
+      videoBoutonSecondaireUrl: this.settings.videoBoutonSecondaireUrl || '',
+      videoPresentationUrl: this.settings.videoPresentationUrl || '',
+      videoPosterUrl: this.settings.videoPosterUrl || '',
+      videoBadgeHaut: this.settings.videoBadgeHaut || '',
+      videoBadgeBas: this.settings.videoBadgeBas || '',
+      videoTitreOverlay: this.settings.videoTitreOverlay || '',
+      videoSousTitreOverlay: this.settings.videoSousTitreOverlay || '',
+      videoLegende: this.settings.videoLegende || '',
+      videoDuree: this.settings.videoDuree || '',
+      socialLinkedin: this.settings.socialLinkedin || '',
+      socialFacebook: this.settings.socialFacebook || '',
+      socialYoutube: this.settings.socialYoutube || '',
+      mapEmbedUrl: this.settings.mapEmbedUrl || '',
+      liveActivityTexte: this.settings.liveActivityTexte || '',
       footerDescription: this.settings.footerDescription || '',
       footerTutelleTexte: this.settings.footerTutelleTexte || '',
       footerCopyright: this.settings.footerCopyright || '',
@@ -1404,16 +2214,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
         this.settings = res;
         this.savingSettings = false;
         notifyLandingSettingsChanged();
-        if (this.activeTab === 'verif_contact') {
-          const whatsappOn = res.whatsappActif === true;
-          this.toast.success(
-            whatsappOn
-              ? 'Paramètres enregistrés. Le bouton WhatsApp est maintenant visible pour les visiteurs.'
-              : 'Paramètres enregistrés. Le bouton WhatsApp est maintenant masqué pour les visiteurs.',
-          );
-        } else {
-          this.toast.success('Paramètres enregistrés avec succès !');
-        }
+        this.toast.success('Paramètres enregistrés avec succès !');
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -1428,13 +2229,443 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     });
   }
 
-  // --- GESTION DES SECTIONS ---
+  // --- GESTION DES FORMATEURS ---
+  rechargerFormateurs(): void {
+    this.landingService.getFormateurs().subscribe({
+      next: (list) => {
+        this.formateursList = list;
+        this.cdr.markForCheck();
+      },
+      error: () => this.toast.error('Erreur lors du chargement des formateurs.'),
+    });
+  }
+
+  ouvrirModalFormateur(): void {
+    this.formateurEnCours = {
+      nom: '',
+      titre: '',
+      specialite: '',
+      experience: "5+ ans d'expérience",
+      photoUrl: '',
+      linkedin: '',
+      ordre: this.formateursList.length + 1,
+      actif: true,
+    };
+    this.modalFormateurVisible = true;
+  }
+
+  editerFormateur(f: LandingPageFormateur): void {
+    this.formateurEnCours = { ...f };
+    this.modalFormateurVisible = true;
+  }
+
+  toggleFormateurActif(f: LandingPageFormateur): void {
+    if (!f.id) return;
+    const nouveauStatut = f.actif === false;
+    this.landingService.updateFormateur(f.id, { actif: nouveauStatut }).subscribe({
+      next: () => {
+        f.actif = nouveauStatut;
+        this.toast.success(nouveauStatut ? 'Formateur visible en vitrine.' : 'Formateur masqué.');
+        this.cdr.markForCheck();
+      },
+      error: () => this.toast.error('Erreur lors du changement de statut.'),
+    });
+  }
+
+  onFormateurPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+        next: (res) => {
+          this.formateurEnCours.photoUrl = res.url;
+          this.toast.success('Photo du formateur téléversée avec succès.');
+          this.cdr.markForCheck();
+        },
+        error: () => this.toast.error('Erreur lors du téléversement de la photo.'),
+      });
+    }
+  }
+
+  sauvegarderFormateurModal(): void {
+    if (!this.formateurEnCours.nom || !this.formateurEnCours.titre || !this.formateurEnCours.specialite) {
+      this.toast.error('Veuillez remplir les champs obligatoires.');
+      return;
+    }
+
+    const payload: Partial<LandingPageFormateur> = {
+      nom: this.formateurEnCours.nom,
+      titre: this.formateurEnCours.titre,
+      specialite: this.formateurEnCours.specialite,
+      experience: this.formateurEnCours.experience || "5+ ans d'expérience",
+      photoUrl: this.formateurEnCours.photoUrl || '',
+      linkedin: this.formateurEnCours.linkedin || '',
+      ordre: Number(this.formateurEnCours.ordre) || 0,
+      actif: this.formateurEnCours.actif !== undefined ? Boolean(this.formateurEnCours.actif) : true,
+    };
+
+    if (this.formateurEnCours.id) {
+      this.landingService.updateFormateur(this.formateurEnCours.id, payload).subscribe({
+        next: () => {
+          this.toast.success('Formateur mis à jour avec succès.');
+          this.modalFormateurVisible = false;
+          this.rechargerFormateurs();
+        },
+        error: () => this.toast.error('Erreur lors de la mise à jour du formateur.'),
+      });
+    } else {
+      this.landingService.createFormateur(payload as any).subscribe({
+        next: () => {
+          this.toast.success('Formateur ajouté avec succès.');
+          this.modalFormateurVisible = false;
+          this.rechargerFormateurs();
+        },
+        error: () => this.toast.error('Erreur lors de la création du formateur.'),
+      });
+    }
+  }
+
+  supprimerFormateur(id: string): void {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce formateur ?')) return;
+    this.landingService.deleteFormateur(id).subscribe({
+      next: () => {
+        this.toast.success('Formateur supprimé.');
+        this.rechargerFormateurs();
+      },
+      error: () => this.toast.error('Erreur lors de la suppression.'),
+    });
+  }
+
+  // --- GESTION DU CAMPUS & ATELIERS ---
+  rechargerCampus(): void {
+    this.landingService.getCampus().subscribe({
+      next: (list) => {
+        this.campusList = list;
+        this.cdr.markForCheck();
+      },
+      error: () => this.toast.error('Erreur lors du chargement des espaces campus.'),
+    });
+  }
+
+  ouvrirModalCampus(): void {
+    this.campusEnCours = {
+      titre: '',
+      description: '',
+      badge: '',
+      equipements: '',
+      photoUrl: '',
+      ordre: this.campusList.length + 1,
+      actif: true,
+    };
+    this.modalCampusVisible = true;
+  }
+
+  editerCampus(c: LandingPageCampus): void {
+    this.campusEnCours = { ...c };
+    this.modalCampusVisible = true;
+  }
+
+  toggleCampusActif(c: LandingPageCampus): void {
+    if (!c.id) return;
+    const nouveauStatut = c.actif === false;
+    this.landingService.updateCampus(c.id, { actif: nouveauStatut }).subscribe({
+      next: () => {
+        c.actif = nouveauStatut;
+        this.toast.success(nouveauStatut ? 'Espace visible.' : 'Espace masqué.');
+        this.cdr.markForCheck();
+      },
+      error: () => this.toast.error('Erreur lors du changement de visibilité.'),
+    });
+  }
+
+  onCampusPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+        next: (res) => {
+          this.campusEnCours.photoUrl = res.url;
+          this.toast.success('Photo du campus téléversée.');
+          this.cdr.markForCheck();
+        },
+        error: () => this.toast.error('Erreur lors du téléversement de la photo.'),
+      });
+    }
+  }
+
+  sauvegarderCampusModal(): void {
+    if (!this.campusEnCours.titre || !this.campusEnCours.description || !this.campusEnCours.equipements) {
+      this.toast.error('Veuillez remplir les champs obligatoires.');
+      return;
+    }
+
+    const payload: Partial<LandingPageCampus> = {
+      titre: this.campusEnCours.titre,
+      description: this.campusEnCours.description,
+      badge: this.campusEnCours.badge || '',
+      equipements: this.campusEnCours.equipements,
+      photoUrl: this.campusEnCours.photoUrl || '',
+      ordre: Number(this.campusEnCours.ordre) || 0,
+      actif: this.campusEnCours.actif !== undefined ? Boolean(this.campusEnCours.actif) : true,
+    };
+
+    if (this.campusEnCours.id) {
+      this.landingService.updateCampus(this.campusEnCours.id, payload).subscribe({
+        next: () => {
+          this.toast.success('Espace campus mis à jour avec succès.');
+          this.modalCampusVisible = false;
+          this.rechargerCampus();
+        },
+        error: () => this.toast.error('Erreur lors de la mise à jour.'),
+      });
+    } else {
+      this.landingService.createCampus(payload as any).subscribe({
+        next: () => {
+          this.toast.success('Espace campus créé avec succès.');
+          this.modalCampusVisible = false;
+          this.rechargerCampus();
+        },
+        error: () => this.toast.error('Erreur lors de la création.'),
+      });
+    }
+  }
+
+  supprimerCampus(id: string): void {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet espace campus ?')) return;
+    this.landingService.deleteCampus(id).subscribe({
+      next: () => {
+        this.toast.success('Espace supprimé.');
+        this.rechargerCampus();
+      },
+      error: () => this.toast.error('Erreur lors de la suppression.'),
+    });
+  }
+
+  // --- GESTION DES PARTENAIRES ---
+  rechargerPartenaires(): void {
+    this.landingService.getPartenaires().subscribe({
+      next: (list) => {
+        this.partenairesList = list;
+        this.cdr.markForCheck();
+      },
+      error: () => this.toast.error('Erreur lors du chargement des partenaires.'),
+    });
+  }
+
+  ouvrirModalPartenaire(): void {
+    this.partenaireEnCours = {
+      nom: '',
+      secteur: '',
+      siteWeb: '',
+      logoUrl: '',
+      ordre: this.partenairesList.length + 1,
+      actif: true,
+    };
+    this.modalPartenaireVisible = true;
+  }
+
+  editerPartenaire(p: LandingPagePartenaire): void {
+    this.partenaireEnCours = { ...p };
+    this.modalPartenaireVisible = true;
+  }
+
+  onPartenaireLogoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+        next: (res) => {
+          this.partenaireEnCours.logoUrl = res.url;
+          this.toast.success('Logo partenaire téléversé.');
+          this.cdr.markForCheck();
+        },
+        error: () => this.toast.error('Erreur lors du téléversement du logo.'),
+      });
+    }
+  }
+
+  sauvegarderPartenaireModal(): void {
+    if (!this.partenaireEnCours.nom) {
+      this.toast.error('Veuillez renseigner le nom du partenaire.');
+      return;
+    }
+
+    const payload: Partial<LandingPagePartenaire> = {
+      nom: this.partenaireEnCours.nom,
+      secteur: this.partenaireEnCours.secteur || '',
+      siteWeb: this.partenaireEnCours.siteWeb || '',
+      logoUrl: this.partenaireEnCours.logoUrl || '',
+      ordre: Number(this.partenaireEnCours.ordre) || 0,
+      actif: this.partenaireEnCours.actif !== undefined ? Boolean(this.partenaireEnCours.actif) : true,
+    };
+
+    if (this.partenaireEnCours.id) {
+      this.landingService.updatePartenaire(this.partenaireEnCours.id, payload).subscribe({
+        next: () => {
+          this.toast.success('Partenaire mis à jour avec succès.');
+          this.modalPartenaireVisible = false;
+          this.rechargerPartenaires();
+        },
+        error: () => this.toast.error('Erreur lors de la mise à jour.'),
+      });
+    } else {
+      this.landingService.createPartenaire(payload as any).subscribe({
+        next: () => {
+          this.toast.success('Partenaire ajouté avec succès.');
+          this.modalPartenaireVisible = false;
+          this.rechargerPartenaires();
+        },
+        error: () => this.toast.error('Erreur lors de la création.'),
+      });
+    }
+  }
+
+  supprimerPartenaire(id: string): void {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce partenaire ?')) return;
+    this.landingService.deletePartenaire(id).subscribe({
+      next: () => {
+        this.toast.success('Partenaire supprimé.');
+        this.rechargerPartenaires();
+      },
+      error: () => this.toast.error('Erreur lors de la suppression.'),
+    });
+  }
+
+  // --- GESTION DES TÉMOIGNAGES ENRICHIS ---
+  rechargerTemoignages(): void {
+    this.landingService.getTemoignages().subscribe({
+      next: (t) => {
+        this.temoignagesList = t;
+        this.cdr.markForCheck();
+      },
+      error: () => this.toast.error('Erreur lors du chargement des témoignages.'),
+    });
+  }
+
+  ouvrirModalTemoignageEnrichi(): void {
+    this.temoignageEnCours = {
+      nom: '',
+      role: '',
+      entreprise: '',
+      promotion: 'Promotion 2024',
+      note: 5,
+      citation: '',
+      photoUrl: '',
+      ordre: this.temoignagesList.length + 1,
+      actif: true,
+    };
+    this.modalTemoignageVisible = true;
+  }
+
+  editerTemoignageEnrichi(tem: LandingPageTemoignage): void {
+    this.temoignageEnCours = { ...tem };
+    this.modalTemoignageVisible = true;
+  }
+
+  toggleTemoignageActif(t: LandingPageTemoignage): void {
+    if (!t.id) return;
+    const nouveauStatut = t.actif === false;
+    this.landingService.updateTemoignage(t.id, { actif: nouveauStatut }).subscribe({
+      next: () => {
+        t.actif = nouveauStatut;
+        this.toast.success(nouveauStatut ? 'Témoignage visible.' : 'Témoignage masqué.');
+        this.cdr.markForCheck();
+      },
+      error: () => this.toast.error('Erreur lors du changement de statut.'),
+    });
+  }
+
+  onTemoignagePhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+        next: (res) => {
+          this.temoignageEnCours.photoUrl = res.url;
+          this.toast.success('Photo du diplômé téléversée.');
+          this.cdr.markForCheck();
+        },
+        error: () => this.toast.error('Erreur lors du téléversement de la photo.'),
+      });
+    }
+  }
+
+  sauvegarderTemoignageEnrichiModal(): void {
+    if (!this.temoignageEnCours.nom || !this.temoignageEnCours.citation) {
+      this.toast.error('Veuillez renseigner le nom et la citation.');
+      return;
+    }
+
+    const payload: Partial<LandingPageTemoignage> = {
+      nom: this.temoignageEnCours.nom,
+      role: this.temoignageEnCours.role || '',
+      entreprise: this.temoignageEnCours.entreprise || '',
+      promotion: this.temoignageEnCours.promotion || '',
+      note: Number(this.temoignageEnCours.note) || 5,
+      citation: this.temoignageEnCours.citation,
+      photoUrl: this.temoignageEnCours.photoUrl || '',
+      ordre: Number(this.temoignageEnCours.ordre) || 0,
+      actif: this.temoignageEnCours.actif !== undefined ? Boolean(this.temoignageEnCours.actif) : true,
+    };
+
+    if (this.temoignageEnCours.id) {
+      this.landingService.updateTemoignage(this.temoignageEnCours.id, payload).subscribe({
+        next: () => {
+          this.toast.success('Témoignage mis à jour avec succès.');
+          this.modalTemoignageVisible = false;
+          this.rechargerTemoignages();
+        },
+        error: () => this.toast.error('Erreur lors de la mise à jour.'),
+      });
+    } else {
+      this.landingService.createTemoignage(payload as any).subscribe({
+        next: () => {
+          this.toast.success('Témoignage ajouté avec succès.');
+          this.modalTemoignageVisible = false;
+          this.rechargerTemoignages();
+        },
+        error: () => this.toast.error('Erreur lors de l\'ajout.'),
+      });
+    }
+  }
+
+  supprimerTemoignage(id: string): void {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce témoignage ?')) return;
+    this.landingService.deleteTemoignage(id).subscribe({
+      next: () => {
+        this.toast.success('Témoignage supprimé.');
+        this.rechargerTemoignages();
+      },
+      error: () => this.toast.error('Erreur lors de la suppression.'),
+    });
+  }
+
+  // --- GESTION DES ABONNÉS NEWSLETTER ---
+  chargerNewsletterAbonnes(): void {
+    this.landingService.getNewsletterAbonnes().subscribe({
+      next: (list) => {
+        this.newsletterAbonnesList = list;
+        this.cdr.markForCheck();
+      },
+      error: () => this.toast.error('Erreur lors du chargement des abonnés newsletter.'),
+    });
+  }
+
+  supprimerNewsletterAbonne(id: string): void {
+    if (!confirm('Êtes-vous sûr de vouloir retirer cet abonné de la liste ?')) return;
+    this.landingService.deleteNewsletterAbonne(id).subscribe({
+      next: () => {
+        this.toast.success('Abonné retiré de la liste.');
+        this.chargerNewsletterAbonnes();
+      },
+      error: () => this.toast.error('Erreur lors de la suppression de l\'abonné.'),
+    });
+  }
+
+  // --- GESTION DES SECTIONS MODULAIRES & FAQ ---
   ouvrirModalSection(): void {
     this.sectionEnCours = {
       typeSection: this.activeTab,
       titre: '',
       sousTitre: '',
       description: '',
+      categorie: this.activeTab === 'faq' ? 'ADMISSIONS' : undefined,
       ordre: this.sectionsFiltrees.length + 1,
       couleur: '#1C75BC',
       icone: '',
@@ -1457,9 +2688,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
         this.toast.success(nouveauStatut ? 'Élément activé et visible.' : 'Élément masqué.');
         this.cdr.markForCheck();
       },
-      error: () => {
-        this.toast.error('Erreur lors du changement de visibilité.');
-      },
+      error: () => this.toast.error('Erreur lors du changement de visibilité.'),
     });
   }
 
@@ -1471,6 +2700,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       titre: this.sectionEnCours.titre,
       sousTitre: this.sectionEnCours.sousTitre || '',
       description: this.sectionEnCours.description || '',
+      categorie: this.sectionEnCours.categorie || '',
       ordre: Number(this.sectionEnCours.ordre) || 0,
       couleur: this.sectionEnCours.couleur || '#1C75BC',
       icone: this.sectionEnCours.icone || '',
@@ -1484,13 +2714,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           this.modalSectionVisible = false;
           this.rechargerSections();
         },
-        error: (err) => {
-          console.error('Erreur API updateSection:', err);
-          const msg = Array.isArray(err?.error?.message)
-            ? err.error.message.join(', ')
-            : err?.error?.message || 'Erreur lors de la mise à jour.';
-          this.toast.error(msg);
-        },
+        error: () => this.toast.error('Erreur lors de la mise à jour.'),
       });
     } else {
       this.landingService.createSection(payload as any).subscribe({
@@ -1499,31 +2723,19 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           this.modalSectionVisible = false;
           this.rechargerSections();
         },
-        error: (err) => {
-          console.error('Erreur API createSection:', err);
-          const msg = Array.isArray(err?.error?.message)
-            ? err.error.message.join(', ')
-            : err?.error?.message || 'Erreur lors de la création.';
-          this.toast.error(msg);
-        },
+        error: () => this.toast.error('Erreur lors de la création.'),
       });
     }
   }
 
   supprimerSection(id: string): void {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) return;
-
     this.landingService.deleteSection(id).subscribe({
       next: () => {
         this.toast.success('Élément supprimé.');
         this.rechargerSections();
       },
-      error: (err) => {
-        const msg = Array.isArray(err?.error?.message)
-          ? err.error.message.join(', ')
-          : err?.error?.message || 'Erreur lors de la suppression.';
-        this.toast.error(msg);
-      },
+      error: () => this.toast.error('Erreur lors de la suppression.'),
     });
   }
 
@@ -1567,19 +2779,17 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   getCategorieBadgeColor(cat?: string, fallback?: string): string {
     if (fallback && fallback.startsWith('#')) return fallback;
     switch ((cat || '').toUpperCase()) {
-      case 'INNOVATION': return '#1C75BC'; // Bleu officiel
-      case 'ADMISSIONS': return '#F0791E'; // Or solaire
-      case 'PARTENARIAT': return '#276B44'; // Vert succès
-      case 'PEDAGOGIE': return '#124F80'; // Bleu foncé
-      case 'VIE_DU_CENTRE': return '#2AA9A0'; // Teal
-      case 'COMMUNIQUE_OFFICIEL': return '#ED1C24'; // Rouge alerte
+      case 'INNOVATION': return '#1C75BC';
+      case 'ADMISSIONS': return '#F0791E';
+      case 'PARTENARIAT': return '#276B44';
+      case 'PEDAGOGIE': return '#124F80';
+      case 'VIE_DU_CENTRE': return '#2AA9A0';
+      case 'COMMUNIQUE_OFFICIEL': return '#ED1C24';
       default: return '#1C75BC';
     }
   }
 
-  // Hero Photo State & Upload
-  uploadingHeroImage: boolean = false;
-
+  // Hero Photo Helpers
   declencherInputHeroImage(): void {
     const el = document.getElementById('heroImageFileInput') as HTMLInputElement;
     el?.click();
@@ -1588,30 +2798,89 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   onHeroImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      this.televerserHeroImage(input.files[0]);
+      this.uploadingHeroImage = true;
+      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+        next: (res) => {
+          this.uploadingHeroImage = false;
+          this.settings.heroImage = res.url;
+          this.toast.success(`Photo du Hero « ${input.files![0].name} » téléversée avec succès.`);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.uploadingHeroImage = false;
+          this.toast.error('Erreur lors du téléversement de la photo.');
+          this.cdr.markForCheck();
+        },
+      });
     }
-  }
-
-  private televerserHeroImage(file: File): void {
-    this.uploadingHeroImage = true;
-    this.landingService.uploadActualiteMedia(file).subscribe({
-      next: (res) => {
-        this.uploadingHeroImage = false;
-        this.settings.heroImage = res.url;
-        this.toast.success(`Photo du Hero « ${file.name} » téléversée avec succès.`);
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.uploadingHeroImage = false;
-        this.toast.error(err?.error?.message || 'Erreur lors du téléversement de la photo.');
-        this.cdr.markForCheck();
-      },
-    });
   }
 
   supprimerHeroImage(): void {
     this.settings.heroImage = '';
     this.toast.info('Photo personnalisée retirée. L\'image par défaut sera affichée.');
+  }
+
+  // Video Poster & URL Helpers
+  onVideoPosterSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.uploadingVideoPoster = true;
+      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+        next: (res) => {
+          this.uploadingVideoPoster = false;
+          this.settings.videoPosterUrl = res.url;
+          this.toast.success(`Miniature vidéo « ${input.files![0].name} » téléversée avec succès.`);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.uploadingVideoPoster = false;
+          this.toast.error('Erreur lors du téléversement de la miniature.');
+          this.cdr.markForCheck();
+        },
+      });
+    }
+  }
+
+  // Video Presentation Upload (fichier local)
+  onVideoPresentationSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      // Vérification côté client : max 200 Mo
+      const maxSize = 200 * 1024 * 1024;
+      if (file.size > maxSize) {
+        this.toast.error(`Le fichier est trop volumineux (${(file.size / 1024 / 1024).toFixed(1)} Mo). Maximum autorisé : 200 Mo.`);
+        input.value = '';
+        return;
+      }
+      this.uploadingVideoPresentation = true;
+      this.cdr.markForCheck();
+      this.landingService.uploadActualiteMedia(file).subscribe({
+        next: (res) => {
+          this.uploadingVideoPresentation = false;
+          this.settings.videoPresentationUrl = res.url;
+          this.toast.success(`Vidéo « ${file.name} » téléversée avec succès. Elle sera lue en lecteur natif.`);
+          input.value = '';
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.uploadingVideoPresentation = false;
+          this.toast.error('Erreur lors du téléversement de la vidéo. Vérifiez la taille et le format du fichier.');
+          input.value = '';
+          this.cdr.markForCheck();
+        },
+      });
+    }
+  }
+
+  formatVideoUrlInput(): void {
+    if (this.settings.videoPresentationUrl) {
+      const url = this.settings.videoPresentationUrl.trim();
+      const ytWatchMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+      if (ytWatchMatch && ytWatchMatch[1]) {
+        this.settings.videoPresentationUrl = `https://www.youtube-nocookie.com/embed/${ytWatchMatch[1]}?rel=0`;
+      }
+    }
   }
 
   getHeroImagePreview(): string {
@@ -1622,18 +2891,9 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     return this.getMediaUrl(url);
   }
 
-  // Media Upload State (Actualités)
-  uploadingImage: boolean = false;
-  uploadingVideo: boolean = false;
-  videoSourceType: 'upload' | 'url' = 'upload';
-
+  // Actualités Media Helpers
   declencherInputImage(): void {
-    const el = document.querySelector('input[type="file"][accept*="image"]') as HTMLInputElement;
-    el?.click();
-  }
-
-  declencherInputVideo(): void {
-    const el = document.querySelector('input[type="file"][accept*="video"]') as HTMLInputElement;
+    const el = document.getElementById('actualiteImgInput') as HTMLInputElement;
     el?.click();
   }
 
@@ -1641,21 +2901,24 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     this.actualiteEnCours.imageUrl = '';
   }
 
-  supprimerVideoActuelle(): void {
-    this.actualiteEnCours.videoUrl = '';
-  }
-
-  isVideoLocal(url?: string): boolean {
-    if (!url) return false;
-    const clean = url.toLowerCase();
-    return (
-      clean.includes('/uploads/') ||
-      clean.includes('/vitalis-media/') ||
-      clean.includes('.mp4') ||
-      clean.includes('.webm') ||
-      clean.includes('.mov') ||
-      clean.includes('.ogg')
-    );
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.uploadingImage = true;
+      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+        next: (res) => {
+          this.uploadingImage = false;
+          this.actualiteEnCours.imageUrl = res.url;
+          this.toast.success(`Photo « ${input.files![0].name} » importée avec succès.`);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.uploadingImage = false;
+          this.toast.error('Erreur lors du téléversement de la photo.');
+          this.cdr.markForCheck();
+        },
+      });
+    }
   }
 
   getMediaUrl(url?: string): string {
@@ -1674,92 +2937,6 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     }
   }
 
-  onImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      this.televerserImage(input.files[0]);
-    }
-  }
-
-  onVideoSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      this.televerserVideo(input.files[0]);
-    }
-  }
-
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  onDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  onImageDropped(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-      const file = event.dataTransfer.files[0];
-      if (file.type.startsWith('image/')) {
-        this.televerserImage(file);
-      } else {
-        this.toast.error('Veuillez glisser un fichier image valide (JPG, PNG, WebP, GIF).');
-      }
-    }
-  }
-
-  onVideoDropped(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-      const file = event.dataTransfer.files[0];
-      if (file.type.startsWith('video/')) {
-        this.televerserVideo(file);
-      } else {
-        this.toast.error('Veuillez glisser un fichier vidéo valide (MP4, WebM, MOV).');
-      }
-    }
-  }
-
-  private televerserImage(file: File): void {
-    this.uploadingImage = true;
-    this.landingService.uploadActualiteMedia(file).subscribe({
-      next: (res) => {
-        this.uploadingImage = false;
-        this.actualiteEnCours.imageUrl = res.url;
-        this.toast.success(`Photo « ${file.name} » importée avec succès.`);
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.uploadingImage = false;
-        console.error('Erreur upload photo:', err);
-        this.toast.error('Erreur lors du téléversement de la photo.');
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  private televerserVideo(file: File): void {
-    this.uploadingVideo = true;
-    this.landingService.uploadActualiteMedia(file).subscribe({
-      next: (res) => {
-        this.uploadingVideo = false;
-        this.actualiteEnCours.videoUrl = res.url;
-        this.toast.success(`Vidéo « ${file.name} » téléversée avec succès sur le serveur.`);
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.uploadingVideo = false;
-        console.error('Erreur upload vidéo:', err);
-        this.toast.error('Erreur lors du téléversement de la vidéo.');
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
   ouvrirModalActualite(): void {
     this.actualiteEnCours = {
       titre: '',
@@ -1775,13 +2952,11 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       ordre: this.actualitesList.length + 1,
       actif: true,
     };
-    this.videoSourceType = 'upload';
     this.modalActualiteVisible = true;
   }
 
   editerActualite(act: LandingPageActualite): void {
     this.actualiteEnCours = { ...act };
-    this.videoSourceType = this.isVideoLocal(act.videoUrl) ? 'upload' : (act.videoUrl ? 'url' : 'upload');
     this.modalActualiteVisible = true;
   }
 
@@ -1812,10 +2987,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           this.modalActualiteVisible = false;
           this.rechargerActualites();
         },
-        error: (err) => {
-          console.error('Erreur updateActualite:', err);
-          this.toast.error('Erreur lors de la mise à jour de l\'actualité.');
-        },
+        error: () => this.toast.error('Erreur lors de la mise à jour.'),
       });
     } else {
       this.landingService.createActualite(payload as any).subscribe({
@@ -1824,17 +2996,13 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           this.modalActualiteVisible = false;
           this.rechargerActualites();
         },
-        error: (err) => {
-          console.error('Erreur createActualite:', err);
-          this.toast.error('Erreur lors de la création de l\'actualité.');
-        },
+        error: () => this.toast.error('Erreur lors de la création.'),
       });
     }
   }
 
   supprimerActualite(id: string): void {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer définitivement cette actualité ?')) return;
-
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette actualité ?')) return;
     this.landingService.deleteActualite(id).subscribe({
       next: () => {
         this.toast.success('Actualité supprimée.');
@@ -1864,105 +3032,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     });
   }
 
-  // --- GESTION DES TÉMOIGNAGES (COMPATIBILITÉ) ---
-  ouvrirModalTemoignage(): void {
-    this.temoignageEnCours = {
-      nom: '',
-      initiales: '',
-      role: '',
-      promotion: '',
-      citation: '',
-      couleur: '#1C75BC',
-      ordre: this.temoignagesList.length + 1,
-      actif: true,
-    };
-    this.modalTemoignageVisible = true;
-  }
-
-  editerTemoignage(tem: LandingPageTemoignage): void {
-    this.temoignageEnCours = { ...tem };
-    this.modalTemoignageVisible = true;
-  }
-
-  genererInitiales(): void {
-    if (this.temoignageEnCours.nom) {
-      const parts = this.temoignageEnCours.nom.trim().split(' ');
-      if (parts.length >= 2) {
-        this.temoignageEnCours.initiales = (parts[0][0] + parts[1][0]).toUpperCase();
-      } else if (parts.length === 1 && parts[0].length >= 2) {
-        this.temoignageEnCours.initiales = parts[0].substring(0, 2).toUpperCase();
-      }
-    }
-  }
-
-  sauvegarderTemoignageModal(): void {
-    if (!this.temoignageEnCours.nom || !this.temoignageEnCours.citation) return;
-
-    const payload: Partial<LandingPageTemoignage> = {
-      nom: this.temoignageEnCours.nom,
-      initiales: this.temoignageEnCours.initiales || '',
-      role: this.temoignageEnCours.role || '',
-      promotion: this.temoignageEnCours.promotion || '',
-      citation: this.temoignageEnCours.citation || '',
-      couleur: this.temoignageEnCours.couleur || '#1C75BC',
-      ordre: Number(this.temoignageEnCours.ordre) || 0,
-      actif: this.temoignageEnCours.actif !== undefined ? Boolean(this.temoignageEnCours.actif) : true,
-    };
-
-    if (this.temoignageEnCours.id) {
-      this.landingService.updateTemoignage(this.temoignageEnCours.id, payload).subscribe({
-        next: () => {
-          this.toast.success('Témoignage mis à jour avec succès.');
-          this.modalTemoignageVisible = false;
-          this.chargerDonnees();
-        },
-        error: (err) => {
-          console.error('Erreur API updateTemoignage:', err);
-          this.toast.error('Erreur lors de la mise à jour.');
-        },
-      });
-    } else {
-      this.landingService.createTemoignage(payload as any).subscribe({
-        next: () => {
-          this.toast.success('Témoignage ajouté avec succès.');
-          this.modalTemoignageVisible = false;
-          this.chargerDonnees();
-        },
-        error: (err) => {
-          console.error('Erreur API createTemoignage:', err);
-          this.toast.error('Erreur lors de l\'ajout.');
-        },
-      });
-    }
-  }
-
-  supprimerTemoignage(id: string): void {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce témoignage ?')) return;
-
-    this.landingService.deleteTemoignage(id).subscribe({
-      next: () => {
-        this.toast.success('Témoignage supprimé.');
-        this.rechargerTemoignages();
-      },
-      error: (err) => {
-        const msg = Array.isArray(err?.error?.message)
-          ? err.error.message.join(', ')
-          : err?.error?.message || 'Erreur lors de la suppression.';
-        this.toast.error(msg);
-      },
-    });
-  }
-
-  private rechargerTemoignages(): void {
-    this.landingService.getTemoignages().subscribe({
-      next: (t) => {
-        this.temoignagesList = t;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  // --- GESTION DES DEMANDES D'ORIENTATION & DOLÉANCES ---
+  // --- DEMANDES D'ORIENTATION ---
   openMessageModal(msg: ContactMessageItem): void {
     this.selectedMessage = msg;
   }
@@ -1983,12 +3053,8 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   copierTexte(texte: string, messageSucces = 'Copié dans le presse-papier'): void {
     if (!texte) return;
     navigator.clipboard.writeText(texte).then(
-      () => {
-        this.toast.success(messageSucces);
-      },
-      () => {
-        this.toast.info(`Texte : ${texte}`);
-      }
+      () => this.toast.success(messageSucces),
+      () => this.toast.info(`Texte : ${texte}`)
     );
   }
 
@@ -2017,23 +3083,18 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
         this.contactMessages = msgs || [];
         this.cdr.markForCheck();
       },
-      error: () => {
-        this.toast.error('Impossible de charger les demandes d\'orientation.');
-      },
+      error: () => this.toast.error('Impossible de charger les demandes d\'orientation.'),
     });
   }
 
   supprimerMessage(id: string): void {
     if (!confirm('Voulez-vous marquer cette demande comme traitée / la supprimer ?')) return;
-
     this.landingService.deleteContactMessage(id).subscribe({
       next: () => {
         this.toast.success('Demande d\'orientation retirée.');
         this.chargerMessages();
       },
-      error: () => {
-        this.toast.error('Erreur lors du traitement de la demande.');
-      },
+      error: () => this.toast.error('Erreur lors du traitement de la demande.'),
     });
   }
 }

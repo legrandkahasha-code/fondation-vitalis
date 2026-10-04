@@ -366,50 +366,131 @@ export class ApprenantService {
       };
     });
 
-    // Recherche d'un quiz non passé si aucun devoir ni séance urgente
-    let prochaineEcheanceResult: any = null;
-    if (prochainDevoir) {
-      prochaineEcheanceResult = {
-        type: 'devoir',
-        id: prochainDevoir.id,
-        titre: prochainDevoir.titre,
-        formationTitre: (prochainDevoir as any).module.formation.titre,
-        dateLimite: prochainDevoir.dateLimite,
-      };
-    } else if (prochaineSeance) {
-      prochaineEcheanceResult = {
-        type: 'seance',
-        id: prochaineSeance.id,
-        titre: prochaineSeance.titreActivite,
-        formationTitre: (prochaineSeance as any).module.formation.titre,
-        dateLimite: prochaineSeance.dateHeureDebut,
-      };
-    } else if (moduleIds.length > 0) {
-      const prochainQuiz = await this.prisma.quiz.findFirst({
-        where: {
-          moduleId: { in: moduleIds },
-          tentatives: { none: { apprenantId: user.id } },
-        },
-        select: {
-          id: true, moduleId: true, titre: true,
-          module: {
-            select: {
-              id: true,
-              formation: { select: { id: true, titre: true } },
-            },
+    // Calcul de l'assiduité globale pour le dashboard
+    const presences = await this.prisma.presenceSeance.findMany({
+      where: { utilisateurId: user.id },
+      select: { statut: true },
+    });
+    const totalPres = presences.length;
+    const assiduCount = presences.filter(
+      (p) => p.statut === 'PRESENT' || p.statut === 'RETARD' || p.statut === 'JUSTIFIE',
+    ).length;
+    const tauxAssiduite = totalPres > 0 ? Math.round((assiduCount / totalPres) * 100) : 100;
+
+    // Détection d'une séance EN DIRECT en ce moment (Coursera / Canvas live banner)
+    const seanceEnDirect = await this.prisma.seanceFormation.findFirst({
+      where: {
+        dateHeureDebut: { lte: now },
+        dateHeureFin: { gte: now },
+        module: { formation: formationFilter },
+      },
+      select: {
+        id: true,
+        titreActivite: true,
+        typeSession: true,
+        dateHeureDebut: true,
+        dateHeureFin: true,
+        salleOuLien: true,
+        module: {
+          select: {
+            id: true,
+            titre: true,
+            formation: { select: { id: true, titre: true } },
           },
         },
-      });
-      if (prochainQuiz) {
-        prochaineEcheanceResult = {
-          type: 'quiz',
-          id: prochainQuiz.id,
-          titre: prochainQuiz.titre,
-          formationTitre: (prochainQuiz as any).module.formation.titre,
-          dateLimite: null,
-        };
+        formateur: { select: { nom: true, prenom: true } },
+      },
+    });
+
+    // Agrégat des 5 prochaines échéances (Devoirs à rendre, Séances à venir, Quiz en attente)
+    const [upcomingDevoirs, upcomingSeances, upcomingQuiz] = await Promise.all([
+      moduleIds.length > 0
+        ? this.prisma.devoir.findMany({
+            where: {
+              moduleId: { in: moduleIds },
+              id: { notIn: devoirsSoumisIds },
+              dateLimite: { gte: now },
+            },
+            select: {
+              id: true, moduleId: true, titre: true, dateLimite: true,
+              module: { select: { id: true, formation: { select: { id: true, titre: true } } } },
+            },
+            orderBy: { dateLimite: 'asc' },
+            take: 5,
+          })
+        : [],
+      this.prisma.seanceFormation.findMany({
+        where: {
+          dateHeureDebut: { gte: now },
+          module: { formation: formationFilter },
+        },
+        select: {
+          id: true, titreActivite: true, typeSession: true, dateHeureDebut: true, salleOuLien: true,
+          module: { select: { id: true, formation: { select: { id: true, titre: true } } } },
+        },
+        orderBy: { dateHeureDebut: 'asc' },
+        take: 5,
+      }),
+      moduleIds.length > 0
+        ? this.prisma.quiz.findMany({
+            where: {
+              moduleId: { in: moduleIds },
+              tentatives: { none: { apprenantId: user.id } },
+            },
+            select: {
+              id: true, titre: true, dureeMinutes: true,
+              module: { select: { id: true, formation: { select: { id: true, titre: true } } } },
+            },
+            take: 3,
+          })
+        : [],
+    ]);
+
+    const echeancesList: Array<{
+      type: 'devoir' | 'seance' | 'quiz';
+      id: string;
+      titre: string;
+      formationTitre: string;
+      dateLimite: Date | null;
+      extra?: string | null;
+    }> = [
+      ...upcomingDevoirs.map((d) => ({
+        type: 'devoir' as const,
+        id: d.id,
+        titre: d.titre,
+        formationTitre: (d as any).module.formation.titre,
+        dateLimite: d.dateLimite,
+        extra: null,
+      })),
+      ...upcomingSeances.map((s) => ({
+        type: 'seance' as const,
+        id: s.id,
+        titre: s.titreActivite,
+        formationTitre: (s as any).module.formation.titre,
+        dateLimite: s.dateHeureDebut,
+        extra: s.salleOuLien,
+      })),
+      ...upcomingQuiz.map((q) => ({
+        type: 'quiz' as const,
+        id: q.id,
+        titre: q.titre,
+        formationTitre: (q as any).module.formation.titre,
+        dateLimite: null,
+        extra: q.dureeMinutes ? `${q.dureeMinutes} min` : null,
+      })),
+    ];
+
+    echeancesList.sort((a, b) => {
+      if (a.dateLimite && b.dateLimite) {
+        return new Date(a.dateLimite).getTime() - new Date(b.dateLimite).getTime();
       }
-    }
+      if (a.dateLimite) return -1;
+      if (b.dateLimite) return 1;
+      return 0;
+    });
+
+    const prochainesEcheances = echeancesList.slice(0, 5);
+    const prochaineEcheanceResult = prochainesEcheances[0] || null;
 
     const result = {
       completionGlobale,
@@ -418,6 +499,22 @@ export class ApprenantService {
       nbQuizPasses,
       nbDevoirsDeposes: devoirsSoumis.length,
       nbCertificats,
+      tauxAssiduite,
+      seanceEnDirect: seanceEnDirect
+        ? {
+            id: seanceEnDirect.id,
+            titre: seanceEnDirect.titreActivite,
+            typeSession: seanceEnDirect.typeSession,
+            dateHeureDebut: seanceEnDirect.dateHeureDebut,
+            dateHeureFin: seanceEnDirect.dateHeureFin,
+            salleOuLien: seanceEnDirect.salleOuLien,
+            formationTitre: (seanceEnDirect as any).module.formation.titre,
+            formateurNom: seanceEnDirect.formateur
+              ? `${seanceEnDirect.formateur.prenom} ${seanceEnDirect.formateur.nom}`
+              : null,
+          }
+        : null,
+      prochainesEcheances,
       prochaineEcheance: prochaineEcheanceResult,
     };
     return this.setCache(cacheKey, result);
@@ -537,6 +634,7 @@ export class ApprenantService {
       where: await this.formationFilterForUser(user),
       select: {
         id: true, titre: true, description: true, createdAt: true, actif: true, etablissementId: true,
+        syllabusUrl: true, syllabusNomFichier: true,
         etablissement: {
           select: { id: true, nom: true, codeAntenne: true },
         },
@@ -589,6 +687,8 @@ export class ApprenantService {
         id: f.id,
         titre: f.titre,
         description: f.description,
+        syllabusUrl: f.syllabusUrl || null,
+        syllabusNomFichier: f.syllabusNomFichier || null,
         createdAt: f.createdAt,
         etablissement: f.etablissement,
         nbModules: f.modules.length,
@@ -869,6 +969,8 @@ export class ApprenantService {
         id: true,
         titre: true,
         description: true,
+        syllabusUrl: true,
+        syllabusNomFichier: true,
         etablissementId: true,
         actif: true,
         etablissement: { select: { id: true, nom: true, codeAntenne: true } },
@@ -886,6 +988,7 @@ export class ApprenantService {
                 titre: true,
                 contenu: true,
                 fileUrl: true,
+                dureeMinutes: true,
                 createdAt: true,
               },
             },
@@ -906,6 +1009,7 @@ export class ApprenantService {
                 titre: true,
                 consignes: true,
                 dateLimite: true,
+                criteresEvaluation: true,
                 soumissions: {
                   where: { apprenantId: user.id },
                   select: {
@@ -959,6 +1063,7 @@ export class ApprenantService {
         return {
           id: c.id,
           titre: c.titre,
+          dureeMinutes: c.dureeMinutes ?? null,
           hasMedia: !!c.fileUrl,
           hasText: !!c.contenu,
           complete,
@@ -997,6 +1102,7 @@ export class ApprenantService {
           titre: d.titre,
           consignes: d.consignes,
           dateLimite: d.dateLimite,
+          criteresEvaluation: d.criteresEvaluation ?? null,
           estEnRetard: d.dateLimite ? new Date() > d.dateLimite && !soumission : false,
           soumis: !!soumission,
           note: soumission?.note ? Number(soumission.note) : null,
@@ -1047,6 +1153,8 @@ export class ApprenantService {
         id: formation.id,
         titre: formation.titre,
         description: formation.description,
+        syllabusUrl: formation.syllabusUrl,
+        syllabusNomFichier: formation.syllabusNomFichier,
         etablissement: formation.etablissement,
         progressionGlobale,
         certificat: certificat
@@ -1134,6 +1242,7 @@ export class ApprenantService {
         titre: true,
         contenu: true,
         fileUrl: true,
+        dureeMinutes: true,
         module: {
           select: {
             id: true,
@@ -1156,6 +1265,8 @@ export class ApprenantService {
       titre: cours.titre,
       contenu: cours.contenu,
       fileUrl: cours.fileUrl,
+      dureeMinutes: cours.dureeMinutes ?? null,
+      notesPersonnelles: progress?.notesPersonnelles ?? '',
       module: {
         id: cours.module.id,
         titre: cours.module.titre,
@@ -1199,6 +1310,15 @@ export class ApprenantService {
 
     // Invalidation immédiate du cache utilisateur
     this.invalidateUserCache(user.id);
+
+    // Émettre notification SSE pour l'apprenant
+    this.notifications.emit({
+      type: 'COURS_COMPLETED',
+      recipientUserId: user.id,
+      title: 'Leçon validée !',
+      message: `Vous avez complété la leçon avec succès.`,
+      data: { coursId, formationId: cours.module.formationId },
+    });
 
     // Recalcul du pourcentage de la formation
     const progress = await this.pedagogieService.getProgressByFormation(
@@ -1245,6 +1365,286 @@ export class ApprenantService {
       this.logger.warn(`[Auto-Certification BR-03] Notice non-bloquante: ${err?.message}`);
       return null;
     }
+  }
+
+  /**
+   * Télécharger le syllabus officiel d'une formation
+   */
+  async telechargerSyllabus(formationId: string, user: any) {
+    this.assertApprenant(user);
+    await this.assertFormationAccess(formationId, user);
+
+    const formation = await this.prisma.formation.findUnique({
+      where: { id: formationId },
+      select: {
+        id: true,
+        titre: true,
+        syllabusUrl: true,
+        syllabusNomFichier: true,
+      },
+    });
+
+    if (!formation) throw new NotFoundException('Formation introuvable.');
+    if (!formation.syllabusUrl) {
+      throw new NotFoundException('Aucun syllabus officiel n\'a encore été publié pour cette formation.');
+    }
+
+    return {
+      syllabusUrl: formation.syllabusUrl,
+      syllabusNomFichier: formation.syllabusNomFichier || `Syllabus-${formation.titre}.pdf`,
+    };
+  }
+
+  /**
+   * Sauvegarder les notes personnelles d'étude sur une leçon
+   */
+  async sauvegarderNotesPersonnelles(coursId: string, notes: string, user: any) {
+    this.assertApprenant(user);
+    const cours = await this.prisma.cours.findUnique({
+      where: { id: coursId },
+      include: { module: { include: { formation: true } } },
+    });
+    if (!cours) throw new NotFoundException('Cours introuvable.');
+    await this.assertFormationAccess(cours.module.formation.id, user);
+
+    const progress = await this.prisma.userProgress.upsert({
+      where: {
+        utilisateurId_coursId: {
+          utilisateurId: user.id,
+          coursId,
+        },
+      },
+      update: {
+        notesPersonnelles: notes,
+      },
+      create: {
+        utilisateurId: user.id,
+        coursId,
+        notesPersonnelles: notes,
+        complete: false,
+      },
+    });
+
+    this.invalidateUserCache(user.id);
+    return {
+      success: true,
+      notesPersonnelles: progress.notesPersonnelles,
+      updatedAt: new Date(),
+    };
+  }
+
+  /**
+   * Poser une question pédagogique sur une leçon (Q&A / Entraide)
+   */
+  async poserQuestionCours(coursId: string, question: string, user: any) {
+    this.assertApprenant(user);
+    if (!question || !question.trim()) {
+      throw new BadRequestException('La question ne peut pas être vide.');
+    }
+
+    const cours = await this.prisma.cours.findUnique({
+      where: { id: coursId },
+      include: {
+        module: {
+          include: {
+            formation: {
+              select: { id: true, titre: true, etablissementId: true },
+            },
+          },
+        },
+      },
+    });
+    if (!cours) throw new NotFoundException('Cours introuvable.');
+    await this.assertFormationAccess(cours.module.formation.id, user);
+
+    const expediteur = `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Un apprenant';
+
+    // 1. Enregistrer la question en base de données
+    const savedQuestion = await this.prisma.questionCours.create({
+      data: {
+        coursId,
+        auteurId: user.id,
+        question: question.trim(),
+      },
+      include: {
+        auteur: {
+          select: { id: true, nom: true, prenom: true, role: true, photoUrl: true },
+        },
+      },
+    });
+
+    // 2. Notifier le formateur / l'équipe pédagogique de l'établissement
+    this.notifications.emit({
+      type: 'QUESTION_COURS',
+      recipientEtablissementId: cours.module.formation.etablissementId,
+      title: `Question sur : ${cours.titre}`,
+      message: `${expediteur} a posé une question sur la leçon « ${cours.titre} » : "${question.length > 80 ? question.slice(0, 77) + '...' : question}"`,
+      data: {
+        questionId: savedQuestion.id,
+        coursId: cours.id,
+        coursTitre: cours.titre,
+        formationId: cours.module.formation.id,
+        formationTitre: cours.module.formation.titre,
+        apprenantId: user.id,
+        apprenantNom: expediteur,
+        question: question.trim(),
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Votre question a été publiée sur le forum de la leçon et transmise aux formateurs.',
+      question: savedQuestion,
+    };
+  }
+
+  /**
+   * Récupère le fil de questions/réponses communautaire d'un cours (Q&R bidirectionnel)
+   */
+  async getQuestionsCours(coursId: string, user: any) {
+    this.assertApprenant(user);
+    const cours = await this.prisma.cours.findUnique({
+      where: { id: coursId },
+      include: { module: { select: { formationId: true } } },
+    });
+    if (!cours) throw new NotFoundException('Cours introuvable.');
+    await this.assertFormationAccess(cours.module.formationId, user);
+
+    const questions = await this.prisma.questionCours.findMany({
+      where: { coursId },
+      include: {
+        auteur: {
+          select: { id: true, nom: true, prenom: true, role: true, photoUrl: true },
+        },
+        reponses: {
+          include: {
+            auteur: {
+              select: { id: true, nom: true, prenom: true, role: true, photoUrl: true },
+            },
+          },
+          orderBy: [{ estCertifiee: 'desc' }, { createdAt: 'asc' }],
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return questions;
+  }
+
+  /**
+   * Répondre à une question sur une leçon (apprenant, formateur ou administration)
+   */
+  async repondreQuestionCours(questionId: string, reponse: string, user: any) {
+    if (!reponse || !reponse.trim()) {
+      throw new BadRequestException('La réponse ne peut pas être vide.');
+    }
+
+    const question = await this.prisma.questionCours.findUnique({
+      where: { id: questionId },
+      include: {
+        cours: {
+          include: {
+            module: { select: { formationId: true, formation: { select: { id: true, etablissementId: true, titre: true } } } },
+          },
+        },
+        auteur: { select: { id: true, email: true, nom: true, prenom: true } },
+      },
+    });
+    if (!question) throw new NotFoundException('Question introuvable.');
+    await this.assertFormationAccess(question.cours.module.formationId, user);
+
+    const isStaff = user.role === 'FORMATEUR' || user.role === 'ADMIN_CENTRE' || user.role === 'ADMIN_ETABLISSEMENT';
+
+    const savedReponse = await this.prisma.reponseCours.create({
+      data: {
+        questionId,
+        auteurId: user.id,
+        reponse: reponse.trim(),
+        estCertifiee: isStaff,
+      },
+      include: {
+        auteur: {
+          select: { id: true, nom: true, prenom: true, role: true, photoUrl: true },
+        },
+      },
+    });
+
+    // Notifier l'auteur de la question
+    if (question.auteurId !== user.id) {
+      const nomRepondeur = `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Un membre de la communauté';
+      this.notifications.emit({
+        type: 'REPONSE_QUESTION_COURS',
+        recipientUserId: question.auteurId,
+        title: isStaff ? 'Réponse officielle du formateur' : 'Nouvelle réponse sur votre question',
+        message: `${nomRepondeur} a répondu à votre question sur la leçon « ${question.cours.titre} ».`,
+        data: {
+          questionId,
+          coursId: question.coursId,
+          reponseId: savedReponse.id,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Votre réponse a été publiée avec succès.',
+      reponse: savedReponse,
+    };
+  }
+
+  /**
+   * Voter pour une question ou réponse du forum de cours
+   */
+  async voterQuestionCours(questionId: string, user: any) {
+    this.assertApprenant(user);
+    const updated = await this.prisma.questionCours.update({
+      where: { id: questionId },
+      data: { votes: { increment: 1 } },
+    });
+    return { success: true, votes: updated.votes };
+  }
+
+  /**
+   * Téléversement et recadrage de photo d'avatar apprenant
+   */
+  async uploadAvatar(file: Express.Multer.File, user: any) {
+    this.assertApprenant(user);
+    if (!file) throw new BadRequestException('Aucun fichier image fourni.');
+
+    const photoUrl = await this.storage.uploadFile(
+      file.buffer,
+      `avatar-${user.id}-${Date.now()}.png`,
+      file.mimetype || 'image/png',
+      'avatars',
+    );
+
+    // Mettre à jour l'utilisateur
+    await this.prisma.utilisateur.update({
+      where: { id: user.id },
+      data: { photoUrl },
+    });
+
+    // Enregistrer également dans DocumentDossier pour le dossier administratif
+    await this.prisma.documentDossier.create({
+      data: {
+        utilisateurId: user.id,
+        titre: 'Photo d\'identité officielle (e-Badge)',
+        typeDocument: 'PHOTO',
+        nomFichier: file.originalname || 'avatar.png',
+        fileUrl: photoUrl,
+        statut: 'VALIDE',
+        commentaire: 'Photo officielle recadrée par l\'apprenant',
+        ajouteParId: user.id,
+      },
+    });
+
+    this.invalidateUserCache(user.id);
+
+    return {
+      success: true,
+      photoUrl,
+      message: 'Photo d\'identité mise à jour avec succès.',
+    };
   }
 
   /**
@@ -1392,6 +1792,15 @@ export class ApprenantService {
     // Invalider le cache pour actualiser le dashboard et les modules
     this.invalidateUserCache(user.id);
 
+    // Émettre notification SSE pour l'apprenant
+    this.notifications.emit({
+      type: 'QUIZ_SUBMITTED',
+      recipientUserId: user.id,
+      title: 'Évaluation quiz soumise',
+      message: `Votre score : ${score}% (${bonnesReponses}/${totalQuestions} bonnes réponses).`,
+      data: { quizId, score, bonnesReponses, totalQuestions },
+    });
+
     return {
       success: true,
       tentativeId: tentative.id,
@@ -1418,6 +1827,7 @@ export class ApprenantService {
       where: { id: devoirId },
       select: {
         id: true,
+        titre: true,
         dateLimite: true,
         module: {
           select: {
@@ -1441,27 +1851,81 @@ export class ApprenantService {
       'devoirs',
     );
 
-    const soumission = await this.prisma.soumissionDevoir.upsert({
+    const existing = await this.prisma.soumissionDevoir.findUnique({
       where: { devoirId_apprenantId: { devoirId, apprenantId: user.id } },
-      update: {
-        fileUrl,
-        dateDepot: new Date(),
-      },
-      create: {
-        devoirId,
-        apprenantId: user.id,
-        fileUrl,
-      },
     });
+
+    let soumission;
+    if (existing) {
+      if (existing.note !== null) {
+        throw new BadRequestException('Ce devoir a déjà été noté par le formateur et ne peut plus être modifié.');
+      }
+      const existingHistory: any[] = Array.isArray(existing.historique) ? (existing.historique as any[]) : [];
+      existingHistory.push({
+        version: existing.version || 1,
+        fileUrl: existing.fileUrl,
+        dateDepot: existing.dateDepot,
+        commentaire: existing.commentaire,
+      });
+
+      soumission = await this.prisma.soumissionDevoir.update({
+        where: { id: existing.id },
+        data: {
+          fileUrl,
+          version: (existing.version || 1) + 1,
+          historique: existingHistory,
+          dateDepot: new Date(),
+        },
+      });
+    } else {
+      soumission = await this.prisma.soumissionDevoir.create({
+        data: {
+          devoirId,
+          apprenantId: user.id,
+          fileUrl,
+          version: 1,
+          historique: [],
+        },
+      });
+    }
 
     // Invalider le cache
     this.invalidateUserCache(user.id);
+
+    const expediteur = `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Un apprenant';
+
+    // 1. Notifier l'équipe pédagogique et administrative de l'établissement
+    this.notifications.emit({
+      type: 'DEVOIR_DEPOSE',
+      recipientEtablissementId: devoir.module.formation.etablissementId,
+      title: 'Nouveau devoir déposé',
+      message: `${expediteur} a déposé sa copie pour le devoir « ${devoir.titre} » (${devoir.module.formation.titre}).`,
+      data: {
+        devoirId,
+        devoirTitre: devoir.titre,
+        formationId: devoir.module.formation.id,
+        apprenantId: user.id,
+        apprenantNom: expediteur,
+        soumissionId: soumission.id,
+      },
+    });
+
+    // 2. Confirmer en temps réel à l'apprenant
+    this.notifications.emit({
+      type: 'DEVOIR_DEPOSE',
+      recipientUserId: user.id,
+      title: 'Devoir transmis avec succès',
+      message: `Votre travail pour « ${devoir.titre} » a été correctement remis et archivé.`,
+      data: { devoirId, soumissionId: soumission.id },
+    });
 
     return {
       success: true,
       soumissionId: soumission.id,
       devoirId,
       fileUrl: soumission.fileUrl,
+      version: soumission.version,
+      historique: soumission.historique,
       dateDepot: soumission.dateDepot,
     };
   }
@@ -1530,6 +1994,7 @@ export class ApprenantService {
         titre: true,
         consignes: true,
         dateLimite: true,
+        criteresEvaluation: true,
         module: {
           select: {
             id: true,
@@ -1544,6 +2009,8 @@ export class ApprenantService {
           select: {
             id: true,
             fileUrl: true,
+            version: true,
+            historique: true,
             note: true,
             commentaire: true,
             dateDepot: true,
@@ -1560,6 +2027,7 @@ export class ApprenantService {
         titre: d.titre,
         consignes: d.consignes,
         dateLimite: d.dateLimite,
+        criteresEvaluation: d.criteresEvaluation ?? null,
         moduleTitre: d.module.titre,
         formationId: d.module.formation.id,
         formationTitre: d.module.formation.titre,
@@ -1567,6 +2035,8 @@ export class ApprenantService {
           ? {
               id: soumission.id,
               fileUrl: soumission.fileUrl,
+              version: soumission.version || 1,
+              historique: soumission.historique || [],
               note: soumission.note !== null ? Number(soumission.note) : null,
               commentaire: soumission.commentaire,
               dateDepot: soumission.dateDepot,
@@ -1753,6 +2223,103 @@ export class ApprenantService {
       absents,
       justifies,
       tauxAssiduite: taux,
+    };
+  }
+
+  /**
+   * Justifier une absence pour une séance avec pièce justificative
+   */
+  async justifierAbsenceSeance(
+    seanceId: string,
+    file: Express.Multer.File | undefined,
+    motif: string,
+    commentaire: string,
+    user: any,
+  ) {
+    this.assertApprenant(user);
+    if (!motif || !motif.trim()) {
+      throw new BadRequestException('Veuillez préciser le motif de justification (médical, professionnel, etc.).');
+    }
+
+    const seance = await this.prisma.seanceFormation.findUnique({
+      where: { id: seanceId },
+      include: {
+        module: {
+          select: {
+            formationId: true,
+            formation: { select: { id: true, titre: true, etablissementId: true } },
+          },
+        },
+      },
+    });
+    if (!seance) throw new NotFoundException('Séance introuvable.');
+    await this.assertFormationAccess(seance.module.formation.id, user);
+
+    let fileUrl: string | null = null;
+    let nomFichier = '';
+    if (file) {
+      fileUrl = await this.storage.uploadFile(
+        file.buffer,
+        file.originalname,
+        file.mimetype,
+        'justificatifs',
+      );
+      nomFichier = file.originalname;
+
+      // Ajouter aussi au dossier administratif de l'apprenant pour traçabilité officielle
+      await this.prisma.documentDossier.create({
+        data: {
+          utilisateurId: user.id,
+          titre: `Justificatif d'absence · ${seance.titreActivite}`,
+          typeDocument: 'JUSTIFICATIF_ABSENCE',
+          nomFichier: file.originalname,
+          fileUrl,
+          statut: 'EN_ATTENTE',
+          commentaire: `Motif : ${motif.trim()}${commentaire ? ' — ' + commentaire.trim() : ''}`,
+          ajouteParId: user.id,
+        },
+      });
+    }
+
+    const justificationText = `[Demande de justification soumise] Motif : ${motif.trim()}${commentaire ? ' — ' + commentaire.trim() : ''}${nomFichier ? ' (Pièce : ' + nomFichier + ')' : ''}`;
+
+    // Mettre à jour la présence (ou créer si non encore émargé)
+    const presence = await this.prisma.presenceSeance.upsert({
+      where: { seanceId_utilisateurId: { seanceId, utilisateurId: user.id } },
+      update: {
+        remarqueJustification: justificationText,
+        misAJourA: new Date(),
+      },
+      create: {
+        seanceId,
+        utilisateurId: user.id,
+        statut: 'ABSENT',
+        remarqueJustification: justificationText,
+      },
+    });
+
+    this.invalidateUserCache(user.id);
+
+    // Émettre notification SSE pour l'administration de l'établissement
+    const apprenantNom = `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Un apprenant';
+    this.notifications.emit({
+      type: 'ASSIDUITE_UPDATE',
+      recipientEtablissementId: seance.module.formation.etablissementId,
+      title: "Justificatif d'absence déposé",
+      message: `${apprenantNom} a transmis une justification pour la séance « ${seance.titreActivite} » (Motif : ${motif}).`,
+      data: {
+        seanceId,
+        apprenantId: user.id,
+        apprenantNom,
+        motif,
+        fileUrl,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Votre justificatif a été transmis à la direction pédagogique avec succès.',
+      presence,
     };
   }
 

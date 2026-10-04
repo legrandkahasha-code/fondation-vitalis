@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '../../common/enums/role.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ApprenantCache } from '../apprenant/apprenant-cache';
+import { LandingService } from '../landing/landing.service';
 import { CreateCategorieFormationDto, UpdateCategorieFormationDto } from './dto/pedagogie.dto';
 
 function slugifyCategoryCode(text: string): string {
@@ -155,6 +156,7 @@ export class PedagogieService {
                 fileUrl: true,
                 moduleId: true,
                 contenu: true,
+                dureeMinutes: true,
                 createdAt: true,
               },
               orderBy: { createdAt: 'asc' },
@@ -266,6 +268,9 @@ export class PedagogieService {
         ordre: Number(data.ordre) || 0,
         actif: data.actif !== undefined ? data.actif : true,
         fraisInscription: data.fraisInscription ? Number(data.fraisInscription) : null,
+        syllabusUrl: data.syllabusUrl || null,
+        syllabusNomFichier: data.syllabusNomFichier || null,
+        imageUrl: data.imageUrl || null,
         etablissementId,
         formationReferentielId,
       },
@@ -325,6 +330,9 @@ export class PedagogieService {
     if (data.badgeTexte !== undefined) updateData.badgeTexte = data.badgeTexte;
     if (data.ordre !== undefined) updateData.ordre = Number(data.ordre);
     if (data.actif !== undefined) updateData.actif = data.actif;
+    if (data.syllabusUrl !== undefined) updateData.syllabusUrl = data.syllabusUrl;
+    if (data.syllabusNomFichier !== undefined) updateData.syllabusNomFichier = data.syllabusNomFichier;
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
     if (data.formationReferentielId !== undefined || data.filiereId !== undefined) {
       updateData.formationReferentielId = await this.resolveFormationReferentielId(
         data.formationReferentielId !== undefined ? data.formationReferentielId : data.filiereId,
@@ -367,11 +375,134 @@ export class PedagogieService {
       data: { formationId: updated.id, action: 'UPDATE' },
     });
 
+    // Invalider le cache de la landing page immédiatement
+    LandingService.invalidateCache();
+
     // ===== M2+C1 : Sync multi-établissement + cache =====
     ApprenantCache.invalidateParEtablissement([formation.etablissementId]);
     if (user.role === Role.ADMIN_CENTRE) {
       this.synchroniserFormationSourceVersClones(id).catch((err) => {
         this.logger.error(`[SYNC-AUTO] updateFormation ${id}: ${err.message}`);
+      });
+    }
+
+    return updated;
+  }
+
+  async uploadSyllabus(id: string, url: string, originalName: string, user: any) {
+    const formation = await this.getFormation(id, user);
+    if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
+      throw new ForbiddenException('BR-02 : Action non autorisée pour cet établissement.');
+    }
+
+    const updated = await this.prisma.formation.update({
+      where: { id },
+      data: {
+        syllabusUrl: url,
+        syllabusNomFichier: originalName,
+      },
+    });
+
+    this.invalidateFormationsCache(formation.etablissementId);
+    ApprenantCache.invalidateParEtablissement([formation.etablissementId]);
+
+    this.notifications.emit({
+      type: 'FORMATION_UPDATE',
+      recipientEtablissementId: formation.etablissementId,
+      title: 'Syllabus officiel disponible',
+      message: `Le syllabus de la formation "${updated.titre}" est désormais accessible au téléchargement.`,
+      data: { formationId: updated.id, syllabusUrl: url },
+    });
+
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(id).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] uploadSyllabus ${id}: ${err.message}`);
+      });
+    }
+
+    return updated;
+  }
+
+  async deleteSyllabus(id: string, user: any) {
+    const formation = await this.getFormation(id, user);
+    if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
+      throw new ForbiddenException('BR-02 : Action non autorisée pour cet établissement.');
+    }
+
+    const updated = await this.prisma.formation.update({
+      where: { id },
+      data: {
+        syllabusUrl: null,
+        syllabusNomFichier: null,
+      },
+    });
+
+    this.invalidateFormationsCache(formation.etablissementId);
+    ApprenantCache.invalidateParEtablissement([formation.etablissementId]);
+
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(id).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] deleteSyllabus ${id}: ${err.message}`);
+      });
+    }
+
+    return updated;
+  }
+
+  async uploadImage(id: string, url: string, user: any) {
+    const formation = await this.getFormation(id, user);
+    if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
+      throw new ForbiddenException('BR-02 : Action non autorisée pour cet établissement.');
+    }
+
+    const updated = await this.prisma.formation.update({
+      where: { id },
+      data: {
+        imageUrl: url,
+      },
+    });
+
+    this.invalidateFormationsCache(formation.etablissementId);
+    ApprenantCache.invalidateParEtablissement([formation.etablissementId]);
+    // Invalider le cache landing : l'image doit apparaître immédiatement sur la vitrine
+    LandingService.invalidateCache();
+
+    this.notifications.emit({
+      type: 'FORMATION_UPDATE',
+      recipientEtablissementId: formation.etablissementId,
+      title: 'Image de couverture mise à jour',
+      message: `L'image de couverture de la formation "${updated.titre}" a été mise à jour.`,
+      data: { formationId: updated.id, imageUrl: url },
+    });
+
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(id).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] uploadImage ${id}: ${err.message}`);
+      });
+    }
+
+    return updated;
+  }
+
+  async deleteImage(id: string, user: any) {
+    const formation = await this.getFormation(id, user);
+    if (user.role !== Role.ADMIN_CENTRE && formation.etablissementId !== user.etablissementId) {
+      throw new ForbiddenException('BR-02 : Action non autorisée pour cet établissement.');
+    }
+
+    const updated = await this.prisma.formation.update({
+      where: { id },
+      data: {
+        imageUrl: null,
+      },
+    });
+
+    this.invalidateFormationsCache(formation.etablissementId);
+    ApprenantCache.invalidateParEtablissement([formation.etablissementId]);
+
+    if (user.role === Role.ADMIN_CENTRE) {
+      this.synchroniserFormationSourceVersClones(id).catch((err) => {
+        this.logger.error(`[SYNC-AUTO] deleteImage ${id}: ${err.message}`);
       });
     }
 
@@ -436,6 +567,9 @@ export class PedagogieService {
           fraisInscription: source.fraisInscription,
           etablissementId: etab.id,
           formationReferentielId: source.formationReferentielId,
+          syllabusUrl: source.syllabusUrl,
+          syllabusNomFichier: source.syllabusNomFichier,
+          imageUrl: source.imageUrl,
         },
       });
 
@@ -456,6 +590,7 @@ export class PedagogieService {
               titre: cours.titre,
               contenu: cours.contenu,
               fileUrl: cours.fileUrl,
+              dureeMinutes: cours.dureeMinutes,
             },
           });
         }
@@ -497,6 +632,7 @@ export class PedagogieService {
               titre: dv.titre,
               consignes: dv.consignes,
               dateLimite: dv.dateLimite,
+              criteresEvaluation: (dv.criteresEvaluation as any) ?? undefined,
             },
           });
         }
@@ -622,7 +758,7 @@ export class PedagogieService {
   // ====================================
   // COURS
   // ====================================
-  async createCours(moduleId: string, data: { titre: string; contenu?: string; fileUrl?: string }, user: any) {
+  async createCours(moduleId: string, data: { titre: string; contenu?: string; fileUrl?: string; dureeMinutes?: number }, user: any) {
     const mod = await this.prisma.module.findUnique({
       where: { id: moduleId },
       include: { formation: true },
@@ -795,13 +931,39 @@ export class PedagogieService {
 
   async deleteFormation(id: string, user: any) {
     const formation = await this.getFormation(id, user);
-    const deleted = await this.prisma.formation.delete({ where: { id } });
+
+    // Vérifier si des inscriptions actives existent pour cette formation
+    const inscriptionsCount = await this.prisma.inscription.count({
+      where: { formationId: id },
+    });
+
+    let result: any;
+    if (inscriptionsCount > 0) {
+      // Soft delete : archiver la formation sans la supprimer (contrainte FK inscriptions)
+      this.logger.warn(`[deleteFormation] Formation ${id} a ${inscriptionsCount} inscription(s) — archivage (soft delete) au lieu d'une suppression physique.`);
+      result = await this.prisma.formation.update({
+        where: { id },
+        data: {
+          actif: false,
+          publieSurLanding: false,
+        },
+      });
+    } else {
+      // Aucune inscription : suppression physique possible
+      result = await this.prisma.formation.delete({ where: { id } });
+    }
+
     this.invalidateFormationsCache(id);
+    this.invalidateFormationsCache(formation.etablissementId);
+    ApprenantCache.invalidateParEtablissement([formation.etablissementId]);
+    // Invalider le cache landing pour que la formation disparaisse de la vitrine
+    LandingService.invalidateCache();
+
     this.notifications.emit({
       type: 'FORMATION_UPDATE',
       recipientEtablissementId: formation.etablissementId,
       title: 'Formation supprimée',
-      message: `La formation a été supprimée.`,
+      message: `La formation a été ${inscriptionsCount > 0 ? 'archivée' : 'supprimée'}.`,
       data: { formationId: id, action: 'DELETE', etablissementId: formation.etablissementId },
     });
     this.notifications.emit({
@@ -810,7 +972,7 @@ export class PedagogieService {
       message: `Une formation a été retirée du catalogue.`,
       data: { formationId: id, action: 'DELETE' },
     });
-    return deleted;
+    return result;
   }
 
   async submitNote(evaluationId: string, userId: string, valeur: number, user: any, ipAdresse: string) {
@@ -1023,7 +1185,7 @@ export class PedagogieService {
   // ====================================
   // UPDATE & DELETE COURS
   // ====================================
-  async updateCours(id: string, data: { titre?: string; contenu?: string; fileUrl?: string }, user: any) {
+  async updateCours(id: string, data: { titre?: string; contenu?: string; fileUrl?: string; dureeMinutes?: number }, user: any) {
     const cours = await this.prisma.cours.findUnique({
       where: { id },
       include: { module: { include: { formation: true } } },
@@ -1032,13 +1194,15 @@ export class PedagogieService {
     if (user.role !== Role.ADMIN_CENTRE && cours.module.formation.etablissementId !== user.etablissementId) {
       throw new ForbiddenException('BR-02 : Accès interdit.');
     }
+    const updateData: any = {};
+    if (data.titre !== undefined) updateData.titre = data.titre;
+    if (data.contenu !== undefined) updateData.contenu = data.contenu;
+    if (data.fileUrl !== undefined) updateData.fileUrl = data.fileUrl;
+    if (data.dureeMinutes !== undefined) updateData.dureeMinutes = data.dureeMinutes;
+
     const updated = await this.prisma.cours.update({
       where: { id },
-      data: {
-        titre: data.titre,
-        contenu: data.contenu,
-        fileUrl: data.fileUrl,
-      },
+      data: updateData,
     });
     this.invalidateFormationsCache(cours.module.formationId);
 
@@ -1645,6 +1809,22 @@ export class PedagogieService {
     for (const clone of clones) {
       stats.etablissementsCibles.push(clone.etablissementId);
 
+      // Harmoniser le syllabus et l'image si la source en dispose
+      if (
+        clone.syllabusUrl !== source.syllabusUrl ||
+        clone.syllabusNomFichier !== source.syllabusNomFichier ||
+        clone.imageUrl !== source.imageUrl
+      ) {
+        await this.prisma.formation.update({
+          where: { id: clone.id },
+          data: {
+            syllabusUrl: source.syllabusUrl,
+            syllabusNomFichier: source.syllabusNomFichier,
+            imageUrl: source.imageUrl,
+          },
+        });
+      }
+
       // === Niveau 1 : MODULES (clé naturelle : ordre d'abord, sinon titre) ===
       const modulesSourceByOrdre = new Map<number, any>();
       const modulesSourceByTitre = new Map<string, any>();
@@ -1688,6 +1868,7 @@ export class PedagogieService {
                 titre: c.titre,
                 contenu: c.contenu,
                 fileUrl: c.fileUrl,
+                dureeMinutes: c.dureeMinutes,
               })),
             });
             stats.coursCrees += modSrc.cours.length;
@@ -1734,6 +1915,7 @@ export class PedagogieService {
                 titre: d.titre,
                 consignes: d.consignes,
                 dateLimite: d.dateLimite,
+                criteresEvaluation: (d.criteresEvaluation as any) ?? undefined,
               })),
             });
             stats.devoirsCrees += modSrc.devoirs.length;
@@ -1772,13 +1954,15 @@ export class PedagogieService {
               if (!existant) return;
               if (existant.titre !== item.titre ||
                   existant.contenu !== item.contenu ||
-                  existant.fileUrl !== item.fileUrl) {
+                  existant.fileUrl !== item.fileUrl ||
+                  existant.dureeMinutes !== item.dureeMinutes) {
                 await this.prisma.cours.update({
                   where: { id },
                   data: {
                     titre: item.titre,
                     contenu: item.contenu,
                     fileUrl: item.fileUrl,
+                    dureeMinutes: item.dureeMinutes,
                   },
                 });
                 stats.coursMisAJour++;
@@ -1806,7 +1990,7 @@ export class PedagogieService {
                 this.logger.warn(`[SYNC] Cours protégés (progression existante) non supprimés : ${Array.from(idsProteges).length}`);
               }
             },
-            (src) => ({ moduleId: modClone.id, titre: src.titre, contenu: src.contenu, fileUrl: src.fileUrl }),
+            (src) => ({ moduleId: modClone.id, titre: src.titre, contenu: src.contenu, fileUrl: src.fileUrl, dureeMinutes: src.dureeMinutes }),
             (c) => c.titre.trim().toLowerCase(),
             (c) => c.id,
           );
@@ -1962,13 +2146,15 @@ export class PedagogieService {
               if (!existant) return;
               if (existant.titre !== item.titre ||
                   existant.consignes !== item.consignes ||
-                  String(existant.dateLimite ?? '') !== String(item.dateLimite ?? '')) {
+                  String(existant.dateLimite ?? '') !== String(item.dateLimite ?? '') ||
+                  JSON.stringify(existant.criteresEvaluation) !== JSON.stringify(item.criteresEvaluation)) {
                 await this.prisma.devoir.update({
                   where: { id },
                   data: {
                     titre: item.titre,
                     consignes: item.consignes,
                     dateLimite: item.dateLimite,
+                    criteresEvaluation: (item.criteresEvaluation as any) ?? undefined,
                   },
                 });
                 stats.devoirsMisAJour++;
@@ -1993,6 +2179,7 @@ export class PedagogieService {
               titre: src.titre,
               consignes: src.consignes,
               dateLimite: src.dateLimite,
+              criteresEvaluation: (src.criteresEvaluation as any) ?? undefined,
             }),
             (d) => d.titre.trim().toLowerCase(),
             (d) => d.id,

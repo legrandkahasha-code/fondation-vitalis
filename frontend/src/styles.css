@@ -1,17 +1,21 @@
 /* ====================================
  * Vitalis Center EUP — Styles Globaux
- * Charte graphique institutionnelle
- * Conforme au Ministère de la Formation Professionnelle
+ * Charte graphique institutionnelle v2.1
+ * Conforme Ministère de la Formation Professionnelle
+ * Mise à jour : Octobre 2026 — Refonte UX/UI Premium
  * ==================================== */
 
 @import 'tailwindcss';
 
 @theme {
+  /* Couleurs institutionnelles principales */
   --color-bleu: #1C75BC;
   --color-bleu-fonce: #124F80;
   --color-bleu-clair: #E7F1FA;
   --color-or: #F0791E;
   --color-or-clair: #FDECDD;
+  --color-or-africain: #C8902A;       /* Or Kinshasa — identité africaine */
+  --color-or-africain-clair: #F9F0DC; /* Fond gold doux */
   --color-teal: #2AA9A0;
   --color-vert: #276B44;
   --color-vert-clair: #E7F1EA;
@@ -29,6 +33,7 @@
   --color-vc-primary-light: #E7F1FA;
   --color-vc-secondary: #F0791E;
   --color-vc-secondary-light: #FDECDD;
+  --color-vc-gold: #C8902A;
   --color-vc-text: #1B1D1F;
   --color-vc-text-muted: #4B5157;
   --color-vc-background: #F5F6F7;
@@ -42,6 +47,7 @@
   --color-vc-info: #1C75BC;
 
   /* Typographie */
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-heading: 'Public Sans', sans-serif;
   --font-body: 'Public Sans', sans-serif;
 }
@@ -52,6 +58,8 @@
   --bleu-clair: #E7F1FA;
   --or: #F0791E;
   --or-clair: #FDECDD;
+  --or-africain: #C8902A;
+  --or-africain-clair: #F9F0DC;
   --teal: #2AA9A0;
   --vert: #276B44;
   --vert-clair: #E7F1EA;
@@ -69,13 +77,46 @@
   --color-vc-primary-dark: var(--bleu-fonce);
   --color-vc-primary-light: var(--bleu-clair);
   --color-vc-secondary: var(--or);
+  --color-vc-gold: var(--or-africain);
   --color-vc-text: var(--texte);
   --color-vc-text-muted: var(--texte-att);
   --color-vc-background: var(--gris-fond);
   --color-vc-surface: var(--blanc);
   --color-vc-border: var(--gris-bordure);
+  --font-display: 'Playfair Display', Georgia, serif;
   --font-heading: 'Public Sans', sans-serif;
   --font-body: 'Public Sans', sans-serif;
+}
+
+/* ====================================
+ * Accessibilité — Skip to content (WCAG 2.1 AA)
+ * ==================================== */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 99999;
+  background: var(--bleu-fonce);
+  color: #fff;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid var(--or);
+  outline-offset: 2px;
+}
+
+/* Focus visible accessible pour clavier */
+:focus-visible {
+  outline: 2px solid var(--or);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 /* ====================================
@@ -98,9 +139,21 @@ body {
 }
 
 /* ====================================
- * Typographie & Éléments signatures
+ * Typographie — Hiérarchie Institutionnelle Premium
+ * H1 : Playfair Display (autorité, prestige)
+ * H2–H6 : Public Sans (clarté, lisibilité)
  * ==================================== */
-h1, h2, h3, h4, h5, h6 {
+h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--texte);
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+h2, h3, h4, h5, h6 {
   font-family: 'Public Sans', sans-serif;
   font-weight: 700;
   color: var(--texte);
@@ -108,9 +161,21 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.25;
 }
 
-h1 { font-size: 36px; }
 h2 { font-size: 24px; }
 h3 { font-size: 20px; }
+
+/* Titre display hero — Playfair Display avec force */
+.title-display {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Classe utilitaire pour forcage sérif institutionnel */
+.font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
 
 p {
   line-height: 1.55;
@@ -128,18 +193,88 @@ a:hover {
   color: var(--bleu-fonce);
 }
 
-/* Barre d'accent — élément signature unique */
+/* ====================================
+ * Barre d'accent signature — Animée à l'entrée
+ * ==================================== */
 .barre {
   width: 56px;
   height: 5px;
   background: var(--or);
   margin-top: 14px;
   border-radius: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.barre.visible {
+  transform: scaleX(1);
 }
 
 .barre.grande {
   width: 72px;
   height: 6px;
+}
+
+/* Barre centree (mx-auto) : transform-origin centré */
+.barre.mx-auto {
+  transform-origin: center center;
+}
+
+.barre.force-visible {
+  transform: scaleX(1) !important;
+}
+
+.barre.gold {
+  background-color: var(--or-africain);
+}
+
+/* Fallback : si JS est désactivé ou IntersectionObserver indisponible */
+@media (prefers-reduced-motion: reduce) {
+  .barre {
+    transform: scaleX(1) !important;
+    transition: none !important;
+  }
+}
+
+/* ====================================
+ * Or Africain — Éléments de Prestige
+ * ==================================== */
+.gold-africain {
+  color: var(--or-africain);
+}
+
+.bg-gold-africain {
+  background-color: var(--or-africain);
+}
+
+.bg-gold-africain-clair {
+  background-color: var(--or-africain-clair);
+}
+
+.border-gold-africain {
+  border-color: var(--or-africain);
+}
+
+/* Citation prestige — style témoignages */
+.citation-prestige {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 17px;
+  color: var(--texte);
+  line-height: 1.55;
+  position: relative;
+}
+
+.citation-prestige::before {
+  content: '\201C';
+  font-size: 48px;
+  color: var(--or-africain);
+  font-family: 'Playfair Display', Georgia, serif;
+  line-height: 0;
+  vertical-align: -20px;
+  margin-right: 4px;
+  opacity: 0.7;
 }
 
 /* ====================================
@@ -240,6 +375,7 @@ a:hover {
 .field input:focus, .form-input:focus, .field select:focus, .field textarea:focus {
   outline: none;
   border-color: var(--or);
+  box-shadow: 0 0 0 3px rgba(240, 121, 30, 0.12);
 }
 
 .field .hint {
@@ -364,27 +500,138 @@ a:hover {
 .text-vc-muted { color: var(--texte-att); }
 
 /* ====================================
+ * Section Témoignages
+ * ==================================== */
+.temoignage-card {
+  background: var(--blanc);
+  border: 1px solid var(--gris-bordure);
+  border-radius: 2px;
+  padding: 28px;
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
+}
+
+.temoignage-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -8px rgba(18, 79, 128, 0.12),
+              0 4px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+.temoignage-card::before {
+  content: '\201C';
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 80px;
+  color: var(--or-africain);
+  opacity: 0.15;
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.temoignage-stars {
+  display: flex;
+  gap: 2px;
+  color: var(--or-africain);
+  font-size: 14px;
+}
+
+/* ====================================
+ * Section Formateurs
+ * ==================================== */
+.formateur-card {
+  background: var(--blanc);
+  border: 1px solid var(--gris-bordure);
+  border-radius: 2px;
+  padding: 24px;
+  text-align: center;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+  will-change: transform;
+}
+
+.formateur-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 32px -8px rgba(18, 79, 128, 0.13);
+  border-color: var(--bleu);
+}
+
+.formateur-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+  border: 4px solid var(--bleu-clair);
+  display: block;
+  margin: 0 auto 12px;
+  transition: border-color 0.2s ease, transform 0.3s ease;
+}
+
+.formateur-card:hover .formateur-avatar {
+  border-color: var(--bleu);
+  transform: scale(1.06);
+}
+
+/* ====================================
+ * Logos Partenaires — Bande employeurs
+ * ==================================== */
+.partenaire-logo-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  background: var(--blanc);
+  border: 1px solid var(--gris-bordure);
+  border-radius: 2px;
+  opacity: 0.65;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.partenaire-logo-item:hover {
+  opacity: 1;
+  border-color: var(--bleu);
+}
+
+/* ====================================
+ * Section Carte localisation
+ * ==================================== */
+.map-container {
+  border-radius: 2px;
+  overflow: hidden;
+  border: 2px solid var(--gris-bordure);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* ====================================
  * Animations & Effets Visuels Haute Performance (GPU)
- * Conformes aux standards TVET / Ministériels
  * ==================================== */
 
+/* === IMPORTANT : Pulses limités à des usages critiques === */
+/* animate-pulse-glow : réservé aux indicateurs de statut en ligne */
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(42, 169, 160, 0.6);
+    box-shadow: 0 0 0 0 rgba(42, 169, 160, 0.5);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(42, 169, 160, 0);
-    transform: scale(1.08);
+    box-shadow: 0 0 0 5px rgba(42, 169, 160, 0);
+    transform: scale(1.06);
   }
 }
 
+/* animate-pulse-glow-or : réservé uniquement aux boutons "Organisme Agréé" */
 @keyframes pulseGlowOr {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(240, 121, 30, 0.5);
+    box-shadow: 0 0 0 0 rgba(240, 121, 30, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(240, 121, 30, 0);
+    box-shadow: 0 0 0 6px rgba(240, 121, 30, 0);
   }
 }
 
@@ -443,12 +690,19 @@ a:hover {
   }
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
+/* Pulse discret pour pastille "en ligne" uniquement */
+.animate-pulse-glow {
+  animation: pulseGlow 2.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Pulse or uniquement pour le badge "Organisme Agréé" */
 .animate-pulse-glow-or {
-  animation: pulseGlowOr 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  animation: pulseGlowOr 2.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
 .animate-float {
@@ -472,6 +726,11 @@ a:hover {
   animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* Marquee */
 .marquee-container {
   display: flex;
   overflow: hidden;
@@ -492,7 +751,7 @@ a:hover {
   animation-play-state: paused;
 }
 
-/* Shimmer overlay pour badges de sécurité */
+/* Shimmer overlay — badge EUP uniquement */
 .shimmer-badge {
   position: relative;
   overflow: hidden;
@@ -528,7 +787,7 @@ a:hover {
   animation: scanlineAnim 2.2s ease-in-out infinite;
 }
 
-/* Carte interactive avec micro-élévation & bordure active */
+/* Carte interactive avec micro-élévation */
 .card-interactive {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
@@ -542,7 +801,7 @@ a:hover {
               0 4px 8px -2px rgba(0, 0, 0, 0.04);
 }
 
-/* Animation News Showcase Crossfade & Ken Burns */
+/* Ken Burns pour images actualités */
 @keyframes kenBurnsSlow {
   0% {
     transform: scale(1);
@@ -575,17 +834,32 @@ a:hover {
   transition: width 0.06s linear;
 }
 
-/* Accessibilité : désactivation pour utilisateurs sensibles aux mouvements */
+/* ====================================
+ * Accessibilité : désactivation pour utilisateurs
+ * sensibles aux mouvements (prefers-reduced-motion)
+ * ==================================== */
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse-glow,
   .animate-pulse-glow-or,
   .animate-float,
+  .animate-float-delayed,
   .animate-fade-in-up,
+  .animate-fade-in,
   .marquee-content,
   .shimmer-badge::after,
-  .scan-line {
+  .scan-line,
+  .ken-burns-anim,
+  .animate-slide-crossfade,
+  .card-interactive,
+  .temoignage-card,
+  .formateur-card,
+  .formateur-avatar {
     animation: none !important;
     transition: none !important;
+  }
+
+  .barre {
+    transform: scaleX(1) !important;
   }
 }
 
@@ -593,7 +867,7 @@ a:hover {
    Utilitaires accessibilité & sécurité — Landing Page
    ========================================================= */
 
-/* Champ piège anti-spam (Honeypot OWASP) — rendu invisible sans style="display:none" inline */
+/* Champ piège anti-spam (Honeypot OWASP) */
 .honeypot-trap {
   position: absolute;
   width: 1px;
@@ -607,7 +881,50 @@ a:hover {
   pointer-events: none;
 }
 
-/* Fond dégradé radial de la section vérification de certificat */
+/* Fond dégradé radial de la section vérification */
 .verif-bg-radial {
   background: radial-gradient(ellipse at 50% 0%, rgba(28, 117, 188, 0.25) 0%, transparent 65%);
+}
+
+/* =========================================================
+   Ratings étoiles — Cartes formations
+   ========================================================= */
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  color: var(--or-africain);
+  font-size: 13px;
+}
+
+/* =========================================================
+   Badge "Très demandé / Formation Vedette"
+   ========================================================= */
+.badge-hot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #ED1C24 0%, #C8902A 100%);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* =========================================================
+   Fond sections alternées — distinction perceptuelle
+   ========================================================= */
+
+/* Section paire : blanc légèrement teinté */
+.section-warm {
+  background: linear-gradient(180deg, #FAFBFC 0%, #F5F6F7 100%);
+}
+
+/* Section avec accent gold africain discret */
+.section-prestige {
+  background: linear-gradient(180deg, var(--or-africain-clair) 0%, var(--blanc) 100%);
+  border-top: 3px solid var(--or-africain);
 }

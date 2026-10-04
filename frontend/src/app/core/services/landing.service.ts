@@ -7,6 +7,10 @@ import {
   LandingPageSection,
   LandingPageTemoignage,
   LandingPageActualite,
+  LandingPageFormateur,
+  LandingPageCampus,
+  LandingPagePartenaire,
+  LandingNewsletterAbonne,
   PublicLandingData,
   ContactMessageItem,
   WhatsappWidget,
@@ -33,6 +37,10 @@ export class LandingService {
 
   submitContact(data: { nom: string; telephone: string; filiere?: string; message?: string; email?: string; honeypot?: string }): Observable<any> {
     return this.http.post<any>(`${this.url}/contact`, data);
+  }
+
+  subscribeNewsletter(email: string): Observable<any> {
+    return this.http.post<any>(`${this.url}/newsletter`, { email });
   }
 
   // --- ADMIN SETTINGS ---
@@ -107,6 +115,66 @@ export class LandingService {
 
   deleteTemoignage(id: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/temoignages/${id}`);
+  }
+
+  // --- ADMIN FORMATEURS ---
+  getFormateurs(): Observable<LandingPageFormateur[]> {
+    return this.http.get<LandingPageFormateur[]>(`${this.url}/formateurs`);
+  }
+
+  createFormateur(data: Partial<LandingPageFormateur>): Observable<LandingPageFormateur> {
+    return this.http.post<LandingPageFormateur>(`${this.url}/formateurs`, data);
+  }
+
+  updateFormateur(id: string, data: Partial<LandingPageFormateur>): Observable<LandingPageFormateur> {
+    return this.http.put<LandingPageFormateur>(`${this.url}/formateurs/${id}`, data);
+  }
+
+  deleteFormateur(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/formateurs/${id}`);
+  }
+
+  // --- ADMIN CAMPUS ESPACES ---
+  getCampus(): Observable<LandingPageCampus[]> {
+    return this.http.get<LandingPageCampus[]>(`${this.url}/campus`);
+  }
+
+  createCampus(data: Partial<LandingPageCampus>): Observable<LandingPageCampus> {
+    return this.http.post<LandingPageCampus>(`${this.url}/campus`, data);
+  }
+
+  updateCampus(id: string, data: Partial<LandingPageCampus>): Observable<LandingPageCampus> {
+    return this.http.put<LandingPageCampus>(`${this.url}/campus/${id}`, data);
+  }
+
+  deleteCampus(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/campus/${id}`);
+  }
+
+  // --- ADMIN PARTENAIRES ---
+  getPartenaires(): Observable<LandingPagePartenaire[]> {
+    return this.http.get<LandingPagePartenaire[]>(`${this.url}/partenaires`);
+  }
+
+  createPartenaire(data: Partial<LandingPagePartenaire>): Observable<LandingPagePartenaire> {
+    return this.http.post<LandingPagePartenaire>(`${this.url}/partenaires`, data);
+  }
+
+  updatePartenaire(id: string, data: Partial<LandingPagePartenaire>): Observable<LandingPagePartenaire> {
+    return this.http.put<LandingPagePartenaire>(`${this.url}/partenaires/${id}`, data);
+  }
+
+  deletePartenaire(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/partenaires/${id}`);
+  }
+
+  // --- ADMIN NEWSLETTER ---
+  getNewsletterAbonnes(): Observable<LandingNewsletterAbonne[]> {
+    return this.http.get<LandingNewsletterAbonne[]>(`${this.url}/newsletter/abonnes`);
+  }
+
+  deleteNewsletterAbonne(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/newsletter/abonnes/${id}`);
   }
 
   // --- ADMIN CONTACT MESSAGES / ORIENTATIONS ---

@@ -8,6 +8,7 @@ export interface Devoir {
   titre: string;
   consignes?: string;
   dateLimite?: string;
+  criteresEvaluation?: any;
   moduleId: string;
   soumissions?: SoumissionDevoir[];
   _count?: { soumissions: number };
@@ -38,7 +39,7 @@ export class DevoirsService {
     return this.http.get<Devoir>(`${this.url}/${id}`);
   }
 
-  create(moduleId: string, data: { titre: string; consignes?: string; dateLimite?: string }): Observable<Devoir> {
+  create(moduleId: string, data: { titre: string; consignes?: string; dateLimite?: string; criteresEvaluation?: any }): Observable<Devoir> {
     return this.http.post<Devoir>(`${this.url}/module/${moduleId}`, data);
   }
 
@@ -56,7 +57,7 @@ export class DevoirsService {
     return this.http.get<SoumissionDevoir[]>(`${this.url}/mes/soumissions`);
   }
 
-  update(id: string, data: { titre?: string; consignes?: string; dateLimite?: string }): Observable<Devoir> {
+  update(id: string, data: { titre?: string; consignes?: string; dateLimite?: string; criteresEvaluation?: any }): Observable<Devoir> {
     return this.http.put<Devoir>(`${this.url}/${id}`, data);
   }
 

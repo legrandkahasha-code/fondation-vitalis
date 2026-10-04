@@ -220,6 +220,86 @@ export class UpdateLandingSettingsDto {
   @IsOptional()
   @IsString()
   footerBarreTexte?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  videoActif?: boolean;
+
+  @IsOptional()
+  @IsString()
+  videoSousTitre?: string;
+
+  @IsOptional()
+  @IsString()
+  videoTitre?: string;
+
+  @IsOptional()
+  @IsString()
+  videoDescription?: string;
+
+  @IsOptional()
+  @IsString()
+  videoBoutonPrincipal?: string;
+
+  @IsOptional()
+  @IsString()
+  videoBoutonSecondaire?: string;
+
+  @IsOptional()
+  @IsString()
+  videoBoutonSecondaireUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  videoPresentationUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  videoPosterUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  videoBadgeHaut?: string;
+
+  @IsOptional()
+  @IsString()
+  videoBadgeBas?: string;
+
+  @IsOptional()
+  @IsString()
+  videoTitreOverlay?: string;
+
+  @IsOptional()
+  @IsString()
+  videoSousTitreOverlay?: string;
+
+  @IsOptional()
+  @IsString()
+  videoLegende?: string;
+
+  @IsOptional()
+  @IsString()
+  videoDuree?: string;
+
+  @IsOptional()
+  @IsString()
+  socialLinkedin?: string;
+
+  @IsOptional()
+  @IsString()
+  socialFacebook?: string;
+
+  @IsOptional()
+  @IsString()
+  socialYoutube?: string;
+
+  @IsOptional()
+  @IsString()
+  mapEmbedUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  liveActivityTexte?: string;
 }
 
 export class CreateLandingSectionDto {
@@ -236,6 +316,10 @@ export class CreateLandingSectionDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  categorie?: string;
 
   @IsOptional()
   @IsInt()
@@ -282,6 +366,10 @@ export class UpdateLandingSectionDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  categorie?: string;
+
+  @IsOptional()
   @IsInt()
   ordre?: number;
 
@@ -302,11 +390,30 @@ export class CreateLandingTemoignageDto {
   @IsString()
   nom: string;
 
+  @IsOptional()
   @IsString()
-  initiales: string;
+  initiales?: string;
 
   @IsString()
   role: string;
+
+  @IsOptional()
+  @IsString()
+  fonction?: string;
+
+  @IsOptional()
+  @IsString()
+  entreprise?: string;
+
+  @IsOptional()
+  @IsSafeMediaUrl()
+  photoUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  note?: number;
 
   @IsOptional()
   @IsString()
@@ -353,6 +460,24 @@ export class UpdateLandingTemoignageDto {
 
   @IsOptional()
   @IsString()
+  fonction?: string;
+
+  @IsOptional()
+  @IsString()
+  entreprise?: string;
+
+  @IsOptional()
+  @IsSafeMediaUrl()
+  photoUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  note?: number;
+
+  @IsOptional()
+  @IsString()
   promotion?: string;
 
   @IsOptional()
@@ -370,6 +495,198 @@ export class UpdateLandingTemoignageDto {
   @IsOptional()
   @IsBoolean()
   actif?: boolean;
+}
+
+// --- FORMATEURS DTO ---
+export class CreateLandingFormateurDto {
+  @IsString()
+  nom: string;
+
+  @IsString()
+  titre: string;
+
+  @IsString()
+  specialite: string;
+
+  @IsString()
+  experience: string;
+
+  @IsOptional()
+  @IsSafeMediaUrl()
+  photoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  linkedin?: string;
+
+  @IsOptional()
+  @IsInt()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+}
+
+export class UpdateLandingFormateurDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  nom?: string;
+
+  @IsOptional()
+  @IsString()
+  titre?: string;
+
+  @IsOptional()
+  @IsString()
+  specialite?: string;
+
+  @IsOptional()
+  @IsString()
+  experience?: string;
+
+  @IsOptional()
+  @IsSafeMediaUrl()
+  photoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  linkedin?: string;
+
+  @IsOptional()
+  @IsInt()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+}
+
+// --- CAMPUS ESPACES DTO ---
+export class CreateLandingCampusDto {
+  @IsString()
+  titre: string;
+
+  @IsString()
+  description: string;
+
+  @IsOptional()
+  @IsSafeMediaUrl()
+  photoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  badge?: string;
+
+  @IsString()
+  equipements: string;
+
+  @IsOptional()
+  @IsInt()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+}
+
+export class UpdateLandingCampusDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  titre?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsSafeMediaUrl()
+  photoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  badge?: string;
+
+  @IsOptional()
+  @IsString()
+  equipements?: string;
+
+  @IsOptional()
+  @IsInt()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+}
+
+// --- PARTENAIRES DTO ---
+export class CreateLandingPartenaireDto {
+  @IsString()
+  nom: string;
+
+  @IsString()
+  logoUrl: string;
+
+  @IsOptional()
+  @IsString()
+  secteur?: string;
+
+  @IsOptional()
+  @IsString()
+  siteWeb?: string;
+
+  @IsOptional()
+  @IsInt()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+}
+
+export class UpdateLandingPartenaireDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  nom?: string;
+
+  @IsOptional()
+  @IsString()
+  logoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  secteur?: string;
+
+  @IsOptional()
+  @IsString()
+  siteWeb?: string;
+
+  @IsOptional()
+  @IsInt()
+  ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  actif?: boolean;
+}
+
+// --- NEWSLETTER DTO ---
+export class NewsletterSubscribeDto {
+  @IsEmail({}, { message: 'Adresse email invalide.' })
+  email: string;
 }
 
 export class ContactMessageDto {

@@ -1,3 +1,4 @@
+<a href="#contenu-principal" class="skip-link">Aller au contenu principal</a>
 <div class="w-full">
 <div class="min-h-screen flex flex-col bg-white text-[#1B1D1F] font-['Public_Sans',sans-serif] overflow-x-clip w-full">
       
@@ -26,7 +27,7 @@
       <div class="bg-[#124F80] text-white text-[11px] sm:text-xs py-1.5 px-4 sm:px-6 lg:px-8 border-b border-[#0D3859] w-full">
         <div class="max-w-[1600px] mx-auto flex flex-wrap justify-between items-center gap-2">
           <div class="flex items-center gap-2 font-medium min-w-0">
-            <span class="inline-block w-2 h-2 rounded-full bg-[#2AA9A0] shrink-0 animate-pulse-glow"></span>
+            <span class="inline-block w-2 h-2 rounded-full bg-[#2AA9A0] shrink-0"></span>
             <span class="truncate">
               {{ settings.topbarTexte }}
             </span>
@@ -62,6 +63,7 @@
               <img 
                 src="assets/logo-vitalis.png" 
                 alt="Logo Vitalis Center EUP"
+                title="Vitalis Center EUP"
                 class="h-9 sm:h-10 2xl:h-11 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
               />
               <div class="flex flex-col justify-center">
@@ -201,6 +203,7 @@
 
       <!-- 3. SECTION HERO (SPLIT HERO CONFORME ANALYSE COMPARATIVE INTERNATIONALE) -->
       <section id="accueil" class="py-12 lg:py-16 px-4 sm:px-6 bg-gradient-to-b from-[#E7F1FA]/80 via-[#F8FAFC] to-white border-b border-[#D7DBDE] relative overflow-hidden">
+        <div id="contenu-principal" tabindex="-1"></div>
         
         <!-- Éléments de fond décoratifs subtils et lumineux -->
         <div class="absolute -right-20 -top-20 w-96 h-96 bg-[#1C75BC]/8 rounded-full blur-3xl pointer-events-none"></div>
@@ -211,30 +214,40 @@
           <!-- CÔTÉ GAUCHE : TEXTE & PROPOSITION DE VALEUR (100% DE LISIBILITÉ ET HAUT CONTRASTE) -->
           <div class="lg:col-span-7 animate-fade-in-up">
             
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#E7F1FA] border border-[#1C75BC]/30 text-[#1C75BC] text-xs font-semibold rounded-md mb-4 shadow-xs">
-              <span class="inline-block w-2 h-2 rounded-full bg-[#1C75BC] animate-pulse-glow"></span>
-              <span>Autorisation Ministérielle : {{ settings.heroNumeroAgrement }}</span>
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#E7F1FA] border border-[#1C75BC]/30 text-[#1C75BC] text-xs font-semibold rounded-md shadow-xs">
+                <span class="inline-block w-2 h-2 rounded-full bg-[#1C75BC]"></span>
+                <span>Autorisation Ministérielle : {{ settings.heroNumeroAgrement }}</span>
+              </div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 bg-[#E7F1EA] border border-[#276B44]/30 rounded-md text-[11px] text-[#276B44] font-semibold">
+                <span class="w-2 h-2 rounded-full bg-[#276B44]"></span>
+                <span>142 inscrits cette semaine · Session 2026 ouverte</span>
+              </div>
             </div>
 
-            <h1 class="text-4xl lg:text-5xl font-extrabold text-[#1B1D1F] leading-tight tracking-tight">
+            <h1 class="text-4xl lg:text-5xl font-bold text-[#1B1D1F] leading-tight title-display">
               {{ settings.heroTitre }}
             </h1>
 
-            <div class="barre grande my-4"></div>
+            <div class="barre grande force-visible my-4"></div>
 
             <p class="text-sm sm:text-base text-[#4B5157] max-w-xl leading-relaxed mt-4 font-normal">
               {{ settings.heroSousTitre }}
             </p>
 
-            <div class="flex flex-wrap gap-3 mt-8">
-              <a href="#formations" class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white py-2.5 px-5 shadow-sm font-semibold text-xs sm:text-sm hover:translate-y-[-2px] transition-transform">
-                Consulter les formations
+            <div class="flex flex-wrap items-center gap-4 mt-8">
+              <a href="#formations" class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white py-3 px-6 shadow-md font-semibold text-sm hover:translate-y-[-2px] transition-all inline-flex items-center gap-2">
+                <span>Découvrir nos formations</span>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
               </a>
-              <a routerLink="/login" class="btn btn-secondary py-2.5 px-5 shadow-xs text-xs sm:text-sm hover:translate-y-[-2px] transition-transform">
-                Espace Candidat & Inscriptions
+              <a routerLink="/login" class="text-xs sm:text-sm font-semibold text-[#1C75BC] hover:text-[#124F80] hover:underline inline-flex items-center gap-1 transition-colors">
+                <span>Espace Candidat & Inscriptions</span>
+                <span>→</span>
               </a>
-              <a href="#verifier" class="btn btn-ghost py-2.5 px-4 border border-[#D7DBDE] text-[#4B5157] text-xs sm:text-sm hover:border-[#1C75BC] hover:text-[#1C75BC] transition-colors">
-                Vérifier un certificat
+              <span class="text-[#D7DBDE] hidden sm:inline">|</span>
+              <a href="#verifier" class="text-xs sm:text-sm text-[#4B5157] hover:text-[#1C75BC] hover:underline inline-flex items-center gap-1 transition-colors">
+                <svg class="w-4 h-4 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Vérifier un certificat</span>
               </a>
             </div>
 
@@ -306,6 +319,7 @@
                   [src]="getHeroImageUrl()" 
                   (error)="onHeroImageError($event)"
                   alt="Apprenants et ateliers techniques de Vitalis Center" 
+                  title="Apprenants et ateliers techniques de Vitalis Center"
                   class="w-full h-[370px] sm:h-[410px] object-cover object-center group-hover:scale-102 transition-transform duration-500"
                   loading="eager"
                 />
@@ -316,9 +330,9 @@
                 <!-- Badge supérieur : Double logo institutionnel & Pastille Organisme Agréé -->
                 <div class="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between pointer-events-auto">
                   <div class="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md border border-slate-200 flex items-center gap-2">
-                    <img src="assets/logo-vitalis.png" alt="Vitalis Center" class="h-6 w-auto object-contain" />
+                    <img src="assets/logo-vitalis.png" alt="Vitalis Center" title="Vitalis Center" class="h-6 w-auto object-contain" />
                     <div class="h-4 border-r border-slate-300"></div>
-                    <img src="assets/logo-ministere.png" alt="Ministère" class="h-6 w-auto object-contain" />
+                    <img src="assets/logo-ministere.png" alt="Ministère de la Formation Professionnelle" title="Ministère de la Formation Professionnelle" class="h-6 w-auto object-contain" />
                     <span class="text-[11px] font-bold text-[#124F80] hidden sm:inline">Tutelle de l'État</span>
                   </div>
 
@@ -328,7 +342,7 @@
                     class="bg-gradient-to-r from-[#F0791E] to-[#d6610b] hover:from-[#d6610b] hover:to-[#b54f05] text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1.5 animate-pulse-glow-or cursor-pointer transition-all"
                     title="Voir l'agrément officiel"
                   >
-                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
                     <span>Organisme Agréé</span>
                   </button>
                 </div>
@@ -503,9 +517,9 @@
               <div class="p-5 sm:p-6 space-y-4 text-xs">
                 
                 <div class="flex items-center justify-around gap-4 pb-4 border-b border-[#D7DBDE]">
-                  <img src="assets/logo-vitalis.png" alt="Vitalis Center" class="h-14 w-auto object-contain" />
+                  <img src="assets/logo-vitalis.png" alt="Vitalis Center" title="Vitalis Center" class="h-14 w-auto object-contain" />
                   <div class="h-10 border-r-2 border-[#D7DBDE]"></div>
-                  <img src="assets/logo-ministere.png" alt="Ministère de la Formation Professionnelle" class="h-14 w-auto object-contain" />
+                  <img src="assets/logo-ministere.png" alt="Ministère de la Formation Professionnelle" title="Ministère de la Formation Professionnelle" class="h-14 w-auto object-contain" />
                 </div>
 
                 <div class="space-y-3">
@@ -581,41 +595,70 @@
 
       </section>
 
-      <!-- 4. SECTION CHIFFRES CLÉS / IMPACT AVEC ANIMATION DE DÉCOMPTE (COUNT-UP) -->
-      <section id="impact-stats" #statsSection class="py-12 bg-white border-b border-[#D7DBDE]">
+      <!-- 4. SECTION CHIFFRES CLÉS / IMPACT AVEC ANIMATION DE DÉCOMPTE (COUNT-UP HARVARD/TAFE STYLE) -->
+      <section id="impact-stats" #statsSection class="py-14 bg-[#F8FAFC] border-b border-[#D7DBDE]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6">
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-0">
+          <div class="text-center mb-8">
+            <div class="text-xs uppercase tracking-widest text-[#1C75BC] font-bold">L'Excellence en Chiffres</div>
+            <h2 class="text-xl sm:text-2xl font-bold text-[#1B1D1F] mt-1">Impact Réel de Nos Certifications en RDC</h2>
+            <div class="barre grande mx-auto mt-2"></div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             
-            <div class="p-6 text-center border-b border-r border-[#D7DBDE] lg:border-b-0 hover:bg-[#F5F6F7] transition-colors">
+            <div class="p-6 bg-white border border-[#D7DBDE] rounded-md shadow-xs hover:border-[#124F80] hover:shadow-md transition-all">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-lg bg-[#E7F1FA] text-[#124F80] flex items-center justify-center">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+                </div>
+                <span class="text-[10px] font-bold text-[#124F80] bg-[#E7F1FA] px-2 py-0.5 rounded-full">+18% en 2026</span>
+              </div>
               <div class="text-3xl sm:text-4xl font-extrabold text-[#124F80]">
                 {{ laureatsDisplay }}+
               </div>
-              <div class="text-xs sm:text-sm font-bold text-[#1B1D1F] mt-1">Lauréats Certifiés</div>
-              <div class="text-[11px] text-[#4B5157] mt-0.5">Sur l'ensemble du territoire</div>
+              <div class="text-sm font-bold text-[#1B1D1F] mt-1">Lauréats Certifiés</div>
+              <div class="text-xs text-[#4B5157] mt-1 leading-relaxed">Formés et opérationnels dans les institutions publiques et privées.</div>
             </div>
 
-            <div class="p-6 text-center border-b border-[#D7DBDE] lg:border-b-0 lg:border-r hover:bg-[#F5F6F7] transition-colors">
+            <div class="p-6 bg-white border border-[#D7DBDE] rounded-md shadow-xs hover:border-[#F0791E] hover:shadow-md transition-all">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-lg bg-[#FDF0E6] text-[#F0791E] flex items-center justify-center">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                </div>
+                <span class="text-[10px] font-bold text-[#F0791E] bg-[#FDF0E6] px-2 py-0.5 rounded-full">Méthode APC</span>
+              </div>
               <div class="text-3xl sm:text-4xl font-extrabold text-[#F0791E]">
                 {{ tauxReussiteDisplay }} %
               </div>
-              <div class="text-xs sm:text-sm font-bold text-[#1B1D1F] mt-1">Taux de Réussite</div>
-              <div class="text-[11px] text-[#4B5157] mt-0.5">Évaluation continue et rigoureuse</div>
+              <div class="text-sm font-bold text-[#1B1D1F] mt-1">Taux de Réussite</div>
+              <div class="text-xs text-[#4B5157] mt-1 leading-relaxed">Évaluation continue par compétences et ateliers pratiques de terrain.</div>
             </div>
 
-            <div class="p-6 text-center lg:border-r border-[#D7DBDE] hover:bg-[#F5F6F7] transition-colors">
+            <div class="p-6 bg-white border border-[#D7DBDE] rounded-md shadow-xs hover:border-[#276B44] hover:shadow-md transition-all">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-lg bg-[#E7F1EA] text-[#276B44] flex items-center justify-center">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                </div>
+                <span class="text-[10px] font-bold text-[#276B44] bg-[#E7F1EA] px-2 py-0.5 rounded-full">Homologuées État</span>
+              </div>
               <div class="text-3xl sm:text-4xl font-extrabold text-[#276B44]">
                 {{ filieresDisplay }}+
               </div>
-              <div class="text-xs sm:text-sm font-bold text-[#1B1D1F] mt-1">Filières Métiers</div>
-              <div class="text-[11px] text-[#4B5157] mt-0.5">Tech, Gestion & Technique</div>
+              <div class="text-sm font-bold text-[#1B1D1F] mt-1">Filières Métiers</div>
+              <div class="text-xs text-[#4B5157] mt-1 leading-relaxed">Tech, Télécoms, Gestion OHADA, Énergie solaire et BTP.</div>
             </div>
 
-            <div class="p-6 text-center hover:bg-[#F5F6F7] transition-colors">
+            <div class="p-6 bg-white border border-[#D7DBDE] rounded-md shadow-xs hover:border-[#1C75BC] hover:shadow-md transition-all">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-11 h-11 rounded-lg bg-[#E7F1FA] text-[#1C75BC] flex items-center justify-center">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <span class="text-[10px] font-bold text-[#1C75BC] bg-[#E7F1FA] px-2 py-0.5 rounded-full">QR & Blockchain</span>
+              </div>
               <div class="text-3xl sm:text-4xl font-extrabold text-[#1C75BC]">
                 {{ titresVerifDisplay }} %
               </div>
-              <div class="text-xs sm:text-sm font-bold text-[#1B1D1F] mt-1">Titres Vérifiables</div>
-              <div class="text-[11px] text-[#4B5157] mt-0.5">Authentification numérique instantanée</div>
+              <div class="text-sm font-bold text-[#1B1D1F] mt-1">Titres Vérifiables</div>
+              <div class="text-xs text-[#4B5157] mt-1 leading-relaxed">Authentification instantanée en ligne pour employeurs et administrations.</div>
             </div>
 
           </div>
@@ -723,6 +766,25 @@
               <div>
                 <div class="h-1.5" [style.background-color]="formation.couleur || '#1C75BC'"></div>
                 
+                @if (formation.imageUrl) {
+                  <div class="h-40 w-full overflow-hidden bg-slate-100 relative border-b border-[#D7DBDE]">
+                    <img [src]="formation.imageUrl" alt="Illustration du programme de formation" [alt]="formation.titre || 'Illustration du programme de formation'" title="Illustration du programme de formation" [title]="formation.titre || 'Illustration du programme de formation'" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" loading="lazy" (error)="onFormationImageError($event)" />
+                  </div>
+                } @else {
+                  <!-- Bannière de remplacement quand aucune image n'est uploadée -->
+                  <div class="h-40 w-full relative border-b border-[#D7DBDE] flex items-center justify-center overflow-hidden"
+                       [style.background]="'linear-gradient(135deg, ' + (formation.couleur || '#1C75BC') + '22 0%, ' + (formation.couleur || '#1C75BC') + '44 100%)'">
+                    <div class="text-center px-4">
+                      <div class="text-4xl mb-2 opacity-60">
+                        {{ formation.categorieOfficielle === 'gestion' ? '📊' : formation.categorieOfficielle === 'technique' ? '⚙️' : '💻' }}
+                      </div>
+                      <p class="text-xs font-semibold opacity-70 line-clamp-2" [style.color]="formation.couleur || '#1C75BC'">
+                        {{ formation.filiereNom || formation.titre }}
+                      </p>
+                    </div>
+                  </div>
+                }
+
                 <div class="p-5">
                   <div class="flex items-center justify-between gap-2 mb-2">
                     <span 
@@ -734,9 +796,19 @@
                       {{ formation.categorieNom }}
                     </span>
                     <span class="text-[10px] font-semibold text-[#276B44] bg-[#E7F1EA] px-2 py-0.5 rounded flex items-center gap-1">
-                      <span class="w-1.5 h-1.5 rounded-full bg-[#276B44] animate-pulse-glow"></span>
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#276B44]"></span>
                       {{ formation.prochaineSession || formation.badgeTexte || 'Session ouverte' }}
                     </span>
+                  </div>
+
+                  <div class="flex items-center justify-between text-xs mb-2">
+                    <div class="rating-stars flex items-center gap-1">
+                      <span class="text-amber-500 font-bold">★ {{ getFormationRating(formation) }}</span>
+                      <span class="text-[10px] text-[#4B5157] font-normal">(48 avis)</span>
+                    </div>
+                    @if (formation.aLaUne) {
+                      <span class="badge-hot font-bold text-[10px]">🔥 Très demandée</span>
+                    }
                   </div>
 
 
@@ -828,6 +900,151 @@
               </div>
             }
           </div>
+        </div>
+      </section>
+
+      
+      <!-- 7b. SECTION CORPS ENSEIGNANT & EXPERTS DE TERRAIN (HUMANISATION INSTITUTIONNELLE) -->
+      <section id="formateurs" class="py-14 px-4 sm:px-6 bg-white border-b border-[#D7DBDE]">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center mb-10">
+            <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold">Corps Enseignant</div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1">Nos Formateurs Experts de Terrain</h2>
+            <div class="barre grande mx-auto mt-3"></div>
+            <p class="text-xs sm:text-sm text-[#4B5157] max-w-xl mx-auto mt-3">
+              Des professionnels chevronnés issus des plus grandes entreprises congolaises, transmettant un savoir-faire immédiatement opérationnel.
+            </p>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6">
+            @for (f of formateursList; track f.nom) {
+              <div class="formateur-card">
+                <img [src]="f.photo" alt="{{ f.nom || 'Photo de formateur' }}" title="{{ f.nom || 'Photo de formateur' }}" (error)="onImageError($event, 'assets/formateurs/formateur-placeholder.jpg')" class="formateur-avatar" />
+                <div class="font-bold text-base text-[#1B1D1F] mt-2">{{ f.nom }}</div>
+                <div class="text-xs font-semibold text-[#1C75BC] mt-0.5">{{ f.titre }}</div>
+                <div class="text-[11px] text-[#4B5157] mt-1.5 leading-relaxed">{{ f.specialite }}</div>
+                <div class="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 bg-[#E7F1FA] rounded text-[11px] font-semibold text-[#124F80]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#276B44]"></span>
+                  {{ f.experience }}
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      
+      <!-- 7c. SECTION CAMPUS & ATELIERS TECHNIQUES (PREUVE PHYSIQUE & VISITE EN IMAGES - POINT 4.2 & 4.5 AUDIT) -->
+      <section id="campus" class="py-14 px-4 sm:px-6 bg-[#F8FAFC] border-b border-[#D7DBDE]">
+        <div class="max-w-7xl mx-auto">
+          
+          <div class="text-center mb-10">
+            <div class="text-xs uppercase tracking-widest text-[#1C75BC] font-bold">Infrastructures & Équipements</div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1">Immersion au Cœur de Nos Ateliers Techniques</h2>
+            <div class="barre grande mx-auto mt-3"></div>
+            <p class="text-xs sm:text-sm text-[#4B5157] max-w-2xl mx-auto mt-3">
+              Des équipements modernes et des laboratoires dédiés pour une mise en pratique immédiate conforme aux réalités du marché congolais.
+            </p>
+          </div>
+
+          <!-- Grille des 4 espaces du campus -->
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            @for (esp of campusEspacesList; track esp.titre) {
+              <div class="bg-white border border-[#D7DBDE] rounded-md overflow-hidden shadow-xs hover:border-[#1C75BC] hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                  <div class="relative overflow-hidden h-44 bg-[#124F80]">
+                    <img [src]="esp.photo" alt="{{ esp.titre || 'Espace campus et ateliers' }}" title="{{ esp.titre || 'Espace campus et ateliers' }}" (error)="onImageError($event)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <span class="absolute top-3 left-3 px-2 py-0.5 bg-[#124F80]/90 text-white text-[10px] font-bold rounded">
+                      {{ esp.badge }}
+                    </span>
+                  </div>
+                  <div class="p-4">
+                    <h3 class="font-bold text-sm text-[#1B1D1F] leading-snug">{{ esp.titre }}</h3>
+                    <p class="text-xs text-[#4B5157] mt-2 leading-relaxed">{{ esp.description }}</p>
+                  </div>
+                </div>
+                <div class="px-4 pb-4 pt-2 border-t border-[#EDEFF2] text-[11px] text-[#124F80] font-semibold flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#276B44]"></span>
+                  <span>{{ esp.equipements }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Bloc Vidéo Institutionnelle (100% Dynamique & Administrable) -->
+          @if (settings.videoActif !== false) {
+          <div class="bg-[#124F80] rounded-xl text-white p-6 sm:p-8 lg:p-10 shadow-xl overflow-hidden relative">
+            <div class="grid lg:grid-cols-12 gap-8 items-center">
+              <div class="lg:col-span-5 space-y-3">
+                <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs text-[#C6D2E3]">
+                  <span class="w-2 h-2 rounded-full bg-[#F0791E]"></span>
+                  <span>{{ settings.videoSousTitre || 'Vidéo Institutionnelle' }}</span>
+                </div>
+                <h3 class="text-2xl font-bold leading-tight">{{ settings.videoTitre || 'Découvrez Vitalis Center en Action' }}</h3>
+                <p class="text-xs sm:text-sm text-[#C6D2E3] leading-relaxed">
+                  {{ settings.videoDescription || 'Visionnez la présentation officielle de notre établissement d\'utilité publique : témoignages de formateurs, immersion en atelier et parcours des diplômés.' }}
+                </p>
+                <div class="pt-2 flex flex-wrap gap-3">
+                  <button (click)="openVideoModal()" class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white py-2.5 px-5 font-bold text-xs sm:text-sm shadow-md inline-flex items-center gap-2 cursor-pointer transition-transform hover:scale-102">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <span>{{ settings.videoBoutonPrincipal || 'Lancer la présentation (3 min)' }}</span>
+                  </button>
+                  <a [href]="settings.videoBoutonSecondaireUrl || '#contact'" class="btn btn-secondary text-white border-white/30 hover:border-white py-2.5 px-4 text-xs font-semibold">
+                    {{ settings.videoBoutonSecondaire || 'Prendre rendez-vous sur place' }}
+                  </a>
+                </div>
+              </div>
+
+              <div class="lg:col-span-7">
+                <div class="aspect-video bg-black/40 rounded-lg overflow-hidden border border-white/20 relative shadow-2xl group cursor-pointer" (click)="openVideoModal()">
+                  <img [src]="getMediaUrl(settings.videoPosterUrl) || 'assets/actualites/actu-lms-deploiement.jpg'" alt="Aperçu vidéo Vitalis Center" title="Aperçu vidéo Vitalis Center" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
+                  
+                  <!-- Habillage graphique haute fidélité (badges, incrustations et barre de statut) -->
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/30 flex flex-col justify-between p-4 sm:p-5">
+                    
+                    <!-- Badge Haut Gauche -->
+                    <div class="flex items-center justify-between">
+                      <span class="px-2.5 py-1 bg-white/20 backdrop-blur-xs rounded text-[11px] font-bold tracking-wide text-white uppercase shadow-xs">
+                        {{ settings.videoBadgeHaut || 'VITALIS CENTER EUP' }}
+                      </span>
+                    </div>
+
+                    <!-- Bouton Play Central -->
+                    <div class="flex items-center justify-center my-auto">
+                      <div class="w-16 h-16 rounded-full bg-[#F0791E] text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      </div>
+                    </div>
+
+                    <!-- Incrustations Basses & Titres -->
+                    <div class="space-y-1.5">
+                      @if (settings.videoBadgeBas) {
+                        <div class="inline-block px-2 py-0.5 bg-[#F0791E] text-white rounded text-[10px] font-bold tracking-wider uppercase shadow-xs">
+                          {{ settings.videoBadgeBas }}
+                        </div>
+                      }
+                      @if (settings.videoTitreOverlay) {
+                        <div class="text-sm sm:text-base font-bold text-white leading-tight drop-shadow-md">
+                          {{ settings.videoTitreOverlay }}
+                        </div>
+                      }
+                      @if (settings.videoSousTitreOverlay) {
+                        <div class="text-xs text-white/80 drop-shadow-xs">
+                          {{ settings.videoSousTitreOverlay }}
+                        </div>
+                      }
+                      <div class="pt-2 border-t border-white/20 flex justify-between items-center text-xs text-white/90">
+                        <span class="font-medium truncate">{{ settings.videoLegende || 'Reportage Ministère de la Formation Professionnelle' }}</span>
+                        <span class="bg-black/60 px-2 py-0.5 rounded text-[11px] shrink-0 font-mono">{{ settings.videoDuree || '03:15' }}</span>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          }
+
         </div>
       </section>
 
@@ -929,6 +1146,78 @@
         </div>
       </section>
 
+      
+      <!-- 9b. BANDEAU LOGOS PARTENAIRES EMPLOYEURS -->
+      <section class="py-8 bg-[#F5F6F7] border-b border-[#D7DBDE]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+          <div class="text-center text-[11px] uppercase tracking-widest text-[#4B5157] font-bold mb-5">
+            Nos diplômés travaillent dans les meilleures entreprises de RDC
+          </div>
+          <div class="marquee-container">
+            <div class="marquee-content items-center gap-8">
+              @for (p of logosPartenaires; track 'logo1-' + p.nom) {
+                <div class="partenaire-logo-item">
+                  <img [src]="p.logo" alt="{{ p.nom || 'Logo entreprise partenaire' }}" title="{{ p.nom || 'Logo entreprise partenaire' }}" (error)="onLogoError($event, p.nom)"
+                       class="h-8 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
+                </div>
+              }
+              @for (p of logosPartenaires; track 'logo2-' + p.nom) {
+                <div class="partenaire-logo-item" aria-hidden="true">
+                  <img [src]="p.logo" alt="{{ p.nom || 'Logo entreprise partenaire' }}" title="{{ p.nom || 'Logo entreprise partenaire' }}" (error)="onLogoError($event, p.nom)"
+                       class="h-8 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9c. SECTION TÉMOIGNAGES RÉELS — PRESTIGE & EXCELLENCE -->
+      <section id="temoignages" class="py-16 px-4 sm:px-6 section-prestige border-b border-[#D7DBDE]">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center mb-10">
+            <div class="text-xs uppercase tracking-widest text-[#C8902A] font-bold">Paroles de Nos Lauréats</div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1">Ce qu'ils disent de Vitalis Center</h2>
+            <div class="barre grande gold mx-auto mt-3"></div>
+            <p class="text-xs sm:text-sm text-[#4B5157] max-w-xl mx-auto mt-3">
+              Des professionnels actifs dans des entreprises de premier plan en RDC, formés par Vitalis Center EUP.
+            </p>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6">
+            @for (t of temoignagesList; track t.id || $index) {
+              @if (t.actif !== false) {
+              <div class="temoignage-card">
+                <div class="temoignage-stars mb-3" [attr.aria-label]="'Note: ' + (t.note || 5) + ' sur 5'">
+                  <span>★★★★★</span>
+                </div>
+                <p class="text-sm text-[#2E3338] leading-relaxed mb-5 relative z-10">
+                  "{{ t.texte || t.citation }}"
+                </p>
+                <div class="flex items-center gap-3 pt-4 border-t border-[#EDEFF2]">
+                  @if (t.photo) {
+                    <img [src]="t.photo" alt="{{ t.nomPrenom || t.nom || 'Photo de lauréat certifié' }}" title="{{ t.nomPrenom || t.nom || 'Photo de lauréat certifié' }}" (error)="onImageError($event)" 
+                         class="w-12 h-12 rounded-full object-cover border-2 border-[#C8902A]/30" />
+                  } @else {
+                    <div class="w-12 h-12 rounded-full bg-[#1C75BC] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                      {{ (t.nomPrenom || t.nom || 'V').charAt(0) }}
+                    </div>
+                  }
+                  <div>
+                    <div class="font-bold text-sm text-[#1B1D1F]">{{ t.nomPrenom || t.nom }}</div>
+                    <div class="text-xs text-[#4B5157]">{{ t.fonction || t.role }}</div>
+                    <div class="text-xs font-semibold text-[#C8902A]">{{ t.entreprise }}</div>
+                    @if (t.promotion) {
+                      <div class="text-[10px] text-[#9AA1A8] mt-0.5">{{ t.promotion }}</div>
+                    }
+                  </div>
+                </div>
+              </div>
+              }
+            }
+          </div>
+        </div>
+      </section>
+
       <!-- 10. SECTION ACTUALITÉS & ÉVÉNEMENTS DU CENTRE VITALIS (ANIMATION HARVARD / UNESCO STYLE) -->
       <section id="actualites" class="py-16 px-4 sm:px-6 bg-[#FAFBFC] border-b border-[#D7DBDE] relative">
         <div class="max-w-7xl mx-auto">
@@ -991,11 +1280,9 @@
               <!-- Image Haute Définition avec Zoom Ken Burns et Overlay -->
               <div class="relative bg-slate-950 overflow-hidden h-64 sm:h-80 lg:h-96 group">
                 <img 
-                  alt="Actualité à la une"
-                  title="Actualité à la une"
-                  [src]="getMediaUrl(activeSlide.imageUrl) || 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop'" 
-                  [alt]="activeSlide.titre"
-                  [title]="activeSlide.titre"
+                  [src]="getMediaUrl(activeSlide.imageUrl) || 'assets/actualites/actu-lms-deploiement.jpg'" 
+                  alt="{{ activeSlide.titre || 'Actualité à la une' }}"
+                  title="{{ activeSlide.titre || 'Actualité à la une' }}"
                   (error)="onImageError($event)"
                   class="w-full h-full object-cover ken-burns-anim transition-all duration-700"
                 />
@@ -1142,11 +1429,9 @@
 
                     <!-- Miniature -->
                     <img 
-                      alt="Miniature actualité"
-                      title="Miniature actualité"
                       [src]="getMediaUrl(item.imageUrl) || 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=300&auto=format&fit=crop'" 
-                      [alt]="item.titre"
-                      [title]="item.titre"
+                      alt="{{ item.titre || 'Miniature actualité' }}"
+                      title="{{ item.titre || 'Miniature actualité' }}"
                       loading="lazy"
                       width="56"
                       height="56"
@@ -1239,11 +1524,9 @@
                     <!-- Image miniature -->
                     <div class="relative h-44 bg-slate-100 overflow-hidden">
                       <img 
-                        alt="Photo de l'article"
-                        title="Photo de l'article"
                         [src]="getMediaUrl(act.imageUrl) || 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=800&auto=format&fit=crop'" 
-                        [alt]="act.titre"
-                        [title]="act.titre"
+                        alt="{{ act.titre || 'Photo de l\'article' }}"
+                        title="{{ act.titre || 'Photo de l\'article' }}"
                         loading="lazy"
                         width="800"
                         height="450"
@@ -1343,11 +1626,9 @@
           <!-- En-tête avec image de couverture -->
           <div class="relative h-60 sm:h-72 bg-slate-900 overflow-hidden">
             <img 
-              alt="Photo de l'article sélectionné"
-              title="Photo de l'article sélectionné"
-              [src]="getMediaUrl(selectedArticle.imageUrl) || 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop'" 
-              [alt]="selectedArticle.titre"
-              [title]="selectedArticle.titre"
+              [src]="getMediaUrl(selectedArticle.imageUrl) || 'assets/actualites/actu-lms-deploiement.jpg'" 
+              alt="{{ selectedArticle.titre || 'Photo de l\'article sélectionné' }}"
+              title="{{ selectedArticle.titre || 'Photo de l\'article sélectionné' }}"
               (error)="onImageError($event)"
               class="w-full h-full object-cover"
             />
@@ -1587,7 +1868,7 @@
         </div>
       </section>
 
-      <!-- 12. SECTION FAQ INTERACTIVE -->
+      <!-- 12. SECTION FAQ INTERACTIVE AVEC CATÉGORIES (POINT 4.6 AUDIT) -->
       <section id="faq" class="py-14 px-4 sm:px-6 bg-[#F5F6F7] border-b border-[#D7DBDE]">
         <div class="max-w-4xl mx-auto">
           
@@ -1595,13 +1876,33 @@
             <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold">Aide & Réponses</div>
             <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1">Questions Fréquentes</h2>
             <div class="barre grande mx-auto mt-3"></div>
+            <p class="text-xs sm:text-sm text-[#4B5157] max-w-xl mx-auto mt-3">
+              Retrouvez toutes les réponses officielles sur les admissions, nos programmes APC, la reconnaissance d'État et nos partenariats.
+            </p>
+          </div>
+
+          <!-- Onglets de catégories FAQ -->
+          <div class="flex flex-wrap justify-center gap-2 mb-6">
+            @for (cat of faqCategories; track cat.id) {
+              <button 
+                type="button"
+                (click)="setFaqCategory(cat.id)"
+                [class.bg-[#124F80]]="selectedFaqCategory === cat.id"
+                [class.text-white]="selectedFaqCategory === cat.id"
+                [class.bg-white]="selectedFaqCategory !== cat.id"
+                [class.text-[#4B5157]]="selectedFaqCategory !== cat.id"
+                class="px-3.5 py-1.5 rounded-full text-xs font-semibold border border-[#D7DBDE] hover:border-[#124F80] transition-colors cursor-pointer"
+              >
+                {{ cat.label }}
+              </button>
+            }
           </div>
 
           <div class="space-y-2.5">
-            @for (item of faqList; track item.question; let i = $index) {
+            @for (item of faqFiltrees; track item.question; let i = $index) {
             <div class="bg-white border border-[#D7DBDE] overflow-hidden shadow-2xs transition-all rounded-xs" [class.border-[#1C75BC]]="item.ouvert">
               <button 
-                (click)="toggleFaq(i)"
+                (click)="toggleFaq(item)"
                 [attr.aria-expanded]="item.ouvert"
                 [attr.aria-controls]="'faq-panel-' + i"
                 class="w-full p-4 text-left flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-[#1B1D1F] hover:bg-[#F5F6F7] transition-colors cursor-pointer"
@@ -1624,6 +1925,23 @@
             </div>
           }
         </div>
+
+        <!-- Encadré d'orientation directe si question non trouvée -->
+        <div class="mt-8 p-5 bg-white border border-[#1C75BC]/30 rounded-md shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 text-left">
+            <div class="w-10 h-10 rounded-full bg-[#E7F1FA] text-[#1C75BC] flex items-center justify-center shrink-0 font-bold text-lg">
+              💬
+            </div>
+            <div>
+              <div class="font-bold text-xs sm:text-sm text-[#1B1D1F]">Vous avez une question spécifique sur votre profil ?</div>
+              <div class="text-[11px] text-[#4B5157]">Nos conseillers d'orientation vous répondent directement au secrétariat ou sur WhatsApp.</div>
+            </div>
+          </div>
+          <a href="#contact" class="btn btn-primary text-xs py-2 px-4 font-bold shrink-0">
+            Contacter un conseiller →
+          </a>
+        </div>
+
       </div>
     </section>
 
@@ -1675,6 +1993,22 @@
                 <div class="p-3.5 bg-[#F5F6F7] border border-[#D7DBDE] rounded-xs card-interactive">
                   <div class="font-bold text-[#124F80]">Horaires du Secrétariat</div>
                   <div class="text-[#4B5157] mt-0.5">{{ settings.contactHoraires }}</div>
+                </div>
+              </div>
+
+              <!-- Carte de localisation Kinshasa -->
+              <div class="mt-4 map-container rounded overflow-hidden border border-[#D7DBDE]">
+                <iframe
+                  title="Localisation Vitalis Center EUP — Kinshasa, RDC"
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=15.27%2C-4.37%2C15.35%2C-4.29&layer=mapnik"
+                  width="100%"
+                  height="200"
+                  class="border-0"
+                  loading="lazy"
+                  aria-label="Carte de localisation de Vitalis Center EUP à Kinshasa"
+                ></iframe>
+                <div class="p-2 bg-[#F5F6F7] text-[10px] text-[#4B5157] text-center border-t border-[#D7DBDE]">
+                  Kinshasa, République Démocratique du Congo · <a href="https://www.openstreetmap.org" target="_blank" rel="noopener" class="underline">OpenStreetMap</a>
                 </div>
               </div>
             </div>
@@ -1735,6 +2069,40 @@
 
       <!-- 15. FOOTER INSTITUTIONNEL CONFORME CHARTE GRAPHIQUE -->
       <footer class="mt-auto bg-white border-t border-[#D7DBDE]">
+        
+        <!-- Bandeau Newsletter & Alertes d'admissions officielles (Point 3.8 Audit) -->
+        <div class="bg-[#124F80] text-white py-6 px-4 sm:px-6 border-b border-[#0D3859]">
+          <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <div class="font-bold text-sm sm:text-base flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#F0791E]"></span>
+                Restez informé des ouvertures de sessions & bourses d'État
+              </div>
+              <p class="text-xs text-[#C6D2E3] mt-0.5">
+                Recevez directement les communiqués du Ministère et les calendriers d'admission par email.
+              </p>
+            </div>
+            <form (ngSubmit)="inscrireNewsletter()" class="flex w-full md:w-auto max-w-md gap-2">
+              <input 
+                type="email" 
+                [(ngModel)]="newsletterEmail" 
+                name="newsletterEmail" 
+                placeholder="Votre adresse email..." 
+                required 
+                class="bg-white/10 text-white placeholder-white/60 border border-white/20 rounded-md px-3 py-2 text-xs focus:outline-hidden focus:bg-white/20 focus:border-[#F0791E] flex-1 min-w-[200px]"
+                aria-label="Adresse email pour les alertes d'admission"
+              />
+              <button 
+                type="submit" 
+                [disabled]="submittingNewsletter" 
+                class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white text-xs px-4 py-2 font-bold rounded-md shrink-0 transition-transform active:scale-95 cursor-pointer"
+              >
+                {{ submittingNewsletter ? 'Envoi...' : 'S\'abonner' }}
+              </button>
+            </form>
+          </div>
+        </div>
+
         <div class="border-t-4 border-[#F0791E] bg-[#F5F6F7] py-8 px-4 sm:px-6">
           <div class="max-w-7xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-xs text-[#4B5157]">
             
@@ -1775,6 +2143,7 @@
                 <img 
                   src="assets/logo-ministere.png" 
                   alt="Ministère de la Formation Professionnelle - RDC" 
+                  title="Ministère de la Formation Professionnelle - RDC"
                   class="h-16 w-auto object-contain transition-transform hover:scale-105"
                 />
               </div>
@@ -1792,6 +2161,21 @@
               </p>
               <div class="text-[11px] text-[#4B5157]">
                 {{ settings.footerCopyright }}
+              </div>
+
+              <div class="mt-4">
+                <div class="font-bold text-[#1B1D1F] text-xs mb-2">Suivez-nous</div>
+                <div class="flex items-center gap-2">
+                  <a href="https://www.linkedin.com/company/vitalis-center" target="_blank" rel="noopener" aria-label="LinkedIn Vitalis Center" class="w-8 h-8 rounded-full bg-[#0A66C2]/10 hover:bg-[#0A66C2] text-[#0A66C2] hover:text-white flex items-center justify-center transition-colors">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+                  </a>
+                  <a href="https://facebook.com/vitaliscenter" target="_blank" rel="noopener" aria-label="Facebook Vitalis Center" class="w-8 h-8 rounded-full bg-[#1877F2]/10 hover:bg-[#1877F2] text-[#1877F2] hover:text-white flex items-center justify-center transition-colors">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                  </a>
+                  <a href="https://wa.me/243843010337" target="_blank" rel="noopener" aria-label="WhatsApp Vitalis Center" class="w-8 h-8 rounded-full bg-[#25D366]/10 hover:bg-[#25D366] text-[#25D366] hover:text-white flex items-center justify-center transition-colors">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771z"/></svg>
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -1832,5 +2216,56 @@
           </svg>
         </button>
       }
+      
+      <!-- MODALE VIDÉO INSTITUTIONNELLE (POINT 4.5 AUDIT) -->
+      @if (videoModalOpen) {
+      <div 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-fade-in"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Vidéo de présentation Vitalis Center"
+      >
+        <div class="relative w-full max-w-4xl bg-black rounded-xl overflow-hidden shadow-2xl border border-white/20">
+          <div class="flex items-center justify-between p-3 bg-[#124F80] text-white text-xs">
+            <span class="font-bold flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#00A859]"></span>
+              Vitalis Center EUP — Présentation Officielle
+            </span>
+            <button 
+              type="button" 
+              (click)="closeVideoModal()" 
+              aria-label="Fermer la vidéo"
+              class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/30 text-white flex items-center justify-center transition-colors cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+          <div class="aspect-video w-full bg-black">
+            <!-- Lecteur HTML5 natif pour vidéos téléversées localement -->
+            @if (videoPresentationIsLocal && videoPresentationLocalUrl) {
+              <video 
+                [src]="videoPresentationLocalUrl"
+                controls 
+                autoplay
+                [playsInline]="true"
+                class="w-full h-full bg-black"
+                title="Vidéo de présentation de Vitalis Center EUP"
+              ></video>
+            }
+            <!-- Lecteur Iframe pour YouTube / Vimeo / sources externes -->
+            @if (!videoPresentationIsLocal && videoPresentationSafeUrl) {
+              <iframe 
+                [src]="videoPresentationSafeUrl"
+                title="Vidéo de présentation de Vitalis Center EUP"
+                class="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            }
+          </div>
+        </div>
       </div>
+      }
+
+</div>
 </div>

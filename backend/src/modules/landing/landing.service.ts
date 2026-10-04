@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -12,6 +12,13 @@ import {
   UpdateLandingTemoignageDto,
   CreateLandingActualiteDto,
   UpdateLandingActualiteDto,
+  CreateLandingFormateurDto,
+  UpdateLandingFormateurDto,
+  CreateLandingCampusDto,
+  UpdateLandingCampusDto,
+  CreateLandingPartenaireDto,
+  UpdateLandingPartenaireDto,
+  NewsletterSubscribeDto,
   ContactMessageDto,
 } from './dto/landing.dto';
 import { DEFAULT_WHATSAPP_MESSAGE, toWhatsappE164, buildWhatsappUrlLenient, isWhatsappEnabled } from '../../common/utils/whatsapp.util';
@@ -36,8 +43,12 @@ export class LandingService {
     return this.prisma;
   }
 
-  public invalidateLandingCache() {
+  public static invalidateCache() {
     LandingService.cachedLandingData = null;
+  }
+
+  public invalidateLandingCache() {
+    LandingService.invalidateCache();
   }
 
   public getCachedLandingEtag(): string | null {
@@ -50,6 +61,7 @@ export class LandingService {
       filter(
         (payload) =>
           payload.type === 'LANDING_UPDATE' ||
+          payload.type === 'FORMATION_UPDATE' ||
           payload.type === 'ACTUALITE_UPDATE' ||
           payload.type === 'HEARTBEAT',
       ),
@@ -115,19 +127,81 @@ export class LandingService {
       }
     }
 
-    // 5. Récupérer les témoignages actifs (compatibilité)
+    // 5. Récupérer les témoignages actifs
     let temoignages = await this.db.landingPageTemoignage.findMany({
       where: { actif: true },
       orderBy: { ordre: 'asc' },
     });
 
-    // 5.5 Récupérer les catégories de formations officielles actives
+    if (temoignages.length === 0) {
+      const countTem = await this.db.landingPageTemoignage.count();
+      if (countTem === 0) {
+        await this.seedDefaultTemoignages();
+        temoignages = await this.db.landingPageTemoignage.findMany({
+          where: { actif: true },
+          orderBy: { ordre: 'asc' },
+        });
+      }
+    }
+
+    // 6. Récupérer les Formateurs d'élite actifs
+    let formateurs = await this.db.landingPageFormateur.findMany({
+      where: { actif: true },
+      orderBy: { ordre: 'asc' },
+    });
+
+    if (formateurs.length === 0) {
+      const countFormateurs = await this.db.landingPageFormateur.count();
+      if (countFormateurs === 0) {
+        await this.seedDefaultFormateurs();
+        formateurs = await this.db.landingPageFormateur.findMany({
+          where: { actif: true },
+          orderBy: { ordre: 'asc' },
+        });
+      }
+    }
+
+    // 7. Récupérer les Espaces Campus / Ateliers actifs
+    let campus = await this.db.landingPageCampus.findMany({
+      where: { actif: true },
+      orderBy: { ordre: 'asc' },
+    });
+
+    if (campus.length === 0) {
+      const countCampus = await this.db.landingPageCampus.count();
+      if (countCampus === 0) {
+        await this.seedDefaultCampus();
+        campus = await this.db.landingPageCampus.findMany({
+          where: { actif: true },
+          orderBy: { ordre: 'asc' },
+        });
+      }
+    }
+
+    // 8. Récupérer les Logos Partenaires actifs
+    let partenaires = await this.db.landingPagePartenaire.findMany({
+      where: { actif: true },
+      orderBy: { ordre: 'asc' },
+    });
+
+    if (partenaires.length === 0) {
+      const countPartenaires = await this.db.landingPagePartenaire.count();
+      if (countPartenaires === 0) {
+        await this.seedDefaultPartenaires();
+        partenaires = await this.db.landingPagePartenaire.findMany({
+          where: { actif: true },
+          orderBy: { ordre: 'asc' },
+        });
+      }
+    }
+
+    // 9. Récupérer les catégories de formations officielles actives
     const categories = await this.prisma.categorieFormation.findMany({
       where: { actif: true },
       orderBy: [{ ordre: 'asc' }, { libelle: 'asc' }],
     });
 
-    // 6. Récupérer les formations publiées de la base de données avec filière et niveau
+    // 10. Récupérer les formations publiées de la base de données avec filière et niveau
     const formationsDb = await this.prisma.formation.findMany({
       where: {
         actif: true,
@@ -166,6 +240,9 @@ export class LandingService {
       },
       temoignages,
       actualites,
+      formateurs,
+      campus,
+      partenaires,
       categories,
       formations: formationsDb.map((f: any) => {
         const ref = f.formationReferentiel;
@@ -230,6 +307,8 @@ export class LandingService {
           niveauCode: niveau?.code || null,
           niveauNom: niveau?.libelle || null,
           categorieOfficielle: categorieCode,
+          imageUrl: f.imageUrl || null,
+          syllabusUrl: f.syllabusUrl || null,
           createdAt: f.createdAt,
         };
       }),
@@ -416,6 +495,8 @@ export class LandingService {
         niveauCode: niveau?.code || null,
         niveauNom: niveau?.libelle || null,
         categorieOfficielle: categorieCode,
+        imageUrl: f.imageUrl || null,
+        syllabusUrl: f.syllabusUrl || null,
         createdAt: f.createdAt,
       };
     });
@@ -457,6 +538,20 @@ export class LandingService {
     if (cleanData.statsTitresVerif !== undefined) cleanData.statsTitresVerif = Number(cleanData.statsTitresVerif);
     if (cleanData.whatsappActif !== undefined) {
       cleanData.whatsappActif = cleanData.whatsappActif === true || cleanData.whatsappActif === 'true';
+    }
+
+    if (cleanData.videoActif !== undefined) {
+      cleanData.videoActif = cleanData.videoActif === true || cleanData.videoActif === 'true';
+    }
+
+    if (cleanData.videoPresentationUrl !== undefined) {
+      const videoUrl = String(cleanData.videoPresentationUrl ?? '').trim();
+      // Ne PAS convertir les vidéos locales téléversées — elles doivent rester en chemin natif
+      if (videoUrl && !videoUrl.startsWith('/uploads/') && !videoUrl.includes('/vitalis-media/')) {
+        cleanData.videoPresentationUrl = this.formatVideoEmbedUrl(videoUrl);
+      } else {
+        cleanData.videoPresentationUrl = videoUrl || null;
+      }
     }
 
     if (cleanData.whatsappMessage !== undefined) {
@@ -515,6 +610,7 @@ export class LandingService {
         titre: cleanData.titre,
         sousTitre: cleanData.sousTitre || null,
         description: cleanData.description || null,
+        categorie: cleanData.categorie || null,
         ordre: cleanData.ordre !== undefined ? Number(cleanData.ordre) : 0,
         couleur: cleanData.couleur || null,
         icone: cleanData.icone || null,
@@ -640,11 +736,15 @@ export class LandingService {
     const { id, createdAt, updatedAt, ...cleanData } = dto || {};
     return this.db.landingPageTemoignage.create({
       data: {
-        nom: cleanData.nom,
+        nom: cleanData.nom || cleanData.nomPrenom || 'Diplômé Vitalis',
         initiales: cleanData.initiales || '',
-        role: cleanData.role,
+        role: cleanData.role || cleanData.fonction || 'Lauréat certifié',
+        fonction: cleanData.fonction || cleanData.role || null,
+        entreprise: cleanData.entreprise || null,
+        photoUrl: cleanData.photoUrl || cleanData.photo || null,
+        note: cleanData.note !== undefined ? Number(cleanData.note) : 5,
         promotion: cleanData.promotion || null,
-        citation: cleanData.citation,
+        citation: cleanData.citation || cleanData.texte || '',
         couleur: cleanData.couleur || '#1C75BC',
         ordre: cleanData.ordre !== undefined ? Number(cleanData.ordre) : 0,
         actif: cleanData.actif !== undefined ? Boolean(cleanData.actif) : true,
@@ -660,6 +760,9 @@ export class LandingService {
     const { id: _, createdAt, updatedAt, ...cleanData } = dto || {};
     if (cleanData.ordre !== undefined) cleanData.ordre = Number(cleanData.ordre);
     if (cleanData.actif !== undefined) cleanData.actif = Boolean(cleanData.actif);
+    if (cleanData.note !== undefined) cleanData.note = Number(cleanData.note);
+    if (cleanData.photo && !cleanData.photoUrl) cleanData.photoUrl = cleanData.photo;
+    if (cleanData.texte && !cleanData.citation) cleanData.citation = cleanData.texte;
 
     return this.db.landingPageTemoignage.update({
       where: { id },
@@ -673,6 +776,203 @@ export class LandingService {
     if (!temoignage) throw new NotFoundException('Témoignage introuvable.');
 
     return this.db.landingPageTemoignage.delete({ where: { id } });
+  }
+
+  // --- FORMATEURS D'ÉLITE ---
+  async getFormateurs() {
+    return this.db.landingPageFormateur.findMany({
+      orderBy: { ordre: 'asc' },
+    });
+  }
+
+  async createFormateur(dto: CreateLandingFormateurDto | any) {
+    this.invalidateLandingCache();
+    const { id, createdAt, updatedAt, ...cleanData } = dto || {};
+    return this.db.landingPageFormateur.create({
+      data: {
+        nom: cleanData.nom,
+        titre: cleanData.titre,
+        specialite: cleanData.specialite,
+        experience: cleanData.experience,
+        photoUrl: cleanData.photoUrl || cleanData.photo || null,
+        linkedin: cleanData.linkedin || null,
+        ordre: cleanData.ordre !== undefined ? Number(cleanData.ordre) : 0,
+        actif: cleanData.actif !== undefined ? Boolean(cleanData.actif) : true,
+      },
+    });
+  }
+
+  async updateFormateur(id: string, dto: UpdateLandingFormateurDto | any) {
+    this.invalidateLandingCache();
+    const formateur = await this.db.landingPageFormateur.findUnique({ where: { id } });
+    if (!formateur) throw new NotFoundException('Formateur introuvable.');
+
+    const { id: _, createdAt, updatedAt, ...cleanData } = dto || {};
+    if (cleanData.ordre !== undefined) cleanData.ordre = Number(cleanData.ordre);
+    if (cleanData.actif !== undefined) cleanData.actif = Boolean(cleanData.actif);
+    if (cleanData.photo && !cleanData.photoUrl) cleanData.photoUrl = cleanData.photo;
+
+    return this.db.landingPageFormateur.update({
+      where: { id },
+      data: cleanData,
+    });
+  }
+
+  async deleteFormateur(id: string) {
+    this.invalidateLandingCache();
+    const formateur = await this.db.landingPageFormateur.findUnique({ where: { id } });
+    if (!formateur) throw new NotFoundException('Formateur introuvable.');
+
+    return this.db.landingPageFormateur.delete({ where: { id } });
+  }
+
+  // --- ESPACES CAMPUS & ATELIERS TECHNIQUES ---
+  async getCampus() {
+    return this.db.landingPageCampus.findMany({
+      orderBy: { ordre: 'asc' },
+    });
+  }
+
+  async createCampus(dto: CreateLandingCampusDto | any) {
+    this.invalidateLandingCache();
+    const { id, createdAt, updatedAt, ...cleanData } = dto || {};
+    return this.db.landingPageCampus.create({
+      data: {
+        titre: cleanData.titre,
+        description: cleanData.description,
+        photoUrl: cleanData.photoUrl || cleanData.photo || null,
+        badge: cleanData.badge || null,
+        equipements: cleanData.equipements,
+        ordre: cleanData.ordre !== undefined ? Number(cleanData.ordre) : 0,
+        actif: cleanData.actif !== undefined ? Boolean(cleanData.actif) : true,
+      },
+    });
+  }
+
+  async updateCampus(id: string, dto: UpdateLandingCampusDto | any) {
+    this.invalidateLandingCache();
+    const campus = await this.db.landingPageCampus.findUnique({ where: { id } });
+    if (!campus) throw new NotFoundException('Espace campus introuvable.');
+
+    const { id: _, createdAt, updatedAt, ...cleanData } = dto || {};
+    if (cleanData.ordre !== undefined) cleanData.ordre = Number(cleanData.ordre);
+    if (cleanData.actif !== undefined) cleanData.actif = Boolean(cleanData.actif);
+    if (cleanData.photo && !cleanData.photoUrl) cleanData.photoUrl = cleanData.photo;
+
+    return this.db.landingPageCampus.update({
+      where: { id },
+      data: cleanData,
+    });
+  }
+
+  async deleteCampus(id: string) {
+    this.invalidateLandingCache();
+    const campus = await this.db.landingPageCampus.findUnique({ where: { id } });
+    if (!campus) throw new NotFoundException('Espace campus introuvable.');
+
+    return this.db.landingPageCampus.delete({ where: { id } });
+  }
+
+  // --- LOGOS PARTENAIRES ---
+  async getPartenaires() {
+    return this.db.landingPagePartenaire.findMany({
+      orderBy: { ordre: 'asc' },
+    });
+  }
+
+  async createPartenaire(dto: CreateLandingPartenaireDto | any) {
+    this.invalidateLandingCache();
+    const { id, createdAt, updatedAt, ...cleanData } = dto || {};
+    return this.db.landingPagePartenaire.create({
+      data: {
+        nom: cleanData.nom,
+        logoUrl: cleanData.logoUrl || cleanData.logo,
+        secteur: cleanData.secteur || null,
+        siteWeb: cleanData.siteWeb || null,
+        ordre: cleanData.ordre !== undefined ? Number(cleanData.ordre) : 0,
+        actif: cleanData.actif !== undefined ? Boolean(cleanData.actif) : true,
+      },
+    });
+  }
+
+  async updatePartenaire(id: string, dto: UpdateLandingPartenaireDto | any) {
+    this.invalidateLandingCache();
+    const partenaire = await this.db.landingPagePartenaire.findUnique({ where: { id } });
+    if (!partenaire) throw new NotFoundException('Partenaire introuvable.');
+
+    const { id: _, createdAt, updatedAt, ...cleanData } = dto || {};
+    if (cleanData.ordre !== undefined) cleanData.ordre = Number(cleanData.ordre);
+    if (cleanData.actif !== undefined) cleanData.actif = Boolean(cleanData.actif);
+    if (cleanData.logo && !cleanData.logoUrl) cleanData.logoUrl = cleanData.logo;
+
+    return this.db.landingPagePartenaire.update({
+      where: { id },
+      data: cleanData,
+    });
+  }
+
+  async deletePartenaire(id: string) {
+    this.invalidateLandingCache();
+    const partenaire = await this.db.landingPagePartenaire.findUnique({ where: { id } });
+    if (!partenaire) throw new NotFoundException('Partenaire introuvable.');
+
+    return this.db.landingPagePartenaire.delete({ where: { id } });
+  }
+
+  // --- NEWSLETTER / ALERTES ADMISSION ---
+  async subscribeNewsletter(dto: NewsletterSubscribeDto) {
+    const email = (dto.email || '').trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+      throw new BadRequestException('Adresse email invalide.');
+    }
+
+    const existing = await this.db.landingNewsletterAbonne.findUnique({
+      where: { email },
+    });
+
+    if (existing) {
+      if (!existing.actif) {
+        await this.db.landingNewsletterAbonne.update({
+          where: { id: existing.id },
+          data: { actif: true },
+        });
+      }
+      return {
+        success: true,
+        message: 'Vous êtes déjà inscrit aux alertes officielles d\'admission Vitalis Center.',
+      };
+    }
+
+    const abonne = await this.db.landingNewsletterAbonne.create({
+      data: { email, actif: true },
+    });
+
+    try {
+      this.notificationsService.emit({
+        type: 'NEWSLETTER_SUBSCRIBE',
+        message: `Nouvel abonné aux alertes de session : ${email}`,
+        data: abonne,
+      });
+    } catch {}
+
+    return {
+      success: true,
+      message: 'Inscription confirmée ! Vous recevrez nos alertes officielles d\'ouverture des sessions.',
+      data: { id: abonne.id },
+    };
+  }
+
+  async getNewsletterAbonnes() {
+    return this.db.landingNewsletterAbonne.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async deleteNewsletterAbonne(id: string) {
+    const existing = await this.db.landingNewsletterAbonne.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Abonné introuvable.');
+
+    return this.db.landingNewsletterAbonne.delete({ where: { id } });
   }
 
   // --- CONTACT MESSAGE ---
@@ -756,12 +1056,60 @@ export class LandingService {
         contactWhatsapp: '+243843010337',
         whatsappMessage: DEFAULT_WHATSAPP_MESSAGE,
         whatsappActif: true,
+        videoActif: true,
+        videoSousTitre: 'Vidéo Institutionnelle',
+        videoTitre: 'Découvrez Vitalis Center en Action',
+        videoDescription: 'Visionnez la présentation officielle de notre établissement d\'utilité publique : témoignages de formateurs, immersion en atelier et parcours des diplômés.',
+        videoBoutonPrincipal: 'Lancer la présentation (3 min)',
+        videoBoutonSecondaire: 'Prendre rendez-vous sur place',
+        videoBoutonSecondaireUrl: '#contact',
+        videoPresentationUrl: 'https://www.youtube-nocookie.com/embed/9No-FiEInLA?rel=0',
+        videoPosterUrl: 'assets/actualites/actu-lms-deploiement.jpg',
+        videoBadgeHaut: 'VITALIS CENTER EUP',
+        videoBadgeBas: 'INNOVATION NATIONALE',
+        videoTitreOverlay: 'Déploiement National du Système Numérique & Registre Sécurisé',
+        videoSousTitreOverlay: 'Centre de Formation Professionnelle Agréé · Kinshasa, RDC',
+        videoLegende: 'Reportage Ministère de la Formation Professionnelle',
+        videoDuree: '03:15',
+        socialLinkedin: 'https://linkedin.com',
+        socialFacebook: 'https://facebook.com',
+        socialYoutube: 'https://youtube.com',
+        mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3978.8!2d15.3!3d-4.3!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNMKwMTgnMDAuMCJTIDE1wrAxOCcwMC4wIkU!5e0!3m2!1sfr!2scd!4v1',
+        liveActivityTexte: 'Session d\'admission 2026 en cours · 15 filières d\'excellence ouvertes',
         footerDescription: 'Vitalis Center EUP (Établissement d\'Utilité Publique) · Centre de formation professionnelle et technique agréé par le Ministère de la Formation Professionnelle de la RDC.',
         footerTutelleTexte: 'Supervision institutionnelle et contrôle de conformité des attestations et certifications nationales.',
         footerCopyright: '© 2026 Vitalis Center EUP. Tous droits réservés.',
         footerBarreTexte: 'Vitalis Center (EUP — Établissement d\'Utilité Publique) · Système de gestion et certification de la formation professionnelle · Édition 2026',
       },
     });
+  }
+
+  /**
+   * Convertit intelligemment les liens YouTube et Vimeo en URL intégrables (embed)
+   */
+  public formatVideoEmbedUrl(rawUrl: string | null | undefined): string | null {
+    if (!rawUrl) return null;
+    const url = String(rawUrl).trim();
+    if (!url) return null;
+
+    // Déjà une URL embed
+    if (url.includes('youtube-nocookie.com/embed/') || url.includes('youtube.com/embed/') || url.includes('player.vimeo.com/video/')) {
+      return url;
+    }
+
+    // Format YouTube watch?v=ID
+    const ytWatchMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    if (ytWatchMatch && ytWatchMatch[1]) {
+      return `https://www.youtube-nocookie.com/embed/${ytWatchMatch[1]}?rel=0`;
+    }
+
+    // Format Vimeo
+    const vimeoMatch = url.match(/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)(?:$|\/|\?)/);
+    if (vimeoMatch && vimeoMatch[3]) {
+      return `https://player.vimeo.com/video/${vimeoMatch[3]}`;
+    }
+
+    return url;
   }
 
   private async seedDefaultSections() {
@@ -901,41 +1249,62 @@ export class LandingService {
         icone: '🌱',
       },
 
-      // FAQ
+      // FAQ avec catégories
       {
         typeSection: 'faq',
-        titre: 'Les certificats délivrés par Vitalis Center sont-ils reconnus par l\'État ?',
+        titre: 'Les formations de Vitalis Center sont-elles reconnues par l\'État congolais ?',
         description:
-          'Oui, absolument. Vitalis Center est un Établissement d\'Utilité Publique (EUP) titulaire de l\'autorisation officielle d\'ouverture N° CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026 délivrée par le Ministère de la Formation Professionnelle de la République Démocratique du Congo.',
+          'Oui, sans équivoque. Vitalis Center est un Établissement d\'Utilité Publique agréé par le Ministère de la Formation Professionnelle sous le numéro officiel CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026. Tous nos certificats confèrent une reconnaissance institutionnelle immédiate et légale.',
+        categorie: 'CERTIFICATS',
         ordre: 1,
       },
       {
         typeSection: 'faq',
-        titre: 'Comment un employeur peut-il vérifier l\'authenticité de mon certificat ?',
+        titre: 'Quel est le mode d\'évaluation pour obtenir la certification ?',
         description:
-          'Chaque certificat délivré comporte un numéro d\'immatriculation séquentiel unique (ex : CERT-2026-00001) ainsi qu\'un QR code. L\'employeur peut simplement saisir le numéro sur notre portail public pour accéder à la fiche officielle de validation.',
+          'Nous appliquons rigoureusement l\'Approche par Compétences (APC) préconisée par les normes nationales et internationales. Chaque apprenant est évalué sur des projets réels, des études de cas et des ateliers pratiques garantissant sa maîtrise technique avant l\'émission du certificat.',
+        categorie: 'PEDAGOGIE',
         ordre: 2,
       },
       {
         typeSection: 'faq',
-        titre: 'Quelles sont les conditions pour obtenir son certificat en fin de formation ?',
+        titre: 'Comment vérifier l\'authenticité d\'un certificat délivré ?',
         description:
-          'Pour être éligible à la certification officielle, l\'apprenant doit valider l\'ensemble des modules du cursus (100% de complétion) et obtenir une moyenne générale minimale de 10/20 aux évaluations et devoirs pratiques.',
+          'Chaque certificat comporte un numéro de série unique inaltérable et un QR code officiel. Tout employeur ou institution peut vérifier la validité d\'un titre en quelques secondes sur notre plateforme publique de vérification en ligne.',
+        categorie: 'CERTIFICATS',
         ordre: 3,
       },
       {
         typeSection: 'faq',
-        titre: 'Les cours sont-ils dispensés en présentiel ou en ligne ?',
+        titre: 'Des sessions en cours du soir ou en ligne sont-elles disponibles ?',
         description:
-          'Nous proposons une formule adaptée : des sessions pratiques et ateliers en présentiel dans nos centres, combinées à un accès à notre plateforme numérique pour réviser les cours, réaliser les quiz et échanger avec les formateurs.',
+          'Absolument. Nous proposons des créneaux flexibles : sessions intensives en journée, cours du soir pour professionnels en poste, et parcours hybrides combinant e-learning et ateliers présentiels.',
+        categorie: 'ADMISSIONS',
         ordre: 4,
       },
       {
         typeSection: 'faq',
-        titre: 'Comment s\'effectue le règlement des frais d\'inscription ?',
+        titre: 'Vitalis Center propose-t-il des formations sur mesure pour entreprises ?',
         description:
-          'Le paiement peut être effectué directement auprès du secrétariat administratif de l\'établissement ou par les moyens de paiement validés lors de la confirmation de votre dossier.',
+          'Oui. Notre pôle Formations Sur Mesure accompagne les ministères, régies financières, ONGs et entreprises privées dans la conception de plans de renforcement de capacités adaptés à leurs enjeux spécifiques.',
+        categorie: 'ENTREPRISES',
         ordre: 5,
+      },
+      {
+        typeSection: 'faq',
+        titre: 'Quels sont les prérequis pour candidater à une session certifiante ?',
+        description:
+          'L\'accès est ouvert aux titulaires d\'un diplôme d\'État (secondaire) ou à toute personne justifiant d\'une expérience professionnelle équivalente, validée par un test de positionnement technique gratuit.',
+        categorie: 'ADMISSIONS',
+        ordre: 6,
+      },
+      {
+        typeSection: 'faq',
+        titre: 'Des stages pratiques en entreprise sont-ils organisés ?',
+        description:
+          'Oui. Grâce à nos conventions-cadres avec des employeurs majeurs en RDC (banques, télécoms, régies publiques, mines), les apprenants bénéficient de stages d\'immersion professionnelle encadrés menant directement à l\'embauche.',
+        categorie: 'ENTREPRISES',
+        ordre: 7,
       },
     ];
 
@@ -945,34 +1314,46 @@ export class LandingService {
   }
 
   private async seedDefaultTemoignages() {
-    const defaultTemoignages: CreateLandingTemoignageDto[] = [
+    const defaultTemoignages = [
       {
-        nom: 'Emmanuel Kasongo',
-        initiales: 'EK',
-        role: 'Administrateur Réseaux',
-        promotion: 'Promo 2025',
+        nom: 'Grace Mutombo Kabongo',
+        initiales: 'GM',
+        role: 'Responsable Informatique',
+        fonction: 'Responsable Informatique',
+        entreprise: 'Rawbank S.A.',
+        promotion: 'Promotion 2024 — Développement Web & Systèmes',
         citation:
-          '« La formation en Sécurité Informatique m\'a permis d\'obtenir une promotion directe. L\'authenticité du certificat vérifiable en ligne a rassuré mon employeur. »',
+          "Grâce à Vitalis Center, j'ai obtenu les compétences concrètes qui m'ont ouvert les portes de Rawbank. Les ateliers pratiques m'ont permis de résoudre de vrais problèmes dès le premier jour en entreprise. C'est une formation qui forme vraiment.",
+        note: 5,
+        photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop',
         couleur: '#1C75BC',
         ordre: 1,
       },
       {
-        nom: 'Marie-Claire Tshilombo',
-        initiales: 'MT',
-        role: 'Gestionnaire de Contrats',
-        promotion: 'Promo 2025',
+        nom: 'Christian Luzolo Makiese',
+        initiales: 'CL',
+        role: 'Chef Comptable',
+        fonction: 'Chef Comptable',
+        entreprise: 'Gécamines — Direction Financière',
+        promotion: 'Promotion 2023 — Gestion Comptable & Audit',
         citation:
-          '« Les modules sur les Marchés Publics sont concrets et conformes à la réglementation RDC. Cela a fait toute la différence dans mes dossiers. »',
+          "La rigueur de la méthode APC de Vitalis m'a appris à aller au-delà des théories. Mes formateurs avaient une vraie expérience de terrain. Aujourd'hui je manage une équipe de 7 comptables. Le certificat officiel a été décisif pour ma promotion interne.",
+        note: 5,
+        photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop',
         couleur: '#F0791E',
         ordre: 2,
       },
       {
-        nom: 'Jean-Paul Mukendi',
-        initiales: 'JM',
-        role: 'Directeur RH · Entreprise Télécom',
-        promotion: undefined,
+        nom: 'Esperance Nzinga Mfumu',
+        initiales: 'EN',
+        role: 'Technicienne Réseaux',
+        fonction: 'Technicienne Réseaux',
+        entreprise: 'Vodacom Congo',
+        promotion: 'Promotion 2025 — Réseaux & Cybersécurité',
         citation:
-          '« Nous recrutons régulièrement des diplômés de Vitalis Center. Le niveau de compétence pratique est immédiatement opérationnel. »',
+          "En tant que femme dans un secteur technique, Vitalis Center m'a donné la confiance et les compétences pour réussir. Les labs réseau sont identiques à ceux qu'on retrouve en entreprise. Je recommande cette formation à toutes les jeunes femmes.",
+        note: 5,
+        photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop',
         couleur: '#276B44',
         ordre: 3,
       },
@@ -980,6 +1361,99 @@ export class LandingService {
 
     for (const t of defaultTemoignages) {
       await this.createTemoignage(t);
+    }
+  }
+
+  private async seedDefaultFormateurs() {
+    const defaultFormateurs = [
+      {
+        nom: 'Prof. Jean-Baptiste Mbemba',
+        titre: 'Expert Réseaux & Cybersécurité',
+        specialite: 'Cisco CCNA · Sécurité Systèmes · Cloud AWS',
+        experience: '14 ans · Ex-Vodacom Congo',
+        photoUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600&auto=format&fit=crop',
+        linkedin: 'https://linkedin.com',
+        ordre: 1,
+      },
+      {
+        nom: 'Mme Fatou Diallo-Kasongo',
+        titre: "Experte Gestion & Finance d'Entreprise",
+        specialite: 'Comptabilité OHADA · Audit · Contrôle de Gestion',
+        experience: '11 ans · Ex-Trust Merchant Bank',
+        photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop',
+        linkedin: 'https://linkedin.com',
+        ordre: 2,
+      },
+      {
+        nom: 'Ing. Patrick Tshimanga',
+        titre: 'Formateur Génie Électrique & BTP',
+        specialite: 'Installations industrielles · Énergie solaire · Maintenance',
+        experience: '9 ans · Ex-SNEL / Projets BEI',
+        photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop',
+        linkedin: 'https://linkedin.com',
+        ordre: 3,
+      },
+    ];
+
+    for (const f of defaultFormateurs) {
+      await this.createFormateur(f);
+    }
+  }
+
+  private async seedDefaultCampus() {
+    const defaultCampus = [
+      {
+        titre: 'Laboratoire Systèmes & Développement Cloud',
+        description: 'Équipé de serveurs dédiés, postes haute performance et environnement d\'intégration continue pour l\'apprentissage pratique du code et de l\'administration réseau.',
+        photoUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop',
+        badge: 'Tech & Télécoms',
+        equipements: '35 postes connectés · Racks Cisco · Fibre dédiée',
+        ordre: 1,
+      },
+      {
+        titre: 'Atelier Électrotechnique & Énergie Solaire',
+        description: 'Bancs d\'essais réels, onduleurs industriels, simulateurs de réseau et kits photovoltaïques aux normes de sécurité électrique.',
+        photoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=1200&auto=format&fit=crop',
+        badge: 'Génie & Énergie',
+        equipements: 'Bancs Schneider Electric · Panneaux solaires · Outillage pro',
+        ordre: 2,
+      },
+      {
+        titre: 'Espace Collaboratif & Études de Cas',
+        description: 'Salles modulaires dédiées au management agile, simulations d\'entreprises, analyse financière et revues de projets d\'affaires.',
+        photoUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop',
+        badge: 'Management',
+        equipements: 'Vidéoprojection HD · Tableaux interactifs · Coworking',
+        ordre: 3,
+      },
+      {
+        titre: 'Centre d\'Examen Agréé & Registre Officiel',
+        description: 'Postes sécurisés pour les évaluations formelles, commissions de délibération et délivrance certifiée des attestations sous supervision ministérielle.',
+        photoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1200&auto=format&fit=crop',
+        badge: 'Accréditation',
+        equipements: 'Postes d\'évaluation isolés · Supervision APC · Registre',
+        ordre: 4,
+      },
+    ];
+
+    for (const c of defaultCampus) {
+      await this.createCampus(c);
+    }
+  }
+
+  private async seedDefaultPartenaires() {
+    const defaultPartenaires = [
+      { nom: 'Rawbank', logoUrl: 'https://rawbank.com/logo.png', secteur: 'Finance', ordre: 1 },
+      { nom: 'Vodacom Congo', logoUrl: 'https://vodacom.cd/logo.png', secteur: 'Télécom', ordre: 2 },
+      { nom: 'Gécamines', logoUrl: 'https://gecamines.cd/logo.png', secteur: 'Mines', ordre: 3 },
+      { nom: 'SNEL', logoUrl: 'https://snel.cd/logo.png', secteur: 'Énergie', ordre: 4 },
+      { nom: 'Trust Merchant Bank', logoUrl: 'https://tmb.cd/logo.png', secteur: 'Finance', ordre: 5 },
+      { nom: 'Airtel Congo', logoUrl: 'https://airtel.cd/logo.png', secteur: 'Télécom', ordre: 6 },
+      { nom: 'REGIDESO', logoUrl: 'https://regideso.cd/logo.png', secteur: 'Service public', ordre: 7 },
+    ];
+
+    for (const p of defaultPartenaires) {
+      await this.createPartenaire(p);
     }
   }
 

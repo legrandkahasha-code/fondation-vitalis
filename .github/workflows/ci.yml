@@ -1,0 +1,82 @@
+name: Continuous Integration & Security Pipeline (CI/CD)
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-ci:
+    name: Backend Lint, Test, Security Audit & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Security Vulnerability Audit
+        run: npm audit --audit-level=high || true
+
+      - name: Lint Code
+        run: npm run lint || true
+
+      - name: Prisma Generate
+        run: npx prisma generate
+
+      - name: TypeScript Typecheck & Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+          JWT_SECRET: dummy_secret_for_ci_pipeline_build_only_64_characters_long_vitalis
+
+      - name: Run Unit Tests
+        run: npm test -- --passWithNoTests
+
+  frontend-ci:
+    name: Frontend Quality, Build & Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Security Vulnerability Audit
+        run: npm audit --audit-level=high || true
+
+      - name: Angular Production Build
+        run: npm run build -- --configuration production

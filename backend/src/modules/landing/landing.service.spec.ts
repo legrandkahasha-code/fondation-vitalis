@@ -71,6 +71,9 @@ describe('LandingService', () => {
         },
       ]),
     },
+    categorieFormation: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
   };
 
   const mockNotificationsService = {

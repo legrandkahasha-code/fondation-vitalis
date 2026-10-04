@@ -65,6 +65,18 @@ export class CreateFormationDto {
   @IsOptional()
   @IsUUID()
   etablissementId?: string;
+
+  @IsOptional()
+  @IsString()
+  syllabusUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  syllabusNomFichier?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }
 
 export class UpdateFormationDto {
@@ -131,6 +143,18 @@ export class UpdateFormationDto {
   @IsOptional()
   @IsUUID()
   etablissementId?: string;
+
+  @IsOptional()
+  @IsString()
+  syllabusUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  syllabusNomFichier?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }
 
 export class CreateModuleDto {
@@ -158,6 +182,10 @@ export class CreateCoursDto {
   @IsOptional()
   @IsString()
   fileUrl?: string;
+
+  @IsOptional()
+  @IsNumber()
+  dureeMinutes?: number;
 }
 
 export class CreateEvaluationDto {

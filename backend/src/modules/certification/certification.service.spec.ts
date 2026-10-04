@@ -7,6 +7,8 @@ import { PdfService } from '../../common/services/pdf.service';
 import { StorageService } from '../../common/services/storage.service';
 import { NotFoundException } from '@nestjs/common';
 
+import { NotificationsService } from '../notifications/notifications.service';
+
 describe('CertificationService (Business Rules)', () => {
   let service: CertificationService;
 
@@ -24,6 +26,7 @@ describe('CertificationService (Business Rules)', () => {
 
   const mockPdf = { generateCertificatPdf: jest.fn().mockResolvedValue(Buffer.from('pdf')) };
   const mockStorage = { uploadFile: jest.fn().mockResolvedValue('/uploads/certificats/test.pdf') };
+  const mockNotifications = { emit: jest.fn(), stream: jest.fn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -34,6 +37,7 @@ describe('CertificationService (Business Rules)', () => {
         { provide: PdfService, useValue: mockPdf },
         { provide: StorageService, useValue: mockStorage },
         { provide: ConfigService, useValue: { get: jest.fn() } },
+        { provide: NotificationsService, useValue: mockNotifications },
       ],
     }).compile();
 

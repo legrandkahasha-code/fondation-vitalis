@@ -10,13 +10,28 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private configService: ConfigService,
     private utilisateursService: UtilisateursService,
   ) {
+    const jwtSecret = configService.get<string>('JWT_SECRET');
+    if (!jwtSecret || jwtSecret.trim().length === 0) {
+      throw new Error(
+        'FATAL SECURITY CONFIGURATION ERROR: JWT_SECRET environment variable is not defined or is empty! ' +
+        'Cannot start application with insecure authentication.',
+      );
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
-        ExtractJwt.fromUrlQueryParameter('token'),
+        // Support SSE EventSource : l'API EventSource du navigateur ne permet pas de définir de headers Authorization.
+        // Sécurité ANSSI/OWASP : restreint strictement aux flux SSE pour éviter toute fuite sur les endpoints REST.
+        (req: any) => {
+          if (req?.query?.token && (req.path?.includes('sse') || req.url?.includes('sse'))) {
+            return req.query.token;
+          }
+          return null;
+        },
       ]),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET', 'vitalis_center_jwt_secret_dev'),
+      secretOrKey: jwtSecret,
     });
   }
 

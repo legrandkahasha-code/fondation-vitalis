@@ -278,16 +278,17 @@ import { NotificationsService, NotificationPayload } from '../../../core/service
               @if (isNotificationsOpen) {
                 <div
                   (click)="toggleNotificationsPanel(false)"
-                  class="fixed inset-0 z-40 cursor-default"
+                  class="fixed inset-0 z-40 bg-black/10 backdrop-blur-[1px] sm:bg-transparent sm:backdrop-blur-none cursor-default"
                 ></div>
 
-                <div class="absolute right-0 top-11 w-80 sm:w-96 bg-white border border-[#D7DBDE] rounded-xs shadow-2xl z-50 overflow-hidden animate-fade-in text-left">
+                <!-- Mobile: centré en fixed plein écran · Desktop: popover absolu -->
+                <div class="fixed inset-x-3 top-16 bottom-auto sm:absolute sm:inset-auto sm:right-0 sm:top-11 sm:w-96 max-w-[calc(100vw-24px)] bg-white border border-[#D7DBDE] rounded-lg sm:rounded-xs shadow-2xl z-50 overflow-hidden animate-notif-panel text-left">
                   <!-- Popover Header -->
                   <div class="p-3.5 border-b border-[#D7DBDE] bg-[#F5F6F7] flex items-center justify-between">
                     <div class="flex items-center gap-2">
                       <h3 class="text-xs font-bold text-[#1B1D1F]">Notifications</h3>
                       @if (unreadNotificationsCount > 0) {
-                        <span class="px-1.5 py-0.2 bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC] text-[10px] font-bold rounded-xs">
+                        <span class="px-1.5 py-0.5 bg-[#E7F1FA] text-[#1C75BC] border border-[#1C75BC] text-[10px] font-bold rounded-full">
                           {{ unreadNotificationsCount }} nouvelle{{ unreadNotificationsCount > 1 ? 's' : '' }}
                         </span>
                       }
@@ -315,7 +316,7 @@ import { NotificationsService, NotificationPayload } from '../../../core/service
                   </div>
 
                   <!-- Popover Content -->
-                  <div class="max-h-80 overflow-y-auto divide-y divide-[#D7DBDE]">
+                  <div class="max-h-[60vh] sm:max-h-80 overflow-y-auto divide-y divide-[#D7DBDE] overscroll-contain">
                     @if (notificationsHistory.length === 0) {
                       <div class="p-8 text-center text-[#4B5157]">
                         <span class="text-2xl block mb-2">🔔</span>
@@ -326,19 +327,19 @@ import { NotificationsService, NotificationPayload } from '../../../core/service
                       @for (item of notificationsHistory; track item.id) {
                         <div
                           (click)="markNotificationAsRead(item.id)"
-                          class="p-3 hover:bg-[#F5F6F7] transition-colors flex items-start gap-3 cursor-pointer"
+                          class="p-3.5 sm:p-3 hover:bg-[#F5F6F7] transition-colors flex items-start gap-3 cursor-pointer"
                           [class.bg-[#E7F1FA]/30]="!item.read"
                         >
-                          <span class="text-base shrink-0 mt-0.5">{{ toastIcon(item.type) }}</span>
+                          <span class="text-lg sm:text-base shrink-0 mt-0.5">{{ toastIcon(item.type) }}</span>
                           <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-1">
-                              <p class="text-xs font-bold text-[#1B1D1F] truncate leading-tight">{{ item.title || 'Alerte pédagogique' }}</p>
+                              <p class="text-[13px] sm:text-xs font-bold text-[#1B1D1F] truncate leading-tight">{{ item.title || 'Alerte pédagogique' }}</p>
                               @if (!item.read) {
-                                <span class="w-1.5 h-1.5 rounded-full bg-[#1C75BC] shrink-0"></span>
+                                <span class="w-2 h-2 sm:w-1.5 sm:h-1.5 rounded-full bg-[#1C75BC] shrink-0"></span>
                               }
                             </div>
-                            <p class="text-[11px] text-[#4B5157] mt-0.5 line-clamp-2 leading-snug">{{ item.message }}</p>
-                            <span class="text-[9px] text-[#4B5157] font-mono block mt-1">
+                            <p class="text-xs sm:text-[11px] text-[#4B5157] mt-0.5 line-clamp-2 leading-snug">{{ item.message }}</p>
+                            <span class="text-[10px] sm:text-[9px] text-[#4B5157]/70 font-mono block mt-1.5 sm:mt-1">
                               {{ item.receivedAt | date:'dd MMM à HH:mm' }}
                             </span>
                           </div>
@@ -394,6 +395,12 @@ import { NotificationsService, NotificationPayload } from '../../../core/service
       to   { transform: translateX(0);    opacity: 1; }
     }
     .animate-slide-in { animation: slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+    @keyframes notif-panel {
+      from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1);    }
+    }
+    .animate-notif-panel { animation: notif-panel 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
   `],
 })
 export class ApprenantShellComponent implements OnInit, OnDestroy {
@@ -549,9 +556,24 @@ export class ApprenantShellComponent implements OnInit, OnDestroy {
     this.sseSubscription = this.notificationsService.messages().subscribe({
       next: (payload: NotificationPayload) => {
         this.sseConnected = true;
+
+        // ── Défense en profondeur : ignorer les heartbeats même s'ils passent le filtre du service ──
+        if (!payload || !payload.type || payload.type === 'HEARTBEAT' || (payload as any).type === 'heartbeat') {
+          return;
+        }
+
+        // ── Déduplication : ignorer un événement identique reçu dans les 5 dernières secondes ──
+        const isDuplicate = this.notificationsHistory.some(
+          (h) => h.type === payload.type
+            && (h.title === payload.title || h.message === payload.message)
+            && (Date.now() - h.receivedAt.getTime() < 5000)
+        );
+        if (isDuplicate) return;
+
         // 1. Afficher un toast immédiat
         this.showToast(payload);
-        // 1b. Ajouter à l'historique des notifications de la session
+
+        // 2. Ajouter à l'historique des notifications de la session
         this.notificationsHistory.unshift({
           ...payload,
           id: Date.now() + Math.floor(Math.random() * 1000),
@@ -561,7 +583,8 @@ export class ApprenantShellComponent implements OnInit, OnDestroy {
         if (this.notificationsHistory.length > 30) {
           this.notificationsHistory.pop();
         }
-        // 2. Invalider le cache + recharger les données en arrière-plan
+
+        // 3. Invalider le cache + recharger les données en arrière-plan
         this.apprenantService.triggerRealtimeRefresh(payload);
       },
       error: () => { this.sseConnected = false; },

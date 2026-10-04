@@ -1,4 +1,4 @@
-﻿import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -634,6 +634,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
     this.sub = this.notifications.messages().subscribe({
       next: (msg) => {
+        // Défense en profondeur : ignorer les heartbeats techniques
+        if (!msg || !msg.type || msg.type === 'HEARTBEAT') return;
+
         if (msg && typeof msg === 'object') {
           if (msg.type?.startsWith('ADMISSION_')) {
             if (this.auth.hasAnyRole(['ADMIN_CENTRE', 'ADMIN_ETABLISSEMENT', 'PERSONNEL_ADMINISTRATIF'])) {

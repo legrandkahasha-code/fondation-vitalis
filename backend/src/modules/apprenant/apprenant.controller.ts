@@ -23,7 +23,7 @@ import { Role } from '../../common/enums/role.enum';
 import { CheckEnrollment } from '../../common/decorators/check-enrollment.decorator';
 import { ResourceAction } from '../../common/services/authorization.service';
 import { ApprenantService } from './apprenant.service';
-import { SubmitApprenantQuizDto } from './dto/apprenant.dto';
+import { SubmitApprenantQuizDto, SauvegarderNotesDto, PoserQuestionDto } from './dto/apprenant.dto';
 import { uploadFileFilter, MAX_UPLOAD_FILE_SIZE } from '../../common/utils/file-upload.util';
 import { StorageService } from '../../common/services/storage.service';
 import { PdfService } from '../../common/services/pdf.service';
@@ -57,6 +57,20 @@ export class ApprenantController {
   @Patch('profil')
   updateProfile(@Body() dto: { nom?: string; prenom?: string; telephone?: string }, @Req() req: any) {
     return this.service.updateProfile(req.user, dto);
+  }
+
+  /**
+   * POST /apprenant/profil/avatar
+   * Téléversement de l'avatar officiel (recadré avec Canvas HTML5)
+   */
+  @Post('profil/avatar')
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  uploadAvatar(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
+    return this.service.uploadAvatar(file, req.user);
   }
 
   /**
@@ -105,6 +119,15 @@ export class ApprenantController {
   }
 
   /**
+   * GET /apprenant/formations/:id/syllabus/telecharger
+   * Télécharge les métadonnées du syllabus officiel de la formation
+   */
+  @Get('formations/:id/syllabus/telecharger')
+  telechargerSyllabus(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.telechargerSyllabus(id, req.user);
+  }
+
+  /**
    * GET /apprenant/formations/:id/eligibilite-certificat
    * Règle BR-03 : Éligibilité certificat (100% cours + moyenne >= 10/20)
    */
@@ -129,6 +152,63 @@ export class ApprenantController {
   @Post('cours/:id/progression')
   markCoursProgression(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.markCoursProgression(id, req.user);
+  }
+
+  /**
+   * PATCH /apprenant/cours/:id/notes-personnelles
+   * Sauvegarde les notes personnelles d'étude de l'apprenant pour ce cours
+   */
+  @Patch('cours/:id/notes-personnelles')
+  sauvegarderNotes(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SauvegarderNotesDto,
+    @Req() req: any,
+  ) {
+    return this.service.sauvegarderNotesPersonnelles(id, dto.notes, req.user);
+  }
+
+  /**
+   * GET /apprenant/cours/:id/questions
+   * Récupère le fil Q&R communautaire d'un cours (questions, réponses certifiées, votes)
+   */
+  @Get('cours/:id/questions')
+  getQuestionsCours(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.getQuestionsCours(id, req.user);
+  }
+
+  /**
+   * POST /apprenant/cours/:id/poser-question
+   * Permet à l'apprenant de poser une question à l'équipe pédagogique sur le cours
+   */
+  @Post('cours/:id/poser-question')
+  poserQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PoserQuestionDto,
+    @Req() req: any,
+  ) {
+    return this.service.poserQuestionCours(id, dto.question, req.user);
+  }
+
+  /**
+   * POST /apprenant/questions/:id/repondre
+   * Répondre à une question sur le forum de cours
+   */
+  @Post('questions/:id/repondre')
+  repondreQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { reponse: string },
+    @Req() req: any,
+  ) {
+    return this.service.repondreQuestionCours(id, dto.reponse, req.user);
+  }
+
+  /**
+   * POST /apprenant/questions/:id/vote
+   * Voter pour une question du forum
+   */
+  @Post('questions/:id/vote')
+  voterQuestion(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.voterQuestionCours(id, req.user);
   }
 
   /**
@@ -206,6 +286,27 @@ export class ApprenantController {
   @Get('assiduite')
   getAssiduite(@Req() req: any) {
     return this.service.getAssiduite(req.user);
+  }
+
+  /**
+   * POST /apprenant/seances/:id/justifier
+   * Téléversement d'un justificatif d'absence par l'apprenant pour une séance
+   */
+  @Post('seances/:id/justifier')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: uploadFileFilter,
+      limits: { fileSize: MAX_UPLOAD_FILE_SIZE },
+    }),
+  )
+  justifierAbsenceSeance(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('motif') motif: string,
+    @Body('commentaire') commentaire: string,
+    @Req() req: any,
+  ) {
+    return this.service.justifierAbsenceSeance(id, file, motif, commentaire, req.user);
   }
 
   /**
