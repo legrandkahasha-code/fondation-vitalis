@@ -51,6 +51,8 @@ export interface FormationDisplayItem {
   aLaUne?: boolean;
   badgeTexte?: string;
   imageUrl?: string | null;
+  categorieOfficielle?: string;
+  filiereNom?: string;
 }
 
 export interface FaqDisplayItem {
@@ -944,6 +946,8 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
               aLaUne: Boolean(f.aLaUne),
               badgeTexte: f.badgeTexte || 'Session ouverte',
               imageUrl: f.imageUrl || null,
+              categorieOfficielle: f.categorieOfficielle || catCode,
+              filiereNom: f.filiereNom || catNom,
             };
           });
         }

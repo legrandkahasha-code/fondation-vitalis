@@ -776,10 +776,10 @@
                        [style.background]="'linear-gradient(135deg, ' + (formation.couleur || '#1C75BC') + '22 0%, ' + (formation.couleur || '#1C75BC') + '44 100%)'">
                     <div class="text-center px-4">
                       <div class="text-4xl mb-2 opacity-60">
-                        {{ formation.categorieOfficielle === 'gestion' ? '📊' : formation.categorieOfficielle === 'technique' ? '⚙️' : '💻' }}
+                        {{ (formation.categorieOfficielle || formation.categorie) === 'gestion' ? '📊' : (formation.categorieOfficielle || formation.categorie) === 'technique' ? '⚙️' : '💻' }}
                       </div>
                       <p class="text-xs font-semibold opacity-70 line-clamp-2" [style.color]="formation.couleur || '#1C75BC'">
-                        {{ formation.filiereNom || formation.titre }}
+                        {{ formation.filiereNom || formation.categorieNom || formation.titre }}
                       </p>
                     </div>
                   </div>
