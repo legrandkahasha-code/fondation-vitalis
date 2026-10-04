@@ -234,7 +234,8 @@ async function bootstrap() {
   }
 
   const port = parseInt(process.env.PORT || process.env.RENDER_PORT || '3000', 10);
-  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
+  // Toujours écouter sur 0.0.0.0 pour garantir que Render, Docker et les reverse proxies détectent le port ouvert
+  const host = '0.0.0.0';
   await app.listen(port, host);
   console.log(`✅ Vitalis Center API démarré sur http://${host}:${port}/api [NODE_ENV=${process.env.NODE_ENV || 'development'}]`);
 }
