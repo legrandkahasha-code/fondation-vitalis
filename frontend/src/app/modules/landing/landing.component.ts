@@ -126,6 +126,10 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     contactWhatsapp: '+243843010337',
     whatsappMessage: DEFAULT_WHATSAPP_MESSAGE,
     whatsappActif: false,
+    socialLinkedin: 'https://www.linkedin.com/company/vitalis-center',
+    socialFacebook: 'https://facebook.com/vitaliscenter',
+    socialYoutube: '',
+    mapEmbedUrl: '',
     footerDescription: 'Vitalis Center EUP (Établissement d\'Utilité Publique) · Centre de formation professionnelle et technique agréé par le Ministère de la Formation Professionnelle de la RDC.',
     footerTutelleTexte: 'Supervision institutionnelle et contrôle de conformité des attestations et certifications nationales.',
     footerCopyright: '© 2026 Vitalis Center EUP. Tous droits réservés.',
@@ -711,6 +715,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.updateSafeMapUrl();
     this.chargerDonneesLanding();
     this.startSliderLoop();
 
@@ -833,6 +838,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
             whatsappActif: isWhatsappEnabled(data.settings.whatsappActif),
           };
           this.appliquerWhatsappDepuisSettings(this.settings);
+          this.updateSafeMapUrl();
           this.laureatsDisplay = this.settings.statsLaureats ?? 1200;
           this.tauxReussiteDisplay = this.settings.statsTauxReussite ?? 94;
           this.filieresDisplay = this.settings.statsFilieres ?? 15;
@@ -1270,9 +1276,39 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  safeMapUrl: SafeResourceUrl | null = null;
+
+  updateSafeMapUrl(): void {
+    let raw = (this.settings?.mapEmbedUrl || '').trim();
+    if (!raw) {
+      // Synchronisation directe et dynamique avec l'adresse physique saisie par l'administrateur
+      const adresse = (this.settings?.contactAdresse || 'Vitalis Center, Kinshasa, République Démocratique du Congo').trim();
+      raw = `https://maps.google.com/maps?q=${encodeURIComponent(adresse)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    } else {
+      // Si l'administrateur a collé une balise <iframe> complète
+      const iframeMatch = raw.match(/src=["']([^"']+)["']/i);
+      if (iframeMatch && iframeMatch[1]) {
+        raw = iframeMatch[1];
+      }
+    }
+    this.safeMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(raw);
+  }
+
   getMapEmbedSafeUrl(): SafeResourceUrl {
-    const raw = this.settings?.mapEmbedUrl || 'https://www.openstreetmap.org/export/embed.html?bbox=15.27%2C-4.37%2C15.35%2C-4.29&layer=mapnik';
-    return this.sanitizer.bypassSecurityTrustResourceUrl(raw);
+    if (!this.safeMapUrl) {
+      this.updateSafeMapUrl();
+    }
+    return this.safeMapUrl!;
+  }
+
+  get mapDirectLink(): string {
+    const raw = (this.settings?.mapEmbedUrl || '').trim();
+    if (raw && !raw.includes('output=embed') && !raw.includes('openstreetmap.org')) {
+      const iframeMatch = raw.match(/src=["']([^"']+)["']/i);
+      return iframeMatch && iframeMatch[1] ? iframeMatch[1] : raw;
+    }
+    const query = encodeURIComponent(this.settings?.contactAdresse || 'Vitalis Center, Kinshasa');
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
   }
 
   cleanWhatsappNumber(phone?: string): string {

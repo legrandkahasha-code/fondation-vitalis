@@ -1996,19 +1996,24 @@
                 </div>
               </div>
 
-              <!-- Carte de localisation Kinshasa -->
+              <!-- Carte de localisation Kinshasa / Google Maps -->
               <div class="mt-4 map-container rounded overflow-hidden border border-[#D7DBDE]">
                 <iframe
-                  title="Localisation Vitalis Center EUP — Kinshasa, RDC"
-                  src="https://www.openstreetmap.org/export/embed.html?bbox=15.27%2C-4.37%2C15.35%2C-4.29&layer=mapnik"
+                  [title]="'Plan d\'accès Google Maps — ' + (settings.contactAdresse || 'Vitalis Center EUP')"
+                  [src]="safeMapUrl || getMapEmbedSafeUrl()"
                   width="100%"
-                  height="200"
-                  class="border-0"
+                  height="230"
+                  class="border-0 w-full min-h-[220px]"
                   loading="lazy"
-                  aria-label="Carte de localisation de Vitalis Center EUP à Kinshasa"
+                  aria-label="Carte Google Maps de localisation de Vitalis Center EUP"
                 ></iframe>
-                <div class="p-2 bg-[#F5F6F7] text-[10px] text-[#4B5157] text-center border-t border-[#D7DBDE]">
-                  Kinshasa, République Démocratique du Congo · <a href="https://www.openstreetmap.org" target="_blank" rel="noopener" class="underline">OpenStreetMap</a>
+                <div class="p-2 bg-[#F5F6F7] text-[10px] text-[#4B5157] text-center border-t border-[#D7DBDE] flex items-center justify-center gap-1.5 flex-wrap">
+                  <span class="font-medium text-[#124F80]">{{ settings.contactAdresse || 'Kinshasa, République Démocratique du Congo' }}</span>
+                  <span>·</span>
+                  <a [href]="mapDirectLink" target="_blank" rel="noopener noreferrer" class="underline text-[#1C75BC] hover:text-[#124F80] inline-flex items-center gap-1 font-medium">
+                    <span>Ouvrir dans Google Maps</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  </a>
                 </div>
               </div>
             </div>
@@ -2166,15 +2171,26 @@
               <div class="mt-4">
                 <div class="font-bold text-[#1B1D1F] text-xs mb-2">Suivez-nous</div>
                 <div class="flex items-center gap-2">
-                  <a href="https://www.linkedin.com/company/vitalis-center" target="_blank" rel="noopener" aria-label="LinkedIn Vitalis Center" class="w-8 h-8 rounded-full bg-[#0A66C2]/10 hover:bg-[#0A66C2] text-[#0A66C2] hover:text-white flex items-center justify-center transition-colors">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
-                  </a>
-                  <a href="https://facebook.com/vitaliscenter" target="_blank" rel="noopener" aria-label="Facebook Vitalis Center" class="w-8 h-8 rounded-full bg-[#1877F2]/10 hover:bg-[#1877F2] text-[#1877F2] hover:text-white flex items-center justify-center transition-colors">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                  </a>
-                  <a href="https://wa.me/243843010337" target="_blank" rel="noopener" aria-label="WhatsApp Vitalis Center" class="w-8 h-8 rounded-full bg-[#25D366]/10 hover:bg-[#25D366] text-[#25D366] hover:text-white flex items-center justify-center transition-colors">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771z"/></svg>
-                  </a>
+                  @if (settings.socialLinkedin) {
+                    <a [href]="settings.socialLinkedin" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Vitalis Center" title="LinkedIn" class="w-8 h-8 rounded-full bg-[#0A66C2]/10 hover:bg-[#0A66C2] text-[#0A66C2] hover:text-white flex items-center justify-center transition-colors">
+                      <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+                    </a>
+                  }
+                  @if (settings.socialFacebook) {
+                    <a [href]="settings.socialFacebook" target="_blank" rel="noopener noreferrer" aria-label="Facebook Vitalis Center" title="Facebook" class="w-8 h-8 rounded-full bg-[#1877F2]/10 hover:bg-[#1877F2] text-[#1877F2] hover:text-white flex items-center justify-center transition-colors">
+                      <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    </a>
+                  }
+                  @if (settings.socialYoutube) {
+                    <a [href]="settings.socialYoutube" target="_blank" rel="noopener noreferrer" aria-label="YouTube Vitalis Center" title="YouTube" class="w-8 h-8 rounded-full bg-[#FF0000]/10 hover:bg-[#FF0000] text-[#FF0000] hover:text-white flex items-center justify-center transition-colors">
+                      <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    </a>
+                  }
+                  @if (whatsappUrl) {
+                    <a [href]="whatsappUrl" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Vitalis Center" title="WhatsApp" class="w-8 h-8 rounded-full bg-[#25D366]/10 hover:bg-[#25D366] text-[#25D366] hover:text-white flex items-center justify-center transition-colors">
+                      <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771z"/></svg>
+                    </a>
+                  }
                 </div>
               </div>
             </div>

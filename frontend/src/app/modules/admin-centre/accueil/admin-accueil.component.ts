@@ -265,9 +265,20 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               </div>
 
               <div class="field mt-4">
-                <label>URL d'Intégration Carte Interactive (Google Maps / OpenStreetMap Embed)</label>
-                <input type="url" [(ngModel)]="settings.mapEmbedUrl" name="mapEmbedUrl" placeholder="https://www.google.com/maps/embed?pb=..." />
-                <div class="hint">Permet d'afficher la carte géographique exacte du campus principal dans la section Contact.</div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="mb-0">URL d'Intégration Carte Interactive (Google Maps / OpenStreetMap Embed)</label>
+                  <button 
+                    type="button" 
+                    (click)="synchroniserMapAvecAdresse()" 
+                    class="text-xs font-semibold text-[#1C75BC] hover:text-[#124F80] cursor-pointer flex items-center gap-1"
+                    title="Générer automatiquement le lien Google Maps à partir de l'adresse du siège">
+                    📍 Synchroniser avec l'adresse
+                  </button>
+                </div>
+                <input type="url" [(ngModel)]="settings.mapEmbedUrl" name="mapEmbedUrl" placeholder="Laisser vide pour synchronisation automatique avec l'adresse physique" />
+                <div class="hint">
+                  Si ce champ est vide, Google Maps géolocalise et affiche automatiquement l'adresse renseignée dans « Coordonnées & Horaires » (<em>{{ settings.contactAdresse || 'Kinshasa, RDC' }}</em>).
+                </div>
               </div>
             </div>
 
@@ -1105,6 +1116,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                 <div class="field">
                   <label>Adresse du Siège & Ateliers Techniques</label>
                   <input type="text" [(ngModel)]="settings.contactAdresse" name="contactAdresse" placeholder="Kinshasa, République Démocratique du Congo" />
+                  <div class="hint">Cette adresse alimente directement le point de repère sur la carte Google Maps interactive.</div>
                 </div>
 
                 <div class="field">
@@ -2227,6 +2239,13 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  synchroniserMapAvecAdresse(): void {
+    const adresse = (this.settings.contactAdresse || 'Vitalis Center, Kinshasa, République Démocratique du Congo').trim();
+    this.settings.mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(adresse)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    this.toast.info(`Lien Google Maps généré pour l'adresse : "${adresse}"`);
+    this.cdr.markForCheck();
   }
 
   // --- GESTION DES FORMATEURS ---
