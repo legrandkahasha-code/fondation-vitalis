@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { Role } from '../../common/enums/role.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ApprenantCache } from '../apprenant/apprenant-cache';
@@ -619,7 +620,7 @@ export class PedagogieService {
                 quizId: nouveauQuiz.id,
                 enonce: q.enonce,
                 ordre: q.ordre,
-                options: q.options as any,
+                options: (q.options === null ? Prisma.JsonNull : q.options) as Prisma.InputJsonValue,
               })),
             });
           }
@@ -1901,7 +1902,7 @@ export class PedagogieService {
                     quizId: nouvQ.id,
                     enonce: qq.enonce,
                     ordre: qq.ordre,
-                    options: (qq.options as any) ?? [],
+                    options: (qq.options === null ? Prisma.JsonNull : qq.options) as Prisma.InputJsonValue,
                   })),
                 });
               }
@@ -2057,7 +2058,7 @@ export class PedagogieService {
                     quizId: nouvQ.id,
                     enonce: qq.enonce,
                     ordre: qq.ordre,
-                    options: (qq.options as any) ?? [],
+                    options: (qq.options === null ? Prisma.JsonNull : qq.options) as Prisma.InputJsonValue,
                   })),
                 });
               }
