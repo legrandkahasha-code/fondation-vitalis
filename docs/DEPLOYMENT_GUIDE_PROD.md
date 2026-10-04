@@ -47,7 +47,7 @@ Si vous créez les services manuellement sur Render :
   ```
 - **Start Command :**
   ```bash
-  npx prisma migrate deploy && npm run start:prod
+  npm run start:prod
   ```
 - **Health Check Path :** `/api/health`
 - **Variables d'environnement :**
