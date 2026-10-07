@@ -87,10 +87,21 @@ async function bootstrap() {
 
   const isProd = process.env.NODE_ENV === 'production';
   const rawCorsOrigin = process.env.CORS_ORIGIN || '';
-  const allowedOrigins = rawCorsOrigin
-    .split(',')
-    .map((o) => o.trim().replace(/\/$/, ''))
-    .filter(Boolean);
+  const defaultOrigins = [
+    'https://vitaliseup.org',
+    'https://www.vitaliseup.org',
+    'https://vitalis-center.cd',
+    'https://www.vitalis-center.cd',
+  ];
+  const allowedOrigins = Array.from(
+    new Set([
+      ...defaultOrigins,
+      ...rawCorsOrigin
+        .split(',')
+        .map((o) => o.trim().replace(/\/$/, ''))
+        .filter(Boolean),
+    ]),
+  );
 
   app.enableCors({
     origin: (origin, callback) => {
@@ -106,18 +117,21 @@ async function bootstrap() {
         return callback(null, true);
       }
 
-      // Correspondance exacte dans la liste blanche
+      // Correspondance exacte dans la liste blanche (inclut https://vitaliseup.org et https://www.vitaliseup.org)
       if (allowedOrigins.includes(cleanOrigin)) {
         return callback(null, true);
       }
 
-      // Autoriser les domaines cloud officiels (Render, Vercel, Netlify) et le domaine de production
+      // Autoriser les domaines officiels de production et plateformes cloud (Render, Vercel, Netlify)
       const isCloudFrontend =
+        cleanOrigin === 'https://vitaliseup.org' ||
+        cleanOrigin === 'https://www.vitaliseup.org' ||
+        /^https:\/\/[\w-]+\.vitaliseup\.org$/.test(cleanOrigin) ||
+        cleanOrigin === 'https://vitalis-center.cd' ||
+        cleanOrigin === 'https://www.vitalis-center.cd' ||
         /^https:\/\/[\w-]+(\.[\w-]+)*\.onrender\.com$/.test(cleanOrigin) ||
         /^https:\/\/[\w-]+(\.[\w-]+)*\.vercel\.app$/.test(cleanOrigin) ||
-        /^https:\/\/[\w-]+(\.[\w-]+)*\.netlify\.app$/.test(cleanOrigin) ||
-        cleanOrigin === 'https://vitalis-center.cd' ||
-        cleanOrigin === 'https://www.vitalis-center.cd';
+        /^https:\/\/[\w-]+(\.[\w-]+)*\.netlify\.app$/.test(cleanOrigin);
 
       if (isCloudFrontend) {
         return callback(null, true);
@@ -195,10 +209,10 @@ async function bootstrap() {
     index: false,
     setHeaders: (res, path, stat) => {
       const origin = (res.req as any)?.headers?.origin;
-      if (origin && allowedOrigins.includes(origin)) {
+      if (origin && (allowedOrigins.includes(origin) || origin === 'https://vitaliseup.org' || origin === 'https://www.vitaliseup.org')) {
         res.set('Access-Control-Allow-Origin', origin);
       } else {
-        res.set('Access-Control-Allow-Origin', allowedOrigins[0] || 'http://localhost:4200');
+        res.set('Access-Control-Allow-Origin', allowedOrigins[0] || 'https://vitaliseup.org');
       }
       res.set('Cross-Origin-Resource-Policy', 'cross-origin');
       res.set('X-Content-Type-Options', 'nosniff');
