@@ -23,3 +23,10 @@ Thumbs.db
 scratch/
 coverage/
 *.tsbuildinfo
+
+# Backups and database dumps
+backups/
+backend/backups/
+*.dump
+*.tar.gz
+

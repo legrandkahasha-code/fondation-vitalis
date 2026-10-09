@@ -16,3 +16,8 @@ scripts/migrate-*.js
 !/scripts/start-local-db.ps1
 !/scripts/validate-local-db.ps1
 !/scripts/backup.ps1
+
+# Backups
+backups/
+*.dump
+*.tar.gz
