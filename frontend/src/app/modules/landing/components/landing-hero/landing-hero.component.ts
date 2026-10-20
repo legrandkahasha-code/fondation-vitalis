@@ -244,4 +244,58 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   }
+
+  // --- SKELETON LOADER & SUIVI DE CHARGEMENT DES IMAGES (REC 5) ---
+  loadedImages: { [slideId: string]: boolean } = {};
+
+  onImageLoad(slideId: string): void {
+    this.loadedImages[slideId] = true;
+    this.cdr.markForCheck();
+  }
+
+  isImageLoaded(slideId: string): boolean {
+    return !!this.loadedImages[slideId];
+  }
+
+  // --- OPTIMISATION WEBP & SRCSET RESPONSIVE (REC 2) ---
+  private readonly CAMPUS_IMAGES = [
+    'lab-informatique',
+    'atelier-energie',
+    'centre-examen',
+    'salle-conferences',
+  ];
+
+  private getCampusBaseName(url: string | null | undefined): string | null {
+    if (!url) return null;
+    for (const name of this.CAMPUS_IMAGES) {
+      if (url.includes(name)) {
+        return name;
+      }
+    }
+    return null;
+  }
+
+  getImageWebpMobile(url: string | null | undefined): string {
+    const base = this.getCampusBaseName(url);
+    if (base) {
+      return `assets/campus/${base}-mobile.webp`;
+    }
+    return url || 'assets/campus/lab-informatique-mobile.webp';
+  }
+
+  getImageWebpDesktop(url: string | null | undefined): string {
+    const base = this.getCampusBaseName(url);
+    if (base) {
+      return `assets/campus/${base}-desktop.webp`;
+    }
+    return url || 'assets/campus/lab-informatique-desktop.webp';
+  }
+
+  getImageJpgMobile(url: string | null | undefined): string {
+    const base = this.getCampusBaseName(url);
+    if (base) {
+      return `assets/campus/${base}-mobile.jpg`;
+    }
+    return url || 'assets/campus/lab-informatique-mobile.jpg';
+  }
 }
