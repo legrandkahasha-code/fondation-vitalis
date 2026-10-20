@@ -928,3 +928,34 @@ a:hover {
   background: linear-gradient(180deg, var(--or-africain-clair) 0%, var(--blanc) 100%);
   border-top: 3px solid var(--or-africain);
 }
+
+/* =========================================================
+   Hero International Excellence: Grille technique & Jauge GPU
+   ========================================================= */
+.hero-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+@keyframes heroSlideProgressAnim {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+.hero-progress-bar-fill {
+  transform-origin: left;
+  animation: heroSlideProgressAnim 6.5s linear forwards;
+}
+
+.hero-progress-paused {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-progress-bar-fill {
+    animation: none !important;
+    transform: scaleX(1) !important;
+  }
+}

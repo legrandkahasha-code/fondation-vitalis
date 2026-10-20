@@ -2,9 +2,9 @@
 <div class="w-full">
 <div class="min-h-screen flex flex-col bg-white text-[#1B1D1F] font-['Public_Sans',sans-serif] overflow-x-clip w-full">
       
-      <!-- BARRE DE PROGRESSION DE SCROLL (STYLE INSTITUTIONS INTERNATIONALES) -->
+      <!-- BARRE DE PROGRESSION DE SCROLL (STYLE ÉTAT & INSTITUTIONS RÉPUBLICAINES) -->
       <div 
-        class="fixed top-0 left-0 h-1 bg-gradient-to-r from-[#1C75BC] via-[#F0791E] to-[#00A859] z-50 transition-all duration-75 pointer-events-none"
+        class="fixed top-0 left-0 h-1 bg-[#C8902A] z-50 transition-all duration-75 pointer-events-none shadow-xs"
         [style.width.%]="scrollProgress"
       ></div>
 
@@ -201,294 +201,17 @@
         }
       </header>
 
-      <!-- 3. SECTION HERO (SPLIT HERO CONFORME ANALYSE COMPARATIVE INTERNATIONALE) -->
-      <section id="accueil" class="py-12 lg:py-16 px-4 sm:px-6 bg-gradient-to-b from-[#E7F1FA]/80 via-[#F8FAFC] to-white border-b border-[#D7DBDE] relative overflow-hidden">
-        <div id="contenu-principal" tabindex="-1"></div>
-        
-        <!-- Éléments de fond décoratifs subtils et lumineux -->
-        <div class="absolute -right-20 -top-20 w-96 h-96 bg-[#1C75BC]/8 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -left-20 bottom-0 w-80 h-80 bg-[#F0791E]/8 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="max-w-7xl mx-auto grid lg:grid-cols-12 gap-8 lg:gap-10 items-center relative z-10">
-          
-          <!-- CÔTÉ GAUCHE : TEXTE & PROPOSITION DE VALEUR (100% DE LISIBILITÉ ET HAUT CONTRASTE) -->
-          <div class="lg:col-span-7 animate-fade-in-up">
-            
-            <div class="flex flex-wrap items-center gap-2 mb-4">
-              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#E7F1FA] border border-[#1C75BC]/30 text-[#1C75BC] text-xs font-semibold rounded-md shadow-xs">
-                <span class="inline-block w-2 h-2 rounded-full bg-[#1C75BC]"></span>
-                <span>Autorisation Ministérielle : {{ settings.heroNumeroAgrement }}</span>
-              </div>
-              <div class="inline-flex items-center gap-2 px-3 py-1 bg-[#E7F1EA] border border-[#276B44]/30 rounded-md text-[11px] text-[#276B44] font-semibold">
-                <span class="w-2 h-2 rounded-full bg-[#276B44]"></span>
-                <span>142 inscrits cette semaine · Session 2026 ouverte</span>
-              </div>
-            </div>
-
-            <h1 class="text-4xl lg:text-5xl font-bold text-[#1B1D1F] leading-tight title-display">
-              {{ settings.heroTitre }}
-            </h1>
-
-            <div class="barre grande force-visible my-4"></div>
-
-            <p class="text-sm sm:text-base text-[#4B5157] max-w-xl leading-relaxed mt-4 font-normal">
-              {{ settings.heroSousTitre }}
-            </p>
-
-            <div class="flex flex-wrap items-center gap-4 mt-8">
-              <a href="#formations" class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white py-3 px-6 shadow-md font-semibold text-sm hover:translate-y-[-2px] transition-all inline-flex items-center gap-2">
-                <span>Découvrir nos formations</span>
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-              </a>
-              <a routerLink="/login" class="text-xs sm:text-sm font-semibold text-[#1C75BC] hover:text-[#124F80] hover:underline inline-flex items-center gap-1 transition-colors">
-                <span>Espace Candidat & Inscriptions</span>
-                <span>→</span>
-              </a>
-              <span class="text-[#D7DBDE] hidden sm:inline">|</span>
-              <a href="#verifier" class="text-xs sm:text-sm text-[#4B5157] hover:text-[#1C75BC] hover:underline inline-flex items-center gap-1 transition-colors">
-                <svg class="w-4 h-4 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span>Vérifier un certificat</span>
-              </a>
-            </div>
-
-            <!-- Preuves d'assurance sous les boutons -->
-            <div class="mt-8 pt-6 border-t border-[#D7DBDE] flex flex-wrap gap-5 text-xs text-[#4B5157]">
-              <div class="flex items-center gap-1.5 hover:text-[#1B1D1F] transition-colors font-medium">
-                <svg class="w-4 h-4 text-[#276B44] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Certificat officiel infalsifiable</span>
-              </div>
-              <div class="flex items-center gap-1.5 hover:text-[#1B1D1F] transition-colors font-medium">
-                <svg class="w-4 h-4 text-[#276B44] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Ateliers pratiques & Projets concrets</span>
-              </div>
-              <div class="flex items-center gap-1.5 hover:text-[#1B1D1F] transition-colors font-medium">
-                <svg class="w-4 h-4 text-[#276B44] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Immersion professionnelle active</span>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- CÔTÉ DROIT : COMPOSITION VISUELLE HD ET CERTIFICAT D'AGRÉMENT NON TRONQUÉ -->
-          <div class="lg:col-span-5 relative z-10">
-            
-            <!-- Sélecteur d'affichage interactif (Ateliers & Pratique / Certificat d'Agrément) -->
-            <div class="flex items-center justify-between p-1 bg-white border border-[#D7DBDE] rounded-xl mb-3 shadow-xs">
-              <button 
-                type="button"
-                (click)="activeHeroTab = 'photo'"
-                [class.bg-[#1C75BC]]="activeHeroTab === 'photo'"
-                [class.text-white]="activeHeroTab === 'photo'"
-                [class.shadow-xs]="activeHeroTab === 'photo'"
-                [class.text-[#4B5157]]="activeHeroTab !== 'photo'"
-                class="flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>Ateliers & Pratique</span>
-              </button>
-
-              <button 
-                type="button"
-                (click)="activeHeroTab = 'certificat'"
-                [class.bg-[#124F80]]="activeHeroTab === 'certificat'"
-                [class.text-white]="activeHeroTab === 'certificat'"
-                [class.shadow-xs]="activeHeroTab === 'certificat'"
-                [class.text-[#4B5157]]="activeHeroTab !== 'certificat'"
-                class="flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
-                <span>Agrément Officiel</span>
-              </button>
-            </div>
-
-            <!-- VUE 1 : PHOTO HD ATELIER & APPRENANTS AVEC BADGES FLOTTANTS (MODÈLE TAFE / COURSERA) -->
-            @if (activeHeroTab === 'photo') {
-              <div class="relative rounded-2xl shadow-xl border-2 border-white overflow-hidden bg-slate-100 group animate-fade-in">
-                <!-- Image HD des apprenants/ateliers (Nette, vivante, non obscurcie) -->
-                <img 
-                  [src]="getHeroImageUrl()" 
-                  (error)="onHeroImageError($event)"
-                  alt="Apprenants et ateliers techniques de Vitalis Center" 
-                  title="Apprenants et ateliers techniques de Vitalis Center"
-                  class="w-full h-[370px] sm:h-[410px] object-cover object-center group-hover:scale-102 transition-transform duration-500"
-                  loading="eager"
-                />
-
-                <!-- Dégradé progressif uniquement en bas pour mettre en valeur les badges -->
-                <div class="absolute inset-0 bg-gradient-to-t from-[#0A2540]/85 via-[#0A2540]/25 to-transparent pointer-events-none"></div>
-
-                <!-- Badge supérieur : Double logo institutionnel & Pastille Organisme Agréé -->
-                <div class="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between pointer-events-auto">
-                  <div class="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md border border-slate-200 flex items-center gap-2">
-                    <img src="assets/logo-vitalis.png" alt="Vitalis Center" title="Vitalis Center" class="h-6 w-auto object-contain" />
-                    <div class="h-4 border-r border-slate-300"></div>
-                    <img src="assets/logo-ministere.png" alt="Ministère de la Formation Professionnelle" title="Ministère de la Formation Professionnelle" class="h-6 w-auto object-contain" />
-                    <span class="text-[11px] font-bold text-[#124F80] hidden sm:inline">Tutelle de l'État</span>
-                  </div>
-
-                  <button 
-                    type="button"
-                    (click)="activeHeroTab = 'certificat'"
-                    class="bg-gradient-to-r from-[#F0791E] to-[#d6610b] hover:from-[#d6610b] hover:to-[#b54f05] text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1.5 animate-pulse-glow-or cursor-pointer transition-all"
-                    title="Voir l'agrément officiel"
-                  >
-                    <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
-                    <span>Organisme Agréé</span>
-                  </button>
-                </div>
-
-                <!-- Badges inférieurs superposés sur la photo -->
-                <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-end justify-between gap-2">
-                  <div class="bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-xl shadow-lg border border-white/60 max-w-[240px]">
-                    <div class="flex items-center gap-1.5 text-xs font-bold text-[#1B1D1F]">
-                      <span class="text-[#276B44] font-extrabold">✓</span>
-                      <span>{{ settings.heroBadge1Texte || '94% Insertion Professionnelle' }}</span>
-                    </div>
-                    <div class="text-[10px] text-[#4B5157] mt-0.5">Pédagogie APC orientée pratique</div>
-                  </div>
-
-                  <button 
-                    type="button" 
-                    (click)="activeHeroTab = 'certificat'"
-                    class="bg-[#1C75BC] hover:bg-[#124F80] text-white text-xs font-semibold px-3 py-2.5 rounded-xl shadow-lg flex items-center gap-1.5 transition-all cursor-pointer hover:scale-103"
-                  >
-                    <span>Fiche Agrément</span>
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            }
-
-            <!-- VUE 2 : CARTE DU CERTIFICAT D'AGRÉMENT OFFICIEL (COMPLÈTE, NETTE ET SANS COUPURE) -->
-            @if (activeHeroTab === 'certificat') {
-              <div class="relative pt-3 animate-fade-in">
-                
-                <!-- Pastille Organisme Agréé en haut à droite -->
-                <div class="absolute top-0 right-4 z-20 bg-[#F0791E] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-xs shadow-sm flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                  <span>Organisme Agréé</span>
-                </div>
-
-                <!-- Carte Institutionnelle Complète -->
-                <div 
-                  (mousemove)="onMouseMoveHeroWidget($event)" 
-                  (mouseleave)="onMouseLeaveHeroWidget()"
-                  [style.transform]="heroWidgetTransform"
-                  class="bg-white border-2 border-[#1C75BC] p-6 shadow-xl rounded-xl relative transition-transform duration-200 ease-out will-change-transform"
-                >
-                  <!-- En-tête : Sceaux et Logos Institutionnels -->
-                  <div class="flex items-center justify-around gap-4 mb-4 border-b border-[#D7DBDE] pb-4">
-                    <div class="flex flex-col items-center">
-                      <img 
-                        src="assets/logo-vitalis.png" 
-                        alt="Vitalis Center EUP"
-                        width="160"
-                        height="64"
-                        class="h-14 sm:h-16 w-auto object-contain transition-transform hover:scale-105"
-                      />
-                      <span class="text-[10px] font-bold text-[#1C75BC] mt-1">Vitalis Center EUP</span>
-                    </div>
-                    <div class="h-12 border-r-2 border-[#D7DBDE]"></div>
-                    <div class="flex flex-col items-center">
-                      <img 
-                        src="assets/logo-ministere.png" 
-                        alt="Ministère de la Formation Professionnelle - RDC" 
-                        class="h-14 sm:h-16 w-auto object-contain transition-transform hover:scale-105"
-                      />
-                      <span class="text-[10px] font-bold text-[#124F80] mt-1">Ministère de Tutelle</span>
-                    </div>
-                  </div>
-
-                  <!-- Lignes d'informations officielles du certificat -->
-                  <div class="space-y-2.5 text-xs">
-                    <div class="flex justify-between py-1 border-b border-[#F5F6F7]">
-                      <span class="text-[#4B5157]">Établissement :</span>
-                      <span class="font-bold text-[#1C75BC]">Vitalis Center EUP</span>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-[#F5F6F7]">
-                      <span class="text-[#4B5157]">Statut Juridique :</span>
-                      <span class="font-bold text-[#1B1D1F]">Établissement d'Utilité Publique</span>
-                    </div>
-                    <div class="flex items-center justify-between py-1 border-b border-[#F5F6F7] gap-2">
-                      <span class="text-[#4B5157] shrink-0">Agrément Officiel :</span>
-                      <div class="flex items-center gap-1.5 flex-wrap justify-end">
-                        <span class="font-mono text-[#ED1C24] font-bold bg-[#FDE6E6] px-1.5 py-0.5 rounded text-[11px] select-all break-all">
-                          {{ settings.heroNumeroAgrement }}
-                        </span>
-                        <button 
-                          type="button" 
-                          (click)="copyAgrement()" 
-                          class="text-[#1C75BC] hover:text-[#124F80] cursor-pointer p-0.5" 
-                          title="Copier le numéro d'agrément"
-                        >
-                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-[#F5F6F7]">
-                      <span class="text-[#4B5157]">Pédagogie :</span>
-                      <span class="font-semibold text-[#1B1D1F]">Approche par Compétences (APC)</span>
-                    </div>
-                    <div class="flex justify-between py-1 items-center">
-                      <span class="text-[#4B5157]">Sécurité Documentaire :</span>
-                      <span class="inline-flex items-center gap-1 font-semibold text-[#276B44] bg-[#E7F1EA] px-2 py-0.5 rounded text-[11px]">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#276B44] animate-pulse-glow"></span>
-                        QR Code & Filigrane Numérique
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Pied de carte officiel ministériel -->
-                  <div class="mt-4 pt-3 border-t border-[#D7DBDE] text-[11px] text-center text-[#4B5157] flex items-center justify-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-[#2AA9A0]"></span>
-                    <span>République Démocratique du Congo · Ministère de la Formation Professionnelle</span>
-                  </div>
-
-                  <!-- Boutons d'actions en bas de la carte -->
-                  <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <button 
-                      type="button" 
-                      (click)="activeHeroTab = 'photo'"
-                      class="text-[11px] font-semibold text-[#4B5157] hover:text-[#1C75BC] cursor-pointer flex items-center gap-1"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                      </svg>
-                      <span>Voir les ateliers</span>
-                    </button>
-
-                    <button 
-                      type="button" 
-                      (click)="openCredentialsModal()"
-                      class="text-[11px] font-bold text-[#1C75BC] hover:underline cursor-pointer flex items-center gap-1"
-                    >
-                      <span>Fiche officielle (Plein écran)</span>
-                      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            }
-
-          </div>
-
-        </div>
+      <!-- 3. SECTION HERO (COMPOSANT AUTONOME ONPUSH AUX NORMES INTERNATIONALES) -->
+      <app-landing-hero
+        [heroSlides]="heroSlides"
+        [heroNumeroAgrement]="settings.heroNumeroAgrement || ''"
+        [defaultHeroImage]="getHeroImageUrl()"
+        [reassurances]="heroReassurances"
+        (openCredentials)="openCredentialsModal()"
+        (openVideo)="openVideoModal()"
+        (ctaClick)="handleHeroCtaClick($event)"
+        (downloadBrochure)="telechargerBrochure()"
+      ></app-landing-hero>
 
         <!-- MODALE OFFICIELLE INSTITUTIONNELLE (FICHE D'AGRÉMENT ET TUTELLE) -->
         @if (showCredentialsModal) {
@@ -592,8 +315,6 @@
             </div>
           </div>
         }
-
-      </section>
 
       <!-- 4. SECTION CHIFFRES CLÉS / IMPACT AVEC ANIMATION DE DÉCOMPTE (COUNT-UP HARVARD/TAFE STYLE) -->
       <section id="impact-stats" #statsSection class="py-14 bg-[#F8FAFC] border-b border-[#D7DBDE]">

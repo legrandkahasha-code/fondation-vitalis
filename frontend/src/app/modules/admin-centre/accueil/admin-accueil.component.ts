@@ -182,14 +182,26 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
 
                       <div class="field">
                         <label for="heroImageUrlInput" class="text-[11px] text-[#4B5157]">Ou coller une URL d'image web directe</label>
-                        <input 
-                          id="heroImageUrlInput" 
-                          type="url" 
-                          [(ngModel)]="settings.heroImage" 
-                          name="heroImage" 
-                          placeholder="https://images.unsplash.com/..." 
-                          class="text-xs p-2 bg-white border border-[#D7DBDE] rounded-[2px]" 
-                        />
+                        <div class="flex items-center gap-2">
+                          <input 
+                            id="heroImageUrlInput" 
+                            type="url" 
+                            [(ngModel)]="settings.heroImage" 
+                            name="heroImage" 
+                            placeholder="https://images.unsplash.com/..." 
+                            class="text-xs p-2 bg-white border border-[#D7DBDE] rounded-[2px] flex-1" 
+                          />
+                          <button 
+                            type="button" 
+                            (click)="sauvegarderHeroImageDirecte()"
+                            [disabled]="sauvegardantHeroImageDirecte"
+                            class="btn btn-secondary text-xs py-2 px-3 whitespace-nowrap cursor-pointer flex items-center gap-1 font-semibold text-[#124F80] border-[#124F80]"
+                            title="Enregistrer directement cette URL sans faire défiler la page"
+                          >
+                            <span>💾</span>
+                            <span>{{ sauvegardantHeroImageDirecte ? 'Enregistrement...' : 'Enregistrer' }}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -216,6 +228,59 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   </div>
                 </div>
 
+                <!-- Boutons d'Action Principaux (CTA) du Hero -->
+                <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[4px] space-y-3">
+                  <div class="font-bold text-[#124F80] text-xs flex items-center gap-1.5">
+                    <span>🎯</span> Boutons d'Action Principaux (CTA) du Hero
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="p-3 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#124F80]">Bouton Principal (Or d'État)</div>
+                      <div class="field">
+                        <label class="text-[10px] text-[#4B5157]">Texte du Bouton Principal</label>
+                        <input type="text" [(ngModel)]="settings.heroCtaTexte" name="heroCtaTexte" placeholder="Ex : Postuler pour la Session 2026" class="text-xs" />
+                      </div>
+                      <div class="field">
+                        <label class="text-[10px] text-[#4B5157]">Lien de Redirection (URL ou Ancre #)</label>
+                        <input type="text" [(ngModel)]="settings.heroCtaLien" name="heroCtaLien" placeholder="Ex : #formations ou /admission" class="text-xs" />
+                      </div>
+                    </div>
+
+                    <div class="p-3 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#2AA9A0]">Bouton Secondaire (Verre Dépoli)</div>
+                      <div class="field">
+                        <label class="text-[10px] text-[#4B5157]">Texte du Bouton Secondaire</label>
+                        <input type="text" [(ngModel)]="settings.heroCtaSecondaireTexte" name="heroCtaSecondaireTexte" placeholder="Ex : Télécharger la Brochure (PDF)" class="text-xs" />
+                      </div>
+                      <div class="field">
+                        <label class="text-[10px] text-[#4B5157]">Lien de Redirection ou Action</label>
+                        <input type="text" [(ngModel)]="settings.heroCtaSecondaireLien" name="heroCtaSecondaireLien" placeholder="Ex : action:brochure ou #contact" class="text-xs" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3 Puces de Réassurance Institutionnelle -->
+                <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[4px] space-y-3">
+                  <div class="font-bold text-[#124F80] text-xs flex items-center gap-1.5">
+                    <span>🛡️</span> 3 Puces de Réassurance Institutionnelle (Sous les boutons CTA)
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="field">
+                      <label class="text-[11px] text-[#124F80]">Point de Réassurance 1</label>
+                      <input type="text" [(ngModel)]="settings.heroReassurance1" name="heroReassurance1" placeholder="Ex : Certificat officiel infalsifiable (QR Code)" class="text-xs" />
+                    </div>
+                    <div class="field">
+                      <label class="text-[11px] text-[#2AA9A0]">Point de Réassurance 2</label>
+                      <input type="text" [(ngModel)]="settings.heroReassurance2" name="heroReassurance2" placeholder="Ex : Ateliers pratiques & Équipements réels" class="text-xs" />
+                    </div>
+                    <div class="field">
+                      <label class="text-[11px] text-[#C8902A]">Point de Réassurance 3</label>
+                      <input type="text" [(ngModel)]="settings.heroReassurance3" name="heroReassurance3" placeholder="Ex : Immersion professionnelle active" class="text-xs" />
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -225,8 +290,8 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               <div class="grid md:grid-cols-2 gap-4">
                 <div class="field">
                   <label for="liveActivityTexte">Bandeau d'Activité / Notification d'Inscription en Temps Réel</label>
-                  <input id="liveActivityTexte" type="text" [(ngModel)]="settings.liveActivityTexte" name="liveActivityTexte" placeholder="Ex : 🚀 Session d'avril 2026 ouverte : 87 candidats déjà inscrits cette semaine !" />
-                  <div class="hint">Affiché en toast ou ticker dynamique pour stimuler l'urgence d'inscription.</div>
+                  <input id="liveActivityTexte" type="text" [(ngModel)]="settings.liveActivityTexte" name="liveActivityTexte" placeholder="Ex : Inscriptions ouvertes : Session certifiante 2026 sous tutelle ministérielle" />
+                  <div class="hint">Affiché en toast ou bandeau dynamique pour stimuler l'information des candidats.</div>
                 </div>
 
                 <div class="p-3 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[2px] flex flex-col justify-between">
@@ -1469,7 +1534,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               <div class="grid grid-cols-2 gap-3">
                 <div class="field">
                   <label>Titre / Fonction *</label>
-                  <input type="text" [(ngModel)]="formateurEnCours.titre" name="titre" required placeholder="Ex : Chef de Département IA" />
+                  <input type="text" [(ngModel)]="formateurEnCours.titre" name="titre" required placeholder="Ex : Chef de Département Réseaux & Systèmes" />
                 </div>
                 <div class="field">
                   <label>Expérience Professionnelle *</label>
@@ -1536,7 +1601,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
             <form (ngSubmit)="sauvegarderCampusModal()" class="space-y-3.5 text-xs">
               <div class="field">
                 <label>Nom / Titre de l'Espace *</label>
-                <input type="text" [(ngModel)]="campusEnCours.titre" name="titre" required class="font-bold text-sm" placeholder="Ex : Laboratoire Informatique & IA" />
+                <input type="text" [(ngModel)]="campusEnCours.titre" name="titre" required class="font-bold text-sm" placeholder="Ex : Laboratoire Informatique & Cloud" />
               </div>
 
               <div class="field">
@@ -2064,6 +2129,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
 
   // Upload States
   uploadingHeroImage: boolean = false;
+  sauvegardantHeroImageDirecte: boolean = false;
   uploadingVideoPoster: boolean = false;
   uploadingVideoPresentation: boolean = false;
   uploadingImage: boolean = false;
@@ -2176,6 +2242,13 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       heroBadge1Texte: this.settings.heroBadge1Texte || '',
       heroBadge2Texte: this.settings.heroBadge2Texte || '',
       heroBadge3Texte: this.settings.heroBadge3Texte || '',
+      heroCtaTexte: this.settings.heroCtaTexte || '',
+      heroCtaLien: this.settings.heroCtaLien || '',
+      heroCtaSecondaireTexte: this.settings.heroCtaSecondaireTexte || '',
+      heroCtaSecondaireLien: this.settings.heroCtaSecondaireLien || '',
+      heroReassurance1: this.settings.heroReassurance1 || '',
+      heroReassurance2: this.settings.heroReassurance2 || '',
+      heroReassurance3: this.settings.heroReassurance3 || '',
       topbarTexte: this.settings.topbarTexte || '',
       statsLaureats: Number(this.settings.statsLaureats) || 0,
       statsTauxReussite: Number(this.settings.statsTauxReussite) || 0,
@@ -2817,13 +2890,28 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   onHeroImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const fileName = file.name;
       this.uploadingHeroImage = true;
-      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+      this.cdr.markForCheck();
+      this.landingService.uploadActualiteMedia(file).subscribe({
         next: (res) => {
-          this.uploadingHeroImage = false;
           this.settings.heroImage = res.url;
-          this.toast.success(`Photo du Hero « ${input.files![0].name} » téléversée avec succès.`);
-          this.cdr.markForCheck();
+          // Sauvegarde automatique et immédiate en base de données PostgreSQL
+          this.landingService.updateSettings({ heroImage: res.url }).subscribe({
+            next: (saved) => {
+              this.settings = { ...this.settings, ...saved };
+              this.uploadingHeroImage = false;
+              notifyLandingSettingsChanged();
+              this.toast.success(`Photo du Hero « ${fileName} » téléversée et enregistrée en direct !`);
+              this.cdr.markForCheck();
+            },
+            error: () => {
+              this.uploadingHeroImage = false;
+              this.toast.info('Photo téléversée mais non enregistrée automatiquement. Pensez à cliquer sur « Enregistrer tous les paramètres » en bas.');
+              this.cdr.markForCheck();
+            },
+          });
         },
         error: () => {
           this.uploadingHeroImage = false;
@@ -2836,7 +2924,39 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
 
   supprimerHeroImage(): void {
     this.settings.heroImage = '';
-    this.toast.info('Photo personnalisée retirée. L\'image par défaut sera affichée.');
+    this.landingService.updateSettings({ heroImage: '' }).subscribe({
+      next: (saved) => {
+        this.settings = { ...this.settings, ...saved };
+        notifyLandingSettingsChanged();
+        this.toast.info('Photo personnalisée réinitialisée et enregistrée. L\'image officielle par défaut sera affichée.');
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.toast.info('Photo retirée localement. Cliquez sur Enregistrer en bas pour confirmer.');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  sauvegarderHeroImageDirecte(): void {
+    const url = (this.settings.heroImage || '').trim();
+    this.sauvegardantHeroImageDirecte = true;
+    this.cdr.markForCheck();
+    this.landingService.updateSettings({ heroImage: url }).subscribe({
+      next: (saved) => {
+        this.settings = { ...this.settings, ...saved };
+        this.sauvegardantHeroImageDirecte = false;
+        notifyLandingSettingsChanged();
+        this.toast.success('Photo du Hero enregistrée avec succès !');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.sauvegardantHeroImageDirecte = false;
+        const msg = err?.error?.message || 'Erreur lors de l\'enregistrement de la photo.';
+        this.toast.error(msg);
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   // Video Poster & URL Helpers

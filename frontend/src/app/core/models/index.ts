@@ -195,6 +195,13 @@ export interface LandingPageSettings {
   heroBadge1Texte?: string;
   heroBadge2Texte?: string;
   heroBadge3Texte?: string;
+  heroCtaTexte?: string;
+  heroCtaLien?: string;
+  heroCtaSecondaireTexte?: string;
+  heroCtaSecondaireLien?: string;
+  heroReassurance1?: string;
+  heroReassurance2?: string;
+  heroReassurance3?: string;
   topbarTexte?: string;
   statsLaureats: number;
   statsTauxReussite: number;

@@ -123,6 +123,41 @@ export class UpdateLandingSettingsDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
+  heroCtaTexte?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  heroCtaLien?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  heroCtaSecondaireTexte?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  heroCtaSecondaireLien?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  heroReassurance1?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  heroReassurance2?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  heroReassurance3?: string;
+
+  @IsOptional()
+  @IsString()
   topbarTexte?: string;
 
   @IsOptional()

@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -62,11 +62,33 @@ export interface FaqDisplayItem {
   categorie?: string;
 }
 
+export interface HeroSlideItem {
+  id: string;
+  badge: string;
+  badgeCouleur: string;
+  atelierTag: string;
+  tabTitle: string;
+  titre: string;
+  sousTitre: string;
+  imageUrl: string;
+  statChiffre: string;
+  statLabel: string;
+  ctaTexte: string;
+  ctaLien: string;
+  ctaSecondaireTexte?: string;
+  ctaSecondaireLien?: string;
+  sessionStatut?: string;
+  videoUrl?: string;
+}
+
+
+
+import { LandingHeroComponent } from './components/landing-hero/landing-hero.component';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, LandingHeroComponent],
   templateUrl: './landing.component.html',
 })
 export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -238,6 +260,204 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   selectedCategorieActualite: string = 'TOUS';
   selectedArticle: LandingPageActualite | null = null;
+
+  // --- ÉTAT DU SLIDER HERO CINÉMATIQUE INTERACTIF (ROTATION ATELIERS & EXCELLENCE) ---
+  currentHeroIndex: number = 0;
+  heroSliderProgress: number = 0; // 0 à 100%
+  isHeroSliderPaused: boolean = false;
+  private heroSliderTimer: any = null;
+  private readonly HERO_SLIDE_DURATION_MS = 6500;
+  private readonly HERO_TICK_INTERVAL_MS = 65;
+
+  get heroSlides(): HeroSlideItem[] {
+    const slides: HeroSlideItem[] = [
+      {
+        id: 'officiel',
+        badge: this.settings.topbarTexte ? 'Tutelle Officielle · ' + this.settings.topbarTexte : 'Sous tutelle du Ministère de la Formation Professionnelle · RDC',
+        badgeCouleur: '#2AA9A0',
+        atelierTag: 'Campus Central · Titres d\'État',
+        tabTitle: 'Présentation d\'État',
+        titre: this.settings.heroTitre || 'Vitalis Center, la formation professionnelle reconnue par l\'État',
+        sousTitre: this.settings.heroSousTitre || 'Vitalis Center EUP forme les professionnels, cadres et jeunes talents aux métiers d\'avenir sous la tutelle du Ministère de la Formation Professionnelle. Validation par compétences pratiques, encadrement expert et délivrance de certificats officiels infalsifiables.',
+        imageUrl: this.getHeroImageUrl(),
+        statChiffre: this.settings.heroBadge1Texte || '94% Insertion',
+        statLabel: 'Insertion directe et stages garantis',
+        ctaTexte: this.settings.heroCtaTexte || 'Postuler pour la Session 2026',
+        ctaLien: this.settings.heroCtaLien || '#formations',
+        ctaSecondaireTexte: this.settings.heroCtaSecondaireTexte || 'Télécharger la Brochure (PDF)',
+        ctaSecondaireLien: this.settings.heroCtaSecondaireLien || 'action:brochure',
+        sessionStatut: 'Session 2026 · Inscriptions Ouvertes',
+        videoUrl: this.settings?.videoPresentationUrl || '',
+      },
+    ];
+
+    // Intégration dynamique des ateliers et espaces configurés dans l'Espace Administrateur Central
+    if (this.campusEspacesList && this.campusEspacesList.length > 0) {
+      this.campusEspacesList.forEach((c: any, idx: number) => {
+        const couleurBadge = idx % 3 === 0 ? '#C8902A' : idx % 3 === 1 ? '#124F80' : '#2AA9A0';
+        slides.push({
+          id: `campus-${idx}`,
+          badge: c.badge || 'Atelier Professionnel & Lab',
+          badgeCouleur: couleurBadge,
+          atelierTag: c.titre,
+          tabTitle: c.titre && c.titre.length > 22 ? c.titre.substring(0, 20) + '...' : (c.titre || `Atelier 0${idx + 2}`),
+          titre: c.titre,
+          sousTitre: c.description,
+          imageUrl: this.formatImageUrl(c.photo, 'assets/campus/lab-informatique.jpg'),
+          statChiffre: c.badge || '100% Pratique',
+          statLabel: c.equipements || 'Équipements et bancs d\'essais réels',
+          ctaTexte: 'Explorer cette filière',
+          ctaLien: '#formations',
+          ctaSecondaireTexte: 'Poser une question',
+          ctaSecondaireLien: '#contact',
+          sessionStatut: 'Atelier Ouvert · Places Limitées',
+          videoUrl: this.settings?.videoPresentationUrl || '',
+        });
+      });
+    } else {
+      // Fallback gracieux si aucun atelier n'est encore configuré
+      slides.push(
+        {
+          id: 'informatique',
+          badge: 'Atelier Technologique Numérique',
+          badgeCouleur: '#C8902A',
+          atelierTag: 'Lab Informatique · Cloud · Cybersécurité',
+          tabTitle: 'Lab Informatique',
+          titre: 'Maîtrisez les technologies du numérique dans nos laboratoires de pointe',
+          sousTitre: 'Apprentissage immersif sur serveurs réels, postes spécialisés, administration systèmes, réseaux d\'entreprise et cybersécurité pratique avec des professionnels en activité.',
+          imageUrl: 'assets/campus/lab-informatique.jpg',
+          statChiffre: '100% Pratique',
+          statLabel: 'Postes dédiés, serveurs réels et cloud',
+          ctaTexte: 'Explorer les filières IT',
+          ctaLien: '#formations',
+          ctaSecondaireTexte: 'Espace Candidat',
+          ctaSecondaireLien: '/login',
+          sessionStatut: 'Session 2026 · Inscriptions Ouvertes',
+          videoUrl: this.settings?.videoPresentationUrl || '',
+        },
+        {
+          id: 'energie',
+          badge: 'Atelier Industriel & Transition Énergétique',
+          badgeCouleur: '#2AA9A0',
+          atelierTag: 'Électrotechnique · Solaire · Maintenance',
+          tabTitle: 'Atelier Électrotechnique',
+          titre: 'Formez-vous aux énergies d\'avenir et installations industrielles modernes',
+          sousTitre: 'Bancs d\'essais réels, dimensionnement solaire photovoltaïque, automatismes et maintenance industrielle aux normes internationales de sécurité.',
+          imageUrl: 'assets/campus/atelier-energie.jpg',
+          statChiffre: '15+ Métiers',
+          statLabel: 'Bancs d\'essais réels et habilitations',
+          ctaTexte: 'Voir les filières techniques',
+          ctaLien: '#formations',
+          ctaSecondaireTexte: 'Poser une question',
+          ctaSecondaireLien: '#contact',
+          sessionStatut: 'Session 2026 · Inscriptions Ouvertes',
+          videoUrl: this.settings?.videoPresentationUrl || '',
+        }
+      );
+    }
+
+    return slides;
+  }
+
+  get heroReassurances(): string[] {
+    return [
+      this.settings.heroReassurance1 || 'Certificat officiel infalsifiable (QR Code)',
+      this.settings.heroReassurance2 || 'Ateliers pratiques & Équipements réels',
+      this.settings.heroReassurance3 || 'Immersion professionnelle active',
+    ];
+  }
+
+  get currentHeroSlide(): HeroSlideItem {
+    const list = this.heroSlides;
+    return list[this.currentHeroIndex % list.length];
+  }
+
+  startHeroSliderLoop(): void {
+    this.stopHeroSliderLoop();
+    this.ngZone.runOutsideAngular(() => {
+      this.heroSliderTimer = setInterval(() => {
+        if (!this.isHeroSliderPaused && this.heroSlides.length > 1) {
+          this.heroSliderProgress += (this.HERO_TICK_INTERVAL_MS / this.HERO_SLIDE_DURATION_MS) * 100;
+          if (this.heroSliderProgress >= 100) {
+            this.heroSliderProgress = 0;
+            this.ngZone.run(() => {
+              this.nextHeroSlide();
+            });
+          } else {
+            this.cdr.markForCheck();
+          }
+        }
+      }, this.HERO_TICK_INTERVAL_MS);
+    });
+  }
+
+  stopHeroSliderLoop(): void {
+    if (this.heroSliderTimer) {
+      clearInterval(this.heroSliderTimer);
+      this.heroSliderTimer = null;
+    }
+  }
+
+  nextHeroSlide(): void {
+    const total = this.heroSlides.length;
+    if (total <= 1) return;
+    this.currentHeroIndex = (this.currentHeroIndex + 1) % total;
+    this.heroSliderProgress = 0;
+    this.cdr.markForCheck();
+  }
+
+  prevHeroSlide(): void {
+    const total = this.heroSlides.length;
+    if (total <= 1) return;
+    this.currentHeroIndex = (this.currentHeroIndex - 1 + total) % total;
+    this.heroSliderProgress = 0;
+    this.cdr.markForCheck();
+  }
+
+  goToHeroSlide(index: number): void {
+    this.currentHeroIndex = index;
+    this.heroSliderProgress = 0;
+    this.cdr.markForCheck();
+  }
+
+  pauseHeroSlider(): void {
+    this.isHeroSliderPaused = true;
+  }
+
+  resumeHeroSlider(): void {
+    this.isHeroSliderPaused = false;
+  }
+
+  telechargerBrochure(): void {
+    this.toast.info('Ouverture de la brochure officielle Vitalis Center 2026...');
+    const formationsEl = document.querySelector('#formations');
+    if (formationsEl) {
+      formationsEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  handleHeroCtaClick(lien: string): void {
+    if (lien === 'modal:credentials') {
+      this.openCredentialsModal();
+      return;
+    }
+    if (lien === 'action:brochure') {
+      this.telechargerBrochure();
+      return;
+    }
+    if (lien.startsWith('/')) {
+      this.router.navigateByUrl(lien);
+      return;
+    }
+    if (lien.startsWith('#')) {
+      const el = document.querySelector(lien);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+    window.location.href = lien;
+  }
 
   // --- ÉTAT DU SLIDER D'ACTUALITÉS ANIMÉ (HARVARD / UNESCO STYLE) ---
   currentSlideIndex: number = 0;
@@ -638,7 +858,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Catégories officielles des formations
   categoriesFormation: CategorieFormation[] = [
-    { id: '1', code: 'tech', libelle: 'Informatique & Technologies', description: 'Développement, Réseaux & IA', couleur: '#1C75BC', icone: 'code', ordre: 1, actif: true },
+    { id: '1', code: 'tech', libelle: 'Informatique & Technologies', description: 'Développement Web, Réseaux & Systèmes', couleur: '#1C75BC', icone: 'code', ordre: 1, actif: true },
     { id: '2', code: 'gestion', libelle: 'Gestion & Management', description: 'Management, Comptabilité & Audit', couleur: '#F0791E', icone: 'briefcase', ordre: 2, actif: true },
     { id: '3', code: 'technique', libelle: 'Technique, Énergie & BTP', description: 'Génie électrique, Maintenance & BTP', couleur: '#276B44', icone: 'tool', ordre: 3, actif: true },
   ];
@@ -711,13 +931,15 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     private toast: ToastService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
     this.updateSafeMapUrl();
     this.chargerDonneesLanding();
     this.startSliderLoop();
+    this.startHeroSliderLoop();
 
     this.notifSub = this.notifications.messages().subscribe({
       next: (msg) => {
@@ -731,7 +953,10 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     });
 
-    this.unsubLandingSync = subscribeLandingSettingsChanged(() => this.chargerWhatsappWidget());
+    this.unsubLandingSync = subscribeLandingSettingsChanged(() => {
+      this.chargerWhatsappWidget();
+      this.chargerDonneesLanding();
+    });
     this.ouvrirFluxPublic();
 
     // Repli : si le flux temps réel est coupé, revalidation périodique
@@ -748,6 +973,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   onLandingVisibilityChange(): void {
     if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
       this.chargerWhatsappWidget();
+      this.chargerDonneesLanding();
     }
   }
 
@@ -988,6 +1214,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       this.pollingTimer = null;
     }
     this.stopSliderLoop();
+    this.stopHeroSliderLoop();
     if (this.statsObserver) {
       this.statsObserver.disconnect();
     }
@@ -1110,12 +1337,8 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   copiedAgrement: boolean = false;
   activeHeroTab: 'photo' | 'certificat' = 'photo';
 
-  getHeroImageUrl(): string {
-    const url = this.settings.heroImage;
-    if (!url || url.trim() === '') {
-      // Photo professionnelle haute qualité : formation pratique et excellence africaine
-      return 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80';
-    }
+  formatImageUrl(url: string | null | undefined, fallback: string = 'assets/campus/lab-informatique.jpg'): string {
+    if (!url || url.trim() === '') return fallback;
     if (url.startsWith('/uploads/')) {
       const backendBase = environment.apiUrl.replace(/\/api\/?$/, '');
       return `${backendBase}${url}`;
@@ -1123,9 +1346,13 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     return url;
   }
 
+  getHeroImageUrl(): string {
+    return this.formatImageUrl(this.settings.heroImage, 'assets/campus/lab-informatique.jpg');
+  }
+
   onHeroImageError(event: Event): void {
     const target = event.target as HTMLImageElement;
-    const fallback = 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80';
+    const fallback = 'assets/campus/lab-informatique.jpg';
     if (target && target.src !== fallback) {
       target.src = fallback;
     }

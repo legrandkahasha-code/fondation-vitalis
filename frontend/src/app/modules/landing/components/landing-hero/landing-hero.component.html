@@ -1,0 +1,503 @@
+<!-- SECTION HERO INSTITUTIONNELLE DE PRESTIGE MONDIAL -->
+<section 
+  id="accueil" 
+  class="relative min-h-[640px] lg:min-h-[740px] flex flex-col justify-between bg-[#061524] text-white overflow-hidden border-b border-[#0D3859] select-none"
+  (mouseenter)="pauseSlider()"
+  (mouseleave)="resumeSlider()"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd($event)"
+  role="region"
+  aria-label="Présentation officielle et ateliers de Vitalis Center"
+>
+  <div id="contenu-principal" tabindex="-1"></div>
+  
+  <!-- Annonceur d'accessibilité en direct pour les lecteurs d'écran (RGAA / WCAG) -->
+  <div class="sr-only" aria-live="polite" aria-atomic="true">
+    Diapositive {{ currentHeroIndex + 1 }} sur {{ heroSlides.length }} : {{ currentHeroSlide.titre }}
+  </div>
+
+  <!-- CARROUSEL D'IMAGES D'ARRIÈRE-PLAN PLEIN CADRE (EFFET DOCUMENTAIRE KEN BURNS CINÉMATIQUE DOUX) -->
+  <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+    @for (slide of heroSlides; track slide.id; let idx = $index) {
+      <img 
+        [src]="slide.imageUrl" 
+        (error)="onHeroImageError($event)"
+        alt="Atelier et formation de Vitalis Center EUP" 
+        title="Atelier et formation de Vitalis Center EUP"
+        [attr.alt]="slide.titre" 
+        [attr.title]="slide.atelierTag"
+        class="absolute inset-0 w-full h-full object-cover object-right lg:object-center pointer-events-none filter brightness-95 contrast-105 motion-safe:transition-all motion-reduce:transition-none"
+        [class.opacity-45]="idx === currentHeroIndex"
+        [class.lg:opacity-65]="idx === currentHeroIndex"
+        [class.scale-105]="idx === currentHeroIndex"
+        [class.duration-[6500ms]]="idx === currentHeroIndex"
+        [class.ease-out]="idx === currentHeroIndex"
+        [class.opacity-0]="idx !== currentHeroIndex"
+        [class.scale-100]="idx !== currentHeroIndex"
+        [class.duration-700]="idx !== currentHeroIndex"
+        [class.z-10]="idx === currentHeroIndex"
+        [class.z-0]="idx !== currentHeroIndex"
+        [loading]="idx === 0 ? 'eager' : 'lazy'"
+        [attr.fetchpriority]="idx === 0 ? 'high' : 'auto'"
+      />
+    }
+  </div>
+
+  <!-- VOILE DE SÉCURITÉ DE CONTRASTE HAUTE DENSITÉ SUR SMARTPHONE -->
+  <div class="absolute inset-0 bg-[#061524]/75 sm:bg-transparent pointer-events-none z-10"></div>
+
+  <!-- DÉGRADÉ DIRECTIONNEL ASYMÉTRIQUE : LECTURE PARFAITE DU TEXTE À GAUCHE (NOIR/BLEU SOMBRE PUR), LUMIÈRE ÉCLATANTE SUR LA PHOTO À DROITE -->
+  <div class="absolute inset-0 bg-gradient-to-r from-[#061524] via-[#061524]/92 sm:via-[#061524]/80 lg:via-[#061524]/65 to-[#061524]/20 pointer-events-none z-10"></div>
+  <div class="absolute inset-0 bg-gradient-to-t from-[#061524] via-transparent to-[#061524]/50 pointer-events-none z-10"></div>
+  
+  <!-- LUMIÈRE D'AMBIANCE HAUT DE GAMME SOBRE (LUEUR FEUTRÉE RÉPUBLICAINE) -->
+  <div class="absolute top-10 right-1/4 w-[450px] h-[450px] bg-[#C8902A]/8 rounded-full blur-3xl pointer-events-none z-10"></div>
+  <div class="absolute bottom-10 right-10 w-[450px] h-[450px] bg-[#124F80]/25 rounded-full blur-3xl pointer-events-none z-10"></div>
+
+  <!-- CONTENU CENTRAL DE LA SECTION HERO -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:py-14 lg:py-18 relative z-20 w-full flex-1 flex items-center">
+    <div class="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
+      
+      <!-- BLOC TEXTE & PROPOSITION DE VALEUR -->
+      <div class="lg:col-span-8 animate-fade-in-up font-['Public_Sans',sans-serif]">
+        
+        <!-- 1. BADGES OFFICIELS D'ÉTAT & STATUT RÉPUBLICAIN -->
+        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-4 sm:mb-5">
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-xs">
+            <span class="inline-block w-2 h-2 rounded-full bg-[#2AA9A0] animate-pulse"></span>
+            <span class="tracking-wide">{{ currentHeroSlide.badge }}</span>
+          </div>
+          
+          @if (heroNumeroAgrement) {
+            <button 
+              type="button"
+              (click)="openCredentials.emit()"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#C8902A]/15 hover:bg-[#C8902A]/25 border border-[#C8902A]/40 text-[#DFC188] hover:text-white text-[11px] font-mono font-bold transition-colors cursor-pointer"
+              title="Cliquer pour afficher la fiche officielle d'agrément"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span>Aut. {{ heroNumeroAgrement }}</span>
+            </button>
+          }
+
+          <!-- Tag d'atelier actif -->
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/15 text-slate-300 text-[11px] font-medium">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#82C3F5]"></span>
+            <span>{{ currentHeroSlide.atelierTag }}</span>
+          </div>
+        </div>
+
+        <!-- 2. TITRE H1 SÉMANTIQUE PERMANENT (SEO) & MESSAGE D'EXCELLENCE ROTATIF -->
+        <div class="mb-4">
+          <!-- Surtitre ministériel officiel de prestige -->
+          <div class="inline-flex items-center gap-2 mb-2.5 px-3 py-1 rounded-md bg-[#0B253D] border border-[#1A4B75] text-[#DFC188] text-[11px] sm:text-xs font-semibold tracking-wider uppercase font-['Public_Sans',sans-serif]">
+            <span class="inline-block w-2 h-2 rounded-full bg-[#C8902A]"></span>
+            <span>RDC · Ministère de la Formation Professionnelle</span>
+          </div>
+          <h1 class="text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-300 mb-2 flex items-center gap-2 font-['Public_Sans',sans-serif]">
+            <span>Vitalis Center EUP · Établissement Public d'Excellence Technique</span>
+          </h1>
+          <div class="text-3xl sm:text-4xl lg:text-5xl 2xl:text-6xl font-extrabold text-white tracking-tight leading-[1.18] min-h-[75px] sm:min-h-[110px] flex items-center font-['Playfair_Display',serif]">
+            <span class="block transition-all duration-300" aria-live="polite">
+              {{ currentHeroSlide.titre }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Liseré officiel Or d'État (couleur pleine unie noble républicaine) -->
+        <div class="w-20 h-1 bg-[#C8902A] rounded-xs mb-5"></div>
+
+        <!-- 3. SOUS-TITRE & PROPOSITION DE VALEUR -->
+        <p class="text-sm sm:text-base lg:text-lg text-slate-200 max-w-2xl leading-relaxed mb-6 font-normal min-h-[50px] sm:min-h-[60px] transition-all duration-300">
+          {{ currentHeroSlide.sousTitre }}
+        </p>
+
+        <!-- 4. ACTIONS PRINCIPALES & CAPSULE VIDÉO (CTA D'EXCELLENCE ÉTATIQUE) -->
+        <div class="flex flex-wrap items-center gap-3 sm:gap-4 mb-6">
+          <!-- CTA Primaire : Inscription & Formations (Or républicain uni d'État) -->
+          <a 
+            [href]="currentHeroSlide.ctaLien" 
+            (click)="handleCta(currentHeroSlide.ctaLien)"
+            class="px-6 sm:px-7 py-3 sm:py-3.5 bg-[#C8902A] hover:bg-[#B37E22] text-[#061524] font-extrabold text-sm rounded-xl shadow-lg hover:shadow-[#C8902A]/20 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2.5 cursor-pointer"
+          >
+            <span>{{ currentHeroSlide.ctaTexte }}</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </a>
+
+          <!-- CTA Secondaire : Téléchargement Brochure Officielle -->
+          @if (currentHeroSlide.ctaSecondaireTexte && currentHeroSlide.ctaSecondaireLien) {
+            <button 
+              type="button"
+              (click)="handleCta(currentHeroSlide.ctaSecondaireLien)"
+              class="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/25 hover:border-white/40 backdrop-blur-md font-semibold text-sm rounded-xl shadow-xs transition-all duration-200 inline-flex items-center gap-2 cursor-pointer"
+            >
+              <svg class="w-4 h-4 text-[#DFC188]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>{{ currentHeroSlide.ctaSecondaireTexte }}</span>
+            </button>
+          }
+
+          <!-- Capsule Vidéo Teaser Campus (Bouton interactif d'immersion sobre) -->
+          <button 
+            type="button"
+            (click)="openVideoModal()"
+            class="px-4 py-3 bg-white/5 hover:bg-white/15 text-slate-200 hover:text-white border border-white/15 hover:border-white/30 rounded-xl text-xs sm:text-sm font-semibold transition-all inline-flex items-center gap-2 cursor-pointer group"
+            title="Visionner la vidéo de présentation du campus"
+          >
+            <span class="w-6 h-6 rounded-full bg-[#124F80] text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs">
+              <svg class="w-3 h-3 ml-0.5 fill-current" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </span>
+            <span>Voir le campus</span>
+          </button>
+        </div>
+
+        <!-- 5. LABEL D'INSERTION & RECONNAISSANCE INSTITUTIONNELLE -->
+        <div class="flex flex-wrap items-center gap-3 sm:gap-4 py-3 px-3.5 bg-white/5 border border-white/10 rounded-xl max-w-xl mb-6">
+          <div class="w-10 h-10 rounded-lg bg-[#C8902A]/15 border border-[#C8902A]/40 text-[#DFC188] flex items-center justify-center shrink-0 shadow-xs">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+          </div>
+          <div class="text-xs text-slate-200">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-white text-xs tracking-wide">94% d'Insertion Professionnelle Directe</span>
+              <span class="px-1.5 py-0.5 rounded bg-[#276B44]/30 border border-[#276B44]/60 text-[#2AA9A0] text-[10px] font-bold uppercase">Audité APC</span>
+            </div>
+            <p class="text-[11px] text-slate-300 font-medium mt-0.5">
+              Plus de 1 200 lauréats et cadres certifiés en activité en RDC (entreprises partenaires, régies financières et banques)
+            </p>
+          </div>
+        </div>
+
+        <!-- 6. MINI-CARTE ATELIER SUR MOBILE (lg:hidden) -->
+        <div class="lg:hidden p-3.5 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl mb-6">
+          <div class="flex items-center gap-3">
+            <img 
+              [src]="currentHeroSlide.imageUrl" 
+              (error)="onHeroImageError($event)"
+              alt="Aperçu atelier" 
+              class="w-16 h-16 rounded-lg object-cover shrink-0 border border-white/20"
+            />
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5 text-[10px] text-[#2AA9A0] font-bold uppercase">
+                <span class="w-2 h-2 rounded-full bg-[#2AA9A0] animate-pulse"></span>
+                <span>Atelier actif</span>
+              </div>
+              <div class="text-xs font-bold text-white truncate">{{ currentHeroSlide.atelierTag }}</div>
+              <div class="text-[11px] text-[#DFC188] font-bold mt-0.5">{{ currentHeroSlide.statChiffre }} · {{ currentHeroSlide.statLabel }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. BANDEAU DE RÉASSURANCE ACADÉMIQUE DYNAMIQUE -->
+        <div class="pt-4 border-t border-white/15 flex flex-wrap gap-4 sm:gap-6 text-xs text-slate-300">
+          @for (item of reassuranceList; track item) {
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded-full bg-[#276B44]/40 border border-[#276B44] text-[#2AA9A0] flex items-center justify-center shrink-0 font-bold text-[10px]">✓</div>
+              <span class="font-medium">{{ item }}</span>
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- BLOC DROIT : CARTE INTERACTIVE FLOTTANTE (DESKTOP) -->
+      <div class="lg:col-span-4 hidden lg:flex flex-col items-end justify-center font-['Public_Sans',sans-serif]">
+        
+        <div class="w-full max-w-sm bg-white/10 backdrop-blur-xl border border-white/20 p-5 rounded-2xl shadow-2xl relative overflow-hidden group hover:border-[#C8902A]/50 transition-all duration-300">
+          
+          <div class="absolute -right-8 -top-8 w-32 h-32 bg-[#C8902A]/10 rounded-full blur-2xl pointer-events-none"></div>
+
+          <!-- En-tête de la carte avec indicateur en direct -->
+          <div class="flex items-center justify-between pb-3.5 border-b border-white/15 mb-3.5">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#2AA9A0] animate-pulse"></span>
+              <span class="text-xs font-bold text-white tracking-wide uppercase">Atelier en direct</span>
+            </div>
+            <span class="px-2.5 py-0.5 bg-[#C8902A]/20 border border-[#C8902A]/40 text-[#DFC188] text-[10px] font-bold rounded-full uppercase tracking-wider">
+              {{ currentHeroIndex + 1 }} / {{ heroSlides.length }}
+            </span>
+          </div>
+
+          <!-- Statut officiel de la session -->
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2AA9A0]/15 border border-[#2AA9A0]/30 text-[#2AA9A0] text-[10px] font-bold uppercase tracking-wide mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#2AA9A0] animate-pulse"></span>
+            <span>{{ currentHeroSlide.sessionStatut || 'Session 2026 · Inscriptions Ouvertes' }}</span>
+          </div>
+
+          <!-- Aperçu Visuel de l'Atelier -->
+          <div class="relative w-full h-36 rounded-xl overflow-hidden mb-3.5 border border-white/20 bg-slate-900/60 shadow-inner">
+            <img 
+              [src]="currentHeroSlide.imageUrl" 
+              alt="Aperçu de l'atelier en direct - Vitalis Center"
+              title="Aperçu de l'atelier en direct"
+              [attr.alt]="currentHeroSlide.titre"
+              [attr.title]="currentHeroSlide.atelierTag"
+              (error)="onHeroImageError($event)"
+              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+            <div class="absolute bottom-2.5 left-3 right-3 text-white">
+              <p class="text-xs font-bold truncate drop-shadow-sm">{{ currentHeroSlide.atelierTag }}</p>
+            </div>
+          </div>
+
+          <!-- Chiffre Clé d'Insertion -->
+          <div class="mb-3.5">
+            <div class="flex items-baseline gap-2">
+              <span class="text-2xl font-black text-white">
+                {{ currentHeroSlide.statChiffre }}
+              </span>
+            </div>
+            <p class="text-xs text-slate-300 mt-0.5 leading-relaxed">
+              {{ currentHeroSlide.statLabel }}
+            </p>
+          </div>
+
+          <!-- Bouton d'accès direct à la Fiche d'Agrément Officielle -->
+          @if (heroNumeroAgrement) {
+            <button 
+              type="button"
+              (click)="openCredentials.emit()"
+              class="w-full py-2.5 px-3.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 text-xs font-semibold rounded-xl flex items-center justify-between transition-all cursor-pointer group-hover:border-[#C8902A]/50"
+            >
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-[#DFC188]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Fiche Officielle d'Agrément</span>
+              </span>
+              <span class="text-xs font-bold text-[#DFC188]">Consulter →</span>
+            </button>
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BARRE DE NAVIGATION & CONTRÔLE DU SLIDER HERO (ACCESSIBLE ARIA) -->
+  <div class="relative z-20 w-full border-t border-white/10 bg-[#061524]/90 backdrop-blur-md py-3.5 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
+      
+      <!-- Liste des Boutons d'Ateliers -->
+      <div 
+        class="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto max-w-full pb-1 md:pb-0 scrollbar-none w-full md:w-auto"
+        role="tablist"
+        aria-label="Navigation des ateliers d'excellence"
+      >
+        @for (slide of heroSlides; track slide.id; let idx = $index) {
+          <button
+            type="button"
+            role="tab"
+            (click)="goToHeroSlide(idx)"
+            class="group relative text-left px-3 py-2 rounded-lg transition-all cursor-pointer shrink-0 border"
+            [class.bg-white/15]="idx === currentHeroIndex"
+            [class.border-[#C8902A]/40]="idx === currentHeroIndex"
+            [class.shadow-md]="idx === currentHeroIndex"
+            [class.bg-white/5]="idx !== currentHeroIndex"
+            [class.border-white/10]="idx !== currentHeroIndex"
+            [class.hover:bg-white/10]="idx !== currentHeroIndex"
+            [attr.aria-selected]="idx === currentHeroIndex ? 'true' : 'false'"
+            [attr.aria-label]="slide.tabTitle"
+          >
+            <div class="flex items-center gap-2">
+              <span 
+                class="text-[10px] font-mono font-bold"
+                [class.text-[#DFC188]]="idx === currentHeroIndex"
+                [class.text-slate-400]="idx !== currentHeroIndex"
+              >
+                0{{ idx + 1 }}
+              </span>
+              <span 
+                class="text-xs font-medium truncate max-w-[110px] sm:max-w-[150px]"
+                [class.text-white]="idx === currentHeroIndex"
+                [class.font-bold]="idx === currentHeroIndex"
+                [class.text-slate-300]="idx !== currentHeroIndex"
+              >
+                {{ slide.tabTitle }}
+              </span>
+            </div>
+
+            <!-- Jauge de progression du slide actif (Or républicain uni sans dégradé criard) -->
+            <div class="mt-1.5 w-full bg-white/10 h-1 rounded-full overflow-hidden">
+              @if (idx === currentHeroIndex) {
+                <div 
+                  class="h-full bg-[#C8902A] rounded-full transition-all duration-75 ease-linear"
+                  [style.width.%]="heroSliderProgress"
+                ></div>
+              } @else {
+                <div class="h-full w-0"></div>
+              }
+            </div>
+          </button>
+        }
+      </div>
+
+      <!-- Contrôles Flèches & Pause/Lecture -->
+      <div class="flex items-center gap-2 shrink-0 self-end md:self-auto">
+        <button 
+          type="button"
+          (click)="prevHeroSlide()"
+          class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+          title="Atelier précédent"
+          aria-label="Atelier précédent"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button 
+          type="button"
+          (click)="togglePause()"
+          class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+          [title]="isHeroSliderPaused ? 'Reprendre le défilement automatique' : 'Mettre en pause'"
+          [aria-label]="isHeroSliderPaused ? 'Reprendre le défilement automatique' : 'Mettre en pause'"
+        >
+          @if (isHeroSliderPaused) {
+            <svg class="w-3.5 h-3.5 text-[#DFC188]" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          } @else {
+            <svg class="w-3.5 h-3.5 text-slate-300" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+          }
+        </button>
+
+        <button 
+          type="button"
+          (click)="nextHeroSlide()"
+          class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+          title="Atelier suivant"
+          aria-label="Atelier suivant"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BANDEAU DE PASSERELLE / SEGMENTATION D'AUDIENCE (AUDIENCE-FIRST UX) -->
+  <div class="relative z-20 w-full bg-[#040E18] border-t border-white/10 py-3 px-4 sm:px-6 lg:px-8 font-['Public_Sans',sans-serif]">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2 text-slate-300">
+        <span class="text-[#DFC188] font-bold uppercase tracking-wider text-[11px]">Accès direct par profil :</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <!-- Profil 1 : Candidats & Étudiants -->
+        <a 
+          (click)="scrollToSection('#formations')"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-slate-200 hover:text-white transition-all cursor-pointer font-medium"
+        >
+          <svg class="w-3.5 h-3.5 text-[#DFC188]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5" />
+          </svg>
+          <span>Candidats & Étudiants</span>
+        </a>
+        <!-- Profil 2 : Salariés & Professionnels -->
+        <a 
+          (click)="scrollToSection('#admission')"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-slate-200 hover:text-white transition-all cursor-pointer font-medium"
+        >
+          <svg class="w-3.5 h-3.5 text-[#DFC188]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <span>Professionnels en poste</span>
+        </a>
+        <!-- Profil 3 : Entreprises & Ministères -->
+        <a 
+          (click)="scrollToSection('#contact')"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C8902A]/15 hover:bg-[#C8902A]/25 border border-[#C8902A]/35 text-[#DFC188] hover:text-white transition-all cursor-pointer font-semibold"
+        >
+          <svg class="w-3.5 h-3.5 text-[#DFC188]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span>Entreprises & Ministères (B2B)</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- MODALE VIDÉO TEASER DU CAMPUS (HD CINÉMA) -->
+@if (showVideoModal) {
+  <div 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-['Public_Sans',sans-serif]"
+    role="dialog" 
+    aria-modal="true"
+    aria-label="Vidéo de présentation de Vitalis Center"
+    (click)="closeVideoModal()"
+  >
+    <div 
+      class="bg-[#061524] rounded-2xl shadow-2xl border border-white/20 max-w-3xl w-full overflow-hidden animate-fade-in-up"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- En-tête de la modale vidéo -->
+      <div class="p-4 bg-[#0B253D] border-b border-white/15 flex items-center justify-between text-white">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#C8902A] animate-ping"></span>
+          <span class="font-bold text-sm uppercase tracking-wide">Immersion Campus · Vitalis Center EUP</span>
+        </div>
+        <button 
+          type="button"
+          (click)="closeVideoModal()"
+          class="p-1 rounded text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+          title="Fermer la vidéo (Échap)"
+          aria-label="Fermer la vidéo"
+        >
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Corps de la modale vidéo -->
+      <div class="relative aspect-video bg-black flex items-center justify-center overflow-hidden">
+        <img 
+          src="assets/campus/lab-informatique.jpg" 
+          alt="Campus Vitalis Center" 
+          class="w-full h-full object-cover opacity-80"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30"></div>
+        <div class="absolute text-center px-6">
+          <div class="w-16 h-16 rounded-full bg-[#C8902A] text-[#061524] flex items-center justify-center mx-auto mb-3 shadow-xl">
+            <svg class="w-8 h-8 ml-1 fill-current" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-1 font-['Playfair_Display',serif]">Visite immersive des Ateliers & Laboratoires</h3>
+          <p class="text-xs text-slate-300 max-w-md mx-auto">
+            Découvrez nos infrastructures modernes, bancs d'essais réels et formateurs de terrain au service de l'insertion professionnelle en RDC.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pied de la modale vidéo -->
+      <div class="p-4 bg-[#0B253D] border-t border-white/15 flex items-center justify-between">
+        <span class="text-xs text-slate-300">Établissement d'Utilité Publique agréé par l'État</span>
+        <button 
+          type="button" 
+          (click)="closeVideoModal()" 
+          class="px-4 py-1.5 bg-white/15 hover:bg-white/25 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+        >
+          Fermer (Échap)
+        </button>
+      </div>
+    </div>
+  </div>
+}
