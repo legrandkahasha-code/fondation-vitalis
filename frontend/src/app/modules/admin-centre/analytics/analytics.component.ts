@@ -354,7 +354,7 @@ interface DetailedAnalyticsData {
               </div>
 
               <div class="overflow-x-auto mt-2">
-                <table class="w-full text-left text-xs border-collapse">
+                <table class="w-full min-w-[500px] text-left text-xs border-collapse">
                   <thead>
                     <tr class="border-b border-gray-200 text-[#4B5157] font-semibold uppercase text-[10px] tracking-wider">
                       <th class="py-2.5 px-2">#</th>

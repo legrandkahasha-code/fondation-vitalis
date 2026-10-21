@@ -93,7 +93,7 @@ interface AssiduiteSyntheseItem {
           @if (loading) {
             <!-- Skeleton Tableau -->
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs border-collapse">
+              <table class="w-full min-w-[650px] text-left text-xs border-collapse">
                 <thead>
                   <tr class="bg-slate-50 border-b border-[#D7DBDE] text-[#4B5157] font-semibold uppercase text-[11px] tracking-wider">
                     <th class="py-3 px-4">Apprenant</th>
@@ -120,7 +120,7 @@ interface AssiduiteSyntheseItem {
             </div>
           } @else {
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs border-collapse">
+              <table class="w-full min-w-[650px] text-left text-xs border-collapse">
                 <thead>
                   <tr class="bg-slate-50 border-b border-[#D7DBDE] text-[#4B5157] font-semibold uppercase text-[11px] tracking-wider">
                     <th class="py-3 px-4">Apprenant</th>

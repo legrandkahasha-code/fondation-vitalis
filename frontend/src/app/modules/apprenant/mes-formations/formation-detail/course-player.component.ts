@@ -22,27 +22,29 @@ import { CoursContenu } from '../../../../core/services/apprenant.service';
             ></video>
 
             <!-- Video Controls Bar (Playback Speed & Resume Badge) -->
-            <div class="p-3 bg-[#1B1D1F] text-white flex flex-wrap items-center justify-between gap-3 text-xs border-t border-white/10">
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] text-[#9AA1A8] font-semibold">Vitesse :</span>
-                @for (rate of playbackRates; track rate) {
-                  <button
-                    type="button"
-                    (click)="setPlaybackRate(rate)"
-                    class="px-2 py-0.5 rounded-xs text-[10px] font-mono font-bold transition-all cursor-pointer"
-                    [class]="selectedPlaybackRate === rate ? 'bg-[#1C75BC] text-white' : 'bg-white/10 text-white/80 hover:bg-white/20'"
-                  >
-                    {{ rate }}x
-                  </button>
-                }
+            <div class="p-2.5 sm:p-3 bg-[#1B1D1F] text-white flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 text-xs border-t border-white/10">
+              <div class="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2">
+                <span class="text-[10.5px] sm:text-[11px] text-[#9AA1A8] font-semibold">Vitesse :</span>
+                <div class="flex items-center gap-1">
+                  @for (rate of playbackRates; track rate) {
+                    <button
+                      type="button"
+                      (click)="setPlaybackRate(rate)"
+                      class="px-1.5 sm:px-2 py-0.5 rounded-xs text-[9.5px] sm:text-[10px] font-mono font-bold transition-all cursor-pointer"
+                      [class]="selectedPlaybackRate === rate ? 'bg-[#1C75BC] text-white' : 'bg-white/10 text-white/80 hover:bg-white/20'"
+                    >
+                      {{ rate }}x
+                    </button>
+                  }
+                </div>
               </div>
 
-              <div class="flex items-center gap-2">
+              <div class="flex items-center justify-end gap-1.5 sm:gap-2 flex-wrap">
                 @if (savedPlaybackTime > 0) {
                   <button
                     type="button"
                     (click)="reprendreLecture()"
-                    class="px-2.5 py-1 rounded-xs bg-[#F0791E] hover:bg-[#d96612] text-white text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer animate-pulse"
+                    class="px-2 sm:px-2.5 py-1 rounded-xs bg-[#F0791E] hover:bg-[#d96612] text-white text-[10.5px] sm:text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer animate-pulse"
                   >
                     <span>▶ Reprendre à {{ formatVideoSeconds(savedPlaybackTime) }}</span>
                   </button>
@@ -50,21 +52,22 @@ import { CoursContenu } from '../../../../core/services/apprenant.service';
                 <button
                   type="button"
                   (click)="onNoterMinutage()"
-                  class="px-2.5 py-1 rounded-xs bg-[#E7F1FA] text-[#1C75BC] hover:bg-[#1C75BC] hover:text-white border border-[#1C75BC]/40 text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                  class="px-2 sm:px-2.5 py-1 rounded-xs bg-[#E7F1FA] text-[#1C75BC] hover:bg-[#1C75BC] hover:text-white border border-[#1C75BC]/40 text-[10.5px] sm:text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
                   title="Ajouter un repère dans vos notes d'étude"
                 >
-                  <span>📝 Noter à {{ formatVideoSeconds(currentVideoTime) }}</span>
+                  <span>📝 Noter <span class="hidden xs:inline">à {{ formatVideoSeconds(currentVideoTime) }}</span></span>
                 </button>
                 <button
                   type="button"
                   (click)="toggleFullscreen()"
-                  class="px-2.5 py-1 rounded-xs bg-white/10 hover:bg-white/20 text-white text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                  class="p-1 sm:px-2.5 sm:py-1 rounded-xs bg-white/10 hover:bg-white/20 text-white text-[10.5px] sm:text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
                   title="Basculer en plein écran"
+                  aria-label="Plein écran"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
-                  <span>Plein écran</span>
+                  <span class="hidden sm:inline">Plein écran</span>
                 </button>
               </div>
             </div>

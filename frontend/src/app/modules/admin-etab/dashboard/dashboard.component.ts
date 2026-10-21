@@ -127,7 +127,7 @@ import { KpiEtablissement, Utilisateur, FiliereSuiviItem, FiliereSuiviDetail } f
             </div>
           } @else {
             <div class="overflow-x-auto">
-              <table class="w-full text-xs text-left">
+              <table class="w-full min-w-[850px] text-xs text-left">
                 <thead class="bg-[#F5F6F7] text-[#4B5157] uppercase font-bold border-b border-[#D7DBDE]">
                   <tr>
                     <th class="py-3 px-4">Filière / Classe</th>
@@ -301,7 +301,7 @@ import { KpiEtablissement, Utilisateur, FiliereSuiviItem, FiliereSuiviDetail } f
                     </div>
 
                     <div class="border border-[#D7DBDE] rounded-xs overflow-x-auto">
-                      <table class="w-full text-left">
+                      <table class="w-full min-w-[700px] text-left">
                         <thead class="bg-[#F5F6F7] text-[#4B5157] font-bold border-b border-[#D7DBDE]">
                           <tr>
                             <th class="py-2.5 px-3">Matricule</th>
@@ -438,7 +438,7 @@ import { KpiEtablissement, Utilisateur, FiliereSuiviItem, FiliereSuiviDetail } f
             </a>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left">
+            <table class="w-full min-w-[500px] text-xs text-left">
               <thead class="bg-[#F5F6F7] text-[#4B5157] font-bold border-b border-[#D7DBDE]">
                 <tr>
                   <th class="py-2.5 px-3">Nom & Prénom</th>

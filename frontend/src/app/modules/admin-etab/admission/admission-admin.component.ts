@@ -168,7 +168,7 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
 
           <!-- Tableau des candidatures conforme charte -->
           <div class="overflow-x-auto rounded-[2px] border border-[#D7DBDE] bg-white shadow-2xs">
-            <table class="w-full text-left text-xs text-[#1B1D1F]">
+            <table class="w-full min-w-[900px] text-left text-xs text-[#1B1D1F]">
               <thead class="bg-[#F5F6F7] text-[11px] font-bold uppercase tracking-[0.05em] text-[#4B5157] border-b border-[#D7DBDE]">
                 <tr>
                   <th class="p-3.5">Candidat & Dossier</th>
@@ -619,7 +619,7 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
 
             <!-- Tableau exécutif -->
             <div *ngIf="filteredOrientations.length > 0" class="mt-4 overflow-x-auto border border-[#D7DBDE] rounded-[2px]">
-              <table class="w-full text-left text-xs">
+              <table class="w-full min-w-[800px] text-left text-xs">
                 <thead class="bg-[#F5F6F7] text-[11px] font-bold uppercase tracking-[0.05em] text-[#4B5157] border-b border-[#D7DBDE]">
                   <tr>
                     <th class="p-3.5">Date & Réf</th>
@@ -695,7 +695,7 @@ import { MainLayoutComponent } from '../../../shared/layout/main-layout.componen
         <!-- MODAL COMPLET : EXAMEN DU DOSSIER, PIECES & DECISION AVEC EXPLICATIONS                    -->
         <!-- ========================================================================================= -->
         <div *ngIf="modalCandidature" class="fixed inset-0 z-50 flex items-center justify-center bg-[#1B1D1F]/60 p-4 backdrop-blur-xs animate-fade-in">
-          <div class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[2px] bg-white p-6 shadow-2xl border border-[#D7DBDE] border-t-[5px] border-t-[#124F80] flex flex-col justify-between">
+          <div class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[2px] bg-white p-4 sm:p-6 shadow-2xl border border-[#D7DBDE] border-t-[5px] border-t-[#124F80] flex flex-col justify-between">
             <div>
               <!-- Header Modal -->
               <div class="flex items-start justify-between border-b border-[#D7DBDE] pb-4">

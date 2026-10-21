@@ -12,14 +12,15 @@ import { DatePipe } from '@angular/common';
   imports: [FormsModule, MainLayoutComponent, DatePipe],
   template: `
     <app-main-layout>
-      <div class="p-8 max-w-4xl mx-auto">
+      <div class="p-4 sm:p-8 max-w-4xl mx-auto">
         @if (seance) {
-          <h1 class="text-3xl font-bold text-vc-primary font-heading mb-2">{{ seance.titreActivite }}</h1>
-          <p class="text-slate-500 mb-6">{{ seance.dateHeureDebut | date:'dd/MM/yyyy HH:mm' }} — {{ seance.typeSession }}</p>
+          <h1 class="text-2xl sm:text-3xl font-bold text-vc-primary font-heading mb-2">{{ seance.titreActivite }}</h1>
+          <p class="text-slate-500 mb-6 text-sm">{{ seance.dateHeureDebut | date:'dd/MM/yyyy HH:mm' }} — {{ seance.typeSession }}</p>
 
           <div class="card">
             <h3 class="font-bold mb-4">Émargement électronique</h3>
-            <table class="w-full text-sm">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm min-w-[300px]">
               <thead><tr class="border-b"><th class="py-2 text-left">Apprenant</th><th class="py-2">Statut</th></tr></thead>
               <tbody>
                 @for (a of apprenants; track a.id) {
@@ -36,7 +37,8 @@ import { DatePipe } from '@angular/common';
                   </tr>
                 }
               </tbody>
-            </table>
+              </table>
+            </div>
             <button class="btn btn-primary mt-4" (click)="saveEmargement()">Enregistrer l'émargement</button>
             @if (message) { <p class="text-sm mt-2 text-vc-success">{{ message }}</p> }
           </div>

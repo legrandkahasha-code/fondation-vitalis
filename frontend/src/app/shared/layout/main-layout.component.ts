@@ -34,8 +34,7 @@ import { PedagogieService } from '../../core/services/pedagogie.service';
         >
           <!-- Logo & Brand Header -->
           <div class="p-5 border-b border-white/10 bg-black/10">
-            <div class="flex items-center justif
-            y-between">
+            <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <img 
                   src="assets/logo-vitalis.png" 

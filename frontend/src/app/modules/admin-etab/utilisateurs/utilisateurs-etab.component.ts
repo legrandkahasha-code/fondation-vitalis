@@ -10,10 +10,10 @@ import { Utilisateur } from '../../../core/models';
   imports: [MainLayoutComponent],
   template: `
     <app-main-layout>
-      <div class="p-8 max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold text-vc-primary font-heading mb-8">Utilisateurs de mon établissement</h1>
-        <div class="card overflow-hidden p-0">
-          <table class="w-full">
+      <div class="p-4 sm:p-8 max-w-6xl mx-auto">
+        <h1 class="text-2xl sm:text-3xl font-bold text-vc-primary font-heading mb-6 sm:mb-8">Utilisateurs de mon établissement</h1>
+        <div class="card overflow-x-auto p-0">
+          <table class="w-full min-w-[650px]">
             <thead><tr class="text-white text-left" style="background: var(--color-vc-primary);">
               <th class="px-4 py-3">Nom</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Rôle</th>
               <th class="px-4 py-3">Statut</th><th class="px-4 py-3">Actions</th>

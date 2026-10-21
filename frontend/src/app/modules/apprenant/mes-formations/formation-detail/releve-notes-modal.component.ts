@@ -50,7 +50,7 @@ import { ReleveNotesBulletin } from '../../../../core/services/apprenant.service
           </div>
 
           <!-- Modal Body (Printable area) -->
-          <div id="releve-printable" class="p-6 md:p-8 overflow-y-auto space-y-6 text-[#1B1D1F]">
+          <div id="releve-printable" class="p-4 sm:p-6 md:p-8 overflow-y-auto space-y-6 text-[#1B1D1F]">
             @if (loading) {
               <div class="p-12 text-center text-[#4B5157]">
                 <div class="inline-block w-8 h-8 border-3 border-[#1C75BC] border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -87,7 +87,7 @@ import { ReleveNotesBulletin } from '../../../../core/services/apprenant.service
 
               <!-- Table of Grades -->
               <div class="overflow-x-auto border border-[#D7DBDE] rounded-xs">
-                <table class="w-full text-left text-xs border-collapse">
+                <table class="w-full min-w-[500px] text-left text-xs border-collapse">
                   <thead>
                     <tr class="bg-[#124F80] text-white text-[11px] uppercase tracking-wider">
                       <th class="p-3 font-semibold">Module</th>

@@ -1330,7 +1330,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
             </div>
 
             <div *ngIf="newsletterAbonnesList.length > 0" class="overflow-x-auto border border-[#D7DBDE] rounded-[2px]">
-              <table class="w-full text-left text-xs">
+              <table class="w-full min-w-[550px] text-left text-xs">
                 <thead class="bg-[#F5F6F7] text-[11px] font-bold uppercase tracking-[0.05em] text-[#4B5157] border-b border-[#D7DBDE]">
                   <tr>
                     <th class="p-3.5">Date d'inscription</th>
@@ -1436,7 +1436,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
 
             <!-- Tableau moderne -->
             <div *ngIf="filteredContactMessages.length > 0" class="overflow-x-auto border border-[#D7DBDE] rounded-[2px]">
-              <table class="w-full text-left text-xs">
+              <table class="w-full min-w-[800px] text-left text-xs">
                 <thead class="bg-[#F5F6F7] text-[11px] font-bold uppercase tracking-[0.05em] text-[#4B5157] border-b border-[#D7DBDE]">
                   <tr>
                     <th class="p-3.5">Date & Heure</th>

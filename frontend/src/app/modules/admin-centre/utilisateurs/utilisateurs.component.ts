@@ -311,7 +311,7 @@ type SousModuleType = 'ADMINISTRATIF' | 'TECHNIQUE' | 'APPRENANTS' | 'SECURITE';
             </div>
           } @else {
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full min-w-[800px] text-left text-xs">
                 <thead class="bg-[#F8F9FA] text-[#4B5157] border-b border-[#D7DBDE] uppercase text-[10px] tracking-wider font-semibold">
                   <tr>
                     <th class="py-3.5 px-4">Utilisateur / Identité</th>
