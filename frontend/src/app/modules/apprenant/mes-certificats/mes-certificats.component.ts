@@ -95,7 +95,7 @@ import { ToastService } from '../../../core/services/toast.service';
             </div>
             <div>
               <p class="text-[10px] text-[#4B5157] uppercase font-bold tracking-wider">Certifiés</p>
-              <p class="text-2xl font-black text-[#1C75BC] font-mono leading-none mt-0.5">{{ certificats.length }}</p>
+              <p class="text-2xl font-black text-[#1C75BC] font-mono tabular-nums leading-none mt-0.5">{{ certificats.length }}</p>
               <p class="text-[10px] text-[#4B5157] mt-0.5">formation{{ certificats.length > 1 ? 's' : '' }} validée{{ certificats.length > 1 ? 's' : '' }}</p>
             </div>
           </div>
@@ -108,7 +108,7 @@ import { ToastService } from '../../../core/services/toast.service';
             </div>
             <div>
               <p class="text-[10px] text-[#4B5157] uppercase font-bold tracking-wider">Meilleure Moyenne</p>
-              <p class="text-2xl font-black text-[#F0791E] font-mono leading-none mt-0.5">{{ bestMoyenne }}<span class="text-sm font-bold text-[#4B5157]">/20</span></p>
+              <p class="text-2xl font-black text-[#F0791E] font-mono tabular-nums leading-none mt-0.5">{{ bestMoyenne }}<span class="text-sm font-bold text-[#4B5157]">/20</span></p>
               <p class="text-[10px] text-[#4B5157] mt-0.5">score maximum obtenu</p>
             </div>
           </div>

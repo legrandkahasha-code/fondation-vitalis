@@ -251,15 +251,21 @@ export class UtilisateursService {
       );
     }
 
-    const payload = {
+    const basePayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
       etablissementId: user.etablissementId,
     };
 
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const accessToken = this.jwtService.sign(
+      { ...basePayload, token_type: 'access' },
+      { expiresIn: '15m' },
+    );
+    const refreshToken = this.jwtService.sign(
+      { ...basePayload, token_type: 'refresh' },
+      { expiresIn: '7d' },
+    );
 
     // Persist refresh token for revocation capability
     const expiresAt = addDays(new Date(), 7);
@@ -309,6 +315,10 @@ export class UtilisateursService {
   async refreshToken(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken);
+      // Sécurité ANSSI/OWASP : Vérifier formellement que le jeton soumis est bien un refresh token
+      if (payload.token_type && payload.token_type !== 'refresh') {
+        throw new UnauthorizedException('Type de jeton invalide : un jeton de rafraîchissement (refresh token) est requis.');
+      }
       // Verify refresh token exists and is not revoked
       const stored = await (this.prisma as any).refreshToken.findUnique({ where: { token: refreshToken } });
       if (!stored || stored.revoked) throw new UnauthorizedException('Refresh token invalide ou révoqué.');
@@ -322,15 +332,16 @@ export class UtilisateursService {
       };
       // Optionally rotate refresh token: revoke old and create new one
       await (this.prisma as any).refreshToken.update({ where: { token: refreshToken }, data: { revoked: true } });
-      const newRefresh = this.jwtService.sign(newPayload, { expiresIn: '7d' });
+      const newRefresh = this.jwtService.sign({ ...newPayload, token_type: 'refresh' }, { expiresIn: '7d' });
       const newExpiresAt = addDays(new Date(), 7);
       await (this.prisma as any).refreshToken.create({ data: { token: newRefresh, utilisateurId: user.id, expiresAt: newExpiresAt } });
       return {
         success: true,
-        accessToken: this.jwtService.sign(newPayload, { expiresIn: '15m' }),
+        accessToken: this.jwtService.sign({ ...newPayload, token_type: 'access' }, { expiresIn: '15m' }),
         refreshToken: newRefresh,
       };
-    } catch {
+    } catch (e: any) {
+      if (e instanceof UnauthorizedException) throw e;
       throw new UnauthorizedException('Refresh token invalide ou expiré.');
     }
   }

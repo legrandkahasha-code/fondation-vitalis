@@ -60,7 +60,7 @@ interface DetailedAnalyticsData {
                   Temps Réel SSE Actif
                 </span>
               </div>
-              <h1 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 tracking-tight">
+              <h1 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 tracking-tight font-heading">
                 Cockpit National d'Observation & Pilotage
               </h1>
               <div class="barre"></div>
@@ -115,7 +115,7 @@ interface DetailedAnalyticsData {
                   </svg>
                 </span>
               </div>
-              <div class="text-3xl font-extrabold text-[#1B1D1F] tracking-tight">{{ data.kpi.etablissements }}</div>
+              <div class="text-3xl font-extrabold text-[#1B1D1F] tracking-tight tabular-nums">{{ data.kpi.etablissements }}</div>
               <div class="text-[11px] text-[#4B5157] mt-1 font-medium">Antennes & campus</div>
             </div>
 
@@ -129,7 +129,7 @@ interface DetailedAnalyticsData {
                   </svg>
                 </span>
               </div>
-              <div class="text-3xl font-extrabold text-[#1C75BC] tracking-tight">{{ data.kpi.apprenants }}</div>
+              <div class="text-3xl font-extrabold text-[#1C75BC] tracking-tight tabular-nums">{{ data.kpi.apprenants }}</div>
               <div class="text-[11px] text-[#276B44] mt-1 font-medium">Inscrits actifs</div>
             </div>
 
@@ -143,7 +143,7 @@ interface DetailedAnalyticsData {
                   </svg>
                 </span>
               </div>
-              <div class="text-3xl font-extrabold text-[#1B1D1F] tracking-tight">{{ data.kpi.formateurs }}</div>
+              <div class="text-3xl font-extrabold text-[#1B1D1F] tracking-tight tabular-nums">{{ data.kpi.formateurs }}</div>
               <div class="text-[11px] text-[#4B5157] mt-1 font-medium">Corps enseignant</div>
             </div>
 
@@ -157,7 +157,7 @@ interface DetailedAnalyticsData {
                   </svg>
                 </span>
               </div>
-              <div class="text-3xl font-extrabold text-[#1B1D1F] tracking-tight">{{ data.kpi.formations }}</div>
+              <div class="text-3xl font-extrabold text-[#1B1D1F] tracking-tight tabular-nums">{{ data.kpi.formations }}</div>
               <div class="text-[11px] text-[#4B5157] mt-1 font-medium flex items-center justify-between">
                 <span>Formations actives</span>
                 <span class="text-[#1C75BC] font-semibold text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">Gérer ➔</span>
@@ -174,7 +174,7 @@ interface DetailedAnalyticsData {
                   </svg>
                 </span>
               </div>
-              <div class="text-3xl font-extrabold text-[#276B44] tracking-tight">{{ data.kpi.certificatsEmis }}</div>
+              <div class="text-3xl font-extrabold text-[#276B44] tracking-tight tabular-nums">{{ data.kpi.certificatsEmis }}</div>
               <div class="text-[11px] text-[#276B44] mt-1 font-medium">Titres délivrés</div>
             </div>
 
@@ -188,7 +188,7 @@ interface DetailedAnalyticsData {
                   </svg>
                 </span>
               </div>
-              <div class="text-3xl font-extrabold text-[#1B1D1F] tracking-tight">{{ data.kpi.seancesPlanifiees }}</div>
+              <div class="text-3xl font-extrabold text-[#1B1D1F] tracking-tight tabular-nums">{{ data.kpi.seancesPlanifiees }}</div>
               <div class="text-[11px] text-[#4B5157] mt-1 font-medium">Créneaux planifiés</div>
             </div>
           </div>
@@ -200,10 +200,10 @@ interface DetailedAnalyticsData {
             <div class="lg:col-span-2 bg-white border border-[#D7DBDE] p-6 rounded-xs shadow-2xs">
               <div class="flex items-center justify-between mb-4">
                 <div>
-                  <h2 class="text-base font-bold text-[#1B1D1F]">Répartition des Effectifs par Établissement</h2>
+                  <h2 class="text-base font-bold text-[#1B1D1F] font-heading">Répartition des Effectifs par Établissement</h2>
                   <p class="text-xs text-[#4B5157]">Apprenants et formateurs répartis dans les différentes antennes du réseau</p>
                 </div>
-                <span class="text-xs font-semibold text-[#1C75BC] bg-[#E7F1FA] px-2.5 py-1 rounded-xs">
+                <span class="text-xs font-semibold text-[#1C75BC] bg-[#E7F1FA] px-2.5 py-1 rounded-xs tabular-nums">
                   {{ data.etablissements.length }} antennes
                 </span>
               </div>
@@ -220,11 +220,11 @@ interface DetailedAnalyticsData {
                         <span class="text-[10px] text-gray-500">({{ etab.pays }})</span>
                       </div>
                       <div class="flex items-center gap-3 font-semibold flex-wrap">
-                        <span class="text-[#1C75BC]">{{ etab.apprenants }} apprenants</span>
+                        <span class="text-[#1C75BC] tabular-nums">{{ etab.apprenants }} apprenants</span>
                         <span class="text-gray-400">·</span>
-                        <span class="text-[#F0791E]">{{ etab.formateurs }} formateurs</span>
+                        <span class="text-[#F0791E] tabular-nums">{{ etab.formateurs }} formateurs</span>
                         <span class="text-gray-400">·</span>
-                        <span class="text-[#276B44]">{{ etab.certificats }} certifiés</span>
+                        <span class="text-[#276B44] tabular-nums">{{ etab.certificats }} certifiés</span>
                       </div>
                     </div>
 
@@ -266,10 +266,10 @@ interface DetailedAnalyticsData {
               <div>
                 <div class="flex items-center justify-between mb-4">
                   <div>
-                    <h2 class="text-base font-bold text-[#1B1D1F]">Pipeline Admissions</h2>
+                    <h2 class="text-base font-bold text-[#1B1D1F] font-heading">Pipeline Admissions</h2>
                     <p class="text-xs text-[#4B5157]">Candidatures par statut dans le réseau</p>
                   </div>
-                  <span class="text-xs font-semibold text-[#276B44] bg-[#E7F1EA] px-2 py-0.5 rounded-xs">
+                  <span class="text-xs font-semibold text-[#276B44] bg-[#E7F1EA] px-2 py-0.5 rounded-xs tabular-nums">
                     {{ getTotalCandidatures() }} total
                   </span>
                 </div>
@@ -282,7 +282,7 @@ interface DetailedAnalyticsData {
                           <span class="w-2 h-2 rounded-full" [style.backgroundColor]="statut.color"></span>
                           {{ statut.label }}
                         </span>
-                        <span class="font-bold text-[#1B1D1F]">{{ statut.count }}</span>
+                        <span class="font-bold text-[#1B1D1F] tabular-nums">{{ statut.count }}</span>
                       </div>
                       <div class="w-full bg-[#F5F6F7] h-1.5 rounded-full overflow-hidden">
                         <div
@@ -301,7 +301,7 @@ interface DetailedAnalyticsData {
 
               <div class="mt-6 pt-4 border-t border-gray-100 text-xs text-[#4B5157] flex justify-between items-center">
                 <span>Taux de conversion :</span>
-                <span class="font-bold text-[#276B44]">{{ getTauxConversion() }}%</span>
+                <span class="font-bold text-[#276B44] tabular-nums">{{ getTauxConversion() }}%</span>
               </div>
             </div>
 
@@ -314,7 +314,7 @@ interface DetailedAnalyticsData {
             <div class="bg-white border border-[#D7DBDE] p-6 rounded-xs shadow-2xs">
               <div class="flex items-center justify-between mb-4">
                 <div>
-                  <h2 class="text-base font-bold text-[#1B1D1F]">Dynamique des Inscriptions (12 derniers mois)</h2>
+                  <h2 class="text-base font-bold text-[#1B1D1F] font-heading">Dynamique des Inscriptions (12 derniers mois)</h2>
                   <p class="text-xs text-[#4B5157]">Évolution mensuelle des nouveaux apprenants inscrits</p>
                 </div>
               </div>
@@ -325,7 +325,7 @@ interface DetailedAnalyticsData {
                   <div class="flex items-end gap-2 h-44 pt-6 border-b border-gray-200 overflow-x-auto">
                     @for (item of getMoisTendances(); track item.mois) {
                       <div class="flex-1 min-w-[28px] flex flex-col items-center gap-1 h-full justify-end group">
-                        <span class="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+                        <span class="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity font-bold tabular-nums">
                           {{ item.count }}
                         </span>
                         <div
@@ -348,7 +348,7 @@ interface DetailedAnalyticsData {
             <div class="bg-white border border-[#D7DBDE] p-6 rounded-xs shadow-2xs">
               <div class="flex items-center justify-between mb-4">
                 <div>
-                  <h2 class="text-base font-bold text-[#1B1D1F]">Top 10 Formations Certifiantes</h2>
+                  <h2 class="text-base font-bold text-[#1B1D1F] font-heading">Top 10 Formations Certifiantes</h2>
                   <p class="text-xs text-[#4B5157]">Programmes délivrant le plus de titres certifiés</p>
                 </div>
               </div>
@@ -367,11 +367,11 @@ interface DetailedAnalyticsData {
                   <tbody class="divide-y divide-gray-100">
                     @for (f of data.topFormations; track f.id; let idx = $index) {
                       <tr class="hover:bg-[#F5F6F7] transition-colors">
-                        <td class="py-2.5 px-2 font-bold text-[#1C75BC]">{{ idx + 1 }}</td>
+                        <td class="py-2.5 px-2 font-bold text-[#1C75BC] tabular-nums">{{ idx + 1 }}</td>
                         <td class="py-2.5 px-2 font-medium text-[#1B1D1F] max-w-[180px] truncate" [title]="f.titre">{{ f.titre }}</td>
                         <td class="py-2.5 px-2 text-gray-500">{{ f.etablissement }}</td>
-                        <td class="py-2.5 px-2 text-right font-mono text-gray-600">{{ f.modules }}</td>
-                        <td class="py-2.5 px-2 text-right font-bold text-[#276B44] font-mono">{{ f.certificats }}</td>
+                        <td class="py-2.5 px-2 text-right font-mono text-gray-600 tabular-nums">{{ f.modules }}</td>
+                        <td class="py-2.5 px-2 text-right font-bold text-[#276B44] font-mono tabular-nums">{{ f.certificats }}</td>
                       </tr>
                     }
                     @if (data.topFormations.length === 0) {

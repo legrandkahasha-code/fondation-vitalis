@@ -29,21 +29,21 @@ import { KpiGlobal, KpiEtablissement } from '../../core/models';
 
           @if (kpiGlobal) {
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary">{{ kpiGlobal.etablissements }}</p><p class="text-xs text-slate-500">Établissements</p></div>
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary">{{ kpiGlobal.apprenants }}</p><p class="text-xs text-slate-500">Apprenants</p></div>
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary">{{ kpiGlobal.formateurs }}</p><p class="text-xs text-slate-500">Formateurs</p></div>
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary">{{ kpiGlobal.formations }}</p><p class="text-xs text-slate-500">Formations</p></div>
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary">{{ kpiGlobal.certificatsEmis }}</p><p class="text-xs text-slate-500">Certificats</p></div>
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary">{{ kpiGlobal.seancesPlanifiees }}</p><p class="text-xs text-slate-500">Séances</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary tabular-nums">{{ kpiGlobal.etablissements }}</p><p class="text-xs text-slate-500">Établissements</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary tabular-nums">{{ kpiGlobal.apprenants }}</p><p class="text-xs text-slate-500">Apprenants</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary tabular-nums">{{ kpiGlobal.formateurs }}</p><p class="text-xs text-slate-500">Formateurs</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary tabular-nums">{{ kpiGlobal.formations }}</p><p class="text-xs text-slate-500">Formations</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary tabular-nums">{{ kpiGlobal.certificatsEmis }}</p><p class="text-xs text-slate-500">Certificats</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-primary tabular-nums">{{ kpiGlobal.seancesPlanifiees }}</p><p class="text-xs text-slate-500">Séances</p></div>
             </div>
           }
 
           @if (kpiEtab) {
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-secondary">{{ kpiEtab.tauxAssiduite }}%</p><p class="text-xs text-slate-500">Assiduité</p></div>
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-secondary">{{ kpiEtab.tauxCompletion }}%</p><p class="text-xs text-slate-500">Complétion</p></div>
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-secondary">{{ kpiEtab.moyenneGenerale }}/20</p><p class="text-xs text-slate-500">Moyenne</p></div>
-              <div class="card text-center"><p class="text-2xl font-bold text-vc-secondary">{{ kpiEtab.certificatsEmis }}</p><p class="text-xs text-slate-500">Certificats émis</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-secondary tabular-nums">{{ kpiEtab.tauxAssiduite }}%</p><p class="text-xs text-slate-500">Assiduité</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-secondary tabular-nums">{{ kpiEtab.tauxCompletion }}%</p><p class="text-xs text-slate-500">Complétion</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-secondary tabular-nums">{{ kpiEtab.moyenneGenerale }}/20</p><p class="text-xs text-slate-500">Moyenne</p></div>
+              <div class="card text-center"><p class="text-2xl font-bold text-vc-secondary tabular-nums">{{ kpiEtab.certificatsEmis }}</p><p class="text-xs text-slate-500">Certificats émis</p></div>
             </div>
           }
 

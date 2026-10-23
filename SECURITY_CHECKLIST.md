@@ -70,4 +70,11 @@ The following modules have been verified as following the secure pattern:
   - Daily automated GitHub Actions backup workflow `.github/workflows/db-backup.yml` at 02:00 UTC with 30-day artifact retention.
   - Comprehensive Disaster Recovery Plan documented in `docs/DISASTER_RECOVERY_PLAN.md` (RPO < 24h, RTO < 2h).
 - [x] **Continuous Integration & Security Pipeline (CI/CD)**: Full `.github/workflows/ci.yml` checking linting, typechecking, 45 unit tests, npm security audit and production builds on every push/PR.
+- [x] **Anti-Token Confusion & Strict JWT Typology (CWE-287 / OWASP API2:2023)**: Mandatory `token_type: 'access' | 'refresh'` claim. `JwtStrategy` explicitly rejects any refresh token used as an API access bearer token.
+- [x] **Strict CORS Whitelist (CWE-942)**: Removed wildcards on shared PaaS platforms (`*.onrender.com`, `*.vercel.app`, `*.netlify.app`). Permitted origins restricted strictly to authoritative project domains and explicit `CORS_ORIGIN`.
+- [x] **Official Certificate Anti-Poisoning**: Authoritative base URL resolution for QR code verification on state certificates, preventing Host/Origin header manipulation.
+- [x] **Docker Container Hardening (CIS Benchmark)**: Backend production container drops root privileges and runs as unprivileged `USER node`.
+- [x] **Secure Database Dump Execution**: `pg_dump` executed via parameterized argument array (`execFileSync`) preventing shell command injection.
+- [x] **Frontend Role Synchronization**: Unified role getter for `PERSONNEL_ADMINISTRATIF` in Angular authentication service.
+- [x] **Modern Web Security Headers**: Updated `X-XSS-Protection: 0` in Nginx proxy according to current OWASP Secure Headers standards.
 

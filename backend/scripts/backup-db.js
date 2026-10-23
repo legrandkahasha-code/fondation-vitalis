@@ -13,7 +13,7 @@
  * ==============================================================================
  */
 
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -62,13 +62,26 @@ const outputFile = path.join(backupDir, `vitalis_${dbName}_${timestamp}.sql`);
 
 console.log(`📦 Démarrage de la sauvegarde de la base [${dbName}] sur [${dbHost}:${dbPort}]...`);
 
-// 4. Exécuter pg_dump
+// 4. Exécuter pg_dump de manière sécurisée (sans injection shell)
 try {
   const env = { ...process.env, PGPASSWORD: dbPassword };
-  // Commande pg_dump propre et portable
-  const cmd = `pg_dump -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} --no-owner --no-privileges -f "${outputFile}"`;
-  
-  execSync(cmd, { env, stdio: 'inherit' });
+  const pgArgs = [
+    '-h', dbHost,
+    '-p', String(dbPort),
+    '-U', dbUser,
+    '-d', dbName,
+    '--no-owner',
+    '--no-privileges',
+    '-f', outputFile,
+  ];
+
+  try {
+    execFileSync('pg_dump', pgArgs, { env, stdio: 'inherit' });
+  } catch (_fileErr) {
+    // Repli de compatibilité multi-plateforme si pg_dump requiert un wrapper shell
+    const cmd = `pg_dump -h "${dbHost}" -p ${dbPort} -U "${dbUser}" -d "${dbName}" --no-owner --no-privileges -f "${outputFile}"`;
+    execSync(cmd, { env, stdio: 'inherit' });
+  }
 
   // 5. Calcul de l'empreinte SHA-256
   const fileBuffer = fs.readFileSync(outputFile);

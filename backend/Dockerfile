@@ -16,7 +16,11 @@ COPY prisma.config.ts ./
 COPY entrypoint.sh ./entrypoint.sh
 RUN npx prisma generate && \
     mkdir -p uploads && \
-    chmod +x /app/entrypoint.sh
+    chmod +x /app/entrypoint.sh && \
+    chown -R node:node /app
+
+# Sécurité CIS Docker Benchmark : exécution sous utilisateur non-root sans privilèges
+USER node
 
 # Respecte $PORT injecté par Render (fallback 3000 en local)
 ENV PORT=${PORT:-3000}

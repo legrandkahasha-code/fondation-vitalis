@@ -36,6 +36,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    // Sécurité ANSSI/OWASP (CWE-287) : Interdiction absolue d'utiliser un Refresh Token comme Bearer Access Token
+    if (payload?.token_type === 'refresh' || (payload?.token_type && payload.token_type !== 'access')) {
+      throw new UnauthorizedException('Jeton invalide : un jeton d’accès (access token) valide est requis.');
+    }
     const user = await this.utilisateursService.validateUser(payload.sub);
     if (!user) {
       throw new UnauthorizedException();

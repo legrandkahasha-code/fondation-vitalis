@@ -19,7 +19,11 @@ export class CertificationController {
     @Param('utilisateurId', ParseUUIDPipe) utilisateurId: string,
     @Req() req: any,
   ) {
-    const baseUrl = req.headers.origin || 'http://localhost:4200';
+    // Sécurité : Ne jamais faire confiance aveuglément au header client Origin en production
+    const baseUrl =
+      process.env.PUBLIC_APP_URL ||
+      process.env.FRONTEND_URL ||
+      (process.env.NODE_ENV === 'production' ? 'https://vitaliseup.org' : req?.headers?.origin || 'http://localhost:4200');
     return this.service.emettreCertificat(formationId, utilisateurId, baseUrl);
   }
 

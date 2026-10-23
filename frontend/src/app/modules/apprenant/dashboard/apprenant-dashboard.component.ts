@@ -104,7 +104,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </svg>
             </div>
             <div>
-              <p class="text-xl sm:text-2xl font-bold text-[#1B1D1F] font-mono leading-none">{{ dashboard.nbFormations }}</p>
+              <p class="text-xl sm:text-2xl font-bold text-[#1B1D1F] font-mono tabular-nums leading-none">{{ dashboard.nbFormations }}</p>
               <p class="text-[11px] sm:text-xs font-semibold text-[#4B5157] mt-1 truncate group-hover:text-[#1C75BC] transition-colors">Formations actives →</p>
             </div>
           </a>
@@ -120,7 +120,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </svg>
             </div>
             <div>
-              <p class="text-xl sm:text-2xl font-bold text-[#276B44] font-mono leading-none">{{ dashboard.completionGlobale }}%</p>
+              <p class="text-xl sm:text-2xl font-bold text-[#276B44] font-mono tabular-nums leading-none">{{ dashboard.completionGlobale }}%</p>
               <p class="text-[11px] sm:text-xs font-semibold text-[#4B5157] mt-1 truncate group-hover:text-[#276B44] transition-colors">Complétion moyenne →</p>
             </div>
           </a>
@@ -137,7 +137,7 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
             <div>
               <p
-                class="text-xl sm:text-2xl font-bold font-mono leading-none"
+                class="text-xl sm:text-2xl font-bold font-mono tabular-nums leading-none"
                 [class]="(dashboard.tauxAssiduite ?? 100) >= 80 ? 'text-[#276B44]' : (dashboard.tauxAssiduite ?? 100) >= 60 ? 'text-[#F0791E]' : 'text-[#ED1C24]'"
               >
                 {{ dashboard.tauxAssiduite !== undefined ? dashboard.tauxAssiduite : 100 }}%
@@ -158,7 +158,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </svg>
             </div>
             <div>
-              <p class="text-xl sm:text-2xl font-bold text-[#1B1D1F] font-mono leading-none">{{ dashboard.nbDevoirsDeposes }}</p>
+              <p class="text-xl sm:text-2xl font-bold text-[#1B1D1F] font-mono tabular-nums leading-none">{{ dashboard.nbDevoirsDeposes }}</p>
               <p class="text-[11px] sm:text-xs font-semibold text-[#4B5157] mt-1 truncate group-hover:text-[#F0791E] transition-colors">Mes Devoirs →</p>
             </div>
           </a>
@@ -175,7 +175,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </svg>
             </div>
             <div>
-              <p class="text-xl sm:text-2xl font-bold text-[#1B1D1F] font-mono leading-none">{{ dashboard.nbQuizPasses }}</p>
+              <p class="text-xl sm:text-2xl font-bold text-[#1B1D1F] font-mono tabular-nums leading-none">{{ dashboard.nbQuizPasses }}</p>
               <p class="text-[11px] sm:text-xs font-semibold text-[#4B5157] mt-1 truncate group-hover:text-[#1C75BC] transition-colors">Mes Quiz →</p>
             </div>
           </a>
@@ -191,7 +191,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </svg>
             </div>
             <div>
-              <p class="text-xl sm:text-2xl font-bold text-[#F0791E] font-mono leading-none">{{ dashboard.nbCertificats }}</p>
+              <p class="text-xl sm:text-2xl font-bold text-[#F0791E] font-mono tabular-nums leading-none">{{ dashboard.nbCertificats }}</p>
               <p class="text-[11px] sm:text-xs font-semibold text-[#4B5157] mt-1 truncate group-hover:text-[#F0791E] transition-colors">Certificats →</p>
             </div>
           </a>

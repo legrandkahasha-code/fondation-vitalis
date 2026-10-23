@@ -47,31 +47,31 @@ import { KpiEtablissement, Utilisateur, FiliereSuiviItem, FiliereSuiviDetail } f
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
           <!-- KPI 1 : Filières Attribuées (Spécification Expresse) -->
           <div class="p-4 bg-white border border-[#1C75BC]/40 rounded-xs shadow-xs text-center border-t-4 border-t-[#1C75BC]">
-            <p class="text-2xl md:text-3xl font-black text-[#1C75BC] font-mono leading-tight">{{ filieres.length }}</p>
+            <p class="text-2xl md:text-3xl font-black text-[#1C75BC] font-mono tabular-nums leading-tight">{{ filieres.length }}</p>
             <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Filières Attribuées</p>
             <p class="text-[10px] text-[#4B5157] mt-0.5">par l'Admin Central</p>
           </div>
 
           <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#124F80]">
-            <p class="text-2xl md:text-3xl font-black text-[#124F80] font-mono leading-tight">{{ totalApprenantsInscrits }}</p>
+            <p class="text-2xl md:text-3xl font-black text-[#124F80] font-mono tabular-nums leading-tight">{{ totalApprenantsInscrits }}</p>
             <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Apprenants Inscrits</p>
             <p class="text-[10px] text-[#4B5157] mt-0.5">dans les filières</p>
           </div>
 
           <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#276B44]">
-            <p class="text-2xl md:text-3xl font-black text-[#276B44] font-mono leading-tight">{{ kpi?.tauxAssiduite ?? 0 }}%</p>
+            <p class="text-2xl md:text-3xl font-black text-[#276B44] font-mono tabular-nums leading-tight">{{ kpi?.tauxAssiduite ?? 0 }}%</p>
             <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Assiduité Globale</p>
             <p class="text-[10px] text-[#4B5157] mt-0.5">présences aux cours</p>
           </div>
 
           <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#F0791E]">
-            <p class="text-2xl md:text-3xl font-black text-[#F0791E] font-mono leading-tight">{{ kpi?.tauxCompletion ?? 0 }}%</p>
+            <p class="text-2xl md:text-3xl font-black text-[#F0791E] font-mono tabular-nums leading-tight">{{ kpi?.tauxCompletion ?? 0 }}%</p>
             <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Avancement Moyen</p>
             <p class="text-[10px] text-[#4B5157] mt-0.5">complétion des cours</p>
           </div>
 
           <div class="p-4 bg-white border border-[#D7DBDE] rounded-xs shadow-xs text-center border-t-4 border-t-[#1C75BC]">
-            <p class="text-2xl md:text-3xl font-black text-[#1C75BC] font-mono leading-tight">{{ kpi?.moyenneGenerale ?? 0 }}/20</p>
+            <p class="text-2xl md:text-3xl font-black text-[#1C75BC] font-mono tabular-nums leading-tight">{{ kpi?.moyenneGenerale ?? 0 }}/20</p>
             <p class="text-[11px] font-bold text-[#1B1D1F] mt-1 uppercase tracking-wider">Moyenne Générale</p>
             <p class="text-[10px] text-[#4B5157] mt-0.5">toutes évaluations</p>
           </div>
@@ -83,9 +83,9 @@ import { KpiEtablissement, Utilisateur, FiliereSuiviItem, FiliereSuiviDetail } f
         <div id="filieres" class="bg-white border border-[#D7DBDE] rounded-xs shadow-xs p-6 space-y-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#D7DBDE]">
             <div>
-              <h2 class="text-lg font-bold text-[#1B1D1F] flex items-center gap-2">
+              <h2 class="text-lg font-bold text-[#1B1D1F] flex items-center gap-2 font-heading">
                 <span>📚</span> Filières Attribuées à l'Établissement (Classes)
-                <span class="px-2 py-0.5 text-xs bg-[#E7F1FA] text-[#1C75BC] rounded-xs font-mono font-bold">
+                <span class="px-2 py-0.5 text-xs bg-[#E7F1FA] text-[#1C75BC] rounded-xs font-mono font-bold tabular-nums">
                   {{ filieresFiltrees.length }}
                 </span>
               </h2>

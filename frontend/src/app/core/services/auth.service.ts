@@ -75,7 +75,7 @@ export class AuthService {
   }
 
   get isPersonnelAdmin(): boolean {
-    return this.currentUser?.role === 'PERSONNEL_ADMIN';
+    return this.currentUser?.role === 'PERSONNEL_ADMINISTRATIF' || this.currentUser?.role === 'PERSONNEL_ADMIN';
   }
 
   get isApprenant(): boolean {

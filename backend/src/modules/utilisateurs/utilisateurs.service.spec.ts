@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UtilisateursService } from './utilisateurs.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Role } from '../../common/enums/role.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { IdentityService } from '../admission/identity.service';
@@ -23,10 +23,21 @@ describe('UtilisateursService (Business Rules)', () => {
     auditLog: {
       create: jest.fn(),
     },
+    loginAttempt: {
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+    refreshToken: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
   };
 
   const mockJwt = {
     sign: jest.fn().mockReturnValue('mock-token'),
+    verify: jest.fn(),
   };
 
   const mockNotifications = {
@@ -102,6 +113,56 @@ describe('UtilisateursService (Business Rules)', () => {
       }));
       expect(result.utilisateur.role).toBe(Role.APPRENANT);
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('Security: Token Typology & Anti-Confusion (CWE-287 / OWASP API2:2023)', () => {
+    it('should strictly reject refreshToken if token_type is not refresh', async () => {
+      // Un attaquant soumet un access token sur l'endpoint de refresh
+      mockJwt.verify.mockReturnValue({
+        sub: 'uuid-user-1',
+        email: 'test@vitalis.com',
+        role: Role.APPRENANT,
+        token_type: 'access',
+      });
+
+      await expect(service.refreshToken('fake-access-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should accept valid refreshToken and generate rotated tokens with explicit token_type', async () => {
+      mockJwt.verify.mockReturnValue({
+        sub: 'uuid-user-1',
+        email: 'test@vitalis.com',
+        role: Role.APPRENANT,
+        token_type: 'refresh',
+      });
+      mockPrisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'uuid-token-1',
+        token: 'valid-refresh-token',
+        revoked: false,
+      });
+      mockPrisma.refreshToken.update.mockResolvedValue({});
+      mockPrisma.refreshToken.create.mockResolvedValue({});
+      mockPrisma.utilisateur.findUnique.mockResolvedValue({
+        id: 'uuid-user-1',
+        email: 'test@vitalis.com',
+        role: Role.APPRENANT,
+        actif: true,
+      });
+
+      const res = await service.refreshToken('valid-refresh-token');
+
+      expect(res.success).toBe(true);
+      expect(mockJwt.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ token_type: 'access' }),
+        expect.objectContaining({ expiresIn: '15m' }),
+      );
+      expect(mockJwt.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ token_type: 'refresh' }),
+        expect.objectContaining({ expiresIn: '7d' }),
+      );
     });
   });
 });

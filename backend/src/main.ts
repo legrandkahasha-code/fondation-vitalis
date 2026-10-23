@@ -122,18 +122,16 @@ async function bootstrap() {
         return callback(null, true);
       }
 
-      // Autoriser les domaines officiels de production et plateformes cloud (Render, Vercel, Netlify)
-      const isCloudFrontend =
+      // Domaines officiels du réseau Vitalis et sous-domaines légitimes
+      const isOfficialDomain =
         cleanOrigin === 'https://vitaliseup.org' ||
         cleanOrigin === 'https://www.vitaliseup.org' ||
         /^https:\/\/[\w-]+\.vitaliseup\.org$/.test(cleanOrigin) ||
         cleanOrigin === 'https://vitalis-center.cd' ||
         cleanOrigin === 'https://www.vitalis-center.cd' ||
-        /^https:\/\/[\w-]+(\.[\w-]+)*\.onrender\.com$/.test(cleanOrigin) ||
-        /^https:\/\/[\w-]+(\.[\w-]+)*\.vercel\.app$/.test(cleanOrigin) ||
-        /^https:\/\/[\w-]+(\.[\w-]+)*\.netlify\.app$/.test(cleanOrigin);
+        /^https:\/\/[\w-]+\.vitalis-center\.cd$/.test(cleanOrigin);
 
-      if (isCloudFrontend) {
+      if (isOfficialDomain) {
         return callback(null, true);
       }
 
