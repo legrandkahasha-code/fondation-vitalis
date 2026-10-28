@@ -5,6 +5,42 @@ import { tap, shareReplay, finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Formation, Cours, Evaluation, Utilisateur, ProgressInfo, Module, FiliereSuiviItem, FiliereSuiviDetail, CategorieFormation, FiliereReferentiel } from '../models';
 
+export interface LigneFeuilleNotes {
+  apprenantId: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  matricule: string | null;
+  photoUrl: string | null;
+  noteId: string | null;
+  valeur: number | null;
+  statut: 'NOTE' | 'NON_NOTE';
+  dateNotation: string | null;
+  formateurNom: string | null;
+}
+
+export interface FeuilleNotesResponse {
+  evaluation: {
+    id: string;
+    titre: string;
+    noteMaximale: number;
+    moduleId: string;
+    moduleTitre: string;
+    moduleCoefficient: number;
+    formationId: string;
+    formationTitre: string;
+  };
+  kpis: {
+    totalInscrits: number;
+    totalNotes: number;
+    moyenneClasse: number;
+    noteMin: number | null;
+    noteMax: number | null;
+    tauxReussite: number;
+  };
+  lignes: LigneFeuilleNotes[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class PedagogieService {
   private url = `${environment.apiUrl}/pedagogie`;
@@ -306,6 +342,10 @@ export class PedagogieService {
     return this.http.get<Utilisateur[]>(`${this.url}/apprenants`);
   }
 
+  getApprenantsByFormation(formationId: string): Observable<Utilisateur[]> {
+    return this.http.get<Utilisateur[]>(`${this.url}/formations/${formationId}/apprenants`);
+  }
+
   createEvaluation(moduleId: string, data: { titre: string; noteMaximale?: number }): Observable<Evaluation> {
     return this.http.post<Evaluation>(`${this.url}/modules/${moduleId}/evaluations`, data).pipe(
       tap(() => this.invalidateFormationsCache())
@@ -318,6 +358,19 @@ export class PedagogieService {
 
   submitNote(evaluationId: string, utilisateurId: string, valeur: number): Observable<unknown> {
     return this.http.post(`${this.url}/evaluations/${evaluationId}/notes`, { utilisateurId, valeur }).pipe(
+      tap(() => this.invalidateFormationsCache())
+    );
+  }
+
+  getFeuilleNotes(evaluationId: string): Observable<FeuilleNotesResponse> {
+    return this.http.get<FeuilleNotesResponse>(`${this.url}/evaluations/${evaluationId}/feuille-notes`);
+  }
+
+  submitNotesBatch(evaluationId: string, notes: Array<{ utilisateurId: string; valeur: number }>): Observable<{ message: string; count: number; evaluationId: string }> {
+    return this.http.post<{ message: string; count: number; evaluationId: string }>(
+      `${this.url}/evaluations/${evaluationId}/notes/batch`,
+      { notes }
+    ).pipe(
       tap(() => this.invalidateFormationsCache())
     );
   }

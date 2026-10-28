@@ -32,19 +32,22 @@ export const routes: Routes = [
   { path: 'admin-etab/sessions-admission', canActivate: [adminEtabGuard], loadComponent: () => import('./modules/admin-etab/admission/admission-admin.component').then(m => m.AdmissionAdminComponent) },
   { path: 'admin-etab/candidatures', redirectTo: 'admin-etab/sessions-admission', pathMatch: 'full' },
 
+  // ─── ESPACE FORMATEUR & GESTION PÉDAGOGIQUE ──────────────────────────────
   { path: 'formations', canActivate: [formateurGuard], loadComponent: () => import('./modules/formateur/formations/formations.component').then(m => m.FormationsComponent) },
   { path: 'formations/:id', canActivate: [authGuard], loadComponent: () => import('./modules/formateur/formation-detail/formation-detail.component').then(m => m.FormationDetailComponent) },
-  { path: 'cours/:id', redirectTo: '/apprenant/formations' },
-  { path: 'cours', redirectTo: '/apprenant/formations' },
-  { path: 'mes-cours', redirectTo: '/apprenant/formations' },
-  { path: 'mes-devoirs', redirectTo: '/apprenant/evaluations/depot-devoir' },
-  { path: 'mes-quiz', redirectTo: '/apprenant/evaluations/depot-devoir' },
-  { path: 'mes-certificats', redirectTo: '/apprenant/certificats' },
-  { path: 'devoirs', redirectTo: '/apprenant/evaluations/depot-devoir' },
   { path: 'notes', canActivate: [formateurGuard], loadComponent: () => import('./modules/formateur/notes/notes.component').then(m => m.NotesComponent) },
   { path: 'devoirs/noter', canActivate: [formateurGuard], loadComponent: () => import('./modules/formateur/devoirs-noter/devoirs-noter.component').then(m => m.DevoirsNoterComponent) },
   { path: 'seances', canActivate: [formateurGuard], loadComponent: () => import('./modules/seances/seances-list/seances-list.component').then(m => m.SeancesListComponent) },
   { path: 'seances/:id', canActivate: [formateurGuard], loadComponent: () => import('./modules/seances/seance-detail/seance-detail.component').then(m => m.SeanceDetailComponent) },
+
+  // ─── REDIRECTIONS LEGACY RACINE VERS ESPACE APPRENANT (AVEC PATHMATCH STRICT) ───
+  { path: 'cours/:id', redirectTo: '/apprenant/formations', pathMatch: 'full' },
+  { path: 'cours', redirectTo: '/apprenant/formations', pathMatch: 'full' },
+  { path: 'mes-cours', redirectTo: '/apprenant/formations', pathMatch: 'full' },
+  { path: 'mes-devoirs', redirectTo: '/apprenant/evaluations/depot-devoir', pathMatch: 'full' },
+  { path: 'mes-quiz', redirectTo: '/apprenant/evaluations/depot-devoir', pathMatch: 'full' },
+  { path: 'mes-certificats', redirectTo: '/apprenant/certificats', pathMatch: 'full' },
+  { path: 'devoirs', redirectTo: '/apprenant/evaluations/depot-devoir', pathMatch: 'full' },
 
   // ─── ESPACE APPRENANT DÉDIÉ ──────────────────────────────────────────────────
   {

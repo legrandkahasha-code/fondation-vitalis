@@ -10,6 +10,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
 import { EtablissementsService } from '../../core/services/etablissements.service';
 import { UtilisateursService } from '../../core/services/utilisateurs.service';
 import { PedagogieService } from '../../core/services/pedagogie.service';
+import { FormateurBootstrapService } from '../../core/services/formateur-bootstrap.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -615,6 +616,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private etablissementsService: EtablissementsService,
     private utilisateursService: UtilisateursService,
     private pedagogieService: PedagogieService,
+    private formateurBootstrap: FormateurBootstrapService,
   ) { }
 
   ngOnInit(): void {
@@ -626,6 +628,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       this.pedagogieService.getFilieresSuivi().subscribe({ error: () => { } });
     } else if (this.auth.hasRole('ADMIN_ETABLISSEMENT') && this.auth.currentUser?.etablissementId) {
       this.pedagogieService.getFilieresSuivi({ etablissementId: this.auth.currentUser.etablissementId }).subscribe({ error: () => { } });
+    } else if (this.auth.hasRole('FORMATEUR')) {
+      this.formateurBootstrap.getBootstrap().subscribe({ error: () => { } });
     }
 
     // Vérifier si l'utilisateur connecté fait l'objet d'une demande de régularisation active

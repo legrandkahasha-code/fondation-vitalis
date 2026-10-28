@@ -255,8 +255,8 @@ import { ToastService } from '../../../core/services/toast.service';
                 class="p-4 sm:p-5 bg-white border border-[#D7DBDE] rounded-xs shadow-xs hover:border-[#1C75BC] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer group"
                 [class.border-l-4]="true"
                 [class.border-l-[#276B44]]="s.presence?.statut === 'PRESENT'"
-                [class.border-l-[#ED1C24]]="s.presence?.statut === 'ABSENT'"
-                [class.border-l-[#F0791E]]="s.presence?.statut === 'RETARD'"
+                [class.border-l-[#F0791E]]="s.presence?.statut === 'RETARD' || isJustificationEnAttente(s)"
+                [class.border-l-[#ED1C24]]="s.presence?.statut === 'ABSENT' && !isJustificationEnAttente(s)"
                 [class.border-l-[#1C75BC]]="s.presence?.statut === 'JUSTIFIE'"
                 [class.border-l-[#D7DBDE]]="!s.presence?.statut"
               >
@@ -341,12 +341,21 @@ import { ToastService } from '../../../core/services/toast.service';
                         <span>Présent</span>
                       </span>
                     } @else if (s.presence?.statut === 'ABSENT') {
-                      <span class="px-2.5 py-1 rounded-xs bg-[#FDE8E8] text-[#ED1C24] border border-[#ED1C24] text-xs font-bold flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        <span>Absent</span>
-                      </span>
+                      @if (isJustificationEnAttente(s)) {
+                        <span class="px-2.5 py-1 rounded-xs bg-[#FDECDD] text-[#F0791E] border border-[#F0791E] text-xs font-bold flex items-center gap-1" title="Justificatif transmis · En cours d'examen administratif">
+                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Justif. en cours</span>
+                        </span>
+                      } @else {
+                        <span class="px-2.5 py-1 rounded-xs bg-[#FDE8E8] text-[#ED1C24] border border-[#ED1C24] text-xs font-bold flex items-center gap-1">
+                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          <span>Absent</span>
+                        </span>
+                      }
                     } @else if (s.presence?.statut === 'RETARD') {
                       <span class="px-2.5 py-1 rounded-xs bg-[#FDECDD] text-[#F0791E] border border-[#F0791E] text-xs font-bold flex items-center gap-1">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -524,11 +533,11 @@ import { ToastService } from '../../../core/services/toast.service';
               </div>
 
               <!-- Émargement & Assiduité -->
-              <div class="p-3.5 border rounded-xs" [class]="selectedSeanceModal.presence?.statut === 'PRESENT' ? 'bg-[#E7F1EA] border-[#276B44]' : selectedSeanceModal.presence?.statut === 'ABSENT' ? 'bg-[#FDE8E8] border-[#ED1C24]' : selectedSeanceModal.presence?.statut === 'RETARD' ? 'bg-[#FDECDD] border-[#F0791E]' : 'bg-[#F5F6F7] border-[#D7DBDE]'">
+              <div class="p-3.5 border rounded-xs" [class]="selectedSeanceModal.presence?.statut === 'PRESENT' ? 'bg-[#E7F1EA] border-[#276B44]' : isJustificationEnAttente(selectedSeanceModal) ? 'bg-[#FDECDD] border-[#F0791E]' : selectedSeanceModal.presence?.statut === 'ABSENT' ? 'bg-[#FDE8E8] border-[#ED1C24]' : selectedSeanceModal.presence?.statut === 'RETARD' ? 'bg-[#FDECDD] border-[#F0791E]' : 'bg-[#F5F6F7] border-[#D7DBDE]'">
                 <div class="flex items-center justify-between">
                   <span class="font-bold text-xs uppercase tracking-wider text-[#1B1D1F]">Statut d'émargement :</span>
-                  <span class="px-2.5 py-1 rounded-xs font-bold text-xs" [class]="selectedSeanceModal.presence?.statut === 'PRESENT' ? 'bg-[#276B44] text-white' : selectedSeanceModal.presence?.statut === 'ABSENT' ? 'bg-[#ED1C24] text-white' : selectedSeanceModal.presence?.statut === 'RETARD' ? 'bg-[#F0791E] text-white' : 'bg-[#71787E] text-white'">
-                    {{ selectedSeanceModal.presence?.statut || 'NON ÉMARGÉ' }}
+                  <span class="px-2.5 py-1 rounded-xs font-bold text-xs" [class]="selectedSeanceModal.presence?.statut === 'PRESENT' ? 'bg-[#276B44] text-white' : isJustificationEnAttente(selectedSeanceModal) ? 'bg-[#F0791E] text-white' : selectedSeanceModal.presence?.statut === 'ABSENT' ? 'bg-[#ED1C24] text-white' : selectedSeanceModal.presence?.statut === 'RETARD' ? 'bg-[#F0791E] text-white' : 'bg-[#71787E] text-white'">
+                    {{ isJustificationEnAttente(selectedSeanceModal) ? 'JUSTIFICATIF EN EXAMEN' : (selectedSeanceModal.presence?.statut || 'NON ÉMARGÉ') }}
                   </span>
                 </div>
                 @if (selectedSeanceModal.presence?.remarqueJustification) {
@@ -553,6 +562,13 @@ import { ToastService } from '../../../core/services/toast.service';
                     </svg>
                     <span>Justifier mon absence</span>
                   </button>
+                } @else if (isJustificationEnAttente(selectedSeanceModal)) {
+                  <span class="text-xs text-[#F0791E] font-semibold flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-[#F0791E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Justificatif transmis · En attente de validation</span>
+                  </span>
                 }
               </div>
               <div class="flex items-center gap-2">
@@ -957,6 +973,15 @@ export class MesSeancesComponent implements OnInit, OnDestroy {
         this.justificationError = err.error?.message || 'Une erreur est survenue lors de l\'envoi du justificatif.';
       },
     });
+  }
+
+  isJustificationEnAttente(s?: ApprenantSeanceItem | null): boolean {
+    if (!s?.presence) return false;
+    return (
+      s.presence.statut === 'ABSENT' &&
+      !!s.presence.remarqueJustification &&
+      s.presence.remarqueJustification.includes('[Demande de justification soumise]')
+    );
   }
 
   isVisio(s: ApprenantSeanceItem): boolean {

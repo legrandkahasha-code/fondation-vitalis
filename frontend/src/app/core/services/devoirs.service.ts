@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { timeout, tap, shareReplay, finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface Devoir {
@@ -21,8 +22,23 @@ export interface SoumissionDevoir {
   dateDepot: string;
   note?: number;
   commentaire?: string;
-  apprenant?: { id: string; nom: string; prenom: string };
+  apprenant?: { id: string; nom: string; prenom: string; email?: string };
   devoir?: { id?: string; titre: string; module?: { formation?: { titre: string } } };
+}
+
+export interface DevoirFormateurItem {
+  id: string;
+  titre: string;
+  consignes?: string;
+  dateLimite?: string;
+  moduleId: string;
+  moduleTitre: string;
+  formationId: string;
+  formationTitre: string;
+  nbTotalSoumissions: number;
+  nbEnAttente: number;
+  nbNotes: number;
+  soumissions: SoumissionDevoir[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -30,6 +46,43 @@ export class DevoirsService {
   private url = `${environment.apiUrl}/devoirs`;
 
   constructor(private http: HttpClient) {}
+
+  // Cache en mémoire pour affichage instantané (0ms) et anti-freeze
+  private aCorrigerCache: DevoirFormateurItem[] | null = null;
+  private aCorrigerCacheTime = 0;
+  private readonly CACHE_TTL = 30_000; // 30s
+  private aCorrigerInFlight$: Observable<DevoirFormateurItem[]> | null = null;
+
+  invalidateCache(): void {
+    this.aCorrigerCache = null;
+    this.aCorrigerCacheTime = 0;
+    this.aCorrigerInFlight$ = null;
+  }
+
+  getDevoirsACorriger(forceRefresh = false): Observable<DevoirFormateurItem[]> {
+    const isFresh = this.aCorrigerCache && (Date.now() - this.aCorrigerCacheTime < this.CACHE_TTL);
+    if (!forceRefresh && isFresh) {
+      return of(this.aCorrigerCache!);
+    }
+
+    if (!forceRefresh && this.aCorrigerInFlight$) {
+      return this.aCorrigerInFlight$;
+    }
+
+    this.aCorrigerInFlight$ = this.http.get<DevoirFormateurItem[]>(`${this.url}/formateur/a-corriger`).pipe(
+      timeout(6000),
+      tap((data) => {
+        this.aCorrigerCache = data;
+        this.aCorrigerCacheTime = Date.now();
+      }),
+      shareReplay(1),
+      finalize(() => {
+        this.aCorrigerInFlight$ = null;
+      })
+    );
+
+    return this.aCorrigerInFlight$;
+  }
 
   getByModule(moduleId: string): Observable<Devoir[]> {
     return this.http.get<Devoir[]>(`${this.url}/module/${moduleId}`);

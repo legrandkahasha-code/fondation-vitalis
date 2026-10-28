@@ -936,6 +936,12 @@ export class MesCertificatsComponent implements OnInit, OnDestroy {
     const formationsSnap = this.apprenantService.getFormationsSnapshot();
     if (formationsSnap) {
       this.formations = formationsSnap;
+    } else {
+      // Fix Audit : Charger les formations si le cache est vide pour calculer l'éligibilité BR-03
+      this.apprenantService.getFormations().subscribe({
+        next: (formations) => { this.formations = formations || []; },
+        error: () => {},
+      });
     }
 
     // Synchronisation unifiée avec le flux bootstrap
@@ -955,6 +961,10 @@ export class MesCertificatsComponent implements OnInit, OnDestroy {
       .pipe(filter((event) => event.type === 'CERTIFICAT_EMIS'))
       .subscribe(() => {
         this.loadCertificats(false, false);
+        this.apprenantService.getFormations().subscribe({
+          next: (formations) => { this.formations = formations || []; },
+          error: () => {},
+        });
       });
   }
 
@@ -969,8 +979,16 @@ export class MesCertificatsComponent implements OnInit, OnDestroy {
     this.apprenantService.genererCertificat(formationId).subscribe({
       next: (cert) => {
         this.generatingId = null;
-        this.toast.success(`Certificat officiel N° ${cert.numeroSerie} émis avec succès !`);
+        const numSerie = cert?.numeroSerie || cert?.certificat?.numeroSerie || (typeof cert === 'string' ? cert : '');
+        const messageSuccess = numSerie
+          ? `Certificat officiel N° ${numSerie} émis avec succès !`
+          : 'Certificat officiel émis avec succès !';
+        this.toast.success(messageSuccess);
         this.loadCertificats(false, false);
+        this.apprenantService.getFormations().subscribe({
+          next: (formations) => { this.formations = formations || []; },
+          error: () => {},
+        });
       },
       error: (err) => {
         this.generatingId = null;

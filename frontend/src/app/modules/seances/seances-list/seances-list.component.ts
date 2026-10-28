@@ -7,6 +7,7 @@ import { switchMap } from 'rxjs/operators';
 import { SeancesService } from '../../../core/services/seances.service';
 import { PedagogieService } from '../../../core/services/pedagogie.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
+import { FormateurBootstrapService } from '../../../core/services/formateur-bootstrap.service';
 import { MainLayoutComponent } from '../../../shared/layout/main-layout.component';
 import { Seance, Formation } from '../../../core/models';
 
@@ -93,14 +94,25 @@ export class SeancesListComponent implements OnInit, OnDestroy {
 
   private sseSub?: Subscription;
   private pollSub?: Subscription;
+  private bootstrapSub?: Subscription;
 
   constructor(
     private seancesService: SeancesService,
     private pedagogie: PedagogieService,
     private notifications: NotificationsService,
+    private formateurBootstrap: FormateurBootstrapService,
   ) {}
 
   ngOnInit() {
+    // 0. Hydratation INSTANTANÉE depuis le cache bootstrap (0ms garanti)
+    this.bootstrapSub = this.formateurBootstrap.seances$.subscribe((cachedSeances) => {
+      if (cachedSeances && cachedSeances.length > 0 && this.loading) {
+        this.seances = cachedSeances;
+        this.loading = false;
+      }
+    });
+
+    // 1. Chargement complet avec relations détaillées (presences count, etc.)
     this.loadData();
 
     // ─── Flux Temps Réel SSE : Réception immédiate dès qu'une séance est planifiée/modifiée ───
@@ -122,6 +134,7 @@ export class SeancesListComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.sseSub?.unsubscribe();
     this.pollSub?.unsubscribe();
+    this.bootstrapSub?.unsubscribe();
   }
 
   toggleForm() {
@@ -132,6 +145,22 @@ export class SeancesListComponent implements OnInit, OnDestroy {
   }
 
   private loadModules() {
+    // Essayer d'abord les formations du bootstrap (0ms)
+    const bootstrapData = this.formateurBootstrap.bootstrap$.value;
+    if (bootstrapData?.formations?.length) {
+      this.allModules = [];
+      bootstrapData.formations.forEach(f =>
+        f.modules?.forEach(m =>
+          this.allModules.push({ id: m.id, titre: m.titre, formationTitre: f.titre })
+        )
+      );
+      if (this.allModules.length > 0 && !this.form.moduleId) {
+        this.form.moduleId = this.allModules[0].id;
+      }
+      return;
+    }
+
+    // Fallback HTTP
     this.pedagogie.getFormations().subscribe({
       next: (formations) => {
         this.allModules = [];
