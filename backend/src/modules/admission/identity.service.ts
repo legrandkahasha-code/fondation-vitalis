@@ -21,11 +21,19 @@ const APPRENANT_SELECT_STABLE = {
 export class IdentityService {
   constructor(private prisma: PrismaService) {}
 
-  async generateMatricule(): Promise<string> {
-    const params = await this.prisma.parametresReseau.findFirst();
+  async generateMatricule(txClient?: any): Promise<string> {
+    const client = txClient || this.prisma;
+    try {
+      if (typeof client.$executeRawUnsafe === 'function') {
+        await client.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(123456789);`);
+      }
+    } catch {
+      // Ignoré pour les tests unitaires / environnement mock
+    }
+    const params = await client.parametresReseau.findFirst();
     const prefix = params?.matriculePrefixe || 'VIT';
     const year = new Date().getFullYear();
-    const count = await this.prisma.apprenant.count();
+    const count = await client.apprenant.count();
     return `${prefix}-${year}-${String(count + 1).padStart(6, '0')}`;
   }
 
@@ -74,17 +82,32 @@ export class IdentityService {
       }
       return existing;
     }
+
+    const runInTx = typeof this.prisma.$transaction === 'function'
+      ? (cb: (tx: any) => Promise<any>) => this.prisma.$transaction(cb)
+      : (cb: (tx: any) => Promise<any>) => cb(this.prisma);
+
     try {
-      return await this.prisma.apprenant.create({
-        data: {
-          matricule: await this.generateMatricule(),
-          nom: user.nom,
-          prenom: user.prenom,
-          email: user.email,
-          utilisateurId: user.id,
-          etablissementOrigineId: user.etablissementId,
-        },
-        select: APPRENANT_SELECT_STABLE,
+      return await runInTx(async (tx) => {
+        // Double-check sous verrou
+        const doubleCheck = await tx.apprenant.findFirst({
+          where: { OR: [{ utilisateurId: user.id }, { email: user.email }] },
+          select: APPRENANT_SELECT_STABLE,
+        });
+        if (doubleCheck) return doubleCheck;
+
+        const matricule = await this.generateMatricule(tx);
+        return await tx.apprenant.create({
+          data: {
+            matricule,
+            nom: user.nom,
+            prenom: user.prenom,
+            email: user.email,
+            utilisateurId: user.id,
+            etablissementOrigineId: user.etablissementId,
+          },
+          select: APPRENANT_SELECT_STABLE,
+        });
       });
     } catch (createErr: any) {
       const existingFallback = await this.prisma.apprenant.findFirst({

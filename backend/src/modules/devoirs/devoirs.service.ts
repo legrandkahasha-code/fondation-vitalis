@@ -85,28 +85,107 @@ export class DevoirsService {
       throw new BadRequestException('La date limite de dépôt est dépassée.');
     }
     const fileUrl = await this.storage.uploadFile(file.buffer, file.originalname, file.mimetype, 'devoirs');
-    return this.prisma.soumissionDevoir.upsert({
+    const soumission = await this.prisma.soumissionDevoir.upsert({
       where: { devoirId_apprenantId: { devoirId, apprenantId: user.id } },
       update: { fileUrl, dateDepot: new Date() },
       create: { devoirId, apprenantId: user.id, fileUrl },
     });
+
+    const etabId = devoir.module?.formation?.etablissementId;
+    this.notifications.emit({
+      type: 'DEVOIR_SUBMIT',
+      recipientEtablissementId: etabId,
+      title: 'Nouvelle copie déposée',
+      message: `Une nouvelle copie a été déposée pour « ${devoir.titre} ».`,
+      data: { devoirId, apprenantId: user.id },
+    });
+
+    return soumission;
+  }
+
+  async getDevoirsACorriger(user: any) {
+    const formationWhere: any = {};
+    if (user.role !== Role.ADMIN_CENTRE && user.etablissementId) {
+      formationWhere.etablissementId = user.etablissementId;
+    }
+
+    const moduleWhere: any = {
+      formation: formationWhere,
+    };
+
+    if (user.role === Role.FORMATEUR) {
+      // Cloisonnement : Un formateur ne visualise et ne note que les devoirs
+      // des modules qui lui sont attribués (affectation officielle ou séances de cours)
+      moduleWhere.OR = [
+        { affectations: { some: { formateurId: user.id } } },
+        { seances: { some: { formateurId: user.id } } },
+      ];
+    }
+
+    const devoirs = await this.prisma.devoir.findMany({
+      where: {
+        module: moduleWhere,
+      },
+      include: {
+        module: {
+          select: {
+            id: true,
+            titre: true,
+            formation: {
+              select: { id: true, titre: true, etablissementId: true },
+            },
+          },
+        },
+        soumissions: {
+          include: {
+            apprenant: {
+              select: { id: true, nom: true, prenom: true, email: true },
+            },
+          },
+          orderBy: { dateDepot: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return devoirs.map((d) => ({
+      id: d.id,
+      titre: d.titre,
+      consignes: d.consignes,
+      dateLimite: d.dateLimite,
+      moduleId: d.moduleId,
+      moduleTitre: d.module.titre,
+      formationId: d.module.formation.id,
+      formationTitre: d.module.formation.titre,
+      nbTotalSoumissions: d.soumissions.length,
+      nbEnAttente: d.soumissions.filter((s) => s.note === null || s.note === undefined).length,
+      nbNotes: d.soumissions.filter((s) => s.note !== null && s.note !== undefined).length,
+      soumissions: d.soumissions,
+    }));
   }
 
   async noter(devoirId: string, apprenantId: string, note: number, commentaire: string, user: any) {
+    const numNote = Number(note);
+    if (isNaN(numNote) || numNote < 0 || numNote > 20) {
+      throw new BadRequestException('La note doit être une valeur numérique comprise entre 0 et 20.');
+    }
+
     const { } = await this.authz.canAccessDevoir(user, devoirId, ResourceAction.UPDATE);
     const devoir = await this.findOne(devoirId, user);
+
     const soumission = await this.prisma.soumissionDevoir.update({
       where: { devoirId_apprenantId: { devoirId, apprenantId } },
-      data: { note, commentaire },
+      data: { note: numNote, commentaire: commentaire ?? '' },
     });
 
-    // ─── Push temps réel : notifier l'apprenant que son devoir a été noté ───
+    // ─── Push temps réel : notifier l'apprenant et l'établissement que le devoir a été noté ───
     this.notifications.emit({
       type: 'DEVOIR_NOTE',
       recipientUserId: apprenantId,
+      recipientEtablissementId: devoir.module?.formation?.etablissementId,
       title: 'Devoir noté !',
-      message: `Votre devoir « ${devoir.titre} » a été noté : ${note}/20.${commentaire ? ' ' + commentaire : ''}`,
-      data: { devoirId, devoirTitre: devoir.titre, note, commentaire, soumissionId: soumission.id },
+      message: `Votre devoir « ${devoir.titre} » a été noté : ${numNote}/20.${commentaire ? ' ' + commentaire : ''}`,
+      data: { devoirId, devoirTitre: devoir.titre, note: numNote, commentaire, soumissionId: soumission.id },
     });
 
     return soumission;

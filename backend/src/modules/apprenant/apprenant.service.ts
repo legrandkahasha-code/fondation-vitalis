@@ -100,19 +100,41 @@ export class ApprenantService {
       }
       return existing;
     }
-    const count = await this.prisma.apprenant.count();
-    const matricule = `VIT-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
+    const runInTx = typeof this.prisma.$transaction === 'function'
+      ? (cb: (tx: any) => Promise<any>) => this.prisma.$transaction(cb)
+      : (cb: (tx: any) => Promise<any>) => cb(this.prisma);
+
     try {
-      return await this.prisma.apprenant.create({
-        data: {
-          matricule,
-          nom: user.nom || 'Apprenant',
-          prenom: user.prenom || '',
-          email: user.email,
-          utilisateurId: user.id,
-          etablissementOrigineId: user.etablissementId,
-        },
-        select: APPRENANT_MIN_SELECT,
+      return await runInTx(async (tx) => {
+        try {
+          if (typeof tx.$executeRawUnsafe === 'function') {
+            await tx.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(123456789);`);
+          }
+        } catch {
+          // Ignoré pour les tests unitaires / mock
+        }
+
+        // Double check après lock
+        const doubleCheck = await tx.apprenant.findFirst({
+          where: { OR: [{ utilisateurId: user.id }, { email: user.email }] },
+          select: APPRENANT_MIN_SELECT,
+        });
+        if (doubleCheck) return doubleCheck;
+
+        const count = await tx.apprenant.count();
+        const matricule = `VIT-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
+
+        return await tx.apprenant.create({
+          data: {
+            matricule,
+            nom: user.nom || 'Apprenant',
+            prenom: user.prenom || '',
+            email: user.email,
+            utilisateurId: user.id,
+            etablissementOrigineId: user.etablissementId,
+          },
+          select: APPRENANT_MIN_SELECT,
+        });
       });
     } catch (createErr: any) {
       const fallback = await this.prisma.apprenant.findFirst({
@@ -1196,12 +1218,16 @@ export class ApprenantService {
       this.pedagogieService.getMoyennePonderee(formationId, user.id),
     ]);
 
-    const completionOk = progress.completionRate >= 100;
+    const notesObligatoiresOk = progress.tousModulesObligatoiresNotes !== false;
+    const completionOk = progress.completionRate >= 100 && notesObligatoiresOk;
     const moyenneOk = moyenne >= 10;
     const eligible = completionOk && moyenneOk;
 
     let raison: string | null = null;
-    if (!completionOk) {
+    if (!notesObligatoiresOk) {
+      const manquants = progress.modulesManquantsNotes?.map((m: any) => m.titre).join(', ');
+      raison = `Des modules obligatoires ne possèdent aucune note d'évaluation (${manquants || 'modules non évalués'}). Certification impossible.`;
+    } else if (!completionOk) {
       raison = `Progression de cours incomplète (${progress.completionRate}% / 100%).`;
     } else if (!moyenneOk) {
       raison = `Moyenne générale insuffisante (${moyenne}/20 — minimum 10/20 requis).`;
@@ -1351,7 +1377,7 @@ export class ApprenantService {
       if (existingCert) return existingCert;
 
       const progress = await this.pedagogieService.getProgressByFormation(formationId, utilisateurId);
-      if (progress.completionRate < 100) return null;
+      if (progress.completionRate < 100 || progress.tousModulesObligatoiresNotes === false) return null;
 
       const moyenne = await this.pedagogieService.getMoyennePonderee(formationId, utilisateurId);
       if (moyenne < 10) return null;
@@ -2204,14 +2230,29 @@ export class ApprenantService {
    */
   async getAssiduite(user: any) {
     this.assertApprenant(user);
+    const enrolledIds = await this.getEnrolledFormationIds(user);
+
     const presences = await this.prisma.presenceSeance.findMany({
       where: { utilisateurId: user.id },
     });
-    const total = presences.length;
+
     const presents = presences.filter((p) => p.statut === 'PRESENT').length;
     const retards = presences.filter((p) => p.statut === 'RETARD').length;
     const absents = presences.filter((p) => p.statut === 'ABSENT').length;
     const justifies = presences.filter((p) => p.statut === 'JUSTIFIE').length;
+
+    // Calcul du dénominateur en tenant compte des séances échues pour ses formations
+    let total = presences.length;
+    if (enrolledIds.length > 0) {
+      const now = new Date();
+      const seancesPasseesCount = await this.prisma.seanceFormation.count({
+        where: {
+          module: { formationId: { in: enrolledIds } },
+          dateHeureDebut: { lte: now },
+        },
+      });
+      total = Math.max(total, seancesPasseesCount);
+    }
 
     const assidu = presents + retards + justifies;
     const taux = total > 0 ? Math.round((assidu / total) * 100) : 100;
@@ -2220,7 +2261,7 @@ export class ApprenantService {
       total,
       presents,
       retards,
-      absents,
+      absents: Math.max(absents, total - assidu),
       justifies,
       tauxAssiduite: taux,
     };
@@ -2625,7 +2666,7 @@ export class ApprenantService {
   async genererCertificatSiEligible(formationId: string, user: any) {
     this.assertApprenant(user);
     await this.assertFormationAccess(formationId, user);
-    const cert = await this.triggerAutoCertification(formationId, user.id);
+    let cert = await this.triggerAutoCertification(formationId, user.id);
     if (!cert) {
       const eligibilite = await this.checkEligibiliteCertificat(formationId, user);
       if (!eligibilite.eligible) {
@@ -2633,8 +2674,17 @@ export class ApprenantService {
           eligibilite.raison || "Les conditions d'obtention de la certification (Règle BR-03) ne sont pas encore réunies.",
         );
       }
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+      const res = await this.certificationService.emettreCertificat(formationId, user.id, baseUrl);
+      cert = res;
     }
     this.invalidateUserCache(user.id);
-    return { success: true, certificat: cert };
+    const certFinal = (cert as any)?.certificat || cert;
+    return {
+      success: true,
+      certificat: certFinal,
+      numeroSerie: certFinal?.numeroSerie,
+      id: certFinal?.id,
+    };
   }
 }

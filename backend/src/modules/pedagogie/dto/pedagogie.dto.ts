@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, Min, IsUUID, IsEnum, IsDateString, IsArray, ArrayMinSize, ValidateNested, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min, Max, IsUUID, IsEnum, IsDateString, IsArray, ArrayMinSize, ValidateNested, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { type_seance, statut_presence } from '@prisma/client';
 
@@ -203,7 +203,27 @@ export class SubmitNoteDto {
   utilisateurId: string;
 
   @IsNumber()
+  @Min(0)
+  @Max(20)
   valeur: number;
+}
+
+export class SubmitNoteItemDto {
+  @IsUUID()
+  utilisateurId: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(20)
+  valeur: number;
+}
+
+export class SubmitNoteBatchDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => SubmitNoteItemDto)
+  notes: SubmitNoteItemDto[];
 }
 
 export class CreateSeanceDto {

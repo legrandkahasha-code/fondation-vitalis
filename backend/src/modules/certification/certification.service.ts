@@ -1,8 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PedagogieService } from '../pedagogie/pedagogie.service';
+import { PedagogieGradingService } from '../pedagogie/services/pedagogie-grading.service';
 import { PdfService } from '../../common/services/pdf.service';
 import { StorageService } from '../../common/services/storage.service';
 import { Role } from '../../common/enums/role.enum';
@@ -10,25 +11,43 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class CertificationService {
+  private readonly logger = new Logger(CertificationService.name);
+  private gradingServiceInstance: PedagogieGradingService;
+
   constructor(
     private prisma: PrismaService,
     private pedagogieService: PedagogieService,
+    @Optional() private gradingService: PedagogieGradingService,
     private pdfService: PdfService,
     private storageService: StorageService,
     private config: ConfigService,
     private notifications: NotificationsService,
-  ) {}
+  ) {
+    this.gradingServiceInstance =
+      this.gradingService || new PedagogieGradingService(this.prisma, this.notifications);
+  }
 
-  private async generateNumeroSerie(): Promise<string> {
+  private async generateNumeroSerie(txClient?: any): Promise<string> {
+    const client = txClient || this.prisma;
+    try {
+      if (typeof client.$executeRawUnsafe === 'function') {
+        await client.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(789123456);`);
+      }
+    } catch {
+      // Ignoré pour les tests unitaires / environnement mock
+    }
     const year = new Date().getFullYear();
     const prefix = `CERT-${year}-`;
-    const lastCert = await this.prisma.certificat.findFirst({
+    const lastCert = await client.certificat.findFirst({
       where: { numeroSerie: { startsWith: prefix } },
       orderBy: { numeroSerie: 'desc' },
     });
     let nextNumber = 1;
     if (lastCert) {
-      nextNumber = parseInt(lastCert.numeroSerie.replace(prefix, ''), 10) + 1;
+      const parsed = parseInt(lastCert.numeroSerie.replace(prefix, ''), 10);
+      if (!isNaN(parsed)) {
+        nextNumber = parsed + 1;
+      }
     }
     return `${prefix}${String(nextNumber).padStart(5, '0')}`;
   }
@@ -60,44 +79,61 @@ export class CertificationService {
       );
     }
 
-    const moyenne = await this.pedagogieService.getMoyennePonderee(formationId, utilisateurId);
+    // BR-03 STRICT : Vérification incontournable que TOUS les modules obligatoires ont été évalués
+    const audit = await this.gradingServiceInstance.auditCompletudeEvaluations(formationId, utilisateurId);
+    if (!audit.estComplet) {
+      const manquants = audit.modulesManquants.map((m) => `"${m.titre}"`).join(', ');
+      throw new BadRequestException(
+        `BR-03 : Des modules obligatoires ne possèdent aucune note d'évaluation (${manquants}). Complétion et certification strictement interdites.`,
+      );
+    }
+    const moyenne = audit.moyennePonderee;
+
     if (moyenne < 10) {
       throw new BadRequestException(`BR-03 : Moyenne insuffisante (${moyenne}/20). Requis : >= 10/20.`);
     }
 
-    const numeroSerie = await this.generateNumeroSerie();
-    const hashVerification = createHash('sha256')
-      .update(`${utilisateurId}-${formationId}-${numeroSerie}-${Date.now()}`)
-      .digest('hex');
+    const runInTx = typeof this.prisma.$transaction === 'function'
+      ? (cb: (tx: any) => Promise<any>) => this.prisma.$transaction(cb, { maxWait: 10000, timeout: 30000 })
+      : (cb: (tx: any) => Promise<any>) => cb(this.prisma);
 
-    const verifyUrl = `${baseUrl}/certificats/verifier/${numeroSerie}`;
-    const pdfBuffer = await this.pdfService.generateCertificatPdf({
-      numeroSerie,
-      apprenantNom: utilisateur.nom,
-      apprenantPrenom: utilisateur.prenom,
-      formationTitre: formation.titre,
-      etablissementNom: formation.etablissement.nom,
-      moyenne,
-      dateEmission: new Date(),
-      verifyUrl,
-    });
+    const { certificat, numeroSerie, urlPdfS3, verifyUrl } = await runInTx(async (tx) => {
+      const numSerie = await this.generateNumeroSerie(tx);
+      const hashVerification = createHash('sha256')
+        .update(`${utilisateurId}-${formationId}-${numSerie}-${Date.now()}`)
+        .digest('hex');
 
-    const urlPdfS3 = await this.storageService.uploadFile(
-      pdfBuffer,
-      `${numeroSerie}.pdf`,
-      'application/pdf',
-      'certificats',
-    );
+      const verifyUrl = `${baseUrl}/certificats/verifier/${numSerie}`;
+      const pdfBuffer = await this.pdfService.generateCertificatPdf({
+        numeroSerie: numSerie,
+        apprenantNom: utilisateur.nom,
+        apprenantPrenom: utilisateur.prenom,
+        formationTitre: formation.titre,
+        etablissementNom: formation.etablissement?.nom || 'Centre Vitalis',
+        moyenne,
+        dateEmission: new Date(),
+        verifyUrl,
+      });
 
-    const certificat = await this.prisma.certificat.create({
-      data: {
-        numeroSerie,
-        utilisateurId,
-        formationId,
-        moyenneGenerale: moyenne,
-        hashVerification,
-        urlPdfS3,
-      },
+      const urlPdfS3 = await this.storageService.uploadFile(
+        pdfBuffer,
+        `${numSerie}.pdf`,
+        'application/pdf',
+        'certificats',
+      );
+
+      const created = await tx.certificat.create({
+        data: {
+          numeroSerie: numSerie,
+          utilisateurId,
+          formationId,
+          moyenneGenerale: moyenne,
+          hashVerification,
+          urlPdfS3,
+        },
+      });
+
+      return { certificat: created, numeroSerie: numSerie, urlPdfS3, verifyUrl };
     });
 
     await this.prisma.auditLog.create({
@@ -139,7 +175,16 @@ export class CertificationService {
   async getCertificatsUtilisateur(utilisateurId: string) {
     return this.prisma.certificat.findMany({
       where: { utilisateurId },
-      include: { formation: { select: { titre: true } } },
+      include: {
+        formation: {
+          select: {
+            id: true,
+            titre: true,
+            description: true,
+            etablissement: { select: { nom: true, codeAntenne: true } },
+          },
+        },
+      },
       orderBy: { dateEmission: 'desc' },
     });
   }

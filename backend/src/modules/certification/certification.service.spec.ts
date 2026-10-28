@@ -17,6 +17,9 @@ describe('CertificationService (Business Rules)', () => {
     formation: { findUnique: jest.fn() },
     certificat: { findFirst: jest.fn(), create: jest.fn() },
     auditLog: { create: jest.fn() },
+    module: { findMany: jest.fn() },
+    $transaction: jest.fn((cb: any) => cb(mockPrisma)),
+    $executeRawUnsafe: jest.fn(),
   };
 
   const mockPedagogie = {
@@ -64,12 +67,32 @@ describe('CertificationService (Business Rules)', () => {
       await expect(service.emettreCertificat('f1', 'u1', 'http://localhost:4200')).rejects.toThrow(/BR-03/);
     });
 
+    it('should throw if mandatory modules have no grades (BR-03 strict)', async () => {
+      mockPrisma.utilisateur.findUnique.mockResolvedValue({ id: 'u1', nom: 'D', prenom: 'J', etablissement: { nom: 'E' } });
+      mockPrisma.formation.findUnique.mockResolvedValue({ id: 'f1', titre: 'T', etablissement: { nom: 'E' } });
+      mockPrisma.certificat.findFirst.mockResolvedValue(null);
+      mockPedagogie.getProgressByFormation.mockResolvedValue({ completionRate: 100 });
+      // auditCompletudeEvaluations appelle prisma.module.findMany — simule un module sans note
+      mockPrisma.module.findMany.mockResolvedValue([
+        { id: 'm1', titre: 'Module 1', coefficient: 1, evaluations: [], devoirs: [], quiz: [] },
+      ]);
+      await expect(service.emettreCertificat('f1', 'u1', 'http://localhost:4200')).rejects.toThrow(/BR-03/);
+    });
+
     it('should emit cert with CERT-YYYY-XXXXX format (BR-04)', async () => {
       mockPrisma.utilisateur.findUnique.mockResolvedValue({ id: 'u1', nom: 'D', prenom: 'J', etablissement: { nom: 'E' } });
       mockPrisma.formation.findUnique.mockResolvedValue({ id: 'f1', titre: 'T', etablissement: { nom: 'E' } });
       mockPrisma.certificat.findFirst.mockResolvedValue(null);
       mockPedagogie.getProgressByFormation.mockResolvedValue({ completionRate: 100 });
       mockPedagogie.getMoyennePonderee.mockResolvedValue(15);
+      // Tous les modules obligatoires sont évalués (audit passe)
+      mockPrisma.module.findMany.mockResolvedValue([
+        {
+          id: 'm1', titre: 'Module 1', coefficient: 1,
+          evaluations: [{ id: 'e1', notes: [{ utilisateurId: 'u1', valeur: 15 }] }],
+          devoirs: [], quiz: [],
+        },
+      ]);
       mockPrisma.certificat.create.mockImplementation(({ data }) => data);
 
       const res = await service.emettreCertificat('f1', 'u1', 'http://localhost:4200');

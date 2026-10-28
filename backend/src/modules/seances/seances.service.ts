@@ -26,8 +26,12 @@ export class SeancesService {
 
   private invalidateCache(etablissementId?: string) {
     if (etablissementId) {
-      this.seancesCache.delete(etablissementId);
-      this.assiduiteCache.delete(etablissementId);
+      for (const k of this.seancesCache.keys()) {
+        if (k.includes(etablissementId)) this.seancesCache.delete(k);
+      }
+      for (const k of this.assiduiteCache.keys()) {
+        if (k.includes(etablissementId)) this.assiduiteCache.delete(k);
+      }
     } else {
       this.seancesCache.clear();
       this.assiduiteCache.clear();
@@ -97,7 +101,7 @@ export class SeancesService {
   }
 
   async findByEtablissement(user: any) {
-    const cacheKey = user.role === Role.ADMIN_CENTRE ? 'ALL' : user.etablissementId;
+    const cacheKey = user.role === Role.ADMIN_CENTRE ? 'ALL' : `${user.role}_${user.id}_${user.etablissementId}`;
     const cached = this.seancesCache.get(cacheKey);
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data;
@@ -110,8 +114,8 @@ export class SeancesService {
     const data = await this.prisma.seanceFormation.findMany({
       where,
       include: {
-        module: { include: { formation: { select: { titre: true } } } },
-        formateur: { select: { nom: true, prenom: true } },
+        module: { include: { formation: { select: { id: true, titre: true } } } },
+        formateur: { select: { id: true, nom: true, prenom: true } },
         _count: { select: { presences: true } },
       },
       orderBy: { dateHeureDebut: 'desc' },
@@ -258,14 +262,35 @@ export class SeancesService {
 
   async getApprenantsSeance(seanceId: string, user: any) {
     const seance = await this.findOne(seanceId, user);
+    const formationId = seance.module.formationId || seance.module.formation?.id;
+
+    // Filtrer STRICTEMENT les apprenants inscrits à la formation de cette séance
     return this.prisma.utilisateur.findMany({
       where: {
         etablissementId: seance.module.formation.etablissementId,
         role: Role.APPRENANT,
         actif: true,
+        OR: [
+          {
+            apprenantProfile: {
+              inscriptions: {
+                some: {
+                  formationId,
+                  statut: { in: ['ACTIVE', 'RESERVEE', 'TERMINEE'] },
+                },
+              },
+            },
+          },
+          // Inclure aussi tout apprenant ayant déjà un émargement existant sur cette séance
+          {
+            presences: {
+              some: { seanceId },
+            },
+          },
+        ],
       },
       select: { id: true, nom: true, prenom: true, email: true },
-      orderBy: { nom: 'asc' },
+      orderBy: [{ nom: 'asc' }, { prenom: 'asc' }],
     });
   }
 

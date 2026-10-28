@@ -98,7 +98,20 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         // L'Admin Central voit l'intégralité du réseau en temps réel
         if (user.role === 'ADMIN_CENTRE') return true;
         if (payload.type === 'BROADCAST') return true;
-        if (payload.recipientUserId && payload.recipientUserId === user.id) return true;
+
+        // Si la notification est ciblée pour un utilisateur précis
+        if (payload.recipientUserId) {
+          if (payload.recipientUserId === user.id) return true;
+          // Confidentialité académique stricte : un apprenant ne doit JAMAIS recevoir les notifications privées d'un autre
+          if (user.role === 'APPRENANT') return false;
+          // Les formateurs et coordinateurs de l'établissement reçoivent les événements de supervision
+          if (payload.recipientEtablissementId && payload.recipientEtablissementId === user.etablissementId) {
+            return user.role === 'FORMATEUR' || user.role === 'COORDINATEUR';
+          }
+          return false;
+        }
+
+        // Notification globale ou de module au niveau de l'établissement
         if (payload.recipientEtablissementId && payload.recipientEtablissementId === user.etablissementId) return true;
         // Fallback : clés non normalisées émises par les services legacy
         if ((payload as any).etablissementId && (payload as any).etablissementId === user.etablissementId) return true;
