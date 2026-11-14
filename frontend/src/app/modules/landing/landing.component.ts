@@ -611,6 +611,9 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     titre: string;
     description: string;
     photo?: string;
+    photoUrl?: string;
+    photoUrlMobile?: string;
+    photoAlt?: string;
     badge?: string;
     equipements: string;
   }> = [];
@@ -1050,6 +1053,9 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
               titre: c.titre,
               description: c.description,
               photo: (c.photoUrl || c.photo) ? this.getMediaUrl(c.photoUrl || c.photo) : '',
+              photoUrl: c.photoUrl ? this.getMediaUrl(c.photoUrl) : '',
+              photoUrlMobile: c.photoUrlMobile ? this.getMediaUrl(c.photoUrlMobile) : '',
+              photoAlt: c.photoAlt || c.titre,
               badge: c.badge || '',
               equipements: c.equipements,
             }));

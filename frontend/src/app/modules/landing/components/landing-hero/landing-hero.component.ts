@@ -72,7 +72,7 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
       return {
         id: 'default',
         badge: 'Sous tutelle ministérielle · RDC',
-        badgeCouleur: '#2AA9A0',
+        badgeCouleur: 'var(--vert-clair)',
         atelierTag: 'Campus Central',
         tabTitle: 'Campus Central',
         titre: 'Formation Professionnelle reconnue par l\'État',

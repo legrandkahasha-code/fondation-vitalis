@@ -660,52 +660,72 @@
       
       <!-- 7c. SECTION CAMPUS & ATELIERS TECHNIQUES (100% GÉRÉE PAR L'ADMINISTRATEUR) -->
       @if (settings.campusTitre && campusEspacesList.length > 0) {
-      <section id="campus" class="py-12 sm:py-16 px-4 sm:px-6 bg-[#F8FAFC] border-b border-[#D7DBDE]">
+      <section id="campus" class="py-12 sm:py-16 px-4 sm:px-6 bg-[var(--navy)] text-white border-b border-white/10">
         <div class="max-w-7xl mx-auto">
           
           <div class="text-center mb-8 sm:mb-12">
-            <div class="text-xs uppercase tracking-widest text-[#1C75BC] font-bold eyebrow">Infrastructures & Équipements</div>
-            <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Immersion au Cœur de Nos Ateliers Techniques</h2>
-            <div class="barre grande mx-auto mt-3"></div>
-            <p class="text-xs sm:text-sm text-[#4B5157] max-w-2xl mx-auto mt-3">
-              Des équipements modernes et des laboratoires dédiés pour une mise en pratique immédiate conforme aux réalités du marché congolais.
-            </p>
+            @if (settings.campusEyebrow) {
+              <div class="text-sm uppercase tracking-widest text-[var(--or)] font-bold eyebrow">{{ settings.campusEyebrow }}</div>
+            }
+            <h2 class="text-2xl sm:text-3xl font-bold text-white mt-1 font-heading">{{ settings.campusTitre }}</h2>
+            <div class="w-14 sm:w-20 h-[3px] bg-[var(--or)] rounded-full mx-auto mt-3"></div>
+            @if (settings.campusSousTitre) {
+              <p class="text-sm sm:text-base text-[var(--ardoise)] max-w-2xl mx-auto mt-3">
+                {{ settings.campusSousTitre }}
+              </p>
+            }
           </div>
 
           <!-- Grille des ateliers / espaces 100% gérés par l'admin -->
           @if (campusEspacesList.length > 0) {
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mb-10">
-            @for (esp of campusEspacesList; track esp.id || esp.titre) {
-              <div class="bg-white border border-[#D7DBDE] rounded-xl overflow-hidden shadow-xs hover:border-[#1C75BC] hover:shadow-md transition-all flex flex-col justify-between group">
+            @for (esp of campusEspacesList; track esp.id) {
+              <div class="bg-slate-900 border border-white/15 rounded-xl overflow-hidden shadow-xs hover:border-[var(--or)]/60 hover:shadow-md transition-all flex flex-col justify-between group">
                 <div>
-                  <div class="relative overflow-hidden h-44 sm:h-48 bg-[#124F80]">
-                    @if (esp.photo) {
-                      <img [src]="esp.photo" alt="{{ esp.titre }}" title="{{ esp.titre }}" (error)="onImageError($event)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                  <div class="relative overflow-hidden h-44 sm:h-48 bg-[var(--navy)]">
+                    @if (esp.photoUrl || esp.photo) {
+                      <picture>
+                        @if (esp.photoUrlMobile) {
+                          <source media="(max-width: 640px)" [srcset]="esp.photoUrlMobile" type="image/webp">
+                        }
+                        <img 
+                          [src]="esp.photoUrl || esp.photo" 
+                          alt="Atelier technique et équipement de formation Vitalis Center"
+                          [alt]="esp.photoAlt || esp.titre" 
+                          title="Atelier technique Vitalis Center"
+                          [title]="esp.titre" 
+                          (error)="onImageError($event)" 
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                          loading="lazy"
+                          width="640"
+                          height="480"
+                        />
+                      </picture>
                     } @else {
-                      <div class="w-full h-full flex flex-col items-center justify-center text-white/80 p-4 text-center bg-gradient-to-br from-[#124F80] to-[#0B253D]">
-                        <svg class="w-10 h-10 mb-2 text-[#DFC188] opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div class="w-full h-full flex flex-col items-center justify-center text-white/80 p-4 text-center bg-gradient-to-br from-[var(--navy)] to-slate-900">
+                        <svg class="w-10 h-10 mb-2 text-[var(--or)] opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
-                        <span class="text-xs font-bold text-white tracking-wide uppercase">{{ esp.titre }}</span>
+                        <span class="text-sm font-bold text-white tracking-wide uppercase">{{ esp.titre }}</span>
                       </div>
                     }
                     @if (esp.badge) {
-                      <span class="absolute top-3 left-3 px-2 py-0.5 bg-[#124F80]/90 backdrop-blur-xs text-white text-[10px] font-bold rounded shadow-xs">
+                      <span class="absolute top-3 left-3 px-2.5 py-1 bg-[var(--vert)] text-white text-sm font-bold rounded shadow-xs">
                         {{ esp.badge }}
                       </span>
                     }
                   </div>
                   <div class="p-3.5 sm:p-4">
-                    <h3 class="font-bold text-sm text-[#1B1D1F] leading-snug">{{ esp.titre }}</h3>
+                    <h3 class="font-bold text-base text-white leading-snug">{{ esp.titre }}</h3>
                     <!-- Sur mobile : description masquée pour ne pas encombrer l'écran minimal -->
                     @if (esp.description) {
-                      <p class="hidden sm:block text-xs text-[#4B5157] mt-2 leading-relaxed line-clamp-3">{{ esp.description }}</p>
+                      <p class="hidden sm:block text-sm text-[var(--ardoise)] mt-2 leading-relaxed line-clamp-3">{{ esp.description }}</p>
                     }
                   </div>
                 </div>
                 @if (esp.equipements) {
-                  <div class="px-3.5 sm:px-4 pb-3.5 pt-2.5 border-t border-[#EDEFF2] text-[11px] text-[#124F80] font-semibold flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-[#276B44] shrink-0"></span>
+                  <div class="px-3.5 sm:px-4 pb-3.5 pt-2.5 border-t border-white/10 text-sm text-[var(--ardoise)] font-semibold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[var(--vert-clair)] shrink-0"></span>
                     <span class="line-clamp-2">{{ esp.equipements }}</span>
                   </div>
                 }

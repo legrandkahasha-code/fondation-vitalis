@@ -54,6 +54,14 @@
 }
 
 :root {
+  /* Charte institutionnelle refonte Sections A & B (Accueil & Campus) */
+  --navy: #071527;
+  --or: #C8902A;
+  --blanc: #FFFFFF;
+  --ardoise: #CBD5E1;
+  --vert: #276B44;
+  --vert-clair: #4ADE80;
+
   --bleu: #1C75BC;
   --bleu-fonce: #124F80;
   --bleu-clair: #E7F1FA;
