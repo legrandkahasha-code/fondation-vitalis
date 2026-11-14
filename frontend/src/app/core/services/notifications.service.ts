@@ -122,9 +122,12 @@ export class NotificationsService implements OnDestroy {
 
     const refreshToken = localStorage.getItem('vitalis_refresh');
     if (!refreshToken) {
-      // Pas de refresh token disponible, nettoyer le token expiré pour éviter de re-tester
-      localStorage.removeItem('vitalis_token');
-      localStorage.removeItem('vitalis_user');
+      const token = localStorage.getItem('vitalis_token');
+      // Ne purger que si le jeton d'accès est réellement expiré
+      if (!token || isTokenExpired(token, 0)) {
+        localStorage.removeItem('vitalis_token');
+        localStorage.removeItem('vitalis_user');
+      }
       return;
     }
 
