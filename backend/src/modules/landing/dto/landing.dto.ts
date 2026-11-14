@@ -108,6 +108,62 @@ export class UpdateLandingSettingsDto {
 
   @IsOptional()
   @IsString()
+  heroImageMobile?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  heroImageDroitConfirme?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  heroTutelleVisible?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  heroTutelleVisibleMobile?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  heroStatsVisible?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  heroStatsVisibleMobile?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  heroReassurancesVisible?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  heroReassurancesVisibleMobile?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  heroProfilsVisible?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  heroProfilsVisibleMobile?: boolean;
+
+  @IsOptional()
+  @IsString()
+  statsTauxSource?: string;
+
+  @IsOptional()
+  @IsString()
+  campusEyebrow?: string;
+
+  @IsOptional()
+  @IsString()
+  campusTitre?: string;
+
+  @IsOptional()
+  @IsString()
+  campusSousTitre?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(100)
   heroBadge1Texte?: string;
 
@@ -610,8 +666,20 @@ export class CreateLandingCampusDto {
   description: string;
 
   @IsOptional()
-  @IsSafeMediaUrl()
+  @IsString()
   photoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  photoUrlMobile?: string;
+
+  @IsOptional()
+  @IsString()
+  photoAlt?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  droitImageConfirme?: boolean;
 
   @IsOptional()
   @IsString()
@@ -623,6 +691,18 @@ export class CreateLandingCampusDto {
   @IsOptional()
   @IsInt()
   ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  afficherMobile?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  afficherLanding?: boolean;
+
+  @IsOptional()
+  @IsString()
+  statut?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -643,8 +723,20 @@ export class UpdateLandingCampusDto {
   description?: string;
 
   @IsOptional()
-  @IsSafeMediaUrl()
+  @IsString()
   photoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  photoUrlMobile?: string;
+
+  @IsOptional()
+  @IsString()
+  photoAlt?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  droitImageConfirme?: boolean;
 
   @IsOptional()
   @IsString()
@@ -657,6 +749,18 @@ export class UpdateLandingCampusDto {
   @IsOptional()
   @IsInt()
   ordre?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  afficherMobile?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  afficherLanding?: boolean;
+
+  @IsOptional()
+  @IsString()
+  statut?: string;
 
   @IsOptional()
   @IsBoolean()

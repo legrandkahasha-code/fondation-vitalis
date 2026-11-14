@@ -22,6 +22,7 @@ import {
   ContactMessageDto,
 } from './dto/landing.dto';
 import { DEFAULT_WHATSAPP_MESSAGE, toWhatsappE164, buildWhatsappUrlLenient, isWhatsappEnabled } from '../../common/utils/whatsapp.util';
+import { StorageService } from '../../common/services/storage.service';
 
 interface CachedLandingEntry {
   data: any;
@@ -37,6 +38,7 @@ export class LandingService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private storage: StorageService,
   ) {}
 
   private get db(): any {
@@ -81,6 +83,14 @@ export class LandingService {
     let settings = await this.db.landingPageSettings.findFirst();
     if (!settings) {
       settings = await this.seedDefaultSettings();
+    }
+    if (settings) {
+      if (settings.heroImageDroitConfirme !== true) {
+        settings.heroImage = null;
+        settings.heroImageMobile = null;
+      }
+      delete (settings as any).heroImageDroitAuteur;
+      delete (settings as any).heroImageDroitDate;
     }
 
     // 2. Récupérer les sections actives classées par ordre
@@ -161,10 +171,27 @@ export class LandingService {
       }
     }
 
-    // 7. Récupérer les Espaces Campus / Ateliers actifs (100% contrôlés par l'administrateur, sans injection de données non validées)
+    // 7. Récupérer les Espaces Campus / Ateliers actifs et publiés (100% contrôlés par l'administrateur)
     const campus = await this.db.landingPageCampus.findMany({
-      where: { actif: true },
+      where: {
+        actif: true,
+        statut: 'PUBLIE',
+        afficherLanding: true,
+      },
       orderBy: { ordre: 'asc' },
+      take: 4,
+      select: {
+        id: true,
+        titre: true,
+        description: true,
+        photoUrl: true,
+        photoUrlMobile: true,
+        photoAlt: true,
+        badge: true,
+        equipements: true,
+        ordre: true,
+        afficherMobile: true,
+      },
     });
 
     // 8. Récupérer les Logos Partenaires actifs
@@ -517,7 +544,7 @@ export class LandingService {
     return { actif, url: url || '', numero: settings?.contactWhatsapp || null };
   }
 
-  async updateSettings(dto: UpdateLandingSettingsDto | any) {
+  async updateSettings(dto: UpdateLandingSettingsDto | any, user?: any) {
     const existing = await this.getSettings();
     const { id, createdAt, updatedAt, ...cleanData } = dto || {};
     
@@ -531,6 +558,40 @@ export class LandingService {
 
     if (cleanData.videoActif !== undefined) {
       cleanData.videoActif = cleanData.videoActif === true || cleanData.videoActif === 'true';
+    }
+
+    // Sécurité et traçabilité de l'image Hero
+    if (cleanData.heroImage !== undefined) {
+      if (cleanData.heroImage) {
+        if (!cleanData.heroImage.startsWith('/uploads/hero/')) {
+          throw new BadRequestException('L\'image Hero doit être téléversée localement sous /uploads/hero/.');
+        }
+        if (cleanData.heroImage.includes('..') || cleanData.heroImage.includes('\0')) {
+          throw new BadRequestException('Chemin de fichier Hero non autorisé.');
+        }
+        const fileExists = await this.storage.validateUploadPath(cleanData.heroImage, '/uploads/hero/');
+        if (!fileExists) {
+          throw new BadRequestException('Le fichier image Hero spécifié est introuvable sur le disque.');
+        }
+      }
+      if (cleanData.heroImage !== existing?.heroImage) {
+        if (existing?.heroImage) await this.storage.deleteLocalUpload(existing.heroImage);
+        if (existing?.heroImageMobile) await this.storage.deleteLocalUpload(existing.heroImageMobile);
+        cleanData.heroImageDroitConfirme = false;
+        cleanData.heroImageDroitDate = null;
+        cleanData.heroImageDroitAuteur = null;
+      }
+    }
+
+    if (cleanData.heroImageDroitConfirme !== undefined) {
+      cleanData.heroImageDroitConfirme = cleanData.heroImageDroitConfirme === true || cleanData.heroImageDroitConfirme === 'true';
+      if (cleanData.heroImageDroitConfirme && !existing?.heroImageDroitConfirme) {
+        cleanData.heroImageDroitDate = new Date();
+        cleanData.heroImageDroitAuteur = user?.email || user?.id || 'admin';
+      } else if (!cleanData.heroImageDroitConfirme) {
+        cleanData.heroImageDroitDate = null;
+        cleanData.heroImageDroitAuteur = null;
+      }
     }
 
     if (cleanData.videoPresentationUrl !== undefined) {
@@ -822,31 +883,133 @@ export class LandingService {
     });
   }
 
-  async createCampus(dto: CreateLandingCampusDto | any) {
+  private validateNoXss(str?: string, fieldName = 'champ') {
+    if (!str || typeof str !== 'string') return;
+    if (/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi.test(str) || /<[^>]+(on\w+=|javascript:)/i.test(str) || str.includes('<script') || str.includes('</script>')) {
+      throw new BadRequestException(`Le ${fieldName} contient des balises non autorisées (XSS détecté).`);
+    }
+  }
+
+  async createCampus(dto: CreateLandingCampusDto | any, user?: any) {
     this.invalidateLandingCache();
     const { id, createdAt, updatedAt, ...cleanData } = dto || {};
+
+    this.validateNoXss(cleanData.titre, 'titre');
+    this.validateNoXss(cleanData.description, 'description');
+    this.validateNoXss(cleanData.equipements, 'equipements');
+
+    if (cleanData.photoUrl) {
+      if (cleanData.photoUrl.includes('..') || cleanData.photoUrl.includes('\0')) {
+        throw new BadRequestException('Chemin de photo invalide.');
+      }
+      if (/^https?:\/\//i.test(cleanData.photoUrl)) {
+        throw new BadRequestException('Les URLs de photos externes sont interdites.');
+      }
+    }
+
+    if (cleanData.ordre !== undefined) cleanData.ordre = Number(cleanData.ordre);
+    if (cleanData.actif !== undefined) cleanData.actif = Boolean(cleanData.actif);
+    if (cleanData.afficherMobile !== undefined) cleanData.afficherMobile = Boolean(cleanData.afficherMobile);
+    if (cleanData.afficherLanding !== undefined) cleanData.afficherLanding = Boolean(cleanData.afficherLanding);
+    if (cleanData.droitImageConfirme !== undefined) cleanData.droitImageConfirme = Boolean(cleanData.droitImageConfirme);
+
+    if (cleanData.droitImageConfirme) {
+      cleanData.droitImageDate = new Date();
+      cleanData.droitImageAuteur = user?.email || user?.id || 'admin';
+    } else {
+      cleanData.droitImageDate = null;
+      cleanData.droitImageAuteur = null;
+    }
+
+    if (cleanData.statut === 'PUBLIE') {
+      if (!cleanData.photoUrl || !cleanData.photoUrl.startsWith('/uploads/campus/')) {
+        throw new BadRequestException('La publication requiert une photo téléversée localement sous /uploads/campus/.');
+      }
+      if (!cleanData.photoUrlMobile || !cleanData.photoUrlMobile.startsWith('/uploads/campus/')) {
+        throw new BadRequestException('La version mobile de la photo est obligatoire pour la publication.');
+      }
+      const photoOk = await this.storage.validateUploadPath(cleanData.photoUrl, '/uploads/campus/');
+      const photoMobileOk = await this.storage.validateUploadPath(cleanData.photoUrlMobile, '/uploads/campus/');
+      if (!photoOk || !photoMobileOk) {
+        throw new BadRequestException('Le fichier de photo spécifié est introuvable sur le disque.');
+      }
+      if (!cleanData.photoAlt || typeof cleanData.photoAlt !== 'string' || cleanData.photoAlt.trim() === '' || cleanData.photoAlt.startsWith('[MIGRATION]')) {
+        throw new BadRequestException('La publication requiert un texte alternatif (photoAlt) descriptif et non temporaire.');
+      }
+      if (!cleanData.droitImageConfirme) {
+        throw new BadRequestException('La publication requiert la confirmation formelle du droit à l\'image.');
+      }
+    }
+
     return this.db.landingPageCampus.create({
-      data: {
-        titre: cleanData.titre,
-        description: cleanData.description,
-        photoUrl: cleanData.photoUrl || cleanData.photo || null,
-        badge: cleanData.badge || null,
-        equipements: cleanData.equipements,
-        ordre: cleanData.ordre !== undefined ? Number(cleanData.ordre) : 0,
-        actif: cleanData.actif !== undefined ? Boolean(cleanData.actif) : true,
-      },
+      data: cleanData,
     });
   }
 
-  async updateCampus(id: string, dto: UpdateLandingCampusDto | any) {
+  async updateCampus(id: string, dto: UpdateLandingCampusDto | any, user?: any) {
     this.invalidateLandingCache();
     const campus = await this.db.landingPageCampus.findUnique({ where: { id } });
     if (!campus) throw new NotFoundException('Espace campus introuvable.');
 
     const { id: _, createdAt, updatedAt, ...cleanData } = dto || {};
+    this.validateNoXss(cleanData.titre, 'titre');
+    this.validateNoXss(cleanData.description, 'description');
+    this.validateNoXss(cleanData.equipements, 'equipements');
+
+    if (cleanData.photoUrl) {
+      if (cleanData.photoUrl.includes('..') || cleanData.photoUrl.includes('\0')) {
+        throw new BadRequestException('Chemin de photo invalide.');
+      }
+      if (/^https?:\/\//i.test(cleanData.photoUrl)) {
+        throw new BadRequestException('Les URLs de photos externes sont interdites.');
+      }
+    }
+
     if (cleanData.ordre !== undefined) cleanData.ordre = Number(cleanData.ordre);
     if (cleanData.actif !== undefined) cleanData.actif = Boolean(cleanData.actif);
-    if (cleanData.photo && !cleanData.photoUrl) cleanData.photoUrl = cleanData.photo;
+    if (cleanData.afficherMobile !== undefined) cleanData.afficherMobile = Boolean(cleanData.afficherMobile);
+    if (cleanData.afficherLanding !== undefined) cleanData.afficherLanding = Boolean(cleanData.afficherLanding);
+
+    if (cleanData.photoUrl !== undefined && cleanData.photoUrl !== campus.photoUrl) {
+      if (campus.photoUrl) await this.storage.deleteLocalUpload(campus.photoUrl);
+      if (campus.photoUrlMobile) await this.storage.deleteLocalUpload(campus.photoUrlMobile);
+      cleanData.droitImageConfirme = false;
+      cleanData.droitImageDate = null;
+      cleanData.droitImageAuteur = null;
+    }
+
+    if (cleanData.droitImageConfirme !== undefined) {
+      cleanData.droitImageConfirme = Boolean(cleanData.droitImageConfirme);
+      if (cleanData.droitImageConfirme && !campus.droitImageConfirme) {
+        cleanData.droitImageDate = new Date();
+        cleanData.droitImageAuteur = user?.email || user?.id || 'admin';
+      } else if (!cleanData.droitImageConfirme) {
+        cleanData.droitImageDate = null;
+        cleanData.droitImageAuteur = null;
+      }
+    }
+
+    const targetState = { ...campus, ...cleanData };
+
+    if (targetState.statut === 'PUBLIE') {
+      if (!targetState.photoUrl || !targetState.photoUrl.startsWith('/uploads/campus/')) {
+        throw new BadRequestException('La publication requiert une photo téléversée localement sous /uploads/campus/.');
+      }
+      if (!targetState.photoUrlMobile || !targetState.photoUrlMobile.startsWith('/uploads/campus/')) {
+        throw new BadRequestException('La version mobile de la photo est obligatoire pour la publication.');
+      }
+      const photoOk = await this.storage.validateUploadPath(targetState.photoUrl, '/uploads/campus/');
+      const photoMobileOk = await this.storage.validateUploadPath(targetState.photoUrlMobile, '/uploads/campus/');
+      if (!photoOk || !photoMobileOk) {
+        throw new BadRequestException('Le fichier de photo spécifié est introuvable sur le disque.');
+      }
+      if (!targetState.photoAlt || typeof targetState.photoAlt !== 'string' || targetState.photoAlt.trim() === '' || targetState.photoAlt.startsWith('[MIGRATION]')) {
+        throw new BadRequestException('La publication requiert un texte alternatif (photoAlt) descriptif et non temporaire.');
+      }
+      if (!targetState.droitImageConfirme) {
+        throw new BadRequestException('La publication requiert la confirmation formelle du droit à l\'image.');
+      }
+    }
 
     return this.db.landingPageCampus.update({
       where: { id },
@@ -858,6 +1021,9 @@ export class LandingService {
     this.invalidateLandingCache();
     const campus = await this.db.landingPageCampus.findUnique({ where: { id } });
     if (!campus) throw new NotFoundException('Espace campus introuvable.');
+
+    if (campus.photoUrl) await this.storage.deleteLocalUpload(campus.photoUrl);
+    if (campus.photoUrlMobile) await this.storage.deleteLocalUpload(campus.photoUrlMobile);
 
     return this.db.landingPageCampus.delete({ where: { id } });
   }
@@ -1393,47 +1559,6 @@ export class LandingService {
 
     for (const f of defaultFormateurs) {
       await this.createFormateur(f);
-    }
-  }
-
-  private async seedDefaultCampus() {
-    const defaultCampus = [
-      {
-        titre: 'Laboratoire Systèmes & Développement Cloud',
-        description: 'Équipé de serveurs dédiés, postes haute performance et environnement d\'intégration continue pour l\'apprentissage pratique du code et de l\'administration réseau.',
-        photoUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop',
-        badge: 'Tech & Télécoms',
-        equipements: '35 postes connectés · Racks Cisco · Fibre dédiée',
-        ordre: 1,
-      },
-      {
-        titre: 'Atelier Électrotechnique & Énergie Solaire',
-        description: 'Bancs d\'essais réels, onduleurs industriels, simulateurs de réseau et kits photovoltaïques aux normes de sécurité électrique.',
-        photoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=1200&auto=format&fit=crop',
-        badge: 'Génie & Énergie',
-        equipements: 'Bancs Schneider Electric · Panneaux solaires · Outillage pro',
-        ordre: 2,
-      },
-      {
-        titre: 'Espace Collaboratif & Études de Cas',
-        description: 'Salles modulaires dédiées au management agile, simulations d\'entreprises, analyse financière et revues de projets d\'affaires.',
-        photoUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop',
-        badge: 'Management',
-        equipements: 'Vidéoprojection HD · Tableaux interactifs · Coworking',
-        ordre: 3,
-      },
-      {
-        titre: 'Centre d\'Examen Agréé & Registre Officiel',
-        description: 'Postes sécurisés pour les évaluations formelles, commissions de délibération et délivrance certifiée des attestations sous supervision ministérielle.',
-        photoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1200&auto=format&fit=crop',
-        badge: 'Accréditation',
-        equipements: 'Postes d\'évaluation isolés · Supervision APC · Registre',
-        ordre: 4,
-      },
-    ];
-
-    for (const c of defaultCampus) {
-      await this.createCampus(c);
     }
   }
 

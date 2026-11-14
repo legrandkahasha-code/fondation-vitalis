@@ -205,5 +205,204 @@ export class StorageService {
     if (!fileUrl) return '';
     return fileUrl;
   }
+
+  /**
+   * Pipeline d'upload sécurisé pour les ateliers du Campus :
+   * Validation signature binaire, refus strict SVG, limite 8 Mo,
+   * Sharp avec limitInputPixels (50 Mpx), dimension minimale (640x480), suppression GPS/EXIF (.rotate()),
+   * Génération variantes Desktop (1280x960 4:3 WebP) et Mobile (640x480 4:3 WebP) sans agrandissement artificiel.
+   */
+  async processAndSaveCampusPhoto(buffer: Buffer, originalname: string, declaredMimeType?: string) {
+    if (!buffer || buffer.length === 0) {
+      throw new Error('Fichier vide.');
+    }
+    if (buffer.length > 8 * 1024 * 1024) {
+      throw new Error('Taille de fichier excessive : 8 Mo maximum.');
+    }
+
+    // Validation signature binaire (JPEG, PNG, WebP uniquement)
+    const isJpeg = buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    const isPng = buffer.length >= 4 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+    const isWebp = buffer.length >= 12 && buffer.slice(0, 4).toString() === 'RIFF' && buffer.slice(8, 12).toString() === 'WEBP';
+
+    if (!isJpeg && !isPng && !isWebp) {
+      throw new Error('Format d\'image non supporté ou signature invalide. Seuls JPEG, PNG et WebP sont acceptés (SVG strictement refusé).');
+    }
+
+    const startStr = buffer.slice(0, 300).toString('utf-8').toLowerCase();
+    if (startStr.includes('<svg') || startStr.includes('<?xml')) {
+      throw new Error('Les fichiers vectoriels SVG sont strictement interdits.');
+    }
+
+    const sharp = require('sharp');
+    const meta = await sharp(buffer, { limitInputPixels: 50_000_000 }).metadata();
+    const width = meta.width || 0;
+    const height = meta.height || 0;
+    if (width < 640 || height < 480) {
+      throw new Error(`Dimension minimale insuffisante : la photo de campus doit mesurer au moins 640x480 pixels (reçu : ${width}x${height} px).`);
+    }
+
+    const id = randomUUID();
+    const desktopFilename = `campus-${id}-desktop.webp`;
+    const mobileFilename = `campus-${id}-mobile.webp`;
+
+    const desktopBuffer = await sharp(buffer, { limitInputPixels: 50_000_000 })
+      .rotate()
+      .resize(1280, 960, { fit: 'cover', withoutEnlargement: true })
+      .webp({ quality: 80, effort: 4 })
+      .toBuffer();
+
+    const mobileBuffer = await sharp(buffer, { limitInputPixels: 50_000_000 })
+      .rotate()
+      .resize(640, 480, { fit: 'cover', withoutEnlargement: true })
+      .webp({ quality: 80, effort: 4 })
+      .toBuffer();
+
+    const campusDirs = [
+      path.join(this.localDir, 'campus'),
+      path.join(process.cwd(), 'uploads', 'campus'),
+      path.join(process.cwd(), 'backend', 'uploads', 'campus'),
+    ];
+    for (const d of campusDirs) {
+      if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+      fs.writeFileSync(path.join(d, desktopFilename), desktopBuffer);
+      fs.writeFileSync(path.join(d, mobileFilename), mobileBuffer);
+    }
+
+    return {
+      photoUrl: `/uploads/campus/${desktopFilename}`,
+      photoUrlMobile: `/uploads/campus/${mobileFilename}`,
+      desktopSize: desktopBuffer.length,
+      mobileSize: mobileBuffer.length,
+    };
+  }
+
+  /**
+   * Pipeline d'upload sécurisé pour le Hero :
+   * Validation signature binaire, refus strict SVG, limite 8 Mo,
+   * Sharp avec limitInputPixels (50 Mpx), dimension minimale (1280x720), suppression GPS/EXIF (.rotate()),
+   * Génération variantes Desktop (1920x1080 16:9 WebP) et Mobile (768x1024 3:4 WebP) sans agrandissement artificiel.
+   */
+  async processAndSaveHeroImage(buffer: Buffer, originalname: string, declaredMimeType?: string) {
+    if (!buffer || buffer.length === 0) {
+      throw new Error('Fichier vide.');
+    }
+    if (buffer.length > 8 * 1024 * 1024) {
+      throw new Error('Taille de fichier excessive : 8 Mo maximum.');
+    }
+
+    const isJpeg = buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    const isPng = buffer.length >= 4 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+    const isWebp = buffer.length >= 12 && buffer.slice(0, 4).toString() === 'RIFF' && buffer.slice(8, 12).toString() === 'WEBP';
+
+    if (!isJpeg && !isPng && !isWebp) {
+      throw new Error('Format d\'image non supporté ou signature invalide. Seuls JPEG, PNG et WebP sont acceptés (SVG strictement refusé).');
+    }
+
+    const startStr = buffer.slice(0, 300).toString('utf-8').toLowerCase();
+    if (startStr.includes('<svg') || startStr.includes('<?xml')) {
+      throw new Error('Les fichiers vectoriels SVG sont strictement interdits.');
+    }
+
+    const sharp = require('sharp');
+    const meta = await sharp(buffer, { limitInputPixels: 50_000_000 }).metadata();
+    const width = meta.width || 0;
+    const height = meta.height || 0;
+    if (width < 1280 || height < 720) {
+      throw new Error(`Dimension minimale insuffisante : l'image hero doit mesurer au moins 1280x720 pixels (reçu : ${width}x${height} px).`);
+    }
+
+    const id = randomUUID();
+    const desktopFilename = `hero-${id}-desktop.webp`;
+    const mobileFilename = `hero-${id}-mobile.webp`;
+
+    const desktopBuffer = await sharp(buffer, { limitInputPixels: 50_000_000 })
+      .rotate()
+      .resize(1920, 1080, { fit: 'cover', withoutEnlargement: true })
+      .webp({ quality: 82, effort: 4 })
+      .toBuffer();
+
+    const mobileBuffer = await sharp(buffer, { limitInputPixels: 50_000_000 })
+      .rotate()
+      .resize(768, 1024, { fit: 'cover', withoutEnlargement: true })
+      .webp({ quality: 80, effort: 4 })
+      .toBuffer();
+
+    const heroDirs = [
+      path.join(this.localDir, 'hero'),
+      path.join(process.cwd(), 'uploads', 'hero'),
+      path.join(process.cwd(), 'backend', 'uploads', 'hero'),
+    ];
+    for (const d of heroDirs) {
+      if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+      fs.writeFileSync(path.join(d, desktopFilename), desktopBuffer);
+      fs.writeFileSync(path.join(d, mobileFilename), mobileBuffer);
+    }
+
+    return {
+      heroImage: `/uploads/hero/${desktopFilename}`,
+      heroImageMobile: `/uploads/hero/${mobileFilename}`,
+      desktopSize: desktopBuffer.length,
+      mobileSize: mobileBuffer.length,
+    };
+  }
+
+  /**
+   * Supprime physiquement un fichier local d'upload lors d'un remplacement ou d'une suppression.
+   */
+  async deleteLocalUpload(relativeUrl: string | null | undefined): Promise<void> {
+    if (!relativeUrl || typeof relativeUrl !== 'string' || !relativeUrl.startsWith('/uploads/')) return;
+    if (relativeUrl.includes('..') || relativeUrl.includes('\0')) return;
+    const cleanSubpath = relativeUrl.replace(/^\/uploads\//, '');
+    const candidateDirs = [
+      this.localDir,
+      path.join(process.cwd(), 'uploads'),
+      path.join(process.cwd(), 'backend', 'uploads'),
+    ];
+    for (const base of candidateDirs) {
+      const fullPath = path.resolve(base, cleanSubpath);
+      if (fs.existsSync(fullPath)) {
+        try {
+          fs.unlinkSync(fullPath);
+          this.logger.log(`Fichier d'upload supprimé du disque : ${fullPath}`);
+        } catch (e: any) {
+          this.logger.warn(`Impossible de supprimer le fichier ${fullPath} : ${e.message}`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Vérifie formellement qu'un chemin de fichier commence par le préfixe autorisé,
+   * ne contient aucune évasion de répertoire (..), et existe physiquement sur le disque.
+   */
+  async validateUploadPath(url: string | null | undefined, prefix: '/uploads/campus/' | '/uploads/hero/'): Promise<boolean> {
+    if (!url || typeof url !== 'string' || !url.startsWith(prefix)) {
+      return false;
+    }
+    if (url.includes('..') || url.includes('\0')) {
+      return false;
+    }
+    const relativeSubPath = url.replace(/^\/uploads\//, '');
+    const candidateDirs = [
+      this.localDir,
+      path.join(process.cwd(), 'uploads'),
+      path.join(process.cwd(), 'backend', 'uploads'),
+    ];
+
+    for (const base of candidateDirs) {
+      const resolved = path.resolve(base, relativeSubPath);
+      const expectedDir = path.resolve(base, prefix.replace(/^\/uploads\//, ''));
+      if (resolved.startsWith(expectedDir)) {
+        try {
+          await fs.promises.access(resolved, fs.constants.R_OK);
+          return true;
+        } catch {
+          // Continuer sur le candidat suivant
+        }
+      }
+    }
+    return false;
+  }
 }
 

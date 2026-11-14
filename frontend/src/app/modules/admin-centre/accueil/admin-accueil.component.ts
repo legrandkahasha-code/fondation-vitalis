@@ -1633,7 +1633,6 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   <img [src]="getMediaUrl(campusEnCours.photoUrl)" alt="Aperçu photo" class="w-full h-full object-cover" />
                 </div>
                 <input type="file" accept="image/*" (change)="onCampusPhotoSelected($event)" class="text-xs mb-1" />
-                <input type="url" [(ngModel)]="campusEnCours.photoUrl" name="photoUrl" placeholder="Ou URL directe : https://..." class="w-full bg-white p-1.5 border border-[#D7DBDE] rounded-2xs text-[11px]" />
               </div>
 
               <div class="grid grid-cols-2 gap-3 pt-2">

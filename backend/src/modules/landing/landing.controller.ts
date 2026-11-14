@@ -184,8 +184,26 @@ export class LandingController {
 
   @Put('settings')
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
-  updateSettings(@Body() dto: UpdateLandingSettingsDto) {
-    return this.service.updateSettings(dto);
+  updateSettings(@Body() dto: UpdateLandingSettingsDto, @Req() req: any) {
+    return this.service.updateSettings(dto, req?.user);
+  }
+
+  @Post('hero/upload-image')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 8 * 1024 * 1024 },
+    }),
+  )
+  async uploadHeroImage(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Aucun fichier fourni.');
+    }
+    try {
+      return await this.storage.processAndSaveHeroImage(file.buffer, file.originalname, file.mimetype);
+    } catch (err: any) {
+      throw new BadRequestException(err?.message || 'Erreur lors du traitement de l\'image hero.');
+    }
   }
 
   // --- ADMIN SECTIONS ---
@@ -339,8 +357,26 @@ export class LandingController {
 
   @Post('campus')
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
-  createCampus(@Body() dto: CreateLandingCampusDto) {
-    return this.service.createCampus(dto);
+  createCampus(@Body() dto: CreateLandingCampusDto, @Req() req: any) {
+    return this.service.createCampus(dto, req?.user);
+  }
+
+  @Post('campus/upload-photo')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 8 * 1024 * 1024 },
+    }),
+  )
+  async uploadCampusPhoto(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Aucun fichier fourni.');
+    }
+    try {
+      return await this.storage.processAndSaveCampusPhoto(file.buffer, file.originalname, file.mimetype);
+    } catch (err: any) {
+      throw new BadRequestException(err?.message || 'Erreur lors du traitement de la photo campus.');
+    }
   }
 
   @Put('campus/:id')
@@ -348,8 +384,9 @@ export class LandingController {
   updateCampus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateLandingCampusDto,
+    @Req() req: any,
   ) {
-    return this.service.updateCampus(id, dto);
+    return this.service.updateCampus(id, dto, req?.user);
   }
 
   @Delete('campus/:id')
