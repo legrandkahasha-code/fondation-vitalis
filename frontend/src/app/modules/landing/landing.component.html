@@ -658,11 +658,12 @@
       </section>
 
       
-      <!-- 7c. SECTION CAMPUS & ATELIERS TECHNIQUES (PREUVE PHYSIQUE & VISITE EN IMAGES - POINT 4.2 & 4.5 AUDIT) -->
-      <section id="campus" class="py-14 px-4 sm:px-6 bg-[#F8FAFC] border-b border-[#D7DBDE]">
+      <!-- 7c. SECTION CAMPUS & ATELIERS TECHNIQUES (100% GÉRÉE PAR L'ADMINISTRATEUR) -->
+      @if (campusEspacesList.length > 0 || settings.videoActif !== false) {
+      <section id="campus" class="py-12 sm:py-16 px-4 sm:px-6 bg-[#F8FAFC] border-b border-[#D7DBDE]">
         <div class="max-w-7xl mx-auto">
           
-          <div class="text-center mb-10">
+          <div class="text-center mb-8 sm:mb-12">
             <div class="text-xs uppercase tracking-widest text-[#1C75BC] font-bold eyebrow">Infrastructures & Équipements</div>
             <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Immersion au Cœur de Nos Ateliers Techniques</h2>
             <div class="barre grande mx-auto mt-3"></div>
@@ -671,29 +672,47 @@
             </p>
           </div>
 
-          <!-- Grille des 4 espaces du campus -->
-          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            @for (esp of campusEspacesList; track esp.titre) {
-              <div class="bg-white border border-[#D7DBDE] rounded-md overflow-hidden shadow-xs hover:border-[#1C75BC] hover:shadow-md transition-all flex flex-col justify-between group">
+          <!-- Grille des ateliers / espaces 100% gérés par l'admin -->
+          @if (campusEspacesList.length > 0) {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mb-10">
+            @for (esp of campusEspacesList; track esp.id || esp.titre) {
+              <div class="bg-white border border-[#D7DBDE] rounded-xl overflow-hidden shadow-xs hover:border-[#1C75BC] hover:shadow-md transition-all flex flex-col justify-between group">
                 <div>
-                  <div class="relative overflow-hidden h-44 bg-[#124F80]">
-                    <img [src]="esp.photo" alt="{{ esp.titre || 'Espace campus et ateliers' }}" title="{{ esp.titre || 'Espace campus et ateliers' }}" (error)="onImageError($event)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <span class="absolute top-3 left-3 px-2 py-0.5 bg-[#124F80]/90 text-white text-[10px] font-bold rounded">
-                      {{ esp.badge }}
-                    </span>
+                  <div class="relative overflow-hidden h-44 sm:h-48 bg-[#124F80]">
+                    @if (esp.photo) {
+                      <img [src]="esp.photo" alt="{{ esp.titre }}" title="{{ esp.titre }}" (error)="onImageError($event)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                    } @else {
+                      <div class="w-full h-full flex flex-col items-center justify-center text-white/80 p-4 text-center bg-gradient-to-br from-[#124F80] to-[#0B253D]">
+                        <svg class="w-10 h-10 mb-2 text-[#DFC188] opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <span class="text-xs font-bold text-white tracking-wide uppercase">{{ esp.titre }}</span>
+                      </div>
+                    }
+                    @if (esp.badge) {
+                      <span class="absolute top-3 left-3 px-2 py-0.5 bg-[#124F80]/90 backdrop-blur-xs text-white text-[10px] font-bold rounded shadow-xs">
+                        {{ esp.badge }}
+                      </span>
+                    }
                   </div>
-                  <div class="p-4">
+                  <div class="p-3.5 sm:p-4">
                     <h3 class="font-bold text-sm text-[#1B1D1F] leading-snug">{{ esp.titre }}</h3>
-                    <p class="text-xs text-[#4B5157] mt-2 leading-relaxed">{{ esp.description }}</p>
+                    <!-- Sur mobile : description masquée pour ne pas encombrer l'écran minimal -->
+                    @if (esp.description) {
+                      <p class="hidden sm:block text-xs text-[#4B5157] mt-2 leading-relaxed line-clamp-3">{{ esp.description }}</p>
+                    }
                   </div>
                 </div>
-                <div class="px-4 pb-4 pt-2 border-t border-[#EDEFF2] text-[11px] text-[#124F80] font-semibold flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full bg-[#276B44]"></span>
-                  <span>{{ esp.equipements }}</span>
-                </div>
+                @if (esp.equipements) {
+                  <div class="px-3.5 sm:px-4 pb-3.5 pt-2.5 border-t border-[#EDEFF2] text-[11px] text-[#124F80] font-semibold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[#276B44] shrink-0"></span>
+                    <span class="line-clamp-2">{{ esp.equipements }}</span>
+                  </div>
+                }
               </div>
             }
           </div>
+          }
 
           <!-- Bloc Vidéo Institutionnelle (100% Dynamique & Administrable) -->
           @if (settings.videoActif !== false) {
@@ -772,6 +791,7 @@
 
         </div>
       </section>
+      }
 
       <!-- 8. SECTION PROCESSUS D'ADMISSION -->
       <section id="admission" class="py-14 px-4 sm:px-6 bg-white border-b border-[#D7DBDE]">

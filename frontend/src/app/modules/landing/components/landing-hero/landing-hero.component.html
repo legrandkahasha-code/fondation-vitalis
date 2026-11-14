@@ -93,10 +93,10 @@
 
   <!-- CONTENU CENTRAL DE LA SECTION HERO -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6 sm:py-14 lg:py-18 relative z-20 w-full flex-1 flex items-center">
-    <div class="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
+    <div class="w-full">
       
-      <!-- BLOC TEXTE & PROPOSITION DE VALEUR -->
-      <div class="lg:col-span-8 animate-fade-in-up font-['Public_Sans',sans-serif] max-w-full overflow-hidden">
+      <!-- BLOC TEXTE & PROPOSITION DE VALEUR (ÉPURÉ ET CENTRÉ SUR L'ESSENTIEL) -->
+      <div class="max-w-4xl animate-fade-in-up font-['Public_Sans',sans-serif]">
         
         <!-- 1. BADGES OFFICIELS D'ÉTAT & STATUT RÉPUBLICAIN (ÉPURÉ SUR MOBILE) -->
         <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-3 sm:mb-5">
@@ -222,31 +222,7 @@
           </div>
         </div>
 
-        <!-- 6. MINI-CARTE ATELIER SUR MOBILE (visible uniquement sur tablette, masqué sur mobile pour alléger) -->
-        <div class="hidden sm:flex lg:hidden p-3.5 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl mb-6">
-          <div class="flex items-center gap-3">
-            <picture class="w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-white/20 bg-slate-900/60 relative">
-              <source type="image/webp" [srcset]="getImageWebpMobile(currentHeroSlide.imageUrl)">
-              <img 
-                [src]="currentHeroSlide.imageUrl" 
-                (error)="onHeroImageError($event)"
-                alt="Aperçu atelier" 
-                class="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </picture>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5 text-[10px] text-[#2AA9A0] font-bold uppercase">
-                <span class="w-2 h-2 rounded-full bg-[#2AA9A0] animate-pulse"></span>
-                <span>Atelier actif</span>
-              </div>
-              <div class="text-xs font-bold text-white truncate">{{ currentHeroSlide.atelierTag }}</div>
-              <div class="text-[11px] text-[#DFC188] font-bold mt-0.5">{{ currentHeroSlide.statChiffre }} · {{ currentHeroSlide.statLabel }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 7. BANDEAU DE RÉASSURANCE ACADÉMIQUE DYNAMIQUE (allégé sur mobile : max 2 items) -->
+        <!-- 6. BANDEAU DE RÉASSURANCE ACADÉMIQUE DYNAMIQUE (allégé sur mobile : max 2 items) -->
         <div class="pt-3 sm:pt-4 border-t border-white/10 sm:border-white/15 flex flex-wrap gap-3 sm:gap-6 text-[11px] sm:text-xs text-slate-300">
           @for (item of reassuranceList; track item; let i = $index) {
             <div class="flex items-center gap-1.5 sm:gap-2" [class.hidden]="i >= 2" [class.sm:flex]="i >= 2">
@@ -258,88 +234,11 @@
 
       </div>
 
-      <!-- BLOC DROIT : CARTE INTERACTIVE FLOTTANTE (DESKTOP) -->
-      <div class="lg:col-span-4 hidden lg:flex flex-col items-end justify-center font-['Public_Sans',sans-serif]">
-        
-        <div class="w-full max-w-sm bg-white/10 backdrop-blur-xl border border-white/20 p-5 rounded-2xl shadow-2xl relative overflow-hidden group hover:border-[#C8902A]/50 transition-all duration-300">
-          
-          <div class="absolute -right-8 -top-8 w-32 h-32 bg-[#C8902A]/10 rounded-full blur-2xl pointer-events-none"></div>
-
-          <!-- En-tête de la carte avec indicateur en direct -->
-          <div class="flex items-center justify-between pb-3.5 border-b border-white/15 mb-3.5">
-            <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#2AA9A0] animate-pulse"></span>
-              <span class="text-xs font-bold text-white tracking-wide uppercase">Atelier en direct</span>
-            </div>
-            <span class="px-2.5 py-0.5 bg-[#C8902A]/20 border border-[#C8902A]/40 text-[#DFC188] text-[10px] font-bold rounded-full uppercase tracking-wider">
-              {{ currentHeroIndex + 1 }} / {{ heroSlides.length }}
-            </span>
-          </div>
-
-          <!-- Statut officiel de la session -->
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#2AA9A0]/15 border border-[#2AA9A0]/30 text-[#2AA9A0] text-[10px] font-bold uppercase tracking-wide mb-3">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#2AA9A0] animate-pulse"></span>
-            <span>{{ currentHeroSlide.sessionStatut || 'Session 2026 · Inscriptions Ouvertes' }}</span>
-          </div>
-
-          <!-- Aperçu Visuel de l'Atelier avec WebP & Skeleton -->
-          <div class="relative w-full h-36 rounded-xl overflow-hidden mb-3.5 border border-white/20 bg-slate-900/60 shadow-inner">
-            <picture class="w-full h-full block">
-              <source type="image/webp" [srcset]="getImageWebpDesktop(currentHeroSlide.imageUrl)">
-              <img 
-                [src]="currentHeroSlide.imageUrl" 
-                alt="Aperçu de l'atelier en direct - Vitalis Center"
-                title="Aperçu de l'atelier en direct"
-                [attr.alt]="currentHeroSlide.titre"
-                [attr.title]="currentHeroSlide.atelierTag"
-                (error)="onHeroImageError($event)"
-                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
-              />
-            </picture>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-            <div class="absolute bottom-2.5 left-3 right-3 text-white">
-              <p class="text-xs font-bold truncate drop-shadow-sm">{{ currentHeroSlide.atelierTag }}</p>
-            </div>
-          </div>
-
-          <!-- Chiffre Clé d'Insertion -->
-          <div class="mb-3.5">
-            <div class="flex items-baseline gap-2">
-              <span class="text-2xl font-black text-white">
-                {{ currentHeroSlide.statChiffre }}
-              </span>
-            </div>
-            <p class="text-xs text-slate-300 mt-0.5 leading-relaxed">
-              {{ currentHeroSlide.statLabel }}
-            </p>
-          </div>
-
-          <!-- Bouton d'accès direct à la Fiche d'Agrément Officielle -->
-          @if (heroNumeroAgrement) {
-            <button 
-              type="button"
-              (click)="openCredentials.emit()"
-              class="w-full py-2.5 px-3.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 text-xs font-semibold rounded-xl flex items-center justify-between transition-all cursor-pointer group-hover:border-[#C8902A]/50"
-            >
-              <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-[#DFC188]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span>Fiche Officielle d'Agrément</span>
-              </span>
-              <span class="text-xs font-bold text-[#DFC188]">Consulter →</span>
-            </button>
-          }
-
-        </div>
-
-      </div>
-
     </div>
   </div>
 
-  <!-- BARRE DE NAVIGATION & CONTRÔLE DU SLIDER HERO (ACCESSIBLE ARIA) -->
+  <!-- BARRE DE NAVIGATION & CONTRÔLE DU SLIDER HERO (UNIQUEMENT SI PLUSIEURS SLIDES CONFIGURÉS) -->
+  @if (heroSlides.length > 1) {
   <div class="relative z-20 w-full border-t border-white/10 bg-[#061524]/90 backdrop-blur-md py-3.5 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto flex flex-row items-center justify-between gap-2 sm:gap-4">
       
@@ -444,6 +343,7 @@
 
     </div>
   </div>
+  }
 
   <!-- BANDEAU DE PASSERELLE / SEGMENTATION D'AUDIENCE (masqué sur mobile, visible tablette+) -->
   <div class="relative z-20 w-full bg-[#040E18] border-t border-white/10 py-2.5 sm:py-3 px-4 sm:px-6 lg:px-8 font-['Public_Sans',sans-serif] hidden sm:block">

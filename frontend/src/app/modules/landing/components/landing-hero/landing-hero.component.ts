@@ -98,6 +98,12 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
 
   startSliderLoop(): void {
     this.stopSliderLoop();
+    if (this.heroSlides.length <= 1) {
+      this.heroSliderProgress = 0;
+      this.isHeroSliderPaused = true;
+      this.cdr.markForCheck();
+      return;
+    }
     if (this.prefersReducedMotion) {
       this.isHeroSliderPaused = true;
       this.cdr.markForCheck();

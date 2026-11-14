@@ -717,12 +717,19 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div *ngFor="let c of campusList" class="card border border-[#D7DBDE] flex flex-col justify-between hover:border-[#1C75BC] transition-all bg-white p-0 overflow-hidden">
               <div class="relative h-40 bg-slate-100">
-                <img 
-                  [src]="getMediaUrl(c.photoUrl || c.photo) || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop'" 
-                  [alt]="c.titre"
-                  class="w-full h-full object-cover"
-                  (error)="onImageError($event, 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop')"
-                />
+                <ng-container *ngIf="c.photoUrl || c.photo; else noCampusPhoto">
+                  <img 
+                    [src]="getMediaUrl(c.photoUrl || c.photo)" 
+                    [alt]="c.titre"
+                    class="w-full h-full object-cover"
+                  />
+                </ng-container>
+                <ng-template #noCampusPhoto>
+                  <div class="w-full h-full flex flex-col items-center justify-center bg-slate-200 text-slate-500 text-xs gap-1">
+                    <span class="text-xl">📷</span>
+                    <span class="font-medium text-[11px]">Aucune photo téléversée</span>
+                  </div>
+                </ng-template>
                 <div class="absolute top-2.5 left-2.5">
                   <span *ngIf="c.badge" class="px-2 py-0.5 text-[10px] font-bold bg-[#1C75BC] text-white uppercase rounded-2xs shadow-xs">
                     {{ c.badge }}
@@ -1622,8 +1629,11 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               <!-- Upload Photo Campus -->
               <div class="p-3 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2">
                 <label class="font-bold text-[#124F80] block">📸 Photo HD de l'Espace</label>
+                <div *ngIf="campusEnCours.photoUrl" class="relative w-full h-28 rounded overflow-hidden border border-[#D7DBDE] mb-2 bg-slate-100">
+                  <img [src]="getMediaUrl(campusEnCours.photoUrl)" alt="Aperçu photo" class="w-full h-full object-cover" />
+                </div>
                 <input type="file" accept="image/*" (change)="onCampusPhotoSelected($event)" class="text-xs mb-1" />
-                <input type="url" [(ngModel)]="campusEnCours.photoUrl" name="photoUrl" placeholder="Ou URL directe : https://images.unsplash.com/..." class="w-full bg-white p-1.5 border border-[#D7DBDE] rounded-2xs text-[11px]" />
+                <input type="url" [(ngModel)]="campusEnCours.photoUrl" name="photoUrl" placeholder="Ou URL directe : https://..." class="w-full bg-white p-1.5 border border-[#D7DBDE] rounded-2xs text-[11px]" />
               </div>
 
               <div class="grid grid-cols-2 gap-3 pt-2">

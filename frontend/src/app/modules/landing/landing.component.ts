@@ -270,7 +270,8 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly HERO_TICK_INTERVAL_MS = 65;
 
   get heroSlides(): HeroSlideItem[] {
-    const slides: HeroSlideItem[] = [
+    // Le Hero est 100% géré par les paramètres configurés par l'administrateur
+    return [
       {
         id: 'officiel',
         badge: this.settings.topbarTexte ? 'Tutelle Officielle · ' + this.settings.topbarTexte : 'Sous tutelle du Ministère de la Formation Professionnelle · RDC',
@@ -290,73 +291,6 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         videoUrl: this.settings?.videoPresentationUrl || '',
       },
     ];
-
-    // Intégration dynamique des ateliers et espaces configurés dans l'Espace Administrateur Central
-    if (this.campusEspacesList && this.campusEspacesList.length > 0) {
-      this.campusEspacesList.forEach((c: any, idx: number) => {
-        const couleurBadge = idx % 3 === 0 ? '#C8902A' : idx % 3 === 1 ? '#124F80' : '#2AA9A0';
-        slides.push({
-          id: `campus-${idx}`,
-          badge: c.badge || 'Atelier Professionnel & Lab',
-          badgeCouleur: couleurBadge,
-          atelierTag: c.titre,
-          tabTitle: c.titre && c.titre.length > 22 ? c.titre.substring(0, 20) + '...' : (c.titre || `Atelier 0${idx + 2}`),
-          titre: c.titre,
-          sousTitre: c.description,
-          imageUrl: this.formatImageUrl(c.photo, 'assets/campus/lab-informatique.jpg'),
-          statChiffre: c.badge || '100% Pratique',
-          statLabel: c.equipements || 'Équipements et bancs d\'essais réels',
-          ctaTexte: 'Explorer cette filière',
-          ctaLien: '#formations',
-          ctaSecondaireTexte: 'Poser une question',
-          ctaSecondaireLien: '#contact',
-          sessionStatut: 'Atelier Ouvert · Places Limitées',
-          videoUrl: this.settings?.videoPresentationUrl || '',
-        });
-      });
-    } else {
-      // Fallback gracieux si aucun atelier n'est encore configuré
-      slides.push(
-        {
-          id: 'informatique',
-          badge: 'Atelier Technologique Numérique',
-          badgeCouleur: '#C8902A',
-          atelierTag: 'Lab Informatique · Cloud · Cybersécurité',
-          tabTitle: 'Lab Informatique',
-          titre: 'Maîtrisez les technologies du numérique dans nos laboratoires de pointe',
-          sousTitre: 'Apprentissage immersif sur serveurs réels, postes spécialisés, administration systèmes, réseaux d\'entreprise et cybersécurité pratique avec des professionnels en activité.',
-          imageUrl: 'assets/campus/lab-informatique.jpg',
-          statChiffre: '100% Pratique',
-          statLabel: 'Postes dédiés, serveurs réels et cloud',
-          ctaTexte: 'Explorer les filières IT',
-          ctaLien: '#formations',
-          ctaSecondaireTexte: 'Espace Candidat',
-          ctaSecondaireLien: '/login',
-          sessionStatut: 'Session 2026 · Inscriptions Ouvertes',
-          videoUrl: this.settings?.videoPresentationUrl || '',
-        },
-        {
-          id: 'energie',
-          badge: 'Atelier Industriel & Transition Énergétique',
-          badgeCouleur: '#2AA9A0',
-          atelierTag: 'Électrotechnique · Solaire · Maintenance',
-          tabTitle: 'Atelier Électrotechnique',
-          titre: 'Formez-vous aux énergies d\'avenir et installations industrielles modernes',
-          sousTitre: 'Bancs d\'essais réels, dimensionnement solaire photovoltaïque, automatismes et maintenance industrielle aux normes internationales de sécurité.',
-          imageUrl: 'assets/campus/atelier-energie.jpg',
-          statChiffre: '15+ Métiers',
-          statLabel: 'Bancs d\'essais réels et habilitations',
-          ctaTexte: 'Voir les filières techniques',
-          ctaLien: '#formations',
-          ctaSecondaireTexte: 'Poser une question',
-          ctaSecondaireLien: '#contact',
-          sessionStatut: 'Session 2026 · Inscriptions Ouvertes',
-          videoUrl: this.settings?.videoPresentationUrl || '',
-        }
-      );
-    }
-
-    return slides;
   }
 
   get heroReassurances(): string[] {
@@ -671,37 +605,15 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     { nom: 'REGIDESO', logo: 'assets/partenaires/regideso.png', secteur: 'Service public' },
   ];
 
-  // --- ESPACES DU CAMPUS & ATELIERS TECHNIQUES (POINT 4.2 AUDIT) ---
-  campusEspacesList = [
-    {
-      titre: 'Laboratoire Systèmes & Développement Cloud',
-      description: 'Équipé de serveurs dédiés, postes haute performance et environnement d\'intégration continue pour l\'apprentissage pratique du code et de l\'administration réseau.',
-      photo: 'assets/campus/lab-informatique.jpg',
-      badge: 'Tech & Télécoms',
-      equipements: '35 postes connectés · Racks Cisco · Fibre dédiée',
-    },
-    {
-      titre: 'Atelier Électrotechnique & Énergie Solaire',
-      description: 'Bancs d\'essais réels, onduleurs industriels, simulateurs de réseau et kits photovoltaïques aux normes de sécurité électrique.',
-      photo: 'assets/campus/atelier-energie.jpg',
-      badge: 'Génie & Énergie',
-      equipements: 'Bancs Schneider Electric · Panneaux solaires · Outillage pro',
-    },
-    {
-      titre: 'Espace Collaboratif & Études de Cas',
-      description: 'Salles modulaires dédiées au management agile, simulations d\'entreprises, analyse financière et revues de projets d\'affaires.',
-      photo: 'assets/campus/salle-conferences.jpg',
-      badge: 'Management',
-      equipements: 'Vidéoprojection HD · Tableaux interactifs · Coworking',
-    },
-    {
-      titre: 'Centre d\'Examen Agréé & Registre Officiel',
-      description: 'Postes sécurisés pour les évaluations formelles, commissions de délibération et délivrance certifiée des attestations sous supervision ministérielle.',
-      photo: 'assets/campus/centre-examen.jpg',
-      badge: 'Accréditation',
-      equipements: 'Postes d\'évaluation isolés · Supervision APC · Registre',
-    },
-  ];
+  // --- ESPACES DU CAMPUS & ATELIERS TECHNIQUES (100% GÉRÉS PAR L'ADMINISTRATEUR) ---
+  campusEspacesList: Array<{
+    id?: string;
+    titre: string;
+    description: string;
+    photo?: string;
+    badge?: string;
+    equipements: string;
+  }> = [];
 
   // --- MODALE VIDÉO INSTITUTIONNELLE (POINT 4.5 AUDIT) ---
   videoModalOpen: boolean = false;
@@ -1130,14 +1042,19 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
           }));
         }
 
-        if (data.campus && data.campus.length > 0) {
-          this.campusEspacesList = data.campus.map((c: any) => ({
-            titre: c.titre,
-            description: c.description,
-            photo: c.photoUrl || c.photo || 'assets/campus/lab-informatique.jpg',
-            badge: c.badge || 'Campus & Labs',
-            equipements: c.equipements,
-          }));
+        if (data.campus && Array.isArray(data.campus)) {
+          this.campusEspacesList = data.campus
+            .filter((c: any) => c.actif !== false)
+            .map((c: any) => ({
+              id: c.id,
+              titre: c.titre,
+              description: c.description,
+              photo: (c.photoUrl || c.photo) ? this.getMediaUrl(c.photoUrl || c.photo) : '',
+              badge: c.badge || '',
+              equipements: c.equipements,
+            }));
+        } else {
+          this.campusEspacesList = [];
         }
 
         if (data.partenaires && data.partenaires.length > 0) {

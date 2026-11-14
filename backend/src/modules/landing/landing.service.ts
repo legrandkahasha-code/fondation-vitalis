@@ -161,22 +161,11 @@ export class LandingService {
       }
     }
 
-    // 7. Récupérer les Espaces Campus / Ateliers actifs
-    let campus = await this.db.landingPageCampus.findMany({
+    // 7. Récupérer les Espaces Campus / Ateliers actifs (100% contrôlés par l'administrateur, sans injection de données non validées)
+    const campus = await this.db.landingPageCampus.findMany({
       where: { actif: true },
       orderBy: { ordre: 'asc' },
     });
-
-    if (campus.length === 0) {
-      const countCampus = await this.db.landingPageCampus.count();
-      if (countCampus === 0) {
-        await this.seedDefaultCampus();
-        campus = await this.db.landingPageCampus.findMany({
-          where: { actif: true },
-          orderBy: { ordre: 'asc' },
-        });
-      }
-    }
 
     // 8. Récupérer les Logos Partenaires actifs
     let partenaires = await this.db.landingPagePartenaire.findMany({

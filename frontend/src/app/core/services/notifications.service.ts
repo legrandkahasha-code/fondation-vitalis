@@ -80,6 +80,7 @@ export class NotificationsService implements OnDestroy {
   private reconnectTimer: any = null;
   /** Timer qui déclenche une reconnexion juste avant l'expiration du token actuel */
   private tokenExpiryTimer: any = null;
+  private isRefreshing = false;
   private destroy$ = new Subject<void>();
 
   constructor(private ngZone: NgZone) {}
@@ -106,11 +107,17 @@ export class NotificationsService implements OnDestroy {
 
   /** Rafraîchit le token via le refresh token, puis ouvre l'EventSource. */
   private _refreshThenConnect(): void {
+    if (this.isRefreshing) return;
+
     const refreshToken = localStorage.getItem('vitalis_refresh');
     if (!refreshToken) {
-      // Pas de refresh token disponible, on ne peut rien faire
+      // Pas de refresh token disponible, nettoyer le token expiré pour éviter de re-tester
+      localStorage.removeItem('vitalis_token');
+      localStorage.removeItem('vitalis_user');
       return;
     }
+
+    this.isRefreshing = true;
 
     const apiBase = environment.apiUrl.replace(/\/api$/, '');
     fetch(`${environment.apiUrl}/utilisateurs/refresh`, {
@@ -120,13 +127,18 @@ export class NotificationsService implements OnDestroy {
     })
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
       .then((data: { accessToken: string; refreshToken: string }) => {
+        this.isRefreshing = false;
         localStorage.setItem('vitalis_token', data.accessToken);
         localStorage.setItem('vitalis_refresh', data.refreshToken);
         this._openEventSource(data.accessToken);
       })
       .catch(() => {
-        // Refresh échoué : session expirée définitivement, ne pas boucler
-        console.warn('[NotificationsService] Refresh token invalide ou expiré, SSE non connecté.');
+        this.isRefreshing = false;
+        // Refresh échoué : session expirée définitivement, nettoyer pour éviter tout spam de requêtes
+        localStorage.removeItem('vitalis_token');
+        localStorage.removeItem('vitalis_refresh');
+        localStorage.removeItem('vitalis_user');
+        console.warn('[NotificationsService] Session expirée ou invalide, stockage local réinitialisé, SSE non connecté.');
       });
   }
 
