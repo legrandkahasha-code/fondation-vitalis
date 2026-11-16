@@ -66,6 +66,8 @@
   --bleu-fonce: #124F80;
   --bleu-clair: #E7F1FA;
   --or-clair: #FDECDD;
+  --or-attente: #F0791E;
+  --or-attente-clair: #FDECDD;
   --or-africain: #C8902A;
   --or-africain-clair: #F9F0DC;
   --teal: #2AA9A0;
@@ -469,7 +471,7 @@ a:hover {
 
 .field input:focus, .form-input:focus, .field select:focus, .field textarea:focus {
   outline: none;
-  border-color: var(--or);
+  border-color: var(--or-attente);
   box-shadow: 0 0 0 3px rgba(240, 121, 30, 0.12);
 }
 
@@ -498,9 +500,9 @@ a:hover {
 }
 
 .tag.attente, .badge-attente, .badge-admin-etab, .badge-warning {
-  background: var(--or-clair);
-  color: var(--or);
-  border-color: var(--or);
+  background: var(--or-attente-clair);
+  color: var(--or-attente);
+  border-color: var(--or-attente);
 }
 
 .tag.info, .badge-info, .badge-admin-centre, .badge-formateur, .badge-apprenant {
