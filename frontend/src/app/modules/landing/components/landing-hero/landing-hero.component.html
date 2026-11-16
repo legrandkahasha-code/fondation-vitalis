@@ -1,4 +1,4 @@
-<!-- SECTION HERO INSTITUTIONNELLE DE PRESTIGE MONDIAL -->
+<!-- SECTION HERO INSTITUTIONNELLE DE PRESTIGE MONDIAL (ÉTAPE 5) -->
 <section 
   id="accueil" 
   class="relative min-h-[560px] lg:min-h-[740px] flex flex-col justify-between bg-[var(--navy)] text-white overflow-hidden border-b border-white/10 select-none"
@@ -7,7 +7,7 @@
   (touchstart)="onTouchStart($event)"
   (touchend)="onTouchEnd($event)"
   role="region"
-  aria-label="Présentation officielle et ateliers de Vitalis Center"
+  aria-label="Présentation officielle et formations d'excellence de Vitalis Center"
 >
   <div id="contenu-principal" tabindex="-1"></div>
   
@@ -16,154 +16,116 @@
     Diapositive {{ currentHeroIndex + 1 }} sur {{ heroSlides.length }} : {{ currentHeroSlide.titre }}
   </div>
 
-  <!-- SKELETON LOADER DISCRET D'ARRIÈRE-PLAN (REC 5) -->
-  @for (slide of heroSlides; track slide.id; let idx = $index) {
-    @if (!isImageLoaded(slide.id) && idx === currentHeroIndex) {
-      <div class="absolute inset-0 bg-[var(--navy)] flex items-center justify-center pointer-events-none z-5 animate-pulse">
-        <div class="flex flex-col items-center gap-2 opacity-50">
-          <div class="w-7 h-7 rounded-full border-2 border-[var(--or)] border-t-transparent animate-spin"></div>
-          <span class="text-sm text-[var(--ardoise)] font-mono tracking-widest uppercase">Vitalis Center · Chargement...</span>
-        </div>
-      </div>
-    }
+  <!-- CARROUSEL D'IMAGES D'ARRIÈRE-PLAN PLEIN CADRE (MASQUÉ SI DROIT NON CONFIRMÉ OU SAVE-DATA) -->
+  @if (settings?.heroImageDroitConfirme && !isSaveDataEnabled) {
+    <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+      @for (slide of heroSlides; track slide.id; let idx = $index) {
+        @if (slide.imageUrl) {
+          <picture 
+            class="absolute inset-0 w-full h-full pointer-events-none motion-safe:transition-all motion-reduce:transition-none"
+            [class.opacity-50]="idx === currentHeroIndex"
+            [class.sm:opacity-55]="idx === currentHeroIndex"
+            [class.lg:opacity-65]="idx === currentHeroIndex"
+            [class.scale-105]="idx === currentHeroIndex"
+            [class.duration-[6500ms]]="idx === currentHeroIndex"
+            [class.ease-out]="idx === currentHeroIndex"
+            [class.opacity-0]="idx !== currentHeroIndex"
+            [class.scale-100]="idx !== currentHeroIndex"
+            [class.duration-700]="idx !== currentHeroIndex"
+            [class.z-10]="idx === currentHeroIndex"
+            [class.z-0]="idx !== currentHeroIndex"
+          >
+            <!-- Format WebP ultra-léger pour Smartphone (<768px / max-width: 767px) -->
+            <source 
+              media="(max-width: 767px)" 
+              type="image/webp" 
+              [srcset]="getImageWebpMobile(slide.imageUrl)"
+            >
+            <!-- Format WebP haute fidélité pour Tablette & Desktop (>=768px) -->
+            <source 
+              media="(min-width: 768px)" 
+              type="image/webp" 
+              [srcset]="getImageWebpDesktop(slide.imageUrl)"
+            >
+            <!-- Fallback JPG pour navigateurs sans support WebP sur mobile -->
+            <source 
+              media="(max-width: 767px)" 
+              type="image/jpeg" 
+              [srcset]="getImageJpgMobile(slide.imageUrl)"
+            >
+            <!-- Balise image principale avec fetchpriority haute pour le LCP -->
+            <img 
+              [src]="slide.imageUrl" 
+              (load)="onImageLoad(slide.id)"
+              (error)="onHeroImageError($event)"
+              [alt]="slide.titre" 
+              [title]="slide.atelierTag || slide.titre"
+              class="w-full h-full object-cover object-center pointer-events-none filter brightness-95 contrast-105 hero-bg-cover"
+              [loading]="idx === 0 ? 'eager' : 'lazy'"
+              [attr.fetchpriority]="idx === 0 ? 'high' : 'auto'"
+            />
+          </picture>
+        }
+      }
+    </div>
   }
 
-  <!-- CARROUSEL D'IMAGES D'ARRIÈRE-PLAN PLEIN CADRE AVEC WEBP & SRCSET MOBILE (REC 2) -->
-  <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-    @for (slide of heroSlides; track slide.id; let idx = $index) {
-      <picture 
-        class="absolute inset-0 w-full h-full pointer-events-none motion-safe:transition-all motion-reduce:transition-none"
-        [class.opacity-50]="idx === currentHeroIndex"
-        [class.sm:opacity-55]="idx === currentHeroIndex"
-        [class.lg:opacity-65]="idx === currentHeroIndex"
-        [class.scale-105]="idx === currentHeroIndex"
-        [class.duration-[6500ms]]="idx === currentHeroIndex"
-        [class.ease-out]="idx === currentHeroIndex"
-        [class.opacity-0]="idx !== currentHeroIndex"
-        [class.scale-100]="idx !== currentHeroIndex"
-        [class.duration-700]="idx !== currentHeroIndex"
-        [class.z-10]="idx === currentHeroIndex"
-        [class.z-0]="idx !== currentHeroIndex"
-      >
-        <!-- Format WebP ultra-léger pour Smartphone (<768px / max-width: 767px) : ~30-40 KB -->
-        <source 
-          media="(max-width: 767px)" 
-          type="image/webp" 
-          [srcset]="getImageWebpMobile(slide.imageUrl)"
-        >
-        <!-- Format WebP haute fidélité pour Tablette & Desktop (>=768px) : ~90-130 KB -->
-        <source 
-          media="(min-width: 768px)" 
-          type="image/webp" 
-          [srcset]="getImageWebpDesktop(slide.imageUrl)"
-        >
-        <!-- Fallback JPG compressé pour vieux navigateurs sans WebP sur mobile -->
-        <source 
-          media="(max-width: 767px)" 
-          type="image/jpeg" 
-          [srcset]="getImageJpgMobile(slide.imageUrl)"
-        >
-        <!-- Balise image standard avec écouteur de fin de chargement et accessibilité -->
-        <img 
-          [src]="slide.imageUrl" 
-          (load)="onImageLoad(slide.id)"
-          (error)="onHeroImageError($event)"
-          alt="Atelier et formation de Vitalis Center EUP" 
-          title="Atelier et formation de Vitalis Center EUP"
-          [attr.alt]="slide.titre" 
-          [attr.title]="slide.atelierTag"
-          class="w-full h-full object-cover object-center pointer-events-none filter brightness-95 contrast-105 hero-bg-cover"
-          [loading]="idx === 0 ? 'eager' : 'lazy'"
-          [attr.fetchpriority]="idx === 0 ? 'high' : 'auto'"
-        />
-      </picture>
-    }
-  </div>
-
-  <!-- VOILE DE SÉCURITÉ DE CONTRASTE HAUTE DENSITÉ SUR SMARTPHONE -->
-  <div class="absolute inset-0 bg-[var(--navy)]/60 sm:bg-transparent pointer-events-none z-10"></div>
-
-  <!-- DÉGRADÉ DIRECTIONNEL ASYMÉTRIQUE : LECTURE PARFAITE DU TEXTE À GAUCHE (NOIR/BLEU SOMBRE PUR), LUMIÈRE ÉCLATANTE SUR LA PHOTO À DROITE -->
-  <div class="absolute inset-0 bg-gradient-to-r from-[var(--navy)] via-[var(--navy)]/92 sm:via-[var(--navy)]/80 lg:via-[var(--navy)]/65 to-[var(--navy)]/20 pointer-events-none z-10"></div>
+  <!-- VOILE DE SÉCURITÉ DE CONTRASTE DIRECTIONNEL : DÉGRADÉ NAVY PUR -->
+  <div class="absolute inset-0 bg-gradient-to-r from-[var(--navy)] via-[var(--navy)]/95 sm:via-[var(--navy)]/85 lg:via-[var(--navy)]/70 to-[var(--navy)]/30 pointer-events-none z-10"></div>
   <div class="absolute inset-0 bg-gradient-to-t from-[var(--navy)] via-transparent to-[var(--navy)]/50 pointer-events-none z-10"></div>
   
-  <!-- LUMIÈRE D'AMBIANCE HAUT DE GAMME SOBRE (LUEUR FEUTRÉE RÉPUBLICAINE) -->
+  <!-- LUMIÈRE D'AMBIANCE SOBRE -->
   <div class="absolute top-10 right-1/4 w-[450px] h-[450px] bg-[var(--or)]/8 rounded-full blur-3xl pointer-events-none z-10"></div>
-  <div class="absolute bottom-10 right-10 w-[450px] h-[450px] bg-[var(--navy)]/25 rounded-full blur-3xl pointer-events-none z-10"></div>
 
   <!-- CONTENU CENTRAL DE LA SECTION HERO -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6 sm:py-14 lg:py-18 relative z-20 w-full flex-1 flex items-center">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8 sm:py-14 lg:py-18 relative z-20 w-full flex-1 flex items-center">
     <div class="w-full">
       
-      <!-- BLOC TEXTE & PROPOSITION DE VALEUR (ÉPURÉ ET CENTRÉ SUR L'ESSENTIEL) -->
+      <!-- BLOC TEXTE & PROPOSITION DE VALEUR -->
       <div class="max-w-4xl animate-fade-in-up font-['Public_Sans',sans-serif]">
         
-        <!-- 1. BADGES OFFICIELS D'ÉTAT & STATUT RÉPUBLICAIN (ÉPURÉ SUR MOBILE) -->
-        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-3 sm:mb-5">
-          <div class="inline-flex items-center gap-2 px-3 py-1 sm:py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-semibold shadow-xs">
-            <span class="inline-block w-2 h-2 rounded-full bg-[var(--vert-clair)] animate-pulse"></span>
-            <span class="tracking-wide">{{ currentHeroSlide.badge }}</span>
-          </div>
-          
-          @if (heroNumeroAgrement) {
+        <!-- 1. LIGNE DE TUTELLE UNIQUE -->
+        <div class="inline-flex items-center px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-semibold tracking-wide shadow-xs mb-2 sm:mb-2.5">
+          <span>RDC · Ministère de la Formation Professionnelle</span>
+        </div>
+
+        <!-- Ligne d'agrément ministériel discrète et séparée -->
+        @if (heroNumeroAgrement) {
+          <div class="mb-4 sm:mb-6">
             <button 
               type="button"
               (click)="openCredentials.emit()"
-              class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[var(--or)]/15 hover:bg-[var(--or)]/25 border border-[var(--or)]/40 text-[var(--or)] hover:text-white text-sm font-mono font-bold transition-colors cursor-pointer"
-              title="Cliquer pour afficher la fiche officielle d'agrément"
+              class="inline-flex items-center gap-1.5 text-sm text-[var(--ardoise)] hover:text-[var(--or)] font-mono transition-colors cursor-pointer"
+              title="Consulter l'agrément ministériel officiel"
             >
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              <span>Agrément ministériel N° {{ heroNumeroAgrement }}</span>
+              <svg class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
-              <span>Aut. {{ heroNumeroAgrement }}</span>
             </button>
-          }
-
-          <!-- Tag d'atelier : toujours masqué sur mobile pour éviter la surcharge de badges -->
-          @if (currentHeroSlide.atelierTag && currentHeroSlide.atelierTag !== currentHeroSlide.titre) {
-            <div class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/15 text-[var(--ardoise)] text-sm font-medium">
-              <span class="w-1.5 h-1.5 rounded-full bg-[var(--ardoise)]"></span>
-              <span>{{ currentHeroSlide.atelierTag }}</span>
-            </div>
-          }
-        </div>
-
-        <!-- 2. TITRE H1 SÉMANTIQUE & MESSAGE D'EXCELLENCE -->
-        <div class="mb-3 sm:mb-4">
-          <!-- Surtitre ministériel officiel (masqué sur mobile car déjà dans la topbar) -->
-          <div class="hidden md:inline-flex items-center gap-2 mb-2.5 px-3 py-1 rounded-md bg-[var(--navy)] border border-white/15 text-[var(--or)] text-sm font-semibold tracking-wider uppercase font-['Public_Sans',sans-serif]">
-            <span class="inline-block w-2 h-2 rounded-full bg-[var(--or)]"></span>
-            <span>RDC · Ministère de la Formation Professionnelle</span>
           </div>
+        }
 
-          <!-- H1 accessible : invisible visuellement, présent pour le SEO et les lecteurs d'écran -->
-          <h1 class="sr-only">
-            Vitalis Center EUP — Établissement Public d'Excellence en Formation Professionnelle et Technique
+        <!-- 2. TITRE PRINCIPAL & LISERÉ OR -->
+        <div class="mb-4 sm:mb-6">
+          <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] sm:leading-[1.2] font-['Playfair_Display',serif]">
+            {{ currentHeroSlide.titre }}
           </h1>
-
-          <!-- Titre visuel principal du slide (seul titre visible, aucun doublon) -->
-          <div class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl 2xl:text-6xl font-extrabold text-white tracking-tight leading-[1.15] sm:leading-[1.2] min-h-[60px] sm:min-h-[90px] flex items-center font-['Playfair_Display',serif]">
-            <span class="block transition-all duration-300" aria-live="polite">
-              {{ currentHeroSlide.titre }}
-            </span>
-          </div>
+          <div class="w-16 sm:w-20 h-[3px] bg-[var(--or)] rounded-full mt-3 sm:mt-4"></div>
         </div>
-
-        <!-- Liseré officiel Or d'État -->
-        <div class="w-14 sm:w-20 h-[3px] bg-[var(--or)] rounded-full mb-3 sm:mb-5"></div>
 
         <!-- 3. SOUS-TITRE & PROPOSITION DE VALEUR -->
-        <p class="text-sm sm:text-base lg:text-lg text-[var(--ardoise)] max-w-2xl leading-relaxed mb-4 sm:mb-6 font-normal transition-all duration-300">
+        <p class="text-base sm:text-lg text-[var(--ardoise)] max-w-2xl leading-relaxed mb-6 sm:mb-8 font-normal">
           {{ currentHeroSlide.sousTitre }}
         </p>
 
-        <!-- 4. ACTIONS PRINCIPALES & CAPSULE VIDÉO (CTA D'EXCELLENCE ÉTATIQUE DÉGAGÉ SUR MOBILE) -->
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4 mb-6">
-          <!-- CTA Primaire : Inscription & Formations -->
+        <!-- 4. ACTIONS : 2 BOUTONS (TEXTE NAVY SUR OR + SECONDAIRE CONTOUR BLANC) + LIEN « VOIR CAMPUS » -->
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-8 sm:mb-10">
+          <!-- Bouton 1 : CTA Primaire (Texte Navy sur Or) -->
           <a 
             [href]="currentHeroSlide.ctaLien" 
             (click)="handleCta(currentHeroSlide.ctaLien)"
-            class="w-full sm:w-auto px-6 sm:px-7 py-3 sm:py-3.5 bg-[var(--or)] hover:bg-[var(--or)]/85 text-[var(--navy)] font-extrabold text-sm rounded-xl shadow-lg hover:shadow-[var(--or)]/20 transition-all duration-200 inline-flex items-center justify-center gap-2.5 cursor-pointer text-center"
+            class="w-full sm:w-auto px-7 py-3.5 bg-[var(--or)] hover:bg-[var(--or)]/90 text-[var(--navy)] font-extrabold text-sm rounded-xl shadow-lg hover:shadow-[var(--or)]/25 transition-all duration-200 inline-flex items-center justify-center gap-2.5 cursor-pointer text-center"
           >
             <span>{{ currentHeroSlide.ctaTexte }}</span>
             <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -171,63 +133,89 @@
             </svg>
           </a>
 
-          <!-- Groupe Secondaire : Brochure & Vidéo (Duo 2 colonnes sur smartphone, flex sur grand écran) -->
-          <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <!-- CTA Secondaire : Téléchargement Brochure Officielle -->
-            @if (currentHeroSlide.ctaSecondaireTexte && currentHeroSlide.ctaSecondaireLien) {
-              <button 
-                type="button"
-                (click)="handleCta(currentHeroSlide.ctaSecondaireLien)"
-                class="w-full sm:w-auto px-3.5 sm:px-6 py-2.5 sm:py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/25 hover:border-white/40 backdrop-blur-md font-semibold text-sm rounded-xl shadow-xs transition-all duration-200 inline-flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-center"
-              >
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--or)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span class="truncate">{{ currentHeroSlide.ctaSecondaireTexte }}</span>
-              </button>
-            }
-
-            <!-- Capsule Vidéo Teaser Campus -->
+          <!-- Bouton 2 : CTA Secondaire (Contour blanc fin, texte blanc, fond transparent) -->
+          @if (currentHeroSlide.ctaSecondaireTexte && currentHeroSlide.ctaSecondaireLien) {
             <button 
               type="button"
-              (click)="openVideoModal()"
-              class="w-full sm:w-auto px-3.5 sm:px-4 py-2.5 sm:py-3 bg-white/5 hover:bg-white/15 text-[var(--ardoise)] hover:text-white border border-white/15 hover:border-white/30 rounded-xl text-sm font-semibold transition-all inline-flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer group text-center"
-              title="Visionner la vidéo de présentation du campus"
+              (click)="handleCta(currentHeroSlide.ctaSecondaireLien)"
+              class="w-full sm:w-auto px-6 py-3.5 bg-transparent hover:bg-white/10 text-white border border-white/30 hover:border-white/60 font-semibold text-sm rounded-xl shadow-xs transition-all duration-200 inline-flex items-center justify-center gap-2 cursor-pointer text-center"
             >
-              <span class="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-[var(--navy)] text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs shrink-0">
-                <svg class="w-2 h-2 sm:w-3 sm:h-3 ml-0.5 fill-current" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </span>
-              <span class="truncate">Voir campus</span>
+              <svg class="w-4 h-4 shrink-0 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>{{ currentHeroSlide.ctaSecondaireTexte }}</span>
             </button>
-          </div>
+          }
+
+          <!-- Lien : Voir campus -->
+          <a 
+            (click)="scrollToSection('#campus')"
+            class="inline-flex items-center justify-center gap-2 px-4 py-3.5 text-white hover:text-[var(--or)] text-sm font-semibold transition-colors cursor-pointer group text-center"
+            title="Découvrir les ateliers et infrastructures du campus"
+          >
+            <span class="w-6 h-6 rounded-full bg-white/10 group-hover:bg-[var(--or)] group-hover:text-[var(--navy)] text-white flex items-center justify-center transition-all shadow-xs shrink-0">
+              <svg class="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </span>
+            <span class="underline underline-offset-4 decoration-white/30 group-hover:decoration-[var(--or)]">Voir le campus</span>
+          </a>
         </div>
 
-        <!-- 5. LABEL D'INSERTION & RECONNAISSANCE INSTITUTIONNELLE (masqué sur mobile pour alléger) -->
-        <div class="hidden sm:flex flex-wrap items-center gap-3 sm:gap-4 py-3 px-3.5 bg-white/5 border border-white/10 rounded-xl max-w-xl mb-6">
-          <div class="w-10 h-10 rounded-lg bg-[var(--or)]/15 border border-[var(--or)]/40 text-[var(--or)] flex items-center justify-center shrink-0 shadow-xs">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
-          </div>
-          <div class="text-sm text-[var(--ardoise)]">
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-white text-sm tracking-wide">94% d'Insertion Professionnelle Directe</span>
-              <span class="px-1.5 py-0.5 rounded bg-[var(--vert)]/30 border border-[var(--vert)]/60 text-white text-sm font-bold uppercase">Audité APC</span>
+        <!-- 5. BANDE DE 3 CHIFFRES (TAUX D'INSERTION, LAURÉATS, TITRES QR) -->
+        @if (settings?.statsTauxReussite || settings?.statsLaureats || settings?.statsTitresVerif) {
+          <div class="pt-6 sm:pt-8 border-t border-white/15">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-3xl">
+              <!-- Chiffre 1 : Taux d'insertion -->
+              @if (settings?.statsTauxReussite) {
+                <div class="flex flex-col">
+                  <span class="text-3xl sm:text-4xl lg:text-5xl font-black text-[var(--or)] tracking-tight font-['Playfair_Display',serif]">
+                    {{ settings.statsTauxReussite }}%
+                  </span>
+                  <span class="text-sm text-[var(--ardoise)] font-medium mt-1">
+                    Taux d'insertion professionnelle
+                  </span>
+                  @if (settings?.statsTauxSource) {
+                    <span class="text-xs sm:text-sm text-[var(--ardoise)]/80 mt-1 italic font-mono">
+                      {{ settings.statsTauxSource }}
+                    </span>
+                  }
+                </div>
+              }
+
+              <!-- Chiffre 2 : Lauréats -->
+              @if (settings?.statsLaureats) {
+                <div class="flex flex-col">
+                  <span class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight font-['Playfair_Display',serif]">
+                    {{ settings.statsLaureats }}+
+                  </span>
+                  <span class="text-sm text-[var(--ardoise)] font-medium mt-1">
+                    Lauréats et cadres certifiés
+                  </span>
+                </div>
+              }
+
+              <!-- Chiffre 3 : Titres vérifiables par QR -->
+              @if (settings?.statsTitresVerif) {
+                <div class="flex flex-col">
+                  <span class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight font-['Playfair_Display',serif]">
+                    {{ settings.statsTitresVerif }}%
+                  </span>
+                  <span class="text-sm text-[var(--ardoise)] font-medium mt-1">
+                    Titres vérifiables par QR Code
+                  </span>
+                </div>
+              }
             </div>
-            <p class="text-sm text-[var(--ardoise)] font-medium mt-0.5">
-              Plus de 1 200 lauréats et cadres certifiés en activité en RDC (entreprises partenaires, régies financières et banques)
-            </p>
           </div>
-        </div>
+        }
 
-        <!-- 6. BANDEAU DE RÉASSURANCE ACADÉMIQUE DYNAMIQUE (allégé sur mobile : max 2 items) -->
-        <div class="pt-3 sm:pt-4 border-t border-white/10 sm:border-white/15 flex flex-wrap gap-3 sm:gap-6 text-sm text-[var(--ardoise)]">
-          @for (item of reassuranceList; track item; let i = $index) {
-            <div class="flex items-center gap-1.5 sm:gap-2" [class.hidden]="i >= 2" [class.sm:flex]="i >= 2">
-              <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[var(--vert)]/40 border border-[var(--vert)] text-[var(--vert-clair)] flex items-center justify-center shrink-0 font-bold text-sm">✓</div>
-              <span class="font-medium">{{ item }}</span>
+        <!-- 6. BANDEAU DE RÉASSURANCE ACADÉMIQUE DYNAMIQUE -->
+        <div class="mt-6 flex flex-wrap gap-4 sm:gap-6 text-sm text-[var(--ardoise)]">
+          @for (item of reassuranceList; track item) {
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded-full bg-[var(--vert)]/40 border border-[var(--vert)] text-[var(--vert-clair)] flex items-center justify-center shrink-0 font-bold text-sm">✓</div>
+              <span class="font-medium text-white/90">{{ item }}</span>
             </div>
           }
         </div>
@@ -281,7 +269,7 @@
               </span>
             </div>
 
-            <!-- Jauge de progression du slide actif (Or républicain uni sans dégradé criard) -->
+            <!-- Jauge de progression du slide actif -->
             <div class="mt-1 sm:mt-1.5 w-full bg-white/10 h-0.5 sm:h-1 rounded-full overflow-hidden">
               @if (idx === currentHeroIndex) {
                 <div 
@@ -345,11 +333,11 @@
   </div>
   }
 
-  <!-- BANDEAU DE PASSERELLE / SEGMENTATION D'AUDIENCE (masqué sur mobile, visible tablette+) -->
-  <div class="relative z-20 w-full bg-[var(--navy)] border-t border-white/10 py-2.5 sm:py-3 px-4 sm:px-6 lg:px-8 font-['Public_Sans',sans-serif] hidden sm:block">
+  <!-- BARRE DE PROFILS (SEGMENTATION D'AUDIENCE) -->
+  <div class="relative z-20 w-full bg-[var(--navy)] border-t border-white/10 py-2.5 sm:py-3 px-4 sm:px-6 lg:px-8 font-['Public_Sans',sans-serif]">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-sm">
       <div class="flex items-center gap-2 text-[var(--ardoise)]">
-        <span class="text-[var(--or)] font-bold uppercase tracking-wider text-sm">Accès direct par profil :</span>
+        <span class="text-[var(--or)] font-bold uppercase tracking-wider text-sm">Accès par profil :</span>
       </div>
       <div class="flex flex-wrap items-center gap-2 sm:gap-3">
         <!-- Profil 1 : Candidats & Étudiants -->
@@ -388,13 +376,13 @@
 
 </section>
 
-<!-- CTA MOBILE FLOTTANT STICKY (REC 1) -->
+<!-- CTA MOBILE FLOTTANT STICKY -->
 @if (!showVideoModal) {
   <div class="sm:hidden fixed inset-x-3 hero-floating-cta z-40 animate-fade-in-up">
     <a 
       [href]="currentHeroSlide.ctaLien" 
       (click)="handleCta(currentHeroSlide.ctaLien)"
-      class="w-full py-3 px-4 bg-[var(--or)] hover:bg-[var(--or)]/85 text-[var(--navy)] font-extrabold text-sm rounded-xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] flex items-center justify-between border border-[var(--or)]/60 active:scale-98 transition-all duration-200 cursor-pointer"
+      class="w-full py-3 px-4 bg-[var(--or)] hover:bg-[var(--or)]/90 text-[var(--navy)] font-extrabold text-sm rounded-xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] flex items-center justify-between border border-[var(--or)]/60 active:scale-98 transition-all duration-200 cursor-pointer"
       aria-label="Postuler à la session 2026 - Vitalis Center"
     >
       <div class="flex items-center gap-2 min-w-0">
@@ -410,73 +398,5 @@
         </svg>
       </span>
     </a>
-  </div>
-}
-
-<!-- MODALE VIDÉO TEASER DU CAMPUS (HD CINÉMA) -->
-@if (showVideoModal) {
-  <div 
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-['Public_Sans',sans-serif]"
-    role="dialog" 
-    aria-modal="true"
-    aria-label="Vidéo de présentation de Vitalis Center"
-    (click)="closeVideoModal()"
-  >
-    <div 
-      class="bg-[var(--navy)] rounded-2xl shadow-2xl border border-white/20 max-w-3xl w-full overflow-hidden animate-fade-in-up"
-      (click)="$event.stopPropagation()"
-    >
-      <!-- En-tête de la modale vidéo -->
-      <div class="p-4 bg-[var(--navy)] border-b border-white/15 flex items-center justify-between text-white">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-[var(--or)] animate-ping"></span>
-          <span class="font-bold text-sm uppercase tracking-wide">Immersion Campus · Vitalis Center EUP</span>
-        </div>
-        <button 
-          type="button"
-          (click)="closeVideoModal()"
-          class="p-1 rounded text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-          title="Fermer la vidéo (Échap)"
-          aria-label="Fermer la vidéo"
-        >
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Corps de la modale vidéo -->
-      <div class="relative aspect-video bg-black flex items-center justify-center overflow-hidden">
-        <img 
-          src="assets/campus/lab-informatique.jpg" 
-          alt="Campus Vitalis Center" 
-          class="w-full h-full object-cover opacity-80"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30"></div>
-        <div class="absolute text-center px-6">
-          <div class="w-16 h-16 rounded-full bg-[var(--or)] text-[var(--navy)] flex items-center justify-center mx-auto mb-3 shadow-xl">
-            <svg class="w-8 h-8 ml-1 fill-current" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-          </div>
-          <h3 class="text-lg font-bold text-white mb-1 font-['Playfair_Display',serif]">Visite immersive des Ateliers & Laboratoires</h3>
-          <p class="text-sm text-[var(--ardoise)] max-w-md mx-auto">
-            Découvrez nos infrastructures modernes, bancs d'essais réels et formateurs de terrain au service de l'insertion professionnelle en RDC.
-          </p>
-        </div>
-      </div>
-
-      <!-- Pied de la modale vidéo -->
-      <div class="p-4 bg-[var(--navy)] border-t border-white/15 flex items-center justify-between">
-        <span class="text-sm text-[var(--ardoise)]">Établissement d'Utilité Publique agréé par l'État</span>
-        <button 
-          type="button" 
-          (click)="closeVideoModal()" 
-          class="px-4 py-1.5 bg-white/15 hover:bg-white/25 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
-        >
-          Fermer (Échap)
-        </button>
-      </div>
-    </div>
   </div>
 }

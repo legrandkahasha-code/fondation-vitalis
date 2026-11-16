@@ -274,14 +274,14 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     return [
       {
         id: 'officiel',
-        badge: this.settings.topbarTexte ? 'Tutelle Officielle · ' + this.settings.topbarTexte : 'Sous tutelle du Ministère de la Formation Professionnelle · RDC',
+        badge: '',
         badgeCouleur: '#2AA9A0',
         atelierTag: 'Campus Central · Titres d\'État',
         tabTitle: 'Présentation d\'État',
         titre: this.settings.heroTitre || 'Vitalis Center, la formation professionnelle reconnue par l\'État',
         sousTitre: this.settings.heroSousTitre || 'Vitalis Center EUP forme les professionnels, cadres et jeunes talents aux métiers d\'avenir sous la tutelle du Ministère de la Formation Professionnelle. Validation par compétences pratiques, encadrement expert et délivrance de certificats officiels infalsifiables.',
         imageUrl: this.getHeroImageUrl(),
-        statChiffre: this.settings.heroBadge1Texte || '94% Insertion',
+        statChiffre: this.settings.statsTauxReussite ? `${this.settings.statsTauxReussite}%` : '',
         statLabel: 'Insertion directe et stages garantis',
         ctaTexte: this.settings.heroCtaTexte || 'Postuler pour la Session 2026',
         ctaLien: this.settings.heroCtaLien || '#formations',
@@ -516,7 +516,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedArticle = null;
   }
 
-  
+
   calculerTempsLecture(contenu?: string): string {
     if (!contenu || !contenu.trim()) return '1 min';
     const mots = contenu.trim().split(/\s+/).length;
@@ -805,10 +805,14 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     return url;
   }
 
-  onImageError(event: Event, fallback = 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop'): void {
+  onImageError(event: Event, fallback?: string): void {
     const target = event.target as HTMLImageElement;
-    if (target && target.src !== fallback) {
-      target.src = fallback;
+    if (target) {
+      if (fallback && target.src !== fallback) {
+        target.src = fallback;
+      } else {
+        target.style.display = 'none';
+      }
     }
   }
 
@@ -833,7 +837,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
           return this.sanitizer.bypassSecurityTrustResourceUrl(`https://player.vimeo.com/video/${videoId}`);
         }
       }
-    } catch (e) {}
+    } catch (e) { }
     return null;
   }
 
@@ -848,7 +852,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
     private ngZone: NgZone
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.updateSafeMapUrl();
@@ -1270,14 +1274,16 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getHeroImageUrl(): string {
-    return this.formatImageUrl(this.settings.heroImage, 'assets/campus/lab-informatique.jpg');
+    if (!this.settings?.heroImage || this.settings?.heroImageDroitConfirme !== true) {
+      return '';
+    }
+    return this.formatImageUrl(this.settings.heroImage, '');
   }
 
   onHeroImageError(event: Event): void {
     const target = event.target as HTMLImageElement;
-    const fallback = 'assets/campus/lab-informatique.jpg';
-    if (target && target.src !== fallback) {
-      target.src = fallback;
+    if (target) {
+      target.style.display = 'none';
     }
   }
 

@@ -25,6 +25,7 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   @Input() heroNumeroAgrement: string = '';
   @Input() defaultHeroImage: string = '';
   @Input() reassurances: string[] = [];
+  @Input() settings: any = {};
 
   get reassuranceList(): string[] {
     if (this.reassurances && this.reassurances.length > 0) {
@@ -77,7 +78,7 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
         tabTitle: 'Campus Central',
         titre: 'Formation Professionnelle reconnue par l\'État',
         sousTitre: 'Formation par compétences pratiques et certificats officiels infalsifiables.',
-        imageUrl: this.defaultHeroImage || 'assets/campus/lab-informatique.jpg',
+        imageUrl: this.settings?.heroImageDroitConfirme ? (this.defaultHeroImage || this.settings?.heroImage || '') : '',
         statChiffre: '94% Insertion',
         statLabel: 'Stages et emplois garantis',
         ctaTexte: 'Postuler pour la Session 2026',
@@ -89,9 +90,17 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     return this.heroSlides[this.currentHeroIndex % this.heroSlides.length];
   }
 
-  private get prefersReducedMotion(): boolean {
+  get prefersReducedMotion(): boolean {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+    return false;
+  }
+
+  get isSaveDataEnabled(): boolean {
+    if (typeof navigator !== 'undefined') {
+      const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+      return !!conn?.saveData;
     }
     return false;
   }
@@ -210,9 +219,9 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   }
 
   onHeroImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    if (img && !img.src.includes('lab-informatique.jpg')) {
-      img.src = 'assets/campus/lab-informatique.jpg';
+    const img = event.target as HTMLElement;
+    if (img) {
+      img.style.display = 'none';
     }
   }
 
@@ -251,7 +260,7 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- SKELETON LOADER & SUIVI DE CHARGEMENT DES IMAGES (REC 5) ---
+  // --- SKELETON LOADER & SUIVI DE CHARGEMENT DES IMAGES ---
   loadedImages: { [slideId: string]: boolean } = {};
 
   onImageLoad(slideId: string): void {
@@ -263,45 +272,25 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     return !!this.loadedImages[slideId];
   }
 
-  // --- OPTIMISATION WEBP & SRCSET RESPONSIVE (REC 2) ---
-  private readonly CAMPUS_IMAGES = [
-    'lab-informatique',
-    'atelier-energie',
-    'centre-examen',
-    'salle-conferences',
-  ];
-
-  private getCampusBaseName(url: string | null | undefined): string | null {
-    if (!url) return null;
-    for (const name of this.CAMPUS_IMAGES) {
-      if (url.includes(name)) {
-        return name;
-      }
-    }
-    return null;
-  }
-
+  // --- OPTIMISATION WEBP & SRCSET RESPONSIVE ---
   getImageWebpMobile(url: string | null | undefined): string {
-    const base = this.getCampusBaseName(url);
-    if (base) {
-      return `assets/campus/${base}-mobile.webp`;
+    if (this.settings?.heroImageMobile) {
+      return this.settings.heroImageMobile;
     }
-    return url || 'assets/campus/lab-informatique-mobile.webp';
+    return url || '';
   }
 
   getImageWebpDesktop(url: string | null | undefined): string {
-    const base = this.getCampusBaseName(url);
-    if (base) {
-      return `assets/campus/${base}-desktop.webp`;
+    if (this.isSaveDataEnabled && this.settings?.heroImageMobile) {
+      return this.settings.heroImageMobile;
     }
-    return url || 'assets/campus/lab-informatique-desktop.webp';
+    return url || '';
   }
 
   getImageJpgMobile(url: string | null | undefined): string {
-    const base = this.getCampusBaseName(url);
-    if (base) {
-      return `assets/campus/${base}-mobile.jpg`;
+    if (this.settings?.heroImageMobile) {
+      return this.settings.heroImageMobile;
     }
-    return url || 'assets/campus/lab-informatique-mobile.jpg';
+    return url || '';
   }
 }
