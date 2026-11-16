@@ -158,7 +158,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                       </div>
                     </div>
 
-                    <!-- Contrôles d'upload et URL directe -->
+                    <!-- Contrôles d'upload sécurisé Sharp -->
                     <div class="md:col-span-8 space-y-2.5">
                       <input 
                         id="heroImageFileInput" 
@@ -176,31 +176,31 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                           class="btn btn-primary text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer shadow-xs"
                         >
                           <span>📁</span>
-                          <span>{{ uploadingHeroImage ? 'Téléversement en cours...' : 'Choisir une photo sur votre appareil' }}</span>
+                          <span>{{ uploadingHeroImage ? 'Optimisation Sharp en cours...' : 'Téléverser une photo (Sharp 1920x1080 & 768x1024)' }}</span>
                         </button>
                       </div>
 
-                      <div class="field">
-                        <label for="heroImageUrlInput" class="text-[11px] text-[#4B5157]">Ou coller une URL d'image web directe</label>
-                        <div class="flex items-center gap-2">
+                      <div *ngIf="settings.heroImageMobile" class="text-[11px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-200">
+                        📱 <strong>Version Smartphone générée :</strong> <span class="font-mono text-[10px]">{{ settings.heroImageMobile }}</span>
+                      </div>
+
+                      <!-- Confirmation Droit à l'image Hero -->
+                      <div class="p-3 bg-amber-50 border border-amber-200 rounded text-xs space-y-1.5">
+                        <label class="flex items-start gap-2 cursor-pointer font-semibold text-amber-900">
                           <input 
-                            id="heroImageUrlInput" 
-                            type="url" 
-                            [(ngModel)]="settings.heroImage" 
-                            name="heroImage" 
-                            placeholder="https://images.unsplash.com/..." 
-                            class="text-xs p-2 bg-white border border-[#D7DBDE] rounded-[2px] flex-1" 
+                            type="checkbox" 
+                            [(ngModel)]="settings.heroImageDroitConfirme" 
+                            name="heroImageDroitConfirme" 
+                            (change)="onHeroDroitImageChange()"
+                            class="mt-0.5 rounded text-amber-600 focus:ring-amber-500"
                           />
-                          <button 
-                            type="button" 
-                            (click)="sauvegarderHeroImageDirecte()"
-                            [disabled]="sauvegardantHeroImageDirecte"
-                            class="btn btn-secondary text-xs py-2 px-3 whitespace-nowrap cursor-pointer flex items-center gap-1 font-semibold text-[#124F80] border-[#124F80]"
-                            title="Enregistrer directement cette URL sans faire défiler la page"
-                          >
-                            <span>💾</span>
-                            <span>{{ sauvegardantHeroImageDirecte ? 'Enregistrement...' : 'Enregistrer' }}</span>
-                          </button>
+                          <span>Attestation des droits à l'image : Je confirme détenir l'autorisation expresse pour afficher cette photographie sur le Hero officiel (obligatoire pour affichage public).</span>
+                        </label>
+                        <div *ngIf="!settings.heroImageDroitConfirme && settings.heroImage" class="text-amber-800 font-medium text-[11px] pl-6">
+                          ⚠️ L'image du Hero est actuellement <strong>masquée en vitrine publique</strong>. Cochez cette case pour l'activer.
+                        </div>
+                        <div *ngIf="settings.heroImageDroitAuteur" class="text-[10px] text-amber-800 font-mono pl-6">
+                          Dernière validation : {{ settings.heroImageDroitAuteur }} ({{ settings.heroImageDroitDate | date:'dd/MM/yyyy HH:mm' }})
                         </div>
                       </div>
                     </div>
@@ -277,6 +277,98 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                     <div class="field">
                       <label class="text-[11px] text-[#C8902A]">Point de Réassurance 3</label>
                       <input type="text" [(ngModel)]="settings.heroReassurance3" name="heroReassurance3" placeholder="Ex : Immersion professionnelle active" class="text-xs" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Visibilité & Responsive des Composants du Hero -->
+                <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[4px] space-y-3">
+                  <div class="font-bold text-[#124F80] text-xs flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                      <span>🎛️</span> Interrupteurs de Visibilité des Blocs du Hero
+                    </span>
+                    <span class="text-[10px] text-[#4B5157]">Contrôle séparé Desktop / Mobile (&lt; 768px)</span>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <!-- Bloc Tutelle -->
+                    <div class="p-2.5 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#124F80]">🏛️ Tutelle Ministérielle</div>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroTutelleVisible" name="heroTutelleVisible" class="rounded text-[#1C75BC]" />
+                        <span>Visible Desktop</span>
+                      </label>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroTutelleVisibleMobile" name="heroTutelleVisibleMobile" class="rounded text-[#1C75BC]" />
+                        <span>Visible Mobile (&lt;768px)</span>
+                      </label>
+                    </div>
+
+                    <!-- Bloc Statistiques Chiffres -->
+                    <div class="p-2.5 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#276B44]">📊 Bande Statistiques</div>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroStatsVisible" name="heroStatsVisible" class="rounded text-[#276B44]" />
+                        <span>Visible Desktop</span>
+                      </label>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroStatsVisibleMobile" name="heroStatsVisibleMobile" class="rounded text-[#276B44]" />
+                        <span>Visible Mobile (&lt;768px)</span>
+                      </label>
+                    </div>
+
+                    <!-- Bloc Réassurances -->
+                    <div class="p-2.5 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#C8902A]">🛡️ Puces Réassurance</div>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroReassurancesVisible" name="heroReassurancesVisible" class="rounded text-[#C8902A]" />
+                        <span>Visible Desktop</span>
+                      </label>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroReassurancesVisibleMobile" name="heroReassurancesVisibleMobile" class="rounded text-[#C8902A]" />
+                        <span>Visible Mobile (&lt;768px)</span>
+                      </label>
+                    </div>
+
+                    <!-- Bloc Profils Apprenants -->
+                    <div class="p-2.5 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#1C75BC]">👥 Profils / Inscrits</div>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroProfilsVisible" name="heroProfilsVisible" class="rounded text-[#1C75BC]" />
+                        <span>Visible Desktop</span>
+                      </label>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroProfilsVisibleMobile" name="heroProfilsVisibleMobile" class="rounded text-[#1C75BC]" />
+                        <span>Visible Mobile (&lt;768px)</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Paramètres Généraux de la Section Campus -->
+                <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[4px] space-y-3">
+                  <div class="font-bold text-[#124F80] text-xs flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                      <span>🏫</span> Titres & Textes Généraux de la Section Campus
+                    </span>
+                    <span class="text-[10px] text-amber-700 font-medium">⚠️ Si le Titre est vide, la section campus est masquée en vitrine publique</span>
+                  </div>
+
+                  <div class="space-y-3">
+                    <div class="field">
+                      <label class="text-[11px] text-[#124F80]">Sur-titre (Eyebrow / Surtitre)</label>
+                      <input type="text" [(ngModel)]="settings.campusEyebrow" name="campusEyebrow" placeholder="Ex : Infrastructures & Espaces Techniques" class="text-xs" />
+                    </div>
+
+                    <div class="field">
+                      <label class="text-[11px] text-[#124F80] font-bold">Titre Principal de la Section Campus *</label>
+                      <input type="text" [(ngModel)]="settings.campusTitre" name="campusTitre" placeholder="Ex : Campus d'Excellence : Ateliers Pratiques & Laboratoires" class="text-xs font-bold" />
+                      <div class="hint">Obligatoire pour afficher la section en page d'accueil. Si vide, la section ne sera pas affichée aux visiteurs.</div>
+                    </div>
+
+                    <div class="field">
+                      <label class="text-[11px] text-[#124F80]">Sous-titre explicatif</label>
+                      <textarea [(ngModel)]="settings.campusSousTitre" name="campusSousTitre" rows="2" placeholder="Ex : Découvrez nos installations aux normes internationales..." class="text-xs"></textarea>
                     </div>
                   </div>
                 </div>
@@ -366,6 +458,10 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                     <label class="text-[#F0791E]">Taux de Réussite (%)</label>
                     <input type="number" [(ngModel)]="settings.statsTauxReussite" name="statsTauxReussite" min="0" max="100" class="font-bold text-lg text-[#F0791E]" />
                     <div class="hint">Affiché avec « % »</div>
+                  </div>
+                  <div class="field mt-2">
+                    <label class="text-[10px] text-[#4B5157]">Source justificative (ex : Promotion 2024-2025)</label>
+                    <input type="text" [(ngModel)]="settings.statsTauxSource" name="statsTauxSource" placeholder="Ex : Registre des diplômés MIN-FP 2024-2025" class="text-xs" />
                   </div>
                 </div>
 
@@ -704,7 +800,13 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
         <div *ngIf="activeTab === 'campus'" class="space-y-6 animate-fade-in-up">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[2px] border border-[#D7DBDE] shadow-2xs">
             <div>
-              <div class="label" style="margin-bottom: 2px;">Infrastructures & Espaces Techniques</div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="label" style="margin-bottom: 0;">Infrastructures & Espaces Techniques</span>
+                <span class="text-xs px-2 py-0.5 rounded font-bold border"
+                      [ngClass]="getNombreCampusPublies() > 4 ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-emerald-50 text-emerald-800 border-emerald-300'">
+                  Publiés : {{ getNombreCampusPublies() }} / 4 max
+                </span>
+              </div>
               <h3 class="text-lg font-bold text-[#1B1D1F]">Campus, Ateliers Pratiques & Laboratoires</h3>
               <p class="text-xs text-[#4B5157] mt-0.5">Présentez les installations, plateaux techniques et équipements professionnels du centre.</p>
             </div>
@@ -712,6 +814,14 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               <span>+</span>
               <span>Ajouter un espace campus</span>
             </button>
+          </div>
+
+          <!-- Avertissement si titre Campus vide : section invisible en vitrine -->
+          <div *ngIf="!settings.campusTitre" class="p-3 bg-amber-50 border border-amber-300 rounded text-xs text-amber-900 flex items-center gap-2">
+            <span class="text-base">⚠️</span>
+            <div>
+              <strong>Section Campus masquée en vitrine publique :</strong> Aucun titre principal n'est configuré pour le campus. Renseignez-le dans l'onglet « Paramètres Généraux ».
+            </div>
           </div>
 
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -735,10 +845,12 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                     {{ c.badge }}
                   </span>
                 </div>
-                <div class="absolute top-2.5 right-2.5">
-                  <span class="tag" [ngClass]="c.actif !== false ? 'valide' : 'attente'">
-                    {{ c.actif !== false ? 'Visible' : 'Masqué' }}
+                <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                  <span class="tag" [ngClass]="c.statut === 'PUBLIE' ? 'valide' : 'attente'">
+                    {{ c.statut === 'PUBLIE' ? 'Publié' : 'Brouillon' }}
                   </span>
+                  <span *ngIf="c.droitImageConfirme" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold" title="Droits à l'image confirmés">✓ Droits</span>
+                  <span *ngIf="!c.droitImageConfirme && (c.photoUrl || c.photo)" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500 text-white font-bold" title="Droits à l'image non confirmés">⚠️ Sans droit</span>
                 </div>
               </div>
 
@@ -751,16 +863,29 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   </div>
                 </div>
 
-                <div class="pt-3 mt-3 border-t border-[#F5F6F7] flex items-center justify-end gap-1.5">
-                  <button (click)="toggleCampusActif(c)" class="btn btn-ghost text-xs py-1 px-2.5" [title]="c.actif !== false ? 'Masquer' : 'Afficher'">
-                    {{ c.actif !== false ? '👁️' : '✅' }}
-                  </button>
-                  <button (click)="editerCampus(c)" class="btn btn-ghost text-xs py-1 px-2.5" title="Modifier">
-                    ✏️
-                  </button>
-                  <button (click)="supprimerCampus(c.id!)" class="btn btn-ghost text-xs py-1 px-2.5 text-[#ED1C24] border-[#ED1C24]" title="Supprimer">
-                    🗑️
-                  </button>
+                <div class="pt-3 mt-3 border-t border-[#F5F6F7] flex items-center justify-between">
+                  <!-- Contrôle d'Ordre (Monter / Descendre) -->
+                  <div class="flex items-center gap-1 text-[11px] text-[#4B5157]">
+                    <span class="font-mono text-[10px] px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200">#{{ c.ordre || 0 }}</span>
+                    <button type="button" (click)="monterCampus(c)" [disabled]="isPremierCampus(c)" class="btn btn-ghost text-xs p-1 h-7 w-7 flex items-center justify-center cursor-pointer disabled:opacity-30 hover:bg-slate-100 rounded" title="Monter d'un rang">
+                      ▲
+                    </button>
+                    <button type="button" (click)="descendreCampus(c)" [disabled]="isDernierCampus(c)" class="btn btn-ghost text-xs p-1 h-7 w-7 flex items-center justify-center cursor-pointer disabled:opacity-30 hover:bg-slate-100 rounded" title="Descendre d'un rang">
+                      ▼
+                    </button>
+                  </div>
+
+                  <div class="flex items-center gap-1.5">
+                    <button (click)="toggleCampusActif(c)" class="btn btn-ghost text-xs py-1 px-2.5" [title]="c.actif !== false ? 'Masquer' : 'Afficher'">
+                      {{ c.actif !== false ? '👁️' : '✅' }}
+                    </button>
+                    <button (click)="editerCampus(c)" class="btn btn-ghost text-xs py-1 px-2.5" title="Modifier">
+                      ✏️
+                    </button>
+                    <button (click)="supprimerCampus(c.id!)" class="btn btn-ghost text-xs py-1 px-2.5 text-[#ED1C24] border-[#ED1C24]" title="Supprimer">
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1611,9 +1736,18 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                 <input type="text" [(ngModel)]="campusEnCours.titre" name="titre" required class="font-bold text-sm" placeholder="Ex : Laboratoire Informatique & Cloud" />
               </div>
 
-              <div class="field">
-                <label>Badge descriptif</label>
-                <input type="text" [(ngModel)]="campusEnCours.badge" name="badge" placeholder="Ex : 50 Postes Haute Performance" />
+              <div class="grid grid-cols-2 gap-3">
+                <div class="field">
+                  <label>Statut de publication *</label>
+                  <select [(ngModel)]="campusEnCours.statut" name="statut" class="text-xs p-2 bg-white border border-[#D7DBDE] rounded-[2px] w-full font-bold">
+                    <option value="BROUILLON">Brouillon (Non visible)</option>
+                    <option value="PUBLIE">Publié (Vitrine publique)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Badge descriptif (Eyebrow)</label>
+                  <input type="text" [(ngModel)]="campusEnCours.badge" name="badge" placeholder="Ex : 50 Postes Haute Performance" />
+                </div>
               </div>
 
               <div class="field">
@@ -1628,11 +1762,48 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
 
               <!-- Upload Photo Campus -->
               <div class="p-3 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2">
-                <label class="font-bold text-[#124F80] block">📸 Photo HD de l'Espace</label>
-                <div *ngIf="campusEnCours.photoUrl" class="relative w-full h-28 rounded overflow-hidden border border-[#D7DBDE] mb-2 bg-slate-100">
-                  <img [src]="getMediaUrl(campusEnCours.photoUrl)" alt="Aperçu photo" class="w-full h-full object-cover" />
+                <label class="font-bold text-[#124F80] block">📸 Photographie Technique de l'Espace (Pipeline Sharp)</label>
+                <div *ngIf="campusEnCours.photoUrl" class="grid grid-cols-2 gap-2 mb-2">
+                  <div class="relative h-24 rounded overflow-hidden border border-[#D7DBDE] bg-slate-100">
+                    <img [src]="getMediaUrl(campusEnCours.photoUrl)" alt="Aperçu desktop" class="w-full h-full object-cover" />
+                    <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1 py-0.5 rounded font-mono">Desktop WebP</span>
+                  </div>
+                  <div *ngIf="campusEnCours.photoUrlMobile" class="relative h-24 rounded overflow-hidden border border-[#D7DBDE] bg-slate-100">
+                    <img [src]="getMediaUrl(campusEnCours.photoUrlMobile)" alt="Aperçu mobile" class="w-full h-full object-cover" />
+                    <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1 py-0.5 rounded font-mono">Mobile WebP</span>
+                  </div>
                 </div>
-                <input type="file" accept="image/*" (change)="onCampusPhotoSelected($event)" class="text-xs mb-1" />
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onCampusPhotoSelected($event)" class="text-xs mb-1" />
+                <p class="text-[10px] text-slate-500">Pipeline Sharp automatique : génération desktop (800x600 WebP) et smartphone (480x360 WebP), purge EXIF.</p>
+              </div>
+
+              <!-- Accessibilité : photoAlt -->
+              <div class="field">
+                <label>Description alternative de l'image (photoAlt) {{ campusEnCours.statut === 'PUBLIE' ? '*' : '(obligatoire à la publication)' }}</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="campusEnCours.photoAlt" 
+                  name="photoAlt" 
+                  placeholder="Ex : Rangées de postes de travail avec ordinateurs professionnels" 
+                  class="text-xs" 
+                />
+                <p class="text-[10px] text-slate-500 mt-0.5">Décrivez précisément la scène pour les personnes déficientes visuelles (au moins 5 caractères, sans « [MIGRATION] »).</p>
+              </div>
+
+              <!-- Droit à l'image -->
+              <div class="p-3 bg-amber-50 border border-amber-200 rounded text-xs space-y-1.5">
+                <label class="flex items-start gap-2 cursor-pointer font-semibold text-amber-900">
+                  <input 
+                    type="checkbox" 
+                    [(ngModel)]="campusEnCours.droitImageConfirme" 
+                    name="droitImageConfirme" 
+                    class="mt-0.5 rounded text-amber-600 focus:ring-amber-500"
+                  />
+                  <span>Attestation des droits à l'image : Je confirme détenir l'autorisation expresse pour diffusion en vitrine officielle (obligatoire pour statut « Publié »).</span>
+                </label>
+                <div *ngIf="campusEnCours.droitImageAuteur" class="text-[10px] text-amber-800 font-mono pl-6">
+                  Dernière confirmation enregistrée par : {{ campusEnCours.droitImageAuteur }} ({{ campusEnCours.droitImageDate | date:'dd/MM/yyyy HH:mm' }})
+                </div>
               </div>
 
               <div class="grid grid-cols-2 gap-3 pt-2">
@@ -1641,8 +1812,8 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   <input type="number" [(ngModel)]="campusEnCours.ordre" name="ordre" />
                 </div>
                 <div class="flex items-center gap-2 pt-4">
-                  <input type="checkbox" [(ngModel)]="campusEnCours.actif" name="actif" id="campusActif" class="cursor-pointer w-4 h-4" />
-                  <label for="campusActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Visible en vitrine</label>
+                  <input type="checkbox" [(ngModel)]="campusEnCours.afficherLanding" name="afficherLanding" id="campusAfficherLanding" class="cursor-pointer w-4 h-4" />
+                  <label for="campusAfficherLanding" class="font-semibold cursor-pointer text-[#1B1D1F]">Afficher sur la vitrine</label>
                 </div>
               </div>
 
@@ -2248,6 +2419,18 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       heroSousTitre: this.settings.heroSousTitre || '',
       heroNumeroAgrement: this.settings.heroNumeroAgrement || '',
       heroImage: this.settings.heroImage || '',
+      heroTutelleVisible: this.settings.heroTutelleVisible !== false,
+      heroTutelleVisibleMobile: this.settings.heroTutelleVisibleMobile !== false,
+      heroStatsVisible: this.settings.heroStatsVisible !== false,
+      heroStatsVisibleMobile: this.settings.heroStatsVisibleMobile !== false,
+      heroReassurancesVisible: this.settings.heroReassurancesVisible !== false,
+      heroReassurancesVisibleMobile: this.settings.heroReassurancesVisibleMobile !== false,
+      heroProfilsVisible: this.settings.heroProfilsVisible !== false,
+      heroProfilsVisibleMobile: this.settings.heroProfilsVisibleMobile !== false,
+      statsTauxSource: this.settings.statsTauxSource || '',
+      campusEyebrow: this.settings.campusEyebrow || '',
+      campusTitre: this.settings.campusTitre || '',
+      campusSousTitre: this.settings.campusSousTitre || '',
       heroBadge1Texte: this.settings.heroBadge1Texte || '',
       heroBadge2Texte: this.settings.heroBadge2Texte || '',
       heroBadge3Texte: this.settings.heroBadge3Texte || '',
@@ -2440,7 +2623,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   rechargerCampus(): void {
     this.landingService.getCampus().subscribe({
       next: (list) => {
-        this.campusList = list;
+        this.campusList = (list || []).sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
         this.cdr.markForCheck();
       },
       error: () => this.toast.error('Erreur lors du chargement des espaces campus.'),
@@ -2454,6 +2637,11 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       badge: '',
       equipements: '',
       photoUrl: '',
+      photoUrlMobile: '',
+      photoAlt: '',
+      statut: 'BROUILLON',
+      droitImageConfirme: false,
+      afficherLanding: true,
       ordre: this.campusList.length + 1,
       actif: true,
     };
@@ -2481,21 +2669,46 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   onCampusPhotoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+      const file = input.files[0];
+      this.toast.info('Traitement Sharp et téléversement en cours...');
+      this.landingService.uploadCampusPhoto(file).subscribe({
         next: (res) => {
-          this.campusEnCours.photoUrl = res.url;
-          this.toast.success('Photo du campus téléversée.');
+          this.campusEnCours.photoUrl = res.photoUrl;
+          this.campusEnCours.photoUrlMobile = res.photoUrlMobile;
+          // Règle 10 : réinitialisation du droit à l'image à false lors du changement d'image
+          this.campusEnCours.droitImageConfirme = false;
+          this.toast.success('Photo traitée avec succès (WebP desktop 800x600 et mobile 480x360).');
+          this.toast.info('Attention : le droit à l\'image a été réinitialisé. Veuillez cocher la case d\'attestation avant de publier.');
           this.cdr.markForCheck();
         },
-        error: () => this.toast.error('Erreur lors du téléversement de la photo.'),
+        error: (err) => {
+          const msg = err?.error?.message || 'Erreur lors du téléversement de la photo.';
+          this.toast.error(msg);
+        },
       });
     }
   }
 
   sauvegarderCampusModal(): void {
     if (!this.campusEnCours.titre || !this.campusEnCours.description || !this.campusEnCours.equipements) {
-      this.toast.error('Veuillez remplir les champs obligatoires.');
+      this.toast.error('Veuillez remplir les champs obligatoires (Titre, Description, Équipements).');
       return;
+    }
+
+    const isPublie = this.campusEnCours.statut === 'PUBLIE';
+    if (isPublie) {
+      if (!this.campusEnCours.photoUrl || !this.campusEnCours.photoUrl.startsWith('/uploads/campus/')) {
+        this.toast.error('Pour publier un atelier, une photo téléversée (/uploads/campus/...) est obligatoire.');
+        return;
+      }
+      if (!this.campusEnCours.photoAlt || this.campusEnCours.photoAlt.trim().length < 5 || this.campusEnCours.photoAlt.startsWith('[MIGRATION]')) {
+        this.toast.error('Pour publier un atelier, le texte alternatif (photoAlt) est obligatoire (au moins 5 caractères, sans préfixe [MIGRATION]).');
+        return;
+      }
+      if (!this.campusEnCours.droitImageConfirme) {
+        this.toast.error('Pour publier un atelier, vous devez obligatoirement confirmer la détention des droits à l\'image.');
+        return;
+      }
     }
 
     const payload: Partial<LandingPageCampus> = {
@@ -2504,6 +2717,11 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       badge: this.campusEnCours.badge || '',
       equipements: this.campusEnCours.equipements,
       photoUrl: this.campusEnCours.photoUrl || '',
+      photoUrlMobile: this.campusEnCours.photoUrlMobile || '',
+      photoAlt: this.campusEnCours.photoAlt || '',
+      statut: this.campusEnCours.statut || 'BROUILLON',
+      droitImageConfirme: Boolean(this.campusEnCours.droitImageConfirme),
+      afficherLanding: this.campusEnCours.afficherLanding !== undefined ? Boolean(this.campusEnCours.afficherLanding) : true,
       ordre: Number(this.campusEnCours.ordre) || 0,
       actif: this.campusEnCours.actif !== undefined ? Boolean(this.campusEnCours.actif) : true,
     };
@@ -2515,7 +2733,10 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           this.modalCampusVisible = false;
           this.rechargerCampus();
         },
-        error: () => this.toast.error('Erreur lors de la mise à jour.'),
+        error: (err) => {
+          const msg = err?.error?.message || 'Erreur lors de la mise à jour.';
+          this.toast.error(msg);
+        },
       });
     } else {
       this.landingService.createCampus(payload as any).subscribe({
@@ -2524,7 +2745,10 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           this.modalCampusVisible = false;
           this.rechargerCampus();
         },
-        error: () => this.toast.error('Erreur lors de la création.'),
+        error: (err) => {
+          const msg = err?.error?.message || 'Erreur lors de la création.';
+          this.toast.error(msg);
+        },
       });
     }
   }
@@ -2537,6 +2761,68 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
         this.rechargerCampus();
       },
       error: () => this.toast.error('Erreur lors de la suppression.'),
+    });
+  }
+
+  getNombreCampusPublies(): number {
+    return (this.campusList || []).filter((c) => c.statut === 'PUBLIE').length;
+  }
+
+  isPremierCampus(c: LandingPageCampus): boolean {
+    if (!this.campusList || this.campusList.length === 0) return true;
+    return this.campusList[0]?.id === c.id;
+  }
+
+  isDernierCampus(c: LandingPageCampus): boolean {
+    if (!this.campusList || this.campusList.length === 0) return true;
+    return this.campusList[this.campusList.length - 1]?.id === c.id;
+  }
+
+  monterCampus(c: LandingPageCampus): void {
+    const idx = this.campusList.findIndex((item) => item.id === c.id);
+    if (idx <= 0) return;
+    const prev = this.campusList[idx - 1];
+    const prevOrdre = prev.ordre ?? idx - 1;
+    const currentOrdre = c.ordre ?? idx;
+
+    const newCurrentOrdre = prevOrdre;
+    const newPrevOrdre = currentOrdre === prevOrdre ? prevOrdre + 1 : currentOrdre;
+
+    this.landingService.updateCampus(c.id!, { ordre: newCurrentOrdre }).subscribe({
+      next: () => {
+        this.landingService.updateCampus(prev.id!, { ordre: newPrevOrdre }).subscribe({
+          next: () => {
+            this.toast.success(`Ordre modifié : « ${c.titre} » déplacé vers le haut.`);
+            this.rechargerCampus();
+          },
+          error: () => this.rechargerCampus(),
+        });
+      },
+      error: () => this.toast.error('Erreur lors du changement d’ordre.'),
+    });
+  }
+
+  descendreCampus(c: LandingPageCampus): void {
+    const idx = this.campusList.findIndex((item) => item.id === c.id);
+    if (idx < 0 || idx >= this.campusList.length - 1) return;
+    const next = this.campusList[idx + 1];
+    const nextOrdre = next.ordre ?? idx + 1;
+    const currentOrdre = c.ordre ?? idx;
+
+    const newCurrentOrdre = nextOrdre;
+    const newNextOrdre = currentOrdre === nextOrdre ? nextOrdre - 1 : currentOrdre;
+
+    this.landingService.updateCampus(c.id!, { ordre: newCurrentOrdre }).subscribe({
+      next: () => {
+        this.landingService.updateCampus(next.id!, { ordre: newNextOrdre }).subscribe({
+          next: () => {
+            this.toast.success(`Ordre modifié : « ${c.titre} » déplacé vers le bas.`);
+            this.rechargerCampus();
+          },
+          error: () => this.rechargerCampus(),
+        });
+      },
+      error: () => this.toast.error('Erreur lors du changement d’ordre.'),
     });
   }
 
@@ -2902,33 +3188,63 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       const file = input.files[0];
       const fileName = file.name;
       this.uploadingHeroImage = true;
+      this.toast.info('Traitement Sharp du Hero en cours (1920x1080 + mobile 768x1024)...');
       this.cdr.markForCheck();
-      this.landingService.uploadActualiteMedia(file).subscribe({
+      this.landingService.uploadHeroImage(file).subscribe({
         next: (res) => {
-          this.settings.heroImage = res.url;
-          // Sauvegarde automatique et immédiate en base de données PostgreSQL
-          this.landingService.updateSettings({ heroImage: res.url }).subscribe({
+          this.settings.heroImage = res.heroImage;
+          this.settings.heroImageMobile = res.heroImageMobile;
+          // Règle 10 : à chaque changement d'image, le droit à l'image repasse à false
+          this.settings.heroImageDroitConfirme = false;
+
+          // Sauvegarde automatique en base de données
+          this.landingService.updateSettings({
+            heroImage: res.heroImage,
+            heroImageMobile: res.heroImageMobile,
+            heroImageDroitConfirme: false,
+          }).subscribe({
             next: (saved) => {
               this.settings = { ...this.settings, ...saved };
               this.uploadingHeroImage = false;
               notifyLandingSettingsChanged();
-              this.toast.success(`Photo du Hero « ${fileName} » téléversée et enregistrée en direct !`);
+              this.toast.success(`Photo du Hero « ${fileName} » optimisée et enregistrée !`);
+              this.toast.info('Attention : cochez la case d\'attestation des droits à l\'image pour autoriser son affichage sur la vitrine publique.');
               this.cdr.markForCheck();
             },
             error: () => {
               this.uploadingHeroImage = false;
-              this.toast.info('Photo téléversée mais non enregistrée automatiquement. Pensez à cliquer sur « Enregistrer tous les paramètres » en bas.');
+              this.toast.info('Photo téléversée mais non enregistrée automatiquement. Pensez à cliquer sur « Enregistrer tous les paramètres ».');
               this.cdr.markForCheck();
             },
           });
         },
-        error: () => {
+        error: (err) => {
           this.uploadingHeroImage = false;
-          this.toast.error('Erreur lors du téléversement de la photo.');
+          const msg = err?.error?.message || 'Erreur lors du téléversement de la photo.';
+          this.toast.error(msg);
           this.cdr.markForCheck();
         },
       });
     }
+  }
+
+  onHeroDroitImageChange(): void {
+    const confirme = Boolean(this.settings.heroImageDroitConfirme);
+    this.landingService.updateSettings({ heroImageDroitConfirme: confirme }).subscribe({
+      next: (saved) => {
+        this.settings = { ...this.settings, ...saved };
+        notifyLandingSettingsChanged();
+        if (confirme) {
+          this.toast.success('Droits à l\'image confirmés : l\'image du Hero est désormais visible en vitrine publique.');
+        } else {
+          this.toast.info('Droits retirés : l\'image du Hero est désormais masquée sur la vitrine publique.');
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.toast.error('Erreur lors de la mise à jour des droits à l\'image.');
+      },
+    });
   }
 
   supprimerHeroImage(): void {
