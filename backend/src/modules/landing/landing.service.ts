@@ -79,18 +79,85 @@ export class LandingService {
       return LandingService.cachedLandingData.data;
     }
 
-    // 1. Récupérer ou initialiser les paramètres
-    let settings = await this.db.landingPageSettings.findFirst();
+    // 1. Récupérer les paramètres publics avec projection explicite (select restreint)
+    const publicSettingsSelect = {
+      id: true,
+      topbarTexte: true,
+      heroTitre: true,
+      heroSousTitre: true,
+      heroNumeroAgrement: true,
+      heroImage: true,
+      heroImageMobile: true,
+      heroImageDroitConfirme: true,
+      heroCtaTexte: true,
+      heroCtaLien: true,
+      heroCtaSecondaireTexte: true,
+      heroCtaSecondaireLien: true,
+      heroReassurance1: true,
+      heroReassurance2: true,
+      heroReassurance3: true,
+      statsLaureats: true,
+      statsTauxReussite: true,
+      statsFilieres: true,
+      statsTitresVerif: true,
+      statsTauxSource: true,
+      campusEyebrow: true,
+      campusTitre: true,
+      campusSousTitre: true,
+      ctaTitre: true,
+      ctaSousTitre: true,
+      formationsSurMesureTitre: true,
+      formationsSurMesureDescription: true,
+      verifTitre: true,
+      verifSousTitre: true,
+      verifExempleNumero: true,
+      contactAdresse: true,
+      contactEmail: true,
+      contactTelephone: true,
+      contactHoraires: true,
+      contactWhatsapp: true,
+      whatsappMessage: true,
+      whatsappActif: true,
+      footerDescription: true,
+      footerTutelleTexte: true,
+      footerCopyright: true,
+      footerBarreTexte: true,
+      videoActif: true,
+      videoSousTitre: true,
+      videoTitre: true,
+      videoDescription: true,
+      videoBoutonPrincipal: true,
+      videoBoutonSecondaire: true,
+      videoBoutonSecondaireUrl: true,
+      videoPresentationUrl: true,
+      videoPosterUrl: true,
+      videoBadgeHaut: true,
+      videoBadgeBas: true,
+      videoTitreOverlay: true,
+      videoSousTitreOverlay: true,
+      videoLegende: true,
+      videoDuree: true,
+      socialLinkedin: true,
+      socialFacebook: true,
+      socialYoutube: true,
+      mapEmbedUrl: true,
+      updatedAt: true,
+    };
+
+    let settings = await this.db.landingPageSettings.findFirst({
+      select: publicSettingsSelect,
+    });
     if (!settings) {
-      settings = await this.seedDefaultSettings();
+      await this.seedDefaultSettings();
+      settings = await this.db.landingPageSettings.findFirst({
+        select: publicSettingsSelect,
+      });
     }
     if (settings) {
       if (settings.heroImageDroitConfirme !== true) {
         settings.heroImage = null;
         settings.heroImageMobile = null;
       }
-      delete (settings as any).heroImageDroitAuteur;
-      delete (settings as any).heroImageDroitDate;
     }
 
     // 2. Récupérer les sections actives classées par ordre
@@ -1219,20 +1286,20 @@ export class LandingService {
         whatsappMessage: DEFAULT_WHATSAPP_MESSAGE,
         whatsappActif: true,
         videoActif: true,
-        videoSousTitre: 'Vidéo Institutionnelle',
-        videoTitre: 'Découvrez Vitalis Center en Action',
-        videoDescription: 'Visionnez la présentation officielle de notre établissement d\'utilité publique : témoignages de formateurs, immersion en atelier et parcours des diplômés.',
-        videoBoutonPrincipal: 'Lancer la présentation (3 min)',
-        videoBoutonSecondaire: 'Prendre rendez-vous sur place',
-        videoBoutonSecondaireUrl: '#contact',
-        videoPresentationUrl: 'https://www.youtube-nocookie.com/embed/9No-FiEInLA?rel=0',
-        videoPosterUrl: 'assets/actualites/actu-lms-deploiement.jpg',
-        videoBadgeHaut: 'VITALIS CENTER EUP',
-        videoBadgeBas: 'INNOVATION NATIONALE',
-        videoTitreOverlay: 'Déploiement National du Système Numérique & Registre Sécurisé',
-        videoSousTitreOverlay: 'Centre de Formation Professionnelle Agréé · Kinshasa, RDC',
-        videoLegende: 'Reportage Ministère de la Formation Professionnelle',
-        videoDuree: '03:15',
+        videoSousTitre: null,
+        videoTitre: null,
+        videoDescription: null,
+        videoBoutonPrincipal: null,
+        videoBoutonSecondaire: null,
+        videoBoutonSecondaireUrl: null,
+        videoPresentationUrl: null,
+        videoPosterUrl: null,
+        videoBadgeHaut: null,
+        videoBadgeBas: null,
+        videoTitreOverlay: null,
+        videoSousTitreOverlay: null,
+        videoLegende: null,
+        videoDuree: null,
         socialLinkedin: 'https://linkedin.com',
         socialFacebook: 'https://facebook.com',
         socialYoutube: 'https://youtube.com',

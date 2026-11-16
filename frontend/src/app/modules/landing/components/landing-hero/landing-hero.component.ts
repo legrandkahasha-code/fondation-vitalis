@@ -79,8 +79,6 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
         titre: 'Formation Professionnelle reconnue par l\'État',
         sousTitre: 'Formation par compétences pratiques et certificats officiels infalsifiables.',
         imageUrl: this.settings?.heroImageDroitConfirme ? (this.defaultHeroImage || this.settings?.heroImage || '') : '',
-        statChiffre: '94% Insertion',
-        statLabel: 'Stages et emplois garantis',
         ctaTexte: 'Postuler pour la Session 2026',
         ctaLien: '#formations',
         ctaSecondaireTexte: 'Télécharger la Brochure (PDF)',

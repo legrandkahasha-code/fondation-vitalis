@@ -64,15 +64,13 @@ export interface FaqDisplayItem {
 
 export interface HeroSlideItem {
   id: string;
-  badge: string;
-  badgeCouleur: string;
-  atelierTag: string;
+  badge?: string;
+  badgeCouleur?: string;
+  atelierTag?: string;
   tabTitle: string;
   titre: string;
   sousTitre: string;
   imageUrl: string;
-  statChiffre: string;
-  statLabel: string;
   ctaTexte: string;
   ctaLien: string;
   ctaSecondaireTexte?: string;
@@ -281,8 +279,6 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         titre: this.settings.heroTitre || 'Vitalis Center, la formation professionnelle reconnue par l\'État',
         sousTitre: this.settings.heroSousTitre || 'Vitalis Center EUP forme les professionnels, cadres et jeunes talents aux métiers d\'avenir sous la tutelle du Ministère de la Formation Professionnelle. Validation par compétences pratiques, encadrement expert et délivrance de certificats officiels infalsifiables.',
         imageUrl: this.getHeroImageUrl(),
-        statChiffre: this.settings.statsTauxReussite ? `${this.settings.statsTauxReussite}%` : '',
-        statLabel: 'Insertion directe et stages garantis',
         ctaTexte: this.settings.heroCtaTexte || 'Postuler pour la Session 2026',
         ctaLien: this.settings.heroCtaLien || '#formations',
         ctaSecondaireTexte: this.settings.heroCtaSecondaireTexte || 'Télécharger la Brochure (PDF)',

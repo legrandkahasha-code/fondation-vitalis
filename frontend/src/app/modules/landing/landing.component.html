@@ -764,14 +764,16 @@
                 }
 
                 <div class="pt-2 flex flex-wrap gap-3">
-                  <button 
-                    type="button"
-                    (click)="openVideoModal()" 
-                    class="btn bg-[var(--or)] hover:bg-[var(--or)]/90 text-[var(--navy)] py-2.5 px-5 font-extrabold text-sm rounded-xl shadow-md inline-flex items-center gap-2 cursor-pointer transition-transform hover:scale-102"
-                  >
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    <span>{{ settings.videoBoutonPrincipal || 'Lancer la vidéo' }}</span>
-                  </button>
+                  @if (settings.videoBoutonPrincipal) {
+                    <button 
+                      type="button"
+                      (click)="openVideoModal()" 
+                      class="btn bg-[var(--or)] hover:bg-[var(--or)]/90 text-[var(--navy)] py-2.5 px-5 font-extrabold text-sm rounded-xl shadow-md inline-flex items-center gap-2 cursor-pointer transition-transform hover:scale-102"
+                    >
+                      <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      <span>{{ settings.videoBoutonPrincipal }}</span>
+                    </button>
+                  }
 
                   @if (settings.videoBoutonSecondaire && settings.videoBoutonSecondaireUrl) {
                     <a 
