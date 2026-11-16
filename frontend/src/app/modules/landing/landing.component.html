@@ -690,9 +690,7 @@
                         }
                         <img 
                           [src]="esp.photoUrl || esp.photo" 
-                          alt="Atelier technique et équipement de formation Vitalis Center"
                           [alt]="esp.photoAlt" 
-                          title="Atelier technique Vitalis Center"
                           [title]="esp.titre" 
                           (error)="onImageError($event)" 
                           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
@@ -734,42 +732,77 @@
           </div>
           }
 
-          <!-- Bloc Vidéo Institutionnelle (100% Dynamique & Administrable) -->
-          @if (settings.videoActif !== false) {
+        </div>
+      </section>
+      }
+
+      <!-- 7d. SECTION VIDÉO INSTITUTIONNELLE DÉDIÉE (CONDITIONNÉE STRICTEMENT SANS REPLI EN DUR) -->
+      @if (settings.videoActif && settings.videoPresentationUrl) {
+      <section id="video-institutionnelle" class="py-12 sm:py-16 px-4 sm:px-6 bg-[var(--navy)] text-white border-b border-white/10" aria-label="Vidéo institutionnelle de présentation">
+        <div class="max-w-7xl mx-auto">
           <div class="bg-slate-900 border border-white/15 rounded-xl text-white p-6 sm:p-8 lg:p-10 shadow-xl overflow-hidden relative">
             <div class="grid lg:grid-cols-12 gap-8 items-center">
-              <div class="lg:col-span-5 space-y-3">
-                <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-sm text-[var(--ardoise)]">
-                  <span class="w-2 h-2 rounded-full bg-[var(--or)]"></span>
-                  <span>{{ settings.videoSousTitre || 'Vidéo Institutionnelle' }}</span>
-                </div>
-                <h3 class="text-2xl font-bold leading-tight">{{ settings.videoTitre || 'Découvrez Vitalis Center en Action' }}</h3>
-                <p class="text-sm text-[var(--ardoise)] leading-relaxed">
-                  {{ settings.videoDescription || 'Visionnez la présentation officielle de notre établissement d\'utilité publique : témoignages de formateurs, immersion en atelier et parcours des diplômés.' }}
-                </p>
+              
+              <!-- Colonne Texte & Actions -->
+              <div class="lg:col-span-5 space-y-4">
+                @if (settings.videoSousTitre) {
+                  <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-sm text-[var(--ardoise)]">
+                    <span class="w-2 h-2 rounded-full bg-[var(--or)]"></span>
+                    <span>{{ settings.videoSousTitre }}</span>
+                  </div>
+                }
+                
+                @if (settings.videoTitre) {
+                  <h2 class="text-2xl sm:text-3xl font-bold leading-tight font-['Playfair_Display',serif]">{{ settings.videoTitre }}</h2>
+                }
+                
+                @if (settings.videoDescription) {
+                  <p class="text-sm sm:text-base text-[var(--ardoise)] leading-relaxed">
+                    {{ settings.videoDescription }}
+                  </p>
+                }
+
                 <div class="pt-2 flex flex-wrap gap-3">
-                  <button (click)="openVideoModal()" class="btn bg-[var(--or)] hover:bg-[var(--or)]/85 text-[var(--navy)] py-2.5 px-5 font-extrabold text-sm shadow-md inline-flex items-center gap-2 cursor-pointer transition-transform hover:scale-102">
+                  <button 
+                    type="button"
+                    (click)="openVideoModal()" 
+                    class="btn bg-[var(--or)] hover:bg-[var(--or)]/90 text-[var(--navy)] py-2.5 px-5 font-extrabold text-sm rounded-xl shadow-md inline-flex items-center gap-2 cursor-pointer transition-transform hover:scale-102"
+                  >
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    <span>{{ settings.videoBoutonPrincipal || 'Lancer la présentation (3 min)' }}</span>
+                    <span>{{ settings.videoBoutonPrincipal || 'Lancer la vidéo' }}</span>
                   </button>
-                  <a [href]="settings.videoBoutonSecondaireUrl || '#contact'" class="btn btn-secondary text-white border-white/30 hover:border-white py-2.5 px-4 text-sm font-semibold">
-                    {{ settings.videoBoutonSecondaire || 'Prendre rendez-vous sur place' }}
-                  </a>
+
+                  @if (settings.videoBoutonSecondaire && settings.videoBoutonSecondaireUrl) {
+                    <a 
+                      [href]="settings.videoBoutonSecondaireUrl" 
+                      class="btn bg-transparent hover:bg-white/10 text-white border border-white/30 hover:border-white/60 py-2.5 px-4 text-sm font-semibold rounded-xl"
+                    >
+                      {{ settings.videoBoutonSecondaire }}
+                    </a>
+                  }
                 </div>
               </div>
 
+              <!-- Colonne Lecteur / Vignette Vidéo -->
               <div class="lg:col-span-7">
                 <div class="aspect-video bg-black/40 rounded-lg overflow-hidden border border-white/20 relative shadow-2xl group cursor-pointer" (click)="openVideoModal()">
-                  <img [src]="getMediaUrl(settings.videoPosterUrl) || 'assets/actualites/actu-lms-deploiement.jpg'" alt="Aperçu vidéo Vitalis Center" title="Aperçu vidéo Vitalis Center" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
+                  @if (settings.videoPosterUrl) {
+                    <img 
+                      [src]="getMediaUrl(settings.videoPosterUrl)" 
+                      alt="{{ settings.videoTitre }}" 
+                      title="{{ settings.videoTitre }}" 
+                      class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" 
+                    />
+                  }
                   
-                  <!-- Habillage graphique haute fidélité (badges, incrustations et barre de statut) -->
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/30 flex flex-col justify-between p-4 sm:p-5">
-                    
-                    <!-- Badge Haut Gauche -->
-                    <div class="flex items-center justify-between">
-                      <span class="px-2.5 py-1 bg-white/20 backdrop-blur-xs rounded text-sm font-bold tracking-wide text-white uppercase shadow-xs">
-                        {{ settings.videoBadgeHaut || 'VITALIS CENTER EUP' }}
-                      </span>
+                  <!-- Habillage et bouton lecture -->
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/20 flex flex-col justify-between p-4 sm:p-5">
+                    <div>
+                      @if (settings.videoBadgeHaut) {
+                        <span class="px-2.5 py-1 bg-white/20 backdrop-blur-xs rounded text-sm font-bold tracking-wide text-white uppercase shadow-xs">
+                          {{ settings.videoBadgeHaut }}
+                        </span>
+                      }
                     </div>
 
                     <!-- Bouton Play Central -->
@@ -779,7 +812,7 @@
                       </div>
                     </div>
 
-                    <!-- Incrustations Basses & Titres -->
+                    <!-- Incrustations Basses -->
                     <div class="space-y-1.5">
                       @if (settings.videoBadgeBas) {
                         <div class="inline-block px-2 py-0.5 bg-[var(--or)] text-[var(--navy)] rounded text-sm font-bold tracking-wider uppercase shadow-xs">
@@ -796,19 +829,24 @@
                           {{ settings.videoSousTitreOverlay }}
                         </div>
                       }
-                      <div class="pt-2 border-t border-white/20 flex justify-between items-center text-sm text-white/90">
-                        <span class="font-medium truncate">{{ settings.videoLegende || 'Reportage Ministère de la Formation Professionnelle' }}</span>
-                        <span class="bg-black/60 px-2 py-0.5 rounded text-sm shrink-0 font-mono">{{ settings.videoDuree || '03:15' }}</span>
-                      </div>
+                      @if (settings.videoLegende || settings.videoDuree) {
+                        <div class="pt-2 border-t border-white/20 flex justify-between items-center text-sm text-white/90">
+                          @if (settings.videoLegende) {
+                            <span class="font-medium truncate">{{ settings.videoLegende }}</span>
+                          }
+                          @if (settings.videoDuree) {
+                            <span class="bg-black/60 px-2 py-0.5 rounded text-sm shrink-0 font-mono">{{ settings.videoDuree }}</span>
+                          }
+                        </div>
+                      }
                     </div>
 
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
-          }
-
         </div>
       </section>
       }
