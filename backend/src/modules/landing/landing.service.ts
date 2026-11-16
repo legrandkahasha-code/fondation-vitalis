@@ -1086,10 +1086,12 @@ export class LandingService {
       }
     }
 
-    return this.db.landingPageCampus.update({
+    const updated = await this.db.landingPageCampus.update({
       where: { id },
       data: cleanData,
     });
+    this.invalidateLandingCache();
+    return updated;
   }
 
   async deleteCampus(id: string) {
@@ -1308,9 +1310,9 @@ export class LandingService {
         videoSousTitreOverlay: null,
         videoLegende: null,
         videoDuree: null,
-        socialLinkedin: 'https://linkedin.com',
-        socialFacebook: 'https://facebook.com',
-        socialYoutube: 'https://youtube.com',
+        socialLinkedin: null,
+        socialFacebook: null,
+        socialYoutube: null,
         mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3978.8!2d15.3!3d-4.3!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNMKwMTgnMDAuMCJTIDE1wrAxOCcwMC4wIkU!5e0!3m2!1sfr!2scd!4v1',
         liveActivityTexte: 'Session d\'admission 2026 en cours · 15 filières d\'excellence ouvertes',
         footerDescription: 'Vitalis Center EUP (Établissement d\'Utilité Publique) · Centre de formation professionnelle et technique agréé par le Ministère de la Formation Professionnelle de la RDC.',

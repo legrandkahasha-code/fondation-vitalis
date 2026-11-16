@@ -660,7 +660,7 @@
 
       
       <!-- 7c. SECTION CAMPUS & ATELIERS TECHNIQUES (100% GÉRÉE PAR L'ADMINISTRATEUR) -->
-      @if (settings.campusTitre && settings.campusTitre.trim() && campusEspacesList.length > 0) {
+      @if (settings.campusTitre && settings.campusTitre.trim() && displayedCampusList().length > 0) {
       <section id="campus" class="py-12 sm:py-16 px-4 sm:px-6 bg-[var(--navy)] text-white border-b border-white/10">
         <div class="max-w-7xl mx-auto">
           
@@ -678,9 +678,9 @@
           </div>
 
           <!-- Grille des ateliers / espaces 100% gérés par l'admin -->
-          @if (campusEspacesList.length > 0) {
+          @if (displayedCampusList().length > 0) {
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mb-10">
-            @for (esp of campusEspacesList; track esp.id) {
+            @for (esp of displayedCampusList(); track esp.id) {
               <div class="bg-slate-900 border border-white/15 rounded-xl overflow-hidden shadow-xs hover:border-[var(--or)]/60 hover:shadow-md transition-all flex flex-col justify-between group">
                 <div>
                   <div class="relative overflow-hidden h-44 sm:h-48 bg-[var(--navy)]">
