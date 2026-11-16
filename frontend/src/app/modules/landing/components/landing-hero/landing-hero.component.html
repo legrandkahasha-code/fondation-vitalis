@@ -45,21 +45,21 @@
         [class.z-10]="idx === currentHeroIndex"
         [class.z-0]="idx !== currentHeroIndex"
       >
-        <!-- Format WebP ultra-léger pour Smartphone (<640px) : ~30-40 KB -->
+        <!-- Format WebP ultra-léger pour Smartphone (<768px / max-width: 767px) : ~30-40 KB -->
         <source 
-          media="(max-width: 640px)" 
+          media="(max-width: 767px)" 
           type="image/webp" 
           [srcset]="getImageWebpMobile(slide.imageUrl)"
         >
-        <!-- Format WebP haute fidélité pour Tablette & Desktop (>=641px) : ~90-130 KB -->
+        <!-- Format WebP haute fidélité pour Tablette & Desktop (>=768px) : ~90-130 KB -->
         <source 
-          media="(min-width: 641px)" 
+          media="(min-width: 768px)" 
           type="image/webp" 
           [srcset]="getImageWebpDesktop(slide.imageUrl)"
         >
         <!-- Fallback JPG compressé pour vieux navigateurs sans WebP sur mobile -->
         <source 
-          media="(max-width: 640px)" 
+          media="(max-width: 767px)" 
           type="image/jpeg" 
           [srcset]="getImageJpgMobile(slide.imageUrl)"
         >

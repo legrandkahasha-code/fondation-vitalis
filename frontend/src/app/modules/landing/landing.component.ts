@@ -1055,7 +1055,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
               photo: (c.photoUrl || c.photo) ? this.getMediaUrl(c.photoUrl || c.photo) : '',
               photoUrl: c.photoUrl ? this.getMediaUrl(c.photoUrl) : '',
               photoUrlMobile: c.photoUrlMobile ? this.getMediaUrl(c.photoUrlMobile) : '',
-              photoAlt: c.photoAlt || c.titre,
+              photoAlt: c.photoAlt,
               badge: c.badge || '',
               equipements: c.equipements,
             }));
