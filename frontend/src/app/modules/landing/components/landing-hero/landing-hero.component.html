@@ -86,11 +86,7 @@
         
         <!-- 1. LIGNE DE TUTELLE UNIQUE -->
         @if (isTutelleVisible) {
-          <div 
-            class="mb-2 sm:mb-2.5"
-            [class.max-md:hidden]="settings?.heroTutelleVisibleMobile === false"
-            [class.md:hidden]="settings?.heroTutelleVisible === false"
-          >
+          <div class="mb-2 sm:mb-2.5">
             <div class="inline-flex items-center px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-semibold tracking-wide shadow-xs">
               <span>RDC · Ministère de la Formation Professionnelle</span>
             </div>
@@ -172,11 +168,7 @@
 
         <!-- 5. BANDE DE 3 CHIFFRES (TAUX D'INSERTION, LAURÉATS, TITRES QR) -->
         @if (isStatsVisible && (settings?.statsTauxReussite || settings?.statsLaureats || settings?.statsTitresVerif)) {
-          <div 
-            class="pt-6 sm:pt-8 border-t border-white/15"
-            [class.max-md:hidden]="settings?.heroStatsVisibleMobile === false"
-            [class.md:hidden]="settings?.heroStatsVisible === false"
-          >
+          <div class="pt-6 sm:pt-8 border-t border-white/15">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-3xl">
               <!-- Chiffre 1 : Taux d'insertion -->
               @if (settings?.statsTauxReussite) {
@@ -224,11 +216,7 @@
 
         <!-- 6. BANDEAU DE RÉASSURANCE ACADÉMIQUE DYNAMIQUE -->
         @if (isReassurancesVisible && reassuranceList.length > 0) {
-          <div 
-            class="mt-6 flex flex-wrap gap-4 sm:gap-6 text-sm text-[var(--ardoise)]"
-            [class.max-md:hidden]="settings?.heroReassurancesVisibleMobile === false"
-            [class.md:hidden]="settings?.heroReassurancesVisible === false"
-          >
+          <div class="mt-6 flex flex-wrap gap-4 sm:gap-6 text-sm text-[var(--ardoise)]">
             @for (item of reassuranceList; track item) {
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-[var(--vert)]/40 border border-[var(--vert)] text-[var(--vert-clair)] flex items-center justify-center shrink-0 font-bold text-sm">✓</div>
@@ -353,11 +341,7 @@
 
   <!-- BARRE DE PROFILS (SEGMENTATION D'AUDIENCE) -->
   @if (isProfilsVisible) {
-    <div 
-      class="relative z-20 w-full bg-[var(--navy)] border-t border-white/10 py-2.5 sm:py-3 px-4 sm:px-6 lg:px-8 font-['Public_Sans',sans-serif]"
-      [class.max-md:hidden]="settings?.heroProfilsVisibleMobile === false"
-      [class.md:hidden]="settings?.heroProfilsVisible === false"
-    >
+    <div class="relative z-20 w-full bg-[var(--navy)] border-t border-white/10 py-2.5 sm:py-3 px-4 sm:px-6 lg:px-8 font-['Public_Sans',sans-serif]">
       <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-sm">
         <div class="flex items-center gap-2 text-[var(--ardoise)]">
           <span class="text-[var(--or)] font-bold uppercase tracking-wider text-sm">Accès par profil :</span>

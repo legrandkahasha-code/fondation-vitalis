@@ -83,6 +83,25 @@ export interface HeroSlideItem {
 
 import { LandingHeroComponent } from './components/landing-hero/landing-hero.component';
 
+/**
+ * Logique de filtrage et limitation de la liste des ateliers du campus :
+ * - Desktop : 4 éléments maximum
+ * - Mobile (max-width: 767px) : 3 éléments maximum, exige strictement afficherMobile === true
+ * - Liste vide : retourne []
+ */
+export function filterCampusList<T extends { afficherMobile?: boolean | null }>(
+  list: T[] | null | undefined,
+  isMobile: boolean
+): T[] {
+  if (!list || list.length === 0) return [];
+  if (isMobile) {
+    // 3 éléments maximum sur mobile, éléments non marqués afficherMobile === true non rendus
+    return list.filter((item) => item.afficherMobile === true).slice(0, 3);
+  }
+  // 4 sur ordinateur
+  return list.slice(0, 4);
+}
+
 @Component({
   selector: 'app-landing',
   standalone: true,
@@ -621,14 +640,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }>>([]);
 
   public displayedCampusList = computed(() => {
-    const list = this.rawCampusList();
-    if (!list || list.length === 0) return [];
-    if (this.isMobileScreen()) {
-      // 3 éléments maximum sur mobile, éléments non marqués afficherMobile non rendus
-      return list.filter((item) => Boolean(item.afficherMobile)).slice(0, 3);
-    }
-    // 4 sur ordinateur
-    return list.slice(0, 4);
+    return filterCampusList(this.rawCampusList(), this.isMobileScreen());
   });
 
   get campusEspacesList() {
