@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef, HostListener, NgZone, signal, computed } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -602,7 +602,12 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   // --- ESPACES DU CAMPUS & ATELIERS TECHNIQUES (100% GÉRÉS PAR L'ADMINISTRATEUR) ---
-  campusEspacesList: Array<{
+  private campusMobileQuery?: MediaQueryList;
+  private campusMobileListener?: (e: MediaQueryListEvent) => void;
+  public isMobileScreen = signal<boolean>(
+    typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : false
+  );
+  public rawCampusList = signal<Array<{
     id?: string;
     titre: string;
     description: string;
@@ -612,7 +617,23 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     photoAlt?: string;
     badge?: string;
     equipements: string;
-  }> = [];
+    afficherMobile?: boolean;
+  }>>([]);
+
+  public displayedCampusList = computed(() => {
+    const list = this.rawCampusList();
+    if (!list || list.length === 0) return [];
+    if (this.isMobileScreen()) {
+      // 3 éléments maximum sur mobile, éléments non marqués afficherMobile non rendus
+      return list.filter((item) => Boolean(item.afficherMobile)).slice(0, 3);
+    }
+    // 4 sur ordinateur
+    return list.slice(0, 4);
+  });
+
+  get campusEspacesList() {
+    return this.displayedCampusList();
+  }
 
   // --- MODALE VIDÉO INSTITUTIONNELLE (POINT 4.5 AUDIT) ---
   videoModalOpen: boolean = false;
@@ -848,7 +869,21 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
     private ngZone: NgZone
-  ) { }
+  ) {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      this.campusMobileQuery = window.matchMedia('(max-width: 767px)');
+      this.isMobileScreen.set(this.campusMobileQuery.matches);
+      this.campusMobileListener = (e: MediaQueryListEvent) => {
+        this.isMobileScreen.set(e.matches);
+        this.cdr.markForCheck();
+      };
+      if (this.campusMobileQuery.addEventListener) {
+        this.campusMobileQuery.addEventListener('change', this.campusMobileListener);
+      } else {
+        (this.campusMobileQuery as any).addListener(this.campusMobileListener);
+      }
+    }
+  }
 
   ngOnInit(): void {
     this.updateSafeMapUrl();
@@ -1046,7 +1081,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         if (data.campus && Array.isArray(data.campus)) {
-          this.campusEspacesList = data.campus
+          this.rawCampusList.set(data.campus
             .filter((c: any) => c.actif !== false)
             .map((c: any) => ({
               id: c.id,
@@ -1058,9 +1093,10 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
               photoAlt: c.photoAlt,
               badge: c.badge || '',
               equipements: c.equipements,
-            }));
+              afficherMobile: Boolean(c.afficherMobile),
+            })));
         } else {
-          this.campusEspacesList = [];
+          this.rawCampusList.set([]);
         }
 
         if (data.partenaires && data.partenaires.length > 0) {
@@ -1138,6 +1174,13 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.stopSliderLoop();
     this.stopHeroSliderLoop();
+    if (this.campusMobileQuery && this.campusMobileListener) {
+      if (this.campusMobileQuery.removeEventListener) {
+        this.campusMobileQuery.removeEventListener('change', this.campusMobileListener);
+      } else {
+        (this.campusMobileQuery as any).removeListener(this.campusMobileListener);
+      }
+    }
     if (this.statsObserver) {
       this.statsObserver.disconnect();
     }

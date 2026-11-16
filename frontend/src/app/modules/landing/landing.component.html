@@ -660,7 +660,7 @@
 
       
       <!-- 7c. SECTION CAMPUS & ATELIERS TECHNIQUES (100% GÉRÉE PAR L'ADMINISTRATEUR) -->
-      @if (settings.campusTitre && campusEspacesList.length > 0) {
+      @if (settings.campusTitre && settings.campusTitre.trim() && campusEspacesList.length > 0) {
       <section id="campus" class="py-12 sm:py-16 px-4 sm:px-6 bg-[var(--navy)] text-white border-b border-white/10">
         <div class="max-w-7xl mx-auto">
           

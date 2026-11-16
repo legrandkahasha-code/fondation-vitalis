@@ -49,6 +49,10 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   isHeroSliderPaused: boolean = false;
   showVideoModal: boolean = false;
 
+  private mobileQuery?: MediaQueryList;
+  private mobileQueryListener?: (e: MediaQueryListEvent) => void;
+  public isMobile: boolean = false;
+
   private heroSliderTimer: any = null;
   private readonly HERO_SLIDE_DURATION_MS = 6500;
   private readonly HERO_TICK_INTERVAL_MS = 65;
@@ -58,7 +62,21 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   constructor(
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
-  ) {}
+  ) {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      this.mobileQuery = window.matchMedia('(max-width: 767px)');
+      this.isMobile = this.mobileQuery.matches;
+      this.mobileQueryListener = (e: MediaQueryListEvent) => {
+        this.isMobile = e.matches;
+        this.cdr.markForCheck();
+      };
+      if (this.mobileQuery.addEventListener) {
+        this.mobileQuery.addEventListener('change', this.mobileQueryListener);
+      } else {
+        (this.mobileQuery as any).addListener(this.mobileQueryListener);
+      }
+    }
+  }
 
   ngOnInit(): void {
     this.startSliderLoop();
@@ -66,6 +84,41 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopSliderLoop();
+    if (this.mobileQuery && this.mobileQueryListener) {
+      if (this.mobileQuery.removeEventListener) {
+        this.mobileQuery.removeEventListener('change', this.mobileQueryListener);
+      } else {
+        (this.mobileQuery as any).removeListener(this.mobileQueryListener);
+      }
+    }
+  }
+
+  get isTutelleVisible(): boolean {
+    if (this.isMobile) {
+      return this.settings?.heroTutelleVisibleMobile !== false;
+    }
+    return this.settings?.heroTutelleVisible !== false;
+  }
+
+  get isStatsVisible(): boolean {
+    if (this.isMobile) {
+      return this.settings?.heroStatsVisibleMobile !== false;
+    }
+    return this.settings?.heroStatsVisible !== false;
+  }
+
+  get isReassurancesVisible(): boolean {
+    if (this.isMobile) {
+      return this.settings?.heroReassurancesVisibleMobile !== false;
+    }
+    return this.settings?.heroReassurancesVisible !== false;
+  }
+
+  get isProfilsVisible(): boolean {
+    if (this.isMobile) {
+      return this.settings?.heroProfilsVisibleMobile !== false;
+    }
+    return this.settings?.heroProfilsVisible !== false;
   }
 
   get currentHeroSlide(): HeroSlideItem {
