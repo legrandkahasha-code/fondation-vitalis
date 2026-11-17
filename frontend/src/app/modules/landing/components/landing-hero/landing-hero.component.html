@@ -58,8 +58,8 @@
               [src]="slide.imageUrl" 
               (load)="onImageLoad(slide.id)"
               (error)="onHeroImageError($event)"
-              [alt]="slide.titre" 
-              [title]="slide.atelierTag || slide.titre"
+              alt="{{ slide.titre || 'Présentation du centre Vitalis' }}" 
+              title="{{ slide.atelierTag || slide.titre || 'Présentation du centre Vitalis' }}"
               class="w-full h-full object-cover object-center pointer-events-none filter brightness-95 contrast-105 hero-bg-cover"
               [loading]="idx === 0 ? 'eager' : 'lazy'"
               [attr.fetchpriority]="idx === 0 ? 'high' : 'auto'"
@@ -100,7 +100,7 @@
                   class="inline-flex items-center gap-1.5 text-sm text-[var(--ardoise)] hover:text-[var(--or)] font-mono transition-colors cursor-pointer"
                   title="Consulter l'agrément ministériel officiel"
                 >
-                  <span>Agrément ministériel N° {{ heroNumeroAgrement }}</span>
+                  <span>Agrément ministériel {{ heroNumeroAgrement }}</span>
                   <svg class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
@@ -152,18 +152,20 @@
           }
 
           <!-- Lien : Voir campus -->
-          <a 
-            (click)="scrollToSection('#campus')"
-            class="inline-flex items-center justify-center gap-2 px-4 py-3.5 text-white hover:text-[var(--or)] text-sm font-semibold transition-colors cursor-pointer group text-center"
-            title="Découvrir les ateliers et infrastructures du campus"
-          >
-            <span class="w-6 h-6 rounded-full bg-white/10 group-hover:bg-[var(--or)] group-hover:text-[var(--navy)] text-white flex items-center justify-center transition-all shadow-xs shrink-0">
-              <svg class="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            </span>
-            <span class="underline underline-offset-4 decoration-white/30 group-hover:decoration-[var(--or)]">Voir le campus</span>
-          </a>
+          @if (isCampusSectionVisible) {
+            <a 
+              (click)="scrollToSection('#campus')"
+              class="inline-flex items-center justify-center gap-2 px-4 py-3.5 text-white hover:text-[var(--or)] text-sm font-semibold transition-colors cursor-pointer group text-center"
+              title="Découvrir les ateliers et infrastructures du campus"
+            >
+              <span class="w-6 h-6 rounded-full bg-white/10 group-hover:bg-[var(--or)] group-hover:text-[var(--navy)] text-white flex items-center justify-center transition-all shadow-xs shrink-0">
+                <svg class="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </span>
+              <span class="underline underline-offset-4 decoration-white/30 group-hover:decoration-[var(--or)]">Voir le campus</span>
+            </a>
+          }
         </div>
 
         <!-- 5. BANDE DE 3 CHIFFRES (TAUX D'INSERTION, LAURÉATS, TITRES QR) -->
@@ -233,8 +235,8 @@
 
   <!-- BARRE DE NAVIGATION & CONTRÔLE DU SLIDER HERO (UNIQUEMENT SI PLUSIEURS SLIDES CONFIGURÉS) -->
   @if (heroSlides.length > 1) {
-  <div class="relative z-20 w-full border-t border-white/10 bg-[var(--navy)]/90 backdrop-blur-md py-3.5 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto flex flex-row items-center justify-between gap-2 sm:gap-4">
+  <div class="relative z-20 w-full border-t border-white/10 bg-[var(--navy)]/90 backdrop-blur-md py-3.5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-row items-center justify-between gap-2 sm:gap-4">
       
       <!-- Liste des Boutons d'Ateliers (Scrollable au doigt sur smartphone) -->
       <div 
@@ -341,8 +343,8 @@
 
   <!-- BARRE DE PROFILS (SEGMENTATION D'AUDIENCE) -->
   @if (isProfilsVisible) {
-    <div class="relative z-20 w-full bg-[var(--navy)] border-t border-white/10 py-2.5 sm:py-3 px-4 sm:px-6 lg:px-8 font-['Public_Sans',sans-serif]">
-      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-sm">
+    <div class="relative z-20 w-full bg-[var(--navy)] border-t border-white/10 py-2.5 sm:py-3 font-['Public_Sans',sans-serif]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-sm">
         <div class="flex items-center gap-2 text-[var(--ardoise)]">
           <span class="text-[var(--or)] font-bold uppercase tracking-wider text-sm">Accès par profil :</span>
         </div>

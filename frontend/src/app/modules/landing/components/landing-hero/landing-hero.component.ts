@@ -26,6 +26,14 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   @Input() defaultHeroImage: string = '';
   @Input() reassurances: string[] = [];
   @Input() settings: any = {};
+  @Input() hasCampusSection?: boolean;
+
+  get isCampusSectionVisible(): boolean {
+    if (this.hasCampusSection !== undefined) {
+      return this.hasCampusSection;
+    }
+    return !!(this.settings?.campusTitre && this.settings.campusTitre.trim());
+  }
 
   get reassuranceList(): string[] {
     if (this.reassurances && this.reassurances.length > 0) {

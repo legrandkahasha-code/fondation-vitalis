@@ -211,6 +211,7 @@
         [defaultHeroImage]="getHeroImageUrl()"
         [reassurances]="heroReassurances"
         [settings]="settings"
+        [hasCampusSection]="!!(settings.campusTitre && settings.campusTitre.trim() && displayedCampusList().length > 0)"
         (openCredentials)="openCredentialsModal()"
         (openVideo)="openVideoModal()"
         (ctaClick)="handleHeroCtaClick($event)"
@@ -691,8 +692,8 @@
                         }
                         <img 
                           [src]="esp.photoUrl || esp.photo" 
-                          [alt]="esp.photoAlt" 
-                          [title]="esp.titre" 
+                          alt="{{ esp.photoAlt || esp.titre || 'Atelier et espace de formation' }}" 
+                          title="{{ esp.titre || 'Atelier et espace de formation' }}" 
                           (error)="onImageError($event)" 
                           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                           loading="lazy"
