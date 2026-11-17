@@ -692,8 +692,8 @@
                         }
                         <img 
                           [src]="esp.photoUrl || esp.photo" 
-                          [alt]="esp.photoAlt" 
-                          [title]="esp.titre" 
+                          alt="{{ esp.photoAlt }}" 
+                          title="{{ esp.titre }}" 
                           (error)="onImageError($event)" 
                           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                           loading="lazy"
