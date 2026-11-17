@@ -1436,111 +1436,104 @@ export class PedagogieService {
     user: any,
     filters?: { etablissementId?: string; statut?: string; search?: string },
   ) {
-    const where: any = {};
+    try {
+      const where: any = {};
 
-    if (user.role === Role.ADMIN_CENTRE) {
-      if (filters?.etablissementId && filters.etablissementId !== 'ALL') {
-        where.etablissementId = filters.etablissementId;
+      if (user?.role === Role.ADMIN_CENTRE) {
+        if (filters?.etablissementId && filters.etablissementId !== 'ALL') {
+          where.etablissementId = filters.etablissementId;
+        }
+      } else {
+        // Souveraineté stricte par établissement
+        if (!user?.etablissementId) {
+          return [];
+        }
+        where.etablissementId = user.etablissementId;
       }
-    } else {
-      // Souveraineté stricte par établissement
-      where.etablissementId = user.etablissementId;
-    }
 
-    if (filters?.search && filters.search.trim()) {
-      const q = filters.search.trim();
-      where.OR = [
-        { titre: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-        { etablissement: { nom: { contains: q, mode: 'insensitive' } } },
-      ];
-    }
+      if (filters?.search && filters.search.trim()) {
+        const q = filters.search.trim();
+        where.OR = [
+          { titre: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+          { etablissement: { nom: { contains: q, mode: 'insensitive' } } },
+        ];
+      }
 
-    // Récupérer les formations avec l'ensemble des relations nécessaires
-    const formations = await this.prisma.formation.findMany({
-      where,
-      include: {
-        etablissement: {
-          select: { id: true, nom: true, codeAntenne: true, pays: true },
-        },
-        formationReferentiel: {
-          include: {
-            filiere: { select: { id: true, code: true, libelle: true } },
-            niveau: { select: { id: true, code: true, libelle: true } },
+      // Récupérer les formations avec l'ensemble des relations nécessaires
+      const formations = await this.prisma.formation.findMany({
+        where,
+        include: {
+          etablissement: {
+            select: { id: true, nom: true, codeAntenne: true, pays: true },
           },
-        },
-        inscriptions: {
-          include: {
-            apprenant: {
-              select: {
-                id: true,
-                matricule: true,
-                nom: true,
-                prenom: true,
-                email: true,
-                utilisateurId: true,
-              },
+          formationReferentiel: {
+            include: {
+              filiere: { select: { id: true, code: true, libelle: true } },
+              niveau: { select: { id: true, code: true, libelle: true } },
             },
           },
-          orderBy: { dateDebut: 'desc' },
-        },
-        modules: {
-          orderBy: { ordre: 'asc' },
-          include: {
-            cours: { select: { id: true, titre: true } },
-            evaluations: {
-              include: {
-                notes: { select: { valeur: true, utilisateurId: true } },
-              },
-            },
-            quiz: {
-              include: {
-                tentatives: { select: { id: true, score: true } },
-              },
-            },
-            devoirs: {
-              include: {
-                soumissions: { select: { id: true, note: true } },
-              },
-            },
-            seances: {
-              include: {
-                formateur: {
-                  select: { id: true, nom: true, prenom: true, email: true },
+          inscriptions: {
+            include: {
+              apprenant: {
+                select: {
+                  id: true,
+                  matricule: true,
+                  nom: true,
+                  prenom: true,
+                  email: true,
+                  utilisateurId: true,
                 },
               },
             },
-            affectations: {
-              include: {
-                formateur: {
-                  select: { id: true, nom: true, prenom: true, email: true },
+            orderBy: { dateDebut: 'desc' },
+          },
+          modules: {
+            orderBy: { ordre: 'asc' },
+            include: {
+              cours: { select: { id: true, titre: true } },
+              evaluations: {
+                include: {
+                  notes: { select: { valeur: true, utilisateurId: true } },
+                },
+              },
+              quiz: {
+                include: {
+                  tentatives: { select: { id: true, score: true } },
+                },
+              },
+              devoirs: {
+                include: {
+                  soumissions: { select: { id: true, note: true } },
+                },
+              },
+              seances: {
+                include: {
+                  formateur: {
+                    select: { id: true, nom: true, prenom: true, email: true },
+                  },
+                },
+              },
+              affectations: {
+                include: {
+                  formateur: {
+                    select: { id: true, nom: true, prenom: true, email: true },
+                  },
                 },
               },
             },
           },
+          certificats: {
+            select: { id: true, numeroSerie: true, moyenneGenerale: true, dateEmission: true },
+          },
         },
-        certificats: {
-          select: { id: true, numeroSerie: true, moyenneGenerale: true, dateEmission: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      });
 
-    // Formateurs disponibles par établissement pour enrichissement
-    const etabIds = Array.from(new Set(formations.map((f) => f.etablissementId)));
-    const formateursEtab = await this.prisma.utilisateur.findMany({
-      where: {
-        etablissementId: { in: etabIds },
-        role: Role.FORMATEUR,
-        actif: true,
-      },
-      select: { id: true, nom: true, prenom: true, email: true, etablissementId: true },
-    });
-
-    // Cours total ids
-    const allCoursIds = formations.flatMap((f) =>
-      f.modules.flatMap((m) => m.cours.map((c) => c.id)),
-    );
+      // Cours total ids
+      const allCoursIds = formations.flatMap((f) =>
+        f.modules.flatMap((m) => m.cours.map((c) => c.id)),
+      );
 
     const progressRecords = allCoursIds.length > 0
       ? await this.prisma.userProgress.findMany({
@@ -1674,7 +1667,11 @@ export class PedagogieService {
     }
 
     return items;
+  } catch (err: any) {
+    this.logger.error(`Erreur getFilieresSuivi: ${err?.message}`, err?.stack);
+    return [];
   }
+}
 
   async getFiliereSuiviDetail(formationId: string, user: any) {
     const formation = await this.prisma.formation.findUnique({
