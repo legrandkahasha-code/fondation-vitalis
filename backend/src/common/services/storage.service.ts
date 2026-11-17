@@ -226,13 +226,16 @@ export class StorageService {
     const isWebp = buffer.length >= 12 && buffer.slice(0, 4).toString() === 'RIFF' && buffer.slice(8, 12).toString() === 'WEBP';
 
     if (!isJpeg && !isPng && !isWebp) {
-      throw new Error('Format d\'image non supporté ou signature invalide. Seuls JPEG, PNG et WebP sont acceptés (SVG strictement refusé).');
+      // Pas un raster reconnu → vérifier si c'est un SVG
+      const startStr = buffer.slice(0, 300).toString('utf-8').toLowerCase();
+      if (startStr.includes('<svg') || startStr.includes('<?xml')) {
+        throw new Error('Les fichiers vectoriels SVG sont strictement interdits.');
+      }
+      throw new Error('Format d\'image non supporté ou fichier corrompu. Formats acceptés : JPEG, PNG, WebP.');
     }
 
-    const startStr = buffer.slice(0, 300).toString('utf-8').toLowerCase();
-    if (startStr.includes('<svg') || startStr.includes('<?xml')) {
-      throw new Error('Les fichiers vectoriels SVG sont strictement interdits.');
-    }
+    // Magic bytes JPEG/PNG/WebP confirmés → pas de check SVG textuel
+    // (les JPEG avec métadonnées XMP contiennent <?xml, ce qui causait un faux positif)
 
     const sharp = require('sharp');
     const meta = await sharp(buffer, { limitInputPixels: 50_000_000 }).metadata();
@@ -296,13 +299,16 @@ export class StorageService {
     const isWebp = buffer.length >= 12 && buffer.slice(0, 4).toString() === 'RIFF' && buffer.slice(8, 12).toString() === 'WEBP';
 
     if (!isJpeg && !isPng && !isWebp) {
-      throw new Error('Format d\'image non supporté ou signature invalide. Seuls JPEG, PNG et WebP sont acceptés (SVG strictement refusé).');
+      // Pas un raster reconnu → vérifier si c'est un SVG
+      const startStr = buffer.slice(0, 300).toString('utf-8').toLowerCase();
+      if (startStr.includes('<svg') || startStr.includes('<?xml')) {
+        throw new Error('Les fichiers vectoriels SVG sont strictement interdits.');
+      }
+      throw new Error('Format d\'image non supporté ou fichier corrompu. Formats acceptés : JPEG, PNG, WebP.');
     }
 
-    const startStr = buffer.slice(0, 300).toString('utf-8').toLowerCase();
-    if (startStr.includes('<svg') || startStr.includes('<?xml')) {
-      throw new Error('Les fichiers vectoriels SVG sont strictement interdits.');
-    }
+    // Magic bytes JPEG/PNG/WebP confirmés → pas de check SVG textuel
+    // (les JPEG avec métadonnées XMP contiennent <?xml, ce qui causait un faux positif)
 
     const sharp = require('sharp');
     const meta = await sharp(buffer, { limitInputPixels: 50_000_000 }).metadata();
