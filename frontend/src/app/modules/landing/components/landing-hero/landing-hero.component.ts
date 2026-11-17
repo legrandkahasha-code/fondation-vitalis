@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeroSlideItem } from '../../landing.component';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-landing-hero',
@@ -331,25 +332,34 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     return !!this.loadedImages[slideId];
   }
 
+  private formatImageUrl(url: string | null | undefined): string {
+    if (!url || url.trim() === '') return '';
+    if (url.startsWith('/uploads/')) {
+      const backendBase = environment.apiUrl.replace(/\/api\/?$/, '');
+      return `${backendBase}${url}`;
+    }
+    return url;
+  }
+
   // --- OPTIMISATION WEBP & SRCSET RESPONSIVE ---
   getImageWebpMobile(url: string | null | undefined): string {
     if (this.settings?.heroImageMobile) {
-      return this.settings.heroImageMobile;
+      return this.formatImageUrl(this.settings.heroImageMobile);
     }
-    return url || '';
+    return this.formatImageUrl(url);
   }
 
   getImageWebpDesktop(url: string | null | undefined): string {
     if (this.isSaveDataEnabled && this.settings?.heroImageMobile) {
-      return this.settings.heroImageMobile;
+      return this.formatImageUrl(this.settings.heroImageMobile);
     }
-    return url || '';
+    return this.formatImageUrl(url);
   }
 
   getImageJpgMobile(url: string | null | undefined): string {
     if (this.settings?.heroImageMobile) {
-      return this.settings.heroImageMobile;
+      return this.formatImageUrl(this.settings.heroImageMobile);
     }
-    return url || '';
+    return this.formatImageUrl(url);
   }
 }
