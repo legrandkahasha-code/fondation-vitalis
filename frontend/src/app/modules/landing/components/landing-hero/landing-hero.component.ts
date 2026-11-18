@@ -77,6 +77,11 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
       this.isMobile = this.mobileQuery.matches;
       this.mobileQueryListener = (e: MediaQueryListEvent) => {
         this.isMobile = e.matches;
+        if (this.isMobile) {
+          this.stopSliderLoop();
+        } else {
+          this.startSliderLoop();
+        }
         this.cdr.markForCheck();
       };
       if (this.mobileQuery.addEventListener) {
@@ -157,6 +162,10 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     return false;
   }
 
+  get enableMotion(): boolean {
+    return !this.isMobile && !this.prefersReducedMotion;
+  }
+
   get isSaveDataEnabled(): boolean {
     if (typeof navigator !== 'undefined') {
       const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
@@ -173,7 +182,7 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
       return;
     }
-    if (this.prefersReducedMotion) {
+    if (!this.enableMotion) {
       this.isHeroSliderPaused = true;
       this.cdr.markForCheck();
       return;

@@ -22,16 +22,17 @@
       @for (slide of heroSlides; track slide.id; let idx = $index) {
         @if (slide.imageUrl) {
           <picture 
-            class="absolute inset-0 w-full h-full pointer-events-none motion-safe:transition-all motion-reduce:transition-none"
+            class="absolute inset-0 w-full h-full pointer-events-none transition-none md:motion-safe:transition-all"
             [class.opacity-50]="idx === currentHeroIndex"
             [class.sm:opacity-55]="idx === currentHeroIndex"
             [class.lg:opacity-65]="idx === currentHeroIndex"
-            [class.scale-105]="idx === currentHeroIndex"
-            [class.duration-[6500ms]]="idx === currentHeroIndex"
-            [class.ease-out]="idx === currentHeroIndex"
             [class.opacity-0]="idx !== currentHeroIndex"
-            [class.scale-100]="idx !== currentHeroIndex"
-            [class.duration-700]="idx !== currentHeroIndex"
+            [class.scale-105]="enableMotion && idx === currentHeroIndex"
+            [class.scale-100]="!enableMotion || idx !== currentHeroIndex"
+            [class.duration-0]="!enableMotion"
+            [class.duration-[6500ms]]="enableMotion && idx === currentHeroIndex"
+            [class.duration-700]="enableMotion && idx !== currentHeroIndex"
+            [class.ease-out]="enableMotion && idx === currentHeroIndex"
             [class.z-10]="idx === currentHeroIndex"
             [class.z-0]="idx !== currentHeroIndex"
           >
@@ -83,7 +84,7 @@
     <div class="w-full">
       
       <!-- BLOC TEXTE & PROPOSITION DE VALEUR -->
-      <div class="max-w-4xl animate-fade-in-up font-['Public_Sans',sans-serif]">
+      <div class="max-w-4xl motion-safe:md:animate-fade-in-up font-['Public_Sans',sans-serif]">
         
         <!-- 1. LIGNE DE TUTELLE UNIQUE -->
         @if (isTutelleVisible) {
