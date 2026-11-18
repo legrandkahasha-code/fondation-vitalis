@@ -794,11 +794,11 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   // Transform 3D pour le widget Hero
   heroWidgetTransform: string = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
 
-  // Compteurs animés (Count-Up)
-  laureatsDisplay: number = 1200;
-  tauxReussiteDisplay: number = 94;
-  filieresDisplay: number = 15;
-  titresVerifDisplay: number = 100;
+  // Compteurs animés (Count-Up au scroll)
+  laureatsDisplay: number = 0;
+  tauxReussiteDisplay: number = 0;
+  filieresDisplay: number = 0;
+  titresVerifDisplay: number = 0;
   private statsObserver?: IntersectionObserver;
   private countUpDone: boolean = false;
 
@@ -1029,10 +1029,12 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
           };
           this.appliquerWhatsappDepuisSettings(this.settings);
           this.updateSafeMapUrl();
-          this.laureatsDisplay = this.settings.statsLaureats ?? 1200;
-          this.tauxReussiteDisplay = this.settings.statsTauxReussite ?? 94;
-          this.filieresDisplay = this.settings.statsFilieres ?? 15;
-          this.titresVerifDisplay = this.settings.statsTitresVerif ?? 100;
+          if (this.countUpDone) {
+            this.laureatsDisplay = this.settings.statsLaureats ?? 1200;
+            this.tauxReussiteDisplay = this.settings.statsTauxReussite ?? 94;
+            this.filieresDisplay = this.settings.statsFilieres ?? 15;
+            this.titresVerifDisplay = this.settings.statsTitresVerif ?? 100;
+          }
         }
 
         this.chargerWhatsappWidget();
@@ -1250,7 +1252,13 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initStatsObserver(): void {
-    if (typeof IntersectionObserver === 'undefined' || !this.statsSection) return;
+    if (typeof IntersectionObserver === 'undefined' || !this.statsSection) {
+      this.laureatsDisplay = this.settings.statsLaureats ?? 1200;
+      this.tauxReussiteDisplay = this.settings.statsTauxReussite ?? 94;
+      this.filieresDisplay = this.settings.statsFilieres ?? 15;
+      this.titresVerifDisplay = this.settings.statsTitresVerif ?? 100;
+      return;
+    }
 
     this.statsObserver = new IntersectionObserver(
       (entries) => {
@@ -1268,12 +1276,23 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private runCountUp(): void {
-    const duration = 1600;
-    const startTime = performance.now();
     const targetLaureats = this.settings.statsLaureats ?? 1200;
     const targetTaux = this.settings.statsTauxReussite ?? 94;
     const targetFilieres = this.settings.statsFilieres ?? 15;
     const targetTitres = this.settings.statsTitresVerif ?? 100;
+
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      this.laureatsDisplay = targetLaureats;
+      this.tauxReussiteDisplay = targetTaux;
+      this.filieresDisplay = targetFilieres;
+      this.titresVerifDisplay = targetTitres;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const duration = 1600;
+    const startTime = performance.now();
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
@@ -1293,6 +1312,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.filieresDisplay = targetFilieres;
         this.titresVerifDisplay = targetTitres;
       }
+      this.cdr.markForCheck();
     };
 
     requestAnimationFrame(animate);
