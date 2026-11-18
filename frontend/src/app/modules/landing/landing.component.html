@@ -692,6 +692,7 @@
                         }
                         <img 
                           [src]="esp.photoUrl || esp.photo" 
+                          [alt]="esp.photoAlt"
                           alt="{{ esp.photoAlt }}" 
                           title="{{ esp.titre }}" 
                           (error)="onImageError($event)" 

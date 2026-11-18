@@ -184,6 +184,18 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                         📱 <strong>Version Smartphone générée :</strong> <span class="font-mono text-[10px]">{{ settings.heroImageMobile }}</span>
                       </div>
 
+                      <!-- Texte alternatif obligatoire pour l'accessibilité et la conformité -->
+                      <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700">Texte alternatif de l'image Hero (Alt) <span class="text-rose-600">*</span></label>
+                        <input 
+                          type="text" 
+                          [(ngModel)]="settings.heroImageAlt" 
+                          name="heroImageAlt" 
+                          placeholder="Ex : Apprenants en atelier pratique au centre Vitalis"
+                          class="w-full text-xs p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+
                       <!-- Confirmation Droit à l'image Hero -->
                       <div class="p-3 bg-amber-50 border border-amber-200 rounded text-xs space-y-1.5">
                         <label class="flex items-start gap-2 cursor-pointer font-semibold text-amber-900">
@@ -2441,6 +2453,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       heroReassurance1: this.settings.heroReassurance1 || '',
       heroReassurance2: this.settings.heroReassurance2 || '',
       heroReassurance3: this.settings.heroReassurance3 || '',
+      heroImageAlt: this.settings.heroImageAlt || '',
       topbarTexte: this.settings.topbarTexte || '',
       statsLaureats: Number(this.settings.statsLaureats) || 0,
       statsTauxReussite: Number(this.settings.statsTauxReussite) || 0,
@@ -3230,7 +3243,16 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
 
   onHeroDroitImageChange(): void {
     const confirme = Boolean(this.settings.heroImageDroitConfirme);
-    this.landingService.updateSettings({ heroImageDroitConfirme: confirme }).subscribe({
+    if (confirme && (!this.settings.heroImageAlt || !this.settings.heroImageAlt.trim())) {
+      this.toast.error('Le texte alternatif (Alt) de l\'image est obligatoire avant de confirmer le droit à l\'image.');
+      this.settings.heroImageDroitConfirme = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.landingService.updateSettings({
+      heroImageDroitConfirme: confirme,
+      heroImageAlt: this.settings.heroImageAlt || '',
+    }).subscribe({
       next: (saved) => {
         this.settings = { ...this.settings, ...saved };
         notifyLandingSettingsChanged();

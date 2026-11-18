@@ -444,6 +444,7 @@ model LandingPageSettings {
   heroNumeroAgrement             String   @default("N°CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026") @map("hero_numero_agrement")
   heroImage                      String?  @map("hero_image")
   heroImageMobile                String?  @map("hero_image_mobile")
+  heroImageAlt                   String?  @map("hero_image_alt")
   heroImageDroitConfirme         Boolean  @default(false) @map("hero_image_droit_confirme")
   heroImageDroitDate             DateTime? @map("hero_image_droit_date") @db.Timestamptz(6)
   heroImageDroitAuteur           String?  @map("hero_image_droit_auteur")

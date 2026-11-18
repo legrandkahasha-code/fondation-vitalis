@@ -88,6 +88,7 @@ export class LandingService {
       heroNumeroAgrement: true,
       heroImage: true,
       heroImageMobile: true,
+      heroImageAlt: true,
       heroImageDroitConfirme: true,
       heroCtaTexte: true,
       heroCtaLien: true,
@@ -660,10 +661,16 @@ export class LandingService {
 
     if (cleanData.heroImageDroitConfirme !== undefined) {
       cleanData.heroImageDroitConfirme = cleanData.heroImageDroitConfirme === true || cleanData.heroImageDroitConfirme === 'true';
-      if (cleanData.heroImageDroitConfirme && !existing?.heroImageDroitConfirme) {
-        cleanData.heroImageDroitDate = new Date();
-        cleanData.heroImageDroitAuteur = user?.email || user?.id || 'admin';
-      } else if (!cleanData.heroImageDroitConfirme) {
+      if (cleanData.heroImageDroitConfirme) {
+        const alt = (cleanData.heroImageAlt !== undefined ? cleanData.heroImageAlt : existing?.heroImageAlt) || '';
+        if (!alt.trim()) {
+          throw new BadRequestException('Un texte alternatif (heroImageAlt) est obligatoire pour confirmer le droit à l\'image.');
+        }
+        if (!existing?.heroImageDroitConfirme) {
+          cleanData.heroImageDroitDate = new Date();
+          cleanData.heroImageDroitAuteur = user?.email || user?.id || 'admin';
+        }
+      } else {
         cleanData.heroImageDroitDate = null;
         cleanData.heroImageDroitAuteur = null;
       }

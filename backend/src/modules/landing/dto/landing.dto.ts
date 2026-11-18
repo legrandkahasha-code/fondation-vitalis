@@ -111,6 +111,10 @@ export class UpdateLandingSettingsDto {
   heroImageMobile?: string;
 
   @IsOptional()
+  @IsString()
+  heroImageAlt?: string;
+
+  @IsOptional()
   @IsBoolean()
   heroImageDroitConfirme?: boolean;
 

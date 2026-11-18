@@ -193,6 +193,7 @@ export interface LandingPageSettings {
   heroNumeroAgrement: string;
   heroImage?: string;
   heroImageMobile?: string;
+  heroImageAlt?: string;
   heroImageDroitConfirme?: boolean;
   heroImageDroitDate?: string;
   heroImageDroitAuteur?: string;
