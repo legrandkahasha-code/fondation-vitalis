@@ -357,33 +357,6 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   </div>
                 </div>
 
-                <!-- Paramètres Généraux de la Section Campus -->
-                <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[4px] space-y-3">
-                  <div class="font-bold text-[#124F80] text-xs flex items-center justify-between">
-                    <span class="flex items-center gap-1.5">
-                      <span>🏫</span> Titres & Textes Généraux de la Section Campus
-                    </span>
-                    <span class="text-[10px] text-amber-700 font-medium">⚠️ Si le Titre est vide, la section campus est masquée en vitrine publique</span>
-                  </div>
-
-                  <div class="space-y-3">
-                    <div class="field">
-                      <label class="text-[11px] text-[#124F80]">Sur-titre (Eyebrow / Surtitre)</label>
-                      <input type="text" [(ngModel)]="settings.campusEyebrow" name="campusEyebrow" placeholder="Ex : Infrastructures & Espaces Techniques" class="text-xs" />
-                    </div>
-
-                    <div class="field">
-                      <label class="text-[11px] text-[#124F80] font-bold">Titre Principal de la Section Campus *</label>
-                      <input type="text" [(ngModel)]="settings.campusTitre" name="campusTitre" placeholder="Ex : Campus d'Excellence : Ateliers Pratiques & Laboratoires" class="text-xs font-bold" />
-                      <div class="hint">Obligatoire pour afficher la section en page d'accueil. Si vide, la section ne sera pas affichée aux visiteurs.</div>
-                    </div>
-
-                    <div class="field">
-                      <label class="text-[11px] text-[#124F80]">Sous-titre explicatif</label>
-                      <textarea [(ngModel)]="settings.campusSousTitre" name="campusSousTitre" rows="2" placeholder="Ex : Découvrez nos installations aux normes internationales..." class="text-xs"></textarea>
-                    </div>
-                  </div>
-                </div>
 
               </div>
             </div>
@@ -495,20 +468,6 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               </div>
             </div>
 
-            <!-- CTA Bannière -->
-            <div class="card border-t-[5px] border-t-[#276B44]">
-              <div class="label">Bannière d'Appel à l'Action (CTA Inscription)</div>
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="field">
-                  <label>Titre de la Bannière d'Inscription</label>
-                  <input type="text" [(ngModel)]="settings.ctaTitre" name="ctaTitre" class="font-bold" />
-                </div>
-                <div class="field">
-                  <label>Période / Sous-titre d'Ouverture des Sessions</label>
-                  <input type="text" [(ngModel)]="settings.ctaSousTitre" name="ctaSousTitre" />
-                </div>
-              </div>
-            </div>
 
             <!-- Bouton d'enregistrement -->
             <div class="flex justify-end pt-2">
@@ -827,6 +786,28 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               <span>Ajouter un espace campus</span>
             </button>
           </div>
+
+
+            <!-- Titres & Textes Généraux de la Section Campus (déplacé depuis Tab Hero) -->
+            <div class="card border-t-[5px] border-t-[#124F80] mb-4">
+              <div class="label">🏫 Titres & Textes Généraux de la Section Campus</div>
+              <div class="text-[10px] text-amber-700 font-medium mb-3">⚠️ Si le Titre est vide, la section campus est masquée en vitrine publique</div>
+              <div class="space-y-3">
+                <div class="field">
+                  <label class="text-[11px] text-[#124F80]">Sur-titre (Eyebrow / Surtitre)</label>
+                  <input type="text" [(ngModel)]="settings.campusEyebrow" name="campusEyebrow2" placeholder="Ex : Infrastructures & Espaces Techniques" class="text-xs" />
+                </div>
+                <div class="field">
+                  <label class="text-[11px] text-[#124F80] font-bold">Titre Principal de la Section Campus *</label>
+                  <input type="text" [(ngModel)]="settings.campusTitre" name="campusTitre2" placeholder="Ex : Campus d'Excellence : Ateliers Pratiques & Laboratoires" class="text-xs font-bold" />
+                  <div class="hint">Obligatoire pour afficher la section en page d'accueil. Si vide, la section ne sera pas affichée aux visiteurs.</div>
+                </div>
+                <div class="field">
+                  <label class="text-[11px] text-[#124F80]">Sous-titre explicatif</label>
+                  <textarea [(ngModel)]="settings.campusSousTitre" name="campusSousTitre2" rows="2" placeholder="Ex : Découvrez nos installations aux normes internationales..." class="text-xs"></textarea>
+                </div>
+              </div>
+            </div>
 
           <!-- Avertissement si titre Campus vide : section invisible en vitrine -->
           <div *ngIf="!settings.campusTitre" class="p-3 bg-amber-50 border border-amber-300 rounded text-xs text-amber-900 flex items-center gap-2">
@@ -1276,6 +1257,22 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
           </div>
 
           <form (ngSubmit)="sauvegarderSettings()" class="space-y-6">
+
+            <!-- Bannière d'Appel à l'Action CTA Inscription (déplacé depuis Tab Hero) -->
+            <div class="card border-t-[5px] border-t-[#276B44]">
+              <div class="label">Bannière d'Appel à l'Action (CTA Inscription)</div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="field">
+                  <label>Titre de la Bannière d'Inscription</label>
+                  <input type="text" [(ngModel)]="settings.ctaTitre" name="ctaTitre2" class="font-bold" />
+                </div>
+                <div class="field">
+                  <label>Période / Sous-titre d'Ouverture des Sessions</label>
+                  <input type="text" [(ngModel)]="settings.ctaSousTitre" name="ctaSousTitre2" />
+                </div>
+              </div>
+            </div>
+
             
             <!-- Section Vérification de Certificats -->
             <div class="card border-t-[5px] border-t-[#124F80]">
