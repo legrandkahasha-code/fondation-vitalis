@@ -824,6 +824,16 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   <label class="text-[11px] text-[#124F80]">Sous-titre explicatif</label>
                   <textarea [(ngModel)]="settings.campusSousTitre" name="campusSousTitre2" rows="2" placeholder="Ex : Découvrez nos installations aux normes internationales..." class="text-xs"></textarea>
                 </div>
+                <div class="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    (click)="sauvegarderSettings()"
+                    [disabled]="savingSettings"
+                    class="btn text-xs py-2 px-5 bg-[#124F80] hover:bg-[#0D3859] text-white font-semibold shadow-2xs cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>{{ savingSettings ? '⏳ Enregistrement...' : '💾 Enregistrer les titres Campus' }}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -831,7 +841,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
           <div *ngIf="!settings.campusTitre" class="p-3 bg-amber-50 border border-amber-300 rounded text-xs text-amber-900 flex items-center gap-2">
             <span class="text-base">⚠️</span>
             <div>
-              <strong>Section Campus masquée en vitrine publique :</strong> Aucun titre principal n'est configuré pour le campus. Renseignez-le dans l'onglet « Paramètres Généraux ».
+              <strong>Section Campus masquée en vitrine publique :</strong> Aucun titre principal n'est configuré pour le campus. Renseignez-le ci-dessus et enregistrez pour afficher la section en vitrine.
             </div>
           </div>
 

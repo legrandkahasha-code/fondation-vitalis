@@ -683,28 +683,27 @@ export class LandingService {
       }
     }
 
-    // Révocation de sécurité : si le texte alternatif est effacé/vide, le droit à l'image ne peut pas être maintenu
-    if (cleanData.heroImageAlt !== undefined && !String(cleanData.heroImageAlt).trim()) {
+    // Gestion rigoureuse du droit à l'image et du texte alternatif (P1.1)
+    const droitVoulu = cleanData.heroImageDroitConfirme === true || cleanData.heroImageDroitConfirme === 'true';
+    if (cleanData.heroImageDroitConfirme !== undefined && droitVoulu) {
+      const alt = (cleanData.heroImageAlt !== undefined ? cleanData.heroImageAlt : existing?.heroImageAlt) || '';
+      if (!String(alt).trim()) {
+        throw new BadRequestException('Un texte alternatif (heroImageAlt) est obligatoire pour confirmer le droit à l\'image.');
+      }
+      if (!existing?.heroImageDroitConfirme) {
+        cleanData.heroImageDroitDate = new Date();
+        cleanData.heroImageDroitAuteur = user?.email || user?.id || 'admin';
+      }
+      cleanData.heroImageDroitConfirme = true;
+    } else if (cleanData.heroImageDroitConfirme !== undefined && !droitVoulu) {
       cleanData.heroImageDroitConfirme = false;
       cleanData.heroImageDroitDate = null;
       cleanData.heroImageDroitAuteur = null;
-    }
-
-    if (cleanData.heroImageDroitConfirme !== undefined) {
-      cleanData.heroImageDroitConfirme = cleanData.heroImageDroitConfirme === true || cleanData.heroImageDroitConfirme === 'true';
-      if (cleanData.heroImageDroitConfirme) {
-        const alt = (cleanData.heroImageAlt !== undefined ? cleanData.heroImageAlt : existing?.heroImageAlt) || '';
-        if (!String(alt).trim()) {
-          throw new BadRequestException('Un texte alternatif (heroImageAlt) est obligatoire pour confirmer le droit à l\'image.');
-        }
-        if (!existing?.heroImageDroitConfirme) {
-          cleanData.heroImageDroitDate = new Date();
-          cleanData.heroImageDroitAuteur = user?.email || user?.id || 'admin';
-        }
-      } else {
-        cleanData.heroImageDroitDate = null;
-        cleanData.heroImageDroitAuteur = null;
-      }
+    } else if (cleanData.heroImageAlt !== undefined && !String(cleanData.heroImageAlt).trim() && existing?.heroImageDroitConfirme) {
+      // Révocation implicite de sécurité : l'alt est vidé alors que le droit était confirmé
+      cleanData.heroImageDroitConfirme = false;
+      cleanData.heroImageDroitDate = null;
+      cleanData.heroImageDroitAuteur = null;
     }
 
     if (cleanData.videoPresentationUrl !== undefined) {

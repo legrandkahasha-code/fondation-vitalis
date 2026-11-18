@@ -2,16 +2,26 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LandingService } from './landing.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { StorageService } from '../../common/services/storage.service';
+import { BadRequestException } from '@nestjs/common';
 
 describe('LandingService', () => {
   let service: LandingService;
 
   const mockPrismaService = {
+    certificat: {
+      count: jest.fn().mockResolvedValue(150),
+    },
+    filiere: {
+      count: jest.fn().mockResolvedValue(12),
+    },
     landingPageSettings: {
       findFirst: jest.fn().mockResolvedValue({
         id: '123e4567-e89b-12d3-a456-426614174000',
         heroTitre: 'Vitalis Center, la formation professionnelle',
         heroSousTitre: 'Description',
+        heroImageAlt: 'Étudiants en atelier',
+        heroImageDroitConfirme: true,
         statsLaureats: 1200,
         statsTauxReussite: 94,
         statsFilieres: 15,
@@ -62,6 +72,7 @@ describe('LandingService', () => {
       delete: jest.fn(),
     },
     formation: {
+      count: jest.fn().mockResolvedValue(18),
       findMany: jest.fn().mockResolvedValue([
         {
           id: 'form-1',
@@ -105,6 +116,12 @@ describe('LandingService', () => {
     stream: jest.fn(),
   };
 
+  const mockStorageService = {
+    deleteLocalUpload: jest.fn().mockResolvedValue(true),
+    saveLocalUpload: jest.fn(),
+    isLocalUploadExists: jest.fn().mockReturnValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -116,6 +133,10 @@ describe('LandingService', () => {
         {
           provide: NotificationsService,
           useValue: mockNotificationsService,
+        },
+        {
+          provide: StorageService,
+          useValue: mockStorageService,
         },
       ],
     }).compile();
@@ -184,5 +205,58 @@ describe('LandingService', () => {
     const widget = await service.getWhatsappWidget();
     expect(widget.actif).toBe(true);
     expect(widget.url).toContain('wa.me/243843010337');
+  });
+
+  describe('P3.1 - Calcul des statistiques réelles', () => {
+    it('retourne les compteurs réels de la base de données', async () => {
+      const stats = await service.getStatsReelles();
+      expect(stats.laureats).toBe(150);
+      expect(stats.formationsActives).toBe(18);
+      expect(stats.filieres).toBe(12);
+      expect(stats.titresVerifiables).toBe(100);
+      expect(stats.calculeLe).toBeDefined();
+    });
+  });
+
+  describe('P1.1 - Sécurisation droit à l\'image et alt', () => {
+    it('révoque heroImageDroitConfirme si heroImageAlt est vidé', async () => {
+      mockPrismaService.landingPageSettings.findFirst.mockResolvedValue({
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        heroImage: '/uploads/hero/test.jpg',
+        heroImageAlt: 'Ancien texte alternatif',
+        heroImageDroitConfirme: true,
+      });
+
+      mockPrismaService.landingPageSettings.update.mockResolvedValue({
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        heroImageAlt: '',
+        heroImageDroitConfirme: false,
+      });
+
+      await service.updateSettings({ heroImageAlt: '' });
+
+      expect(mockPrismaService.landingPageSettings.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            heroImageDroitConfirme: false,
+            heroImageDroitDate: null,
+            heroImageDroitAuteur: null,
+          }),
+        }),
+      );
+    });
+
+    it('refuse de confirmer le droit à l\'image sans alt', async () => {
+      mockPrismaService.landingPageSettings.findFirst.mockResolvedValue({
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        heroImage: '/uploads/hero/test.jpg',
+        heroImageAlt: '',
+        heroImageDroitConfirme: false,
+      });
+
+      await expect(
+        service.updateSettings({ heroImageDroitConfirme: true, heroImageAlt: '   ' }),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 });
