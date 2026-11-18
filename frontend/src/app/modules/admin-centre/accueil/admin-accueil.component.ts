@@ -109,16 +109,92 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               <p class="text-xs text-[#4B5157] mb-4">
                 Conforme aux standards internationaux : texte institutionnel à gauche et composition visuelle humaine avec micro-badges à droite.
               </p>
+
+              <!-- MINI-APERÇU WYSIWYG EN DIRECT (RECOMMANDATION 1) -->
+              <div class="mb-5 rounded-xl overflow-hidden border border-slate-300 shadow-sm bg-[#0F2027]">
+                <div class="px-3.5 py-2 bg-[#124F80] text-white flex items-center justify-between text-xs">
+                  <span class="font-bold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Aperçu Vitrine en Temps Réel (Rendu Visiteur)</span>
+                  </span>
+                  <span class="text-[10px] opacity-75">Actualisé en direct</span>
+                </div>
+
+                <div class="relative p-5 sm:p-6 bg-gradient-to-r from-[#0F2027] via-[#203A43] to-[#2C5364] text-white flex flex-col justify-between overflow-hidden">
+                  <!-- Simulation de l'image de fond -->
+                  <div 
+                    *ngIf="settings.heroImage && settings.heroImageDroitConfirme" 
+                    class="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none"
+                    [style.backgroundImage]="'url(' + getHeroImagePreview() + ')'"
+                  ></div>
+
+                  <!-- Tutelle & Agrément simulés -->
+                  <div class="relative z-10 flex flex-wrap items-center gap-2 mb-2">
+                    <span class="px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-semibold text-white/90">
+                      🏛️ RDC · Ministère de la Formation Professionnelle
+                    </span>
+                    <span *ngIf="settings.heroNumeroAgrement" class="text-[10px] font-mono text-emerald-300">
+                      {{ settings.heroNumeroAgrement }}
+                    </span>
+                  </div>
+
+                  <!-- Titre & Sous-titre réels -->
+                  <div class="relative z-10 max-w-2xl space-y-1.5 my-2">
+                    <h4 class="text-sm sm:text-base font-extrabold text-white leading-snug">
+                      {{ settings.heroTitre || 'Vitalis Center, la formation professionnelle reconnue par l\'État' }}
+                    </h4>
+                    <p class="text-xs text-white/80 line-clamp-3 leading-relaxed">
+                      {{ settings.heroSousTitre || 'Vitalis Center EUP forme les professionnels, cadres et jeunes talents aux métiers d\'avenir...' }}
+                    </p>
+                  </div>
+
+                  <!-- Micro-badges en direct -->
+                  <div *ngIf="settings.heroBadge1Texte || settings.heroBadge2Texte || settings.heroBadge3Texte" class="relative z-10 my-2 flex flex-wrap gap-2">
+                    <span *ngIf="settings.heroBadge1Texte" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-medium text-white">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#F0791E]"></span>
+                      {{ settings.heroBadge1Texte }}
+                    </span>
+                    <span *ngIf="settings.heroBadge2Texte" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-medium text-white">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                      {{ settings.heroBadge2Texte }}
+                    </span>
+                    <span *ngIf="settings.heroBadge3Texte" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-medium text-white">
+                      <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                      {{ settings.heroBadge3Texte }}
+                    </span>
+                  </div>
+
+                  <!-- Boutons CTA en direct -->
+                  <div class="relative z-10 mt-3 flex flex-wrap items-center gap-2.5">
+                    <span class="px-3 py-1.5 rounded bg-[#F0791E] text-white text-xs font-bold shadow-xs">
+                      {{ settings.heroCtaTexte || 'Postuler pour la Session 2026' }}
+                    </span>
+                    <span *ngIf="settings.heroCtaSecondaireTexte" class="px-3 py-1.5 rounded bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold">
+                      {{ settings.heroCtaSecondaireTexte }}
+                    </span>
+                  </div>
+                </div>
+              </div>
               
               <div class="space-y-4">
                 <div class="field">
-                  <label for="heroTitre">Titre Principal du Hero *</label>
-                  <input id="heroTitre" type="text" [(ngModel)]="settings.heroTitre" name="heroTitre" class="font-bold text-[#1B1D1F]" required />
+                  <div class="flex items-center justify-between mb-1">
+                    <label for="heroTitre" class="mb-0 font-bold text-xs text-[#124F80]">Titre Principal du Hero *</label>
+                    <span class="text-[11px] font-mono px-2 py-0.5 rounded border" [ngClass]="getTitreLongueurClass()">
+                      {{ (settings.heroTitre || '').length }} / 80 car. conseillés
+                    </span>
+                  </div>
+                  <input id="heroTitre" type="text" [(ngModel)]="settings.heroTitre" (ngModelChange)="marquerModifie()" name="heroTitre" class="font-bold text-[#1B1D1F]" required />
                 </div>
 
                 <div class="field">
-                  <label for="heroSousTitre">Texte de Présentation / Sous-titre Institutionnel *</label>
-                  <textarea id="heroSousTitre" rows="3" [(ngModel)]="settings.heroSousTitre" name="heroSousTitre" required></textarea>
+                  <div class="flex items-center justify-between mb-1">
+                    <label for="heroSousTitre" class="mb-0 font-bold text-xs text-[#124F80]">Texte de Présentation / Sous-titre Institutionnel *</label>
+                    <span class="text-[11px] font-mono px-2 py-0.5 rounded border" [ngClass]="getSousTitreLongueurClass()">
+                      {{ (settings.heroSousTitre || '').length }} / 250 car. conseillés
+                    </span>
+                  </div>
+                  <textarea id="heroSousTitre" rows="3" [(ngModel)]="settings.heroSousTitre" (ngModelChange)="marquerModifie()" name="heroSousTitre" required></textarea>
                   <div class="hint">Présentation de la mission d'utilité publique, de la tutelle et de l'Approche par Compétences (APC).</div>
                 </div>
 
@@ -227,15 +303,15 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="field">
                       <label class="text-[11px] text-[#124F80]">Badge 1 (Insertion)</label>
-                      <input type="text" [(ngModel)]="settings.heroBadge1Texte" name="heroBadge1Texte" placeholder="94% Insertion Professionnelle" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroBadge1Texte" (ngModelChange)="marquerModifie()" name="heroBadge1Texte" placeholder="94% Insertion Professionnelle" class="text-xs" />
                     </div>
                     <div class="field">
                       <label class="text-[11px] text-[#276B44]">Badge 2 (Agrément)</label>
-                      <input type="text" [(ngModel)]="settings.heroBadge2Texte" name="heroBadge2Texte" placeholder="Agrément Officiel RDC" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroBadge2Texte" (ngModelChange)="marquerModifie()" name="heroBadge2Texte" placeholder="Agrément Officiel RDC" class="text-xs" />
                     </div>
                     <div class="field">
                       <label class="text-[11px] text-[#F0791E]">Badge 3 (Sécurité)</label>
-                      <input type="text" [(ngModel)]="settings.heroBadge3Texte" name="heroBadge3Texte" placeholder="Certificats Infalsifiables" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroBadge3Texte" (ngModelChange)="marquerModifie()" name="heroBadge3Texte" placeholder="Certificats Infalsifiables" class="text-xs" />
                     </div>
                   </div>
                 </div>
@@ -250,11 +326,26 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                       <div class="font-bold text-[11px] text-[#124F80]">Bouton Principal (Or d'État)</div>
                       <div class="field">
                         <label class="text-[10px] text-[#4B5157]">Texte du Bouton Principal</label>
-                        <input type="text" [(ngModel)]="settings.heroCtaTexte" name="heroCtaTexte" placeholder="Ex : Postuler pour la Session 2026" class="text-xs" />
+                        <input type="text" [(ngModel)]="settings.heroCtaTexte" (ngModelChange)="marquerModifie()" name="heroCtaTexte" placeholder="Ex : Postuler pour la Session 2026" class="text-xs" />
                       </div>
                       <div class="field">
-                        <label class="text-[10px] text-[#4B5157]">Lien de Redirection (URL ou Ancre #)</label>
-                        <input type="text" [(ngModel)]="settings.heroCtaLien" name="heroCtaLien" placeholder="Ex : #formations ou /admission" class="text-xs" />
+                        <div class="flex items-center justify-between">
+                          <label class="text-[10px] text-[#4B5157] mb-0">Lien de Redirection (URL ou Ancre #)</label>
+                          <span *ngIf="settings.heroCtaLien" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                            {{ getLienTypeLabel(settings.heroCtaLien) }}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-1">
+                          <input type="text" [(ngModel)]="settings.heroCtaLien" (ngModelChange)="marquerModifie()" name="heroCtaLien" placeholder="Ex : #formations ou /admission" class="text-xs flex-1" />
+                          <button 
+                            type="button" 
+                            (click)="testerLien(settings.heroCtaLien)"
+                            [disabled]="!settings.heroCtaLien"
+                            class="px-2 py-1 text-[10px] font-semibold rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shrink-0"
+                            title="Tester la redirection dans un nouvel onglet">
+                            Tester ↗
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -262,11 +353,26 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                       <div class="font-bold text-[11px] text-[#2AA9A0]">Bouton Secondaire (Verre Dépoli)</div>
                       <div class="field">
                         <label class="text-[10px] text-[#4B5157]">Texte du Bouton Secondaire</label>
-                        <input type="text" [(ngModel)]="settings.heroCtaSecondaireTexte" name="heroCtaSecondaireTexte" placeholder="Ex : Télécharger la Brochure (PDF)" class="text-xs" />
+                        <input type="text" [(ngModel)]="settings.heroCtaSecondaireTexte" (ngModelChange)="marquerModifie()" name="heroCtaSecondaireTexte" placeholder="Ex : Télécharger la Brochure (PDF)" class="text-xs" />
                       </div>
                       <div class="field">
-                        <label class="text-[10px] text-[#4B5157]">Lien de Redirection ou Action</label>
-                        <input type="text" [(ngModel)]="settings.heroCtaSecondaireLien" name="heroCtaSecondaireLien" placeholder="Ex : action:brochure ou #contact" class="text-xs" />
+                        <div class="flex items-center justify-between">
+                          <label class="text-[10px] text-[#4B5157] mb-0">Lien de Redirection ou Action</label>
+                          <span *ngIf="settings.heroCtaSecondaireLien" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                            {{ getLienTypeLabel(settings.heroCtaSecondaireLien) }}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-1">
+                          <input type="text" [(ngModel)]="settings.heroCtaSecondaireLien" (ngModelChange)="marquerModifie()" name="heroCtaSecondaireLien" placeholder="Ex : action:brochure ou #contact" class="text-xs flex-1" />
+                          <button 
+                            type="button" 
+                            (click)="testerLien(settings.heroCtaSecondaireLien)"
+                            [disabled]="!settings.heroCtaSecondaireLien"
+                            class="px-2 py-1 text-[10px] font-semibold rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shrink-0"
+                            title="Tester la redirection dans un nouvel onglet">
+                            Tester ↗
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -280,15 +386,15 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="field">
                       <label class="text-[11px] text-[#124F80]">Point de Réassurance 1</label>
-                      <input type="text" [(ngModel)]="settings.heroReassurance1" name="heroReassurance1" placeholder="Ex : Certificat officiel infalsifiable (QR Code)" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroReassurance1" (ngModelChange)="marquerModifie()" name="heroReassurance1" placeholder="Ex : Certificat officiel infalsifiable (QR Code)" class="text-xs" />
                     </div>
                     <div class="field">
                       <label class="text-[11px] text-[#2AA9A0]">Point de Réassurance 2</label>
-                      <input type="text" [(ngModel)]="settings.heroReassurance2" name="heroReassurance2" placeholder="Ex : Ateliers pratiques & Équipements réels" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroReassurance2" (ngModelChange)="marquerModifie()" name="heroReassurance2" placeholder="Ex : Ateliers pratiques & Équipements réels" class="text-xs" />
                     </div>
                     <div class="field">
                       <label class="text-[11px] text-[#C8902A]">Point de Réassurance 3</label>
-                      <input type="text" [(ngModel)]="settings.heroReassurance3" name="heroReassurance3" placeholder="Ex : Immersion professionnelle active" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroReassurance3" (ngModelChange)="marquerModifie()" name="heroReassurance3" placeholder="Ex : Immersion professionnelle active" class="text-xs" />
                     </div>
                   </div>
                 </div>
@@ -507,7 +613,37 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
             </div>
 
 
-            <!-- Bouton d'enregistrement -->
+            <!-- BARRE DE SAUVEGARDE FLOTTANTE (STICKY BAR - RECOMMANDATION 2) -->
+            <div 
+              *ngIf="formModifie" 
+              class="sticky bottom-4 z-40 bg-white/95 backdrop-blur-md p-3.5 sm:p-4 rounded-xl shadow-2xl border-2 border-[#F0791E] flex flex-wrap items-center justify-between gap-3 animate-fade-in-up"
+            >
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#F0791E] animate-ping shrink-0"></span>
+                <span class="text-xs font-bold text-[#1B1D1F]">
+                  Modifications non enregistrées dans l'onglet Hero & Réseaux
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="annulerModificationsSettings()"
+                  class="btn text-xs py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer rounded border border-slate-300"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  [disabled]="savingSettings"
+                  class="btn text-xs py-2 px-5 bg-[#F0791E] hover:bg-[#d6610b] text-white font-bold cursor-pointer rounded shadow-xs flex items-center gap-1.5"
+                >
+                  <span>{{ savingSettings ? '⏳' : '💾' }}</span>
+                  <span>{{ savingSettings ? 'Enregistrement en cours...' : 'Enregistrer maintenant' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Bouton d'enregistrement statique -->
             <div class="flex justify-end pt-2">
               <button type="submit" [disabled]="savingSettings" class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white border-none font-bold py-3 px-8 shadow-xs hover:scale-102 transition-transform cursor-pointer">
                 {{ savingSettings ? 'Enregistrement en cours...' : '💾 Enregistrer les Paramètres' }}
@@ -2347,6 +2483,9 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   selectedMessage: ContactMessageItem | null = null;
   searchMessages: string = '';
 
+  formModifie: boolean = false;
+  private settingsOriginaux: any = null;
+
   // Modals state
   modalSectionVisible: boolean = false;
   sectionEnCours: Partial<LandingPageSection> = {};
@@ -2410,6 +2549,8 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     this.landingService.getSettings().subscribe({
       next: (s) => {
         this.settings = s;
+        this.settingsOriginaux = JSON.parse(JSON.stringify(s));
+        this.formModifie = false;
         this.cdr.markForCheck();
       },
       error: () => this.toast.error('Erreur lors du chargement des paramètres.'),
@@ -2549,6 +2690,8 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     this.landingService.updateSettings(payload).subscribe({
       next: (res) => {
         this.settings = res;
+        this.settingsOriginaux = JSON.parse(JSON.stringify(res));
+        this.formModifie = false;
         this.savingSettings = false;
         notifyLandingSettingsChanged();
         this.toast.success('Paramètres enregistrés avec succès !');
@@ -2564,6 +2707,57 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  marquerModifie(): void {
+    this.formModifie = true;
+  }
+
+  getTitreLongueurClass(): string {
+    const len = (this.settings.heroTitre || '').length;
+    if (len >= 35 && len <= 85) return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    if (len === 0) return 'bg-slate-100 text-slate-600 border-slate-300';
+    return 'bg-amber-100 text-amber-800 border-amber-300';
+  }
+
+  getSousTitreLongueurClass(): string {
+    const len = (this.settings.heroSousTitre || '').length;
+    if (len >= 90 && len <= 280) return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    if (len === 0) return 'bg-slate-100 text-slate-600 border-slate-300';
+    return 'bg-amber-100 text-amber-800 border-amber-300';
+  }
+
+  getLienTypeLabel(lien?: string): string {
+    if (!lien) return '';
+    const l = lien.trim().toLowerCase();
+    if (l.startsWith('#')) return 'Ancre de section (' + l + ')';
+    if (l.startsWith('http')) return 'Lien externe';
+    if (l.startsWith('action:')) return 'Action spéciale (' + l.replace('action:', '') + ')';
+    if (l.startsWith('/')) return 'Page interne';
+    return 'Lien relatif';
+  }
+
+  testerLien(lien?: string): void {
+    if (!lien) return;
+    const l = lien.trim();
+    if (l.startsWith('http')) {
+      window.open(l, '_blank');
+    } else if (l.startsWith('#')) {
+      window.open('/' + l, '_blank');
+    } else if (l.startsWith('/')) {
+      window.open(l, '_blank');
+    } else {
+      this.toast.info(`Action testée : "${l}"`);
+    }
+  }
+
+  annulerModificationsSettings(): void {
+    if (this.settingsOriginaux) {
+      this.settings = JSON.parse(JSON.stringify(this.settingsOriginaux));
+      this.formModifie = false;
+      this.toast.info('Modifications annulées. Paramètres initiaux restaurés.');
+      this.cdr.markForCheck();
+    }
   }
 
   synchroniserStatsReelles(): void {
