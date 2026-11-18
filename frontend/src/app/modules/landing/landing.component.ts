@@ -1451,6 +1451,14 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.settings.whatsappActif === true && !!this.whatsappUrl;
   }
 
+  /** Sanitise une URL de réseau social : ne retourne la valeur que si elle commence par http(s):// */
+  safeSocialUrl(url?: string): string | null {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+    return null;
+  }
+
   isScrolled: boolean = false;
 
   @HostListener('window:scroll')
