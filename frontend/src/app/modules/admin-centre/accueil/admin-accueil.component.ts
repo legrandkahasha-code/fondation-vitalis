@@ -466,6 +466,24 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   </div>
                 </div>
               </div>
+
+              <!-- Action de calcul / synchronisation des chiffres clés réels (P3.1) -->
+              <div class="mt-4 pt-3 border-t border-dashed border-[#D7DBDE] flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  (click)="synchroniserStatsReelles()"
+                  [disabled]="syncStatsLoading"
+                  class="btn text-xs py-2 px-4 bg-[#124F80] hover:bg-[#0D3859] text-white font-semibold shadow-2xs cursor-pointer flex items-center gap-2 transition-all"
+                  title="Calculer les valeurs réelles d'après les enregistrements de la base de données"
+                >
+                  <span>{{ syncStatsLoading ? '⏳' : '🔄' }}</span>
+                  <span>{{ syncStatsLoading ? 'Calcul des données réelles...' : 'Calculer d\'après les données réelles' }}</span>
+                </button>
+                <div *ngIf="syncStatsInfo" class="text-[11px] text-[#276B44] font-medium flex items-center gap-1.5">
+                  <span>✓</span>
+                  <span>{{ syncStatsInfo }}</span>
+                </div>
+              </div>
             </div>
 
 
@@ -2264,6 +2282,8 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   loading: boolean = false;
   savingSettings: boolean = false;
   savingWhatsapp: boolean = false;
+  syncStatsLoading: boolean = false;
+  syncStatsInfo: string | null = null;
   activeTab: string = 'settings';
 
   tabs = [
@@ -2511,6 +2531,30 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           ? err.error.message.join(', ')
           : err?.error?.message || 'Erreur lors de l\'enregistrement des paramètres.';
         this.toast.error(msg);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  synchroniserStatsReelles(): void {
+    this.syncStatsLoading = true;
+    this.landingService.getStatsReelles().subscribe({
+      next: (stats) => {
+        this.syncStatsLoading = false;
+        if (stats.laureats !== undefined) this.settings.statsLaureats = stats.laureats;
+        if (stats.filieres !== undefined) this.settings.statsFilieres = stats.filieres;
+        if (stats.titresVerifiables !== undefined) this.settings.statsTitresVerif = stats.titresVerifiables;
+        const heure = new Date(stats.calculeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        this.syncStatsInfo = `Données calculées à ${heure} : ${stats.laureats} certificat(s), ${stats.filieres} filière(s), ${stats.formationsActives} formation(s) active(s).`;
+        this.toast.success(
+          `Statistiques réelles chargées : ${stats.laureats} lauréat(s), ${stats.filieres} filière(s). N'oubliez pas d'enregistrer les paramètres.`
+        );
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.syncStatsLoading = false;
+        console.error('Erreur getStatsReelles:', err);
+        this.toast.error('Impossible de calculer les statistiques réelles depuis la base.');
         this.cdr.markForCheck();
       },
     });

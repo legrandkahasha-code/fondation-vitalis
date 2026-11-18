@@ -615,6 +615,26 @@ export class LandingService {
     return settings;
   }
 
+  /**
+   * P3.1 — Calcul hybride des chiffres clés depuis les données réelles en base.
+   * Retourne les compteurs réels que l'admin peut utiliser pour pré-remplir les stats du hero.
+   */
+  async getStatsReelles() {
+    const [countCertificats, countFormationsActives, countFilieres] = await Promise.all([
+      this.db.certificat.count(),
+      this.db.formation.count({ where: { actif: true } }),
+      this.db.filiere.count(),
+    ]);
+
+    return {
+      laureats: countCertificats,
+      formationsActives: countFormationsActives,
+      filieres: countFilieres,
+      titresVerifiables: 100, // 100% des certificats émis sont vérifiables par QR
+      calculeLe: new Date().toISOString(),
+    };
+  }
+
   async getWhatsappWidget() {
     const settings = await this.getSettings();
     const actif = isWhatsappEnabled(settings?.whatsappActif);

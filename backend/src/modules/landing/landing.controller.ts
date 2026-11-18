@@ -176,6 +176,12 @@ export class LandingController {
   }
 
   // --- ADMIN SETTINGS ---
+  @Get('admin/stats-reelles')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  getStatsReelles() {
+    return this.service.getStatsReelles();
+  }
+
   @Get('settings')
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   getSettings() {

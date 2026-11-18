@@ -48,6 +48,22 @@ export class LandingService {
     return this.http.get<LandingPageSettings>(`${this.url}/settings`);
   }
 
+  getStatsReelles(): Observable<{
+    laureats: number;
+    formationsActives: number;
+    filieres: number;
+    titresVerifiables: number;
+    calculeLe: string;
+  }> {
+    return this.http.get<{
+      laureats: number;
+      formationsActives: number;
+      filieres: number;
+      titresVerifiables: number;
+      calculeLe: string;
+    }>(`${this.url}/admin/stats-reelles`);
+  }
+
   updateSettings(data: Partial<LandingPageSettings>): Observable<LandingPageSettings> {
     return this.http.put<LandingPageSettings>(`${this.url}/settings`, data);
   }
