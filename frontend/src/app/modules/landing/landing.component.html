@@ -702,7 +702,7 @@
                         />
                       </picture>
                     }
-                    @if (esp.badge) {
+                    @if (esp.badge && esp.badge.trim()) {
                       <span class="absolute top-3 left-3 px-2.5 py-1 bg-[var(--vert)] text-white text-sm font-bold rounded shadow-xs">
                         {{ esp.badge }}
                       </span>
@@ -716,7 +716,7 @@
                     }
                   </div>
                 </div>
-                @if (esp.equipements) {
+                @if (esp.equipements && esp.equipements.trim()) {
                   <div class="px-3.5 sm:px-4 pb-3.5 pt-2.5 border-t border-white/10 text-sm text-[var(--ardoise)] font-semibold flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-[var(--vert-clair)] shrink-0"></span>
                     <span class="line-clamp-2">{{ esp.equipements }}</span>

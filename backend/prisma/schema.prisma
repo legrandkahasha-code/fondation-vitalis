@@ -585,7 +585,7 @@ model LandingPageCampus {
   afficherMobile Boolean  @default(true) @map("afficher_mobile")
   afficherLanding Boolean @default(true) @map("afficher_landing")
   statut         String   @default("BROUILLON") @map("statut") @db.VarChar(20)
-  badge       String   @default("Atelier Pro") @db.VarChar(100)
+  badge       String?  @db.VarChar(100)
   equipements String   @db.VarChar(255)
   ordre       Int      @default(0)
   actif       Boolean  @default(true)
