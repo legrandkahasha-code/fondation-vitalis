@@ -406,6 +406,26 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                 </div>
               </div>
 
+              <!-- Passerelle WhatsApp officielle -->
+              <div class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-[2px] flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">💬</span>
+                  <div class="text-xs">
+                    <strong class="text-emerald-900">Bouton Flottant WhatsApp :</strong>
+                    <span class="ml-1 text-emerald-800">
+                      {{ settings.whatsappActif ? 'Actif sur la vitrine (' + (settings.contactWhatsapp || 'Numéro non renseigné') + ')' : 'Désactivé actuellement' }}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  (click)="activeTab = 'verif_contact'"
+                  class="text-xs font-semibold text-[#1C75BC] hover:underline cursor-pointer"
+                >
+                  Configurer WhatsApp & Coordonnées ↗
+                </button>
+              </div>
+
               <div class="field mt-4">
                 <div class="flex items-center justify-between mb-1">
                   <label class="mb-0">URL d'Intégration Carte Interactive (Google Maps / OpenStreetMap Embed)</label>
