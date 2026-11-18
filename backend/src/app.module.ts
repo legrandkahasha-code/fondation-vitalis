@@ -1,5 +1,6 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_PIPE, APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -17,6 +18,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { LandingModule } from './modules/landing/landing.module';
 import { ApprenantModule } from './modules/apprenant/apprenant.module';
 import { AdmissionModule } from './modules/admission/admission.module';
+import { RattrapageModule } from './modules/rattrapage/rattrapage.module';
+import { EnquetesModule } from './modules/enquetes/enquetes.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { EtablissementGuard } from './common/guards/etablissement.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -26,6 +29,12 @@ import { RolesGuard } from './common/guards/roles.guard';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', 'backend/.env'],
+    }),
+    EventEmitterModule.forRoot({
+      wildcard: false,
+      delimiter: '.',
+      maxListeners: 20,
+      verboseMemoryLeak: true,
     }),
     CommonModule,
     PrismaModule,
@@ -41,6 +50,8 @@ import { RolesGuard } from './common/guards/roles.guard';
     LandingModule,
     ApprenantModule,
     AdmissionModule,
+    RattrapageModule,
+    EnquetesModule,
   ],
   controllers: [AppController],
   providers: [

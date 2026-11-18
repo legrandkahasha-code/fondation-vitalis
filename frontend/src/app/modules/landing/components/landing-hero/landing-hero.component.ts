@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeroSlideItem } from '../../landing.component';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-landing-hero',
@@ -25,6 +26,16 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   @Input() heroNumeroAgrement: string = '';
   @Input() defaultHeroImage: string = '';
   @Input() reassurances: string[] = [];
+  @Input() settings: any = {};
+  @Input() hasCampusSection?: boolean;
+  @Input() isDownloadingBrochure: boolean = false;
+
+  get isCampusSectionVisible(): boolean {
+    if (this.hasCampusSection !== undefined) {
+      return this.hasCampusSection;
+    }
+    return !!(this.settings?.campusTitre && this.settings.campusTitre.trim());
+  }
 
   get reassuranceList(): string[] {
     if (this.reassurances && this.reassurances.length > 0) {
@@ -48,6 +59,10 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   isHeroSliderPaused: boolean = false;
   showVideoModal: boolean = false;
 
+  private mobileQuery?: MediaQueryList;
+  private mobileQueryListener?: (e: MediaQueryListEvent) => void;
+  public isMobile: boolean = false;
+
   private heroSliderTimer: any = null;
   private readonly HERO_SLIDE_DURATION_MS = 6500;
   private readonly HERO_TICK_INTERVAL_MS = 65;
@@ -57,7 +72,26 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   constructor(
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
-  ) {}
+  ) {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      this.mobileQuery = window.matchMedia('(max-width: 767px)');
+      this.isMobile = this.mobileQuery.matches;
+      this.mobileQueryListener = (e: MediaQueryListEvent) => {
+        this.isMobile = e.matches;
+        if (this.isMobile) {
+          this.stopSliderLoop();
+        } else {
+          this.startSliderLoop();
+        }
+        this.cdr.markForCheck();
+      };
+      if (this.mobileQuery.addEventListener) {
+        this.mobileQuery.addEventListener('change', this.mobileQueryListener);
+      } else {
+        (this.mobileQuery as any).addListener(this.mobileQueryListener);
+      }
+    }
+  }
 
   ngOnInit(): void {
     this.startSliderLoop();
@@ -65,6 +99,41 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopSliderLoop();
+    if (this.mobileQuery && this.mobileQueryListener) {
+      if (this.mobileQuery.removeEventListener) {
+        this.mobileQuery.removeEventListener('change', this.mobileQueryListener);
+      } else {
+        (this.mobileQuery as any).removeListener(this.mobileQueryListener);
+      }
+    }
+  }
+
+  get isTutelleVisible(): boolean {
+    if (this.isMobile) {
+      return this.settings?.heroTutelleVisibleMobile !== false;
+    }
+    return this.settings?.heroTutelleVisible !== false;
+  }
+
+  get isStatsVisible(): boolean {
+    if (this.isMobile) {
+      return this.settings?.heroStatsVisibleMobile !== false;
+    }
+    return this.settings?.heroStatsVisible !== false;
+  }
+
+  get isReassurancesVisible(): boolean {
+    if (this.isMobile) {
+      return this.settings?.heroReassurancesVisibleMobile !== false;
+    }
+    return this.settings?.heroReassurancesVisible !== false;
+  }
+
+  get isProfilsVisible(): boolean {
+    if (this.isMobile) {
+      return this.settings?.heroProfilsVisibleMobile !== false;
+    }
+    return this.settings?.heroProfilsVisible !== false;
   }
 
   get currentHeroSlide(): HeroSlideItem {
@@ -72,16 +141,14 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
       return {
         id: 'default',
         badge: 'Sous tutelle ministérielle · RDC',
-        badgeCouleur: '#2AA9A0',
+        badgeCouleur: 'var(--vert-clair)',
         atelierTag: 'Campus Central',
         tabTitle: 'Campus Central',
         titre: 'Formation Professionnelle reconnue par l\'État',
         sousTitre: 'Formation par compétences pratiques et certificats officiels infalsifiables.',
-        imageUrl: this.defaultHeroImage || 'assets/campus/lab-informatique.jpg',
-        statChiffre: '94% Insertion',
-        statLabel: 'Stages et emplois garantis',
+        imageUrl: this.settings?.heroImageDroitConfirme ? (this.defaultHeroImage || this.settings?.heroImage || '') : '',
         ctaTexte: 'Postuler pour la Session 2026',
-        ctaLien: '#formations',
+        ctaLien: '#formulaire-orientation',
         ctaSecondaireTexte: 'Télécharger la Brochure (PDF)',
         ctaSecondaireLien: 'action:brochure',
       };
@@ -89,16 +156,34 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     return this.heroSlides[this.currentHeroIndex % this.heroSlides.length];
   }
 
-  private get prefersReducedMotion(): boolean {
+  get prefersReducedMotion(): boolean {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
     return false;
   }
 
+  get enableMotion(): boolean {
+    return !this.isMobile && !this.prefersReducedMotion;
+  }
+
+  get isSaveDataEnabled(): boolean {
+    if (typeof navigator !== 'undefined') {
+      const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+      return !!conn?.saveData;
+    }
+    return false;
+  }
+
   startSliderLoop(): void {
     this.stopSliderLoop();
-    if (this.prefersReducedMotion) {
+    if (this.heroSlides.length <= 1) {
+      this.heroSliderProgress = 0;
+      this.isHeroSliderPaused = true;
+      this.cdr.markForCheck();
+      return;
+    }
+    if (!this.enableMotion) {
       this.isHeroSliderPaused = true;
       this.cdr.markForCheck();
       return;
@@ -204,13 +289,16 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   }
 
   onHeroImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    if (img && !img.src.includes('lab-informatique.jpg')) {
-      img.src = 'assets/campus/lab-informatique.jpg';
+    const img = event.target as HTMLElement;
+    if (img) {
+      img.style.display = 'none';
     }
   }
 
-  handleCta(lien: string): void {
+  handleCta(lien: string, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+    }
     if (lien === 'action:brochure') {
       this.downloadBrochure.emit();
       return;
@@ -245,7 +333,7 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- SKELETON LOADER & SUIVI DE CHARGEMENT DES IMAGES (REC 5) ---
+  // --- SKELETON LOADER & SUIVI DE CHARGEMENT DES IMAGES ---
   loadedImages: { [slideId: string]: boolean } = {};
 
   onImageLoad(slideId: string): void {
@@ -257,45 +345,34 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     return !!this.loadedImages[slideId];
   }
 
-  // --- OPTIMISATION WEBP & SRCSET RESPONSIVE (REC 2) ---
-  private readonly CAMPUS_IMAGES = [
-    'lab-informatique',
-    'atelier-energie',
-    'centre-examen',
-    'salle-conferences',
-  ];
-
-  private getCampusBaseName(url: string | null | undefined): string | null {
-    if (!url) return null;
-    for (const name of this.CAMPUS_IMAGES) {
-      if (url.includes(name)) {
-        return name;
-      }
+  private formatImageUrl(url: string | null | undefined): string {
+    if (!url || url.trim() === '') return '';
+    if (url.startsWith('/uploads/')) {
+      const backendBase = environment.apiUrl.replace(/\/api\/?$/, '');
+      return `${backendBase}${url}`;
     }
-    return null;
+    return url;
   }
 
+  // --- OPTIMISATION WEBP & SRCSET RESPONSIVE ---
   getImageWebpMobile(url: string | null | undefined): string {
-    const base = this.getCampusBaseName(url);
-    if (base) {
-      return `assets/campus/${base}-mobile.webp`;
+    if (this.settings?.heroImageMobile) {
+      return this.formatImageUrl(this.settings.heroImageMobile);
     }
-    return url || 'assets/campus/lab-informatique-mobile.webp';
+    return this.formatImageUrl(url);
   }
 
   getImageWebpDesktop(url: string | null | undefined): string {
-    const base = this.getCampusBaseName(url);
-    if (base) {
-      return `assets/campus/${base}-desktop.webp`;
+    if (this.isSaveDataEnabled && this.settings?.heroImageMobile) {
+      return this.formatImageUrl(this.settings.heroImageMobile);
     }
-    return url || 'assets/campus/lab-informatique-desktop.webp';
+    return this.formatImageUrl(url);
   }
 
   getImageJpgMobile(url: string | null | undefined): string {
-    const base = this.getCampusBaseName(url);
-    if (base) {
-      return `assets/campus/${base}-mobile.jpg`;
+    if (this.settings?.heroImageMobile) {
+      return this.formatImageUrl(this.settings.heroImageMobile);
     }
-    return url || 'assets/campus/lab-informatique-mobile.jpg';
+    return this.formatImageUrl(url);
   }
 }

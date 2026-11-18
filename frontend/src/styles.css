@@ -54,16 +54,23 @@
 }
 
 :root {
+  /* Charte institutionnelle refonte Sections A & B (Accueil & Campus) */
+  --navy: #071527;
+  --or: #C8902A;
+  --blanc: #FFFFFF;
+  --ardoise: #CBD5E1;
+  --vert: #276B44;
+  --vert-clair: #4ADE80;
+
   --bleu: #1C75BC;
   --bleu-fonce: #124F80;
   --bleu-clair: #E7F1FA;
-  --or: #F0791E;
   --or-clair: #FDECDD;
+  --or-attente: #F0791E;
+  --or-attente-clair: #FDECDD;
   --or-africain: #C8902A;
   --or-africain-clair: #F9F0DC;
   --teal: #2AA9A0;
-  --vert: #276B44;
-  --vert-clair: #E7F1EA;
   --rouge: #ED1C24;
   --rouge-clair: #FDE6E6;
   --gris-fond: #F5F6F7;
@@ -71,7 +78,6 @@
   --gris-bordure-forte: #9AA1A8;
   --texte: #1B1D1F;
   --texte-att: #4B5157;
-  --blanc: #FFFFFF;
 
   /* Legacy CSS vars mapping */
   --color-vc-primary: var(--bleu);
@@ -165,52 +171,54 @@ body {
  * H1 : Playfair Display (Sceau d'autorité de l'État)
  * H2–H6 : Public Sans (Clarté, lisibilité républicaine)
  * ==================================== */
-h1 {
-  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
-  font-size: clamp(1.75rem, 3.2vw + 1rem, 2.75rem);
-  font-weight: 700;
-  color: var(--texte);
-  margin: 0;
-  line-height: 1.15;
-  letter-spacing: -0.025em;
-}
+@layer base {
+  h1 {
+    font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+    font-size: clamp(1.75rem, 3.2vw + 1rem, 2.75rem);
+    font-weight: 700;
+    color: var(--texte);
+    margin: 0;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+  }
 
-h2 {
-  font-family: var(--font-heading, 'Public Sans', sans-serif);
-  font-size: clamp(1.25rem, 1.8vw + 0.5rem, 1.75rem);
-  font-weight: 700;
-  color: var(--texte);
-  margin: 0;
-  line-height: 1.25;
-  letter-spacing: -0.015em;
-}
+  h2 {
+    font-family: var(--font-heading, 'Public Sans', sans-serif);
+    font-size: clamp(1.25rem, 1.8vw + 0.5rem, 1.75rem);
+    font-weight: 700;
+    color: var(--texte);
+    margin: 0;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+  }
 
-h3 {
-  font-family: var(--font-heading, 'Public Sans', sans-serif);
-  font-size: clamp(1.0625rem, 1.2vw + 0.4rem, 1.35rem);
-  font-weight: 700;
-  color: var(--texte);
-  margin: 0;
-  line-height: 1.30;
-  letter-spacing: -0.01em;
-}
+  h3 {
+    font-family: var(--font-heading, 'Public Sans', sans-serif);
+    font-size: clamp(1.0625rem, 1.2vw + 0.4rem, 1.35rem);
+    font-weight: 700;
+    color: var(--texte);
+    margin: 0;
+    line-height: 1.30;
+    letter-spacing: -0.01em;
+  }
 
-h4 {
-  font-family: var(--font-heading, 'Public Sans', sans-serif);
-  font-size: clamp(0.9375rem, 0.6vw + 0.5rem, 1.125rem);
-  font-weight: 600;
-  color: var(--texte);
-  margin: 0;
-  line-height: 1.35;
-}
+  h4 {
+    font-family: var(--font-heading, 'Public Sans', sans-serif);
+    font-size: clamp(0.9375rem, 0.6vw + 0.5rem, 1.125rem);
+    font-weight: 600;
+    color: var(--texte);
+    margin: 0;
+    line-height: 1.35;
+  }
 
-h5, h6 {
-  font-family: var(--font-heading, 'Public Sans', sans-serif);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--texte);
-  margin: 0;
-  line-height: 1.4;
+  h5, h6 {
+    font-family: var(--font-heading, 'Public Sans', sans-serif);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--texte);
+    margin: 0;
+    line-height: 1.4;
+  }
 }
 
 /* Titre display hero — Playfair Display avec force */
@@ -268,20 +276,22 @@ td,
   max-width: 68ch;
 }
 
-p {
-  line-height: 1.6;
-  margin-top: 0;
-  margin-bottom: 0.75rem;
-}
+@layer base {
+  p {
+    line-height: 1.6;
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+  }
 
-a {
-  color: var(--bleu);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
+  a {
+    color: var(--bleu);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
 
-a:hover {
-  color: var(--bleu-fonce);
+  a:hover {
+    color: var(--bleu-fonce);
+  }
 }
 
 /* ====================================
@@ -465,7 +475,7 @@ a:hover {
 
 .field input:focus, .form-input:focus, .field select:focus, .field textarea:focus {
   outline: none;
-  border-color: var(--or);
+  border-color: var(--or-attente);
   box-shadow: 0 0 0 3px rgba(240, 121, 30, 0.12);
 }
 
@@ -494,9 +504,9 @@ a:hover {
 }
 
 .tag.attente, .badge-attente, .badge-admin-etab, .badge-warning {
-  background: var(--or-clair);
-  color: var(--or);
-  border-color: var(--or);
+  background: var(--or-attente-clair);
+  color: var(--or-attente);
+  border-color: var(--or-attente);
 }
 
 .tag.info, .badge-info, .badge-admin-centre, .badge-formateur, .badge-apprenant {

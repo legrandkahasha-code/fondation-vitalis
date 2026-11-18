@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef, HostListener, NgZone, signal, computed } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -64,15 +64,13 @@ export interface FaqDisplayItem {
 
 export interface HeroSlideItem {
   id: string;
-  badge: string;
-  badgeCouleur: string;
-  atelierTag: string;
+  badge?: string;
+  badgeCouleur?: string;
+  atelierTag?: string;
   tabTitle: string;
   titre: string;
   sousTitre: string;
   imageUrl: string;
-  statChiffre: string;
-  statLabel: string;
   ctaTexte: string;
   ctaLien: string;
   ctaSecondaireTexte?: string;
@@ -84,6 +82,25 @@ export interface HeroSlideItem {
 
 
 import { LandingHeroComponent } from './components/landing-hero/landing-hero.component';
+
+/**
+ * Logique de filtrage et limitation de la liste des ateliers du campus :
+ * - Desktop : 4 éléments maximum
+ * - Mobile (max-width: 767px) : 3 éléments maximum, exige strictement afficherMobile === true
+ * - Liste vide : retourne []
+ */
+export function filterCampusList<T extends { afficherMobile?: boolean | null }>(
+  list: T[] | null | undefined,
+  isMobile: boolean
+): T[] {
+  if (!list || list.length === 0) return [];
+  if (isMobile) {
+    // 3 éléments maximum sur mobile, éléments non marqués afficherMobile === true non rendus
+    return list.filter((item) => item.afficherMobile === true).slice(0, 3);
+  }
+  // 4 sur ordinateur
+  return list.slice(0, 4);
+}
 
 @Component({
   selector: 'app-landing',
@@ -110,6 +127,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   activeStep: number = 1;
   submittingContact: boolean = false;
   whatsappWidget = { actif: false, url: '' };
+  liveActivityDismissed: boolean = false;
 
   contactForm = {
     nom: '',
@@ -130,6 +148,9 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     heroBadge1Texte: '94% Insertion Professionnelle',
     heroBadge2Texte: 'Agrément Officiel RDC',
     heroBadge3Texte: 'Certificats Infalsifiables',
+    heroCtaTexte: 'Postuler pour la Session 2026',
+    heroCtaLien: '#formulaire-orientation',
+    liveActivityTexte: '',
     statsLaureats: 1200,
     statsTauxReussite: 94,
     statsFilieres: 15,
@@ -270,93 +291,25 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly HERO_TICK_INTERVAL_MS = 65;
 
   get heroSlides(): HeroSlideItem[] {
-    const slides: HeroSlideItem[] = [
+    // Le Hero est 100% géré par les paramètres configurés par l'administrateur
+    return [
       {
         id: 'officiel',
-        badge: this.settings.topbarTexte ? 'Tutelle Officielle · ' + this.settings.topbarTexte : 'Sous tutelle du Ministère de la Formation Professionnelle · RDC',
+        badge: '',
         badgeCouleur: '#2AA9A0',
         atelierTag: 'Campus Central · Titres d\'État',
         tabTitle: 'Présentation d\'État',
         titre: this.settings.heroTitre || 'Vitalis Center, la formation professionnelle reconnue par l\'État',
         sousTitre: this.settings.heroSousTitre || 'Vitalis Center EUP forme les professionnels, cadres et jeunes talents aux métiers d\'avenir sous la tutelle du Ministère de la Formation Professionnelle. Validation par compétences pratiques, encadrement expert et délivrance de certificats officiels infalsifiables.',
         imageUrl: this.getHeroImageUrl(),
-        statChiffre: this.settings.heroBadge1Texte || '94% Insertion',
-        statLabel: 'Insertion directe et stages garantis',
         ctaTexte: this.settings.heroCtaTexte || 'Postuler pour la Session 2026',
-        ctaLien: this.settings.heroCtaLien || '#formations',
+        ctaLien: this.getHeroCtaLien(),
         ctaSecondaireTexte: this.settings.heroCtaSecondaireTexte || 'Télécharger la Brochure (PDF)',
         ctaSecondaireLien: this.settings.heroCtaSecondaireLien || 'action:brochure',
         sessionStatut: 'Session 2026 · Inscriptions Ouvertes',
         videoUrl: this.settings?.videoPresentationUrl || '',
       },
     ];
-
-    // Intégration dynamique des ateliers et espaces configurés dans l'Espace Administrateur Central
-    if (this.campusEspacesList && this.campusEspacesList.length > 0) {
-      this.campusEspacesList.forEach((c: any, idx: number) => {
-        const couleurBadge = idx % 3 === 0 ? '#C8902A' : idx % 3 === 1 ? '#124F80' : '#2AA9A0';
-        slides.push({
-          id: `campus-${idx}`,
-          badge: c.badge || 'Atelier Professionnel & Lab',
-          badgeCouleur: couleurBadge,
-          atelierTag: c.titre,
-          tabTitle: c.titre && c.titre.length > 22 ? c.titre.substring(0, 20) + '...' : (c.titre || `Atelier 0${idx + 2}`),
-          titre: c.titre,
-          sousTitre: c.description,
-          imageUrl: this.formatImageUrl(c.photo, 'assets/campus/lab-informatique.jpg'),
-          statChiffre: c.badge || '100% Pratique',
-          statLabel: c.equipements || 'Équipements et bancs d\'essais réels',
-          ctaTexte: 'Explorer cette filière',
-          ctaLien: '#formations',
-          ctaSecondaireTexte: 'Poser une question',
-          ctaSecondaireLien: '#contact',
-          sessionStatut: 'Atelier Ouvert · Places Limitées',
-          videoUrl: this.settings?.videoPresentationUrl || '',
-        });
-      });
-    } else {
-      // Fallback gracieux si aucun atelier n'est encore configuré
-      slides.push(
-        {
-          id: 'informatique',
-          badge: 'Atelier Technologique Numérique',
-          badgeCouleur: '#C8902A',
-          atelierTag: 'Lab Informatique · Cloud · Cybersécurité',
-          tabTitle: 'Lab Informatique',
-          titre: 'Maîtrisez les technologies du numérique dans nos laboratoires de pointe',
-          sousTitre: 'Apprentissage immersif sur serveurs réels, postes spécialisés, administration systèmes, réseaux d\'entreprise et cybersécurité pratique avec des professionnels en activité.',
-          imageUrl: 'assets/campus/lab-informatique.jpg',
-          statChiffre: '100% Pratique',
-          statLabel: 'Postes dédiés, serveurs réels et cloud',
-          ctaTexte: 'Explorer les filières IT',
-          ctaLien: '#formations',
-          ctaSecondaireTexte: 'Espace Candidat',
-          ctaSecondaireLien: '/login',
-          sessionStatut: 'Session 2026 · Inscriptions Ouvertes',
-          videoUrl: this.settings?.videoPresentationUrl || '',
-        },
-        {
-          id: 'energie',
-          badge: 'Atelier Industriel & Transition Énergétique',
-          badgeCouleur: '#2AA9A0',
-          atelierTag: 'Électrotechnique · Solaire · Maintenance',
-          tabTitle: 'Atelier Électrotechnique',
-          titre: 'Formez-vous aux énergies d\'avenir et installations industrielles modernes',
-          sousTitre: 'Bancs d\'essais réels, dimensionnement solaire photovoltaïque, automatismes et maintenance industrielle aux normes internationales de sécurité.',
-          imageUrl: 'assets/campus/atelier-energie.jpg',
-          statChiffre: '15+ Métiers',
-          statLabel: 'Bancs d\'essais réels et habilitations',
-          ctaTexte: 'Voir les filières techniques',
-          ctaLien: '#formations',
-          ctaSecondaireTexte: 'Poser une question',
-          ctaSecondaireLien: '#contact',
-          sessionStatut: 'Session 2026 · Inscriptions Ouvertes',
-          videoUrl: this.settings?.videoPresentationUrl || '',
-        }
-      );
-    }
-
-    return slides;
   }
 
   get heroReassurances(): string[] {
@@ -428,12 +381,50 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isHeroSliderPaused = false;
   }
 
+  isDownloadingBrochure: boolean = false;
+
   telechargerBrochure(): void {
-    this.toast.info('Ouverture de la brochure officielle Vitalis Center 2026...');
-    const formationsEl = document.querySelector('#formations');
-    if (formationsEl) {
-      formationsEl.scrollIntoView({ behavior: 'smooth' });
+    if (this.isDownloadingBrochure) return;
+    this.isDownloadingBrochure = true;
+    this.toast.info('Génération et téléchargement de la brochure officielle en cours...');
+
+    this.landingService.downloadBrochurePdf().subscribe({
+      next: (blob: Blob) => {
+        this.isDownloadingBrochure = false;
+        try {
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.style.display = 'none';
+          link.href = blobUrl;
+          link.setAttribute('download', 'Brochure-Officielle-Formations-2026-Vitalis-Center.pdf');
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+          }, 400);
+          this.toast.success('La brochure officielle 2026 a été téléchargée avec succès.');
+        } catch (e) {
+          console.error('Erreur lors du déclenchement du téléchargement:', e);
+          this.toast.error('Erreur lors de l\'enregistrement de la brochure sur votre appareil.');
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isDownloadingBrochure = false;
+        console.error('Erreur téléchargement brochure PDF:', err);
+        this.toast.error('Impossible de télécharger la brochure. Assurez-vous que le serveur backend a bien été relancé.');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  getHeroCtaLien(): string {
+    const raw = this.settings.heroCtaLien?.trim();
+    if (!raw || raw === '#formations') {
+      return '#formulaire-orientation';
     }
+    return raw;
   }
 
   handleHeroCtaClick(lien: string): void {
@@ -450,13 +441,38 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     if (lien.startsWith('#')) {
-      const el = document.querySelector(lien);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
+      // Redirection fluide et ciblée vers le formulaire d'orientation
+      const targetSelector = (lien === '#formations' || lien === '#orientation' || lien === '#formulaire-orientation')
+        ? '#formulaire-orientation'
+        : lien;
+      this.scrollToElement(targetSelector);
       return;
     }
     window.location.href = lien;
+  }
+
+  scrollToElement(selector: string): void {
+    if (!selector) return;
+    let el = document.querySelector(selector) as HTMLElement | null;
+    if (!el && selector === '#formulaire-orientation') {
+      el = document.querySelector('#contact') as HTMLElement | null;
+    }
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (selector === '#formulaire-orientation') {
+        el.classList.add('ring-2', 'ring-[#1C75BC]', 'ring-offset-2');
+        setTimeout(() => {
+          el?.classList.remove('ring-2', 'ring-[#1C75BC]', 'ring-offset-2');
+        }, 2200);
+
+        const inputNom = el.querySelector('input[name="nom"]') as HTMLInputElement | null;
+        if (inputNom) {
+          setTimeout(() => {
+            inputNom.focus({ preventScroll: true });
+          }, 600);
+        }
+      }
+    }
   }
 
   // --- ÉTAT DU SLIDER D'ACTUALITÉS ANIMÉ (HARVARD / UNESCO STYLE) ---
@@ -582,7 +598,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedArticle = null;
   }
 
-  
+
   calculerTempsLecture(contenu?: string): string {
     if (!contenu || !contenu.trim()) return '1 min';
     const mots = contenu.trim().split(/\s+/).length;
@@ -671,37 +687,32 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     { nom: 'REGIDESO', logo: 'assets/partenaires/regideso.png', secteur: 'Service public' },
   ];
 
-  // --- ESPACES DU CAMPUS & ATELIERS TECHNIQUES (POINT 4.2 AUDIT) ---
-  campusEspacesList = [
-    {
-      titre: 'Laboratoire Systèmes & Développement Cloud',
-      description: 'Équipé de serveurs dédiés, postes haute performance et environnement d\'intégration continue pour l\'apprentissage pratique du code et de l\'administration réseau.',
-      photo: 'assets/campus/lab-informatique.jpg',
-      badge: 'Tech & Télécoms',
-      equipements: '35 postes connectés · Racks Cisco · Fibre dédiée',
-    },
-    {
-      titre: 'Atelier Électrotechnique & Énergie Solaire',
-      description: 'Bancs d\'essais réels, onduleurs industriels, simulateurs de réseau et kits photovoltaïques aux normes de sécurité électrique.',
-      photo: 'assets/campus/atelier-energie.jpg',
-      badge: 'Génie & Énergie',
-      equipements: 'Bancs Schneider Electric · Panneaux solaires · Outillage pro',
-    },
-    {
-      titre: 'Espace Collaboratif & Études de Cas',
-      description: 'Salles modulaires dédiées au management agile, simulations d\'entreprises, analyse financière et revues de projets d\'affaires.',
-      photo: 'assets/campus/salle-conferences.jpg',
-      badge: 'Management',
-      equipements: 'Vidéoprojection HD · Tableaux interactifs · Coworking',
-    },
-    {
-      titre: 'Centre d\'Examen Agréé & Registre Officiel',
-      description: 'Postes sécurisés pour les évaluations formelles, commissions de délibération et délivrance certifiée des attestations sous supervision ministérielle.',
-      photo: 'assets/campus/centre-examen.jpg',
-      badge: 'Accréditation',
-      equipements: 'Postes d\'évaluation isolés · Supervision APC · Registre',
-    },
-  ];
+  // --- ESPACES DU CAMPUS & ATELIERS TECHNIQUES (100% GÉRÉS PAR L'ADMINISTRATEUR) ---
+  private campusMobileQuery?: MediaQueryList;
+  private campusMobileListener?: (e: MediaQueryListEvent) => void;
+  public isMobileScreen = signal<boolean>(
+    typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : false
+  );
+  public rawCampusList = signal<Array<{
+    id?: string;
+    titre: string;
+    description: string;
+    photo?: string;
+    photoUrl?: string;
+    photoUrlMobile?: string;
+    photoAlt?: string;
+    badge?: string;
+    equipements: string;
+    afficherMobile?: boolean;
+  }>>([]);
+
+  public displayedCampusList = computed(() => {
+    return filterCampusList(this.rawCampusList(), this.isMobileScreen());
+  });
+
+  get campusEspacesList() {
+    return this.displayedCampusList();
+  }
 
   // --- MODALE VIDÉO INSTITUTIONNELLE (POINT 4.5 AUDIT) ---
   videoModalOpen: boolean = false;
@@ -848,11 +859,11 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   // Transform 3D pour le widget Hero
   heroWidgetTransform: string = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
 
-  // Compteurs animés (Count-Up)
-  laureatsDisplay: number = 1200;
-  tauxReussiteDisplay: number = 94;
-  filieresDisplay: number = 15;
-  titresVerifDisplay: number = 100;
+  // Compteurs animés (Count-Up au scroll)
+  laureatsDisplay: number = 0;
+  tauxReussiteDisplay: number = 0;
+  filieresDisplay: number = 0;
+  titresVerifDisplay: number = 0;
   private statsObserver?: IntersectionObserver;
   private countUpDone: boolean = false;
 
@@ -890,10 +901,14 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     return url;
   }
 
-  onImageError(event: Event, fallback = 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop'): void {
+  onImageError(event: Event, fallback?: string): void {
     const target = event.target as HTMLImageElement;
-    if (target && target.src !== fallback) {
-      target.src = fallback;
+    if (target) {
+      if (fallback && target.src !== fallback) {
+        target.src = fallback;
+      } else {
+        target.style.display = 'none';
+      }
     }
   }
 
@@ -918,7 +933,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
           return this.sanitizer.bypassSecurityTrustResourceUrl(`https://player.vimeo.com/video/${videoId}`);
         }
       }
-    } catch (e) {}
+    } catch (e) { }
     return null;
   }
 
@@ -933,7 +948,21 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
     private ngZone: NgZone
-  ) {}
+  ) {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      this.campusMobileQuery = window.matchMedia('(max-width: 767px)');
+      this.isMobileScreen.set(this.campusMobileQuery.matches);
+      this.campusMobileListener = (e: MediaQueryListEvent) => {
+        this.isMobileScreen.set(e.matches);
+        this.cdr.markForCheck();
+      };
+      if (this.campusMobileQuery.addEventListener) {
+        this.campusMobileQuery.addEventListener('change', this.campusMobileListener);
+      } else {
+        (this.campusMobileQuery as any).addListener(this.campusMobileListener);
+      }
+    }
+  }
 
   ngOnInit(): void {
     this.updateSafeMapUrl();
@@ -1065,10 +1094,12 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
           };
           this.appliquerWhatsappDepuisSettings(this.settings);
           this.updateSafeMapUrl();
-          this.laureatsDisplay = this.settings.statsLaureats ?? 1200;
-          this.tauxReussiteDisplay = this.settings.statsTauxReussite ?? 94;
-          this.filieresDisplay = this.settings.statsFilieres ?? 15;
-          this.titresVerifDisplay = this.settings.statsTitresVerif ?? 100;
+          if (this.countUpDone) {
+            this.laureatsDisplay = this.settings.statsLaureats ?? 1200;
+            this.tauxReussiteDisplay = this.settings.statsTauxReussite ?? 94;
+            this.filieresDisplay = this.settings.statsFilieres ?? 15;
+            this.titresVerifDisplay = this.settings.statsTitresVerif ?? 100;
+          }
         }
 
         this.chargerWhatsappWidget();
@@ -1130,14 +1161,23 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
           }));
         }
 
-        if (data.campus && data.campus.length > 0) {
-          this.campusEspacesList = data.campus.map((c: any) => ({
-            titre: c.titre,
-            description: c.description,
-            photo: c.photoUrl || c.photo || 'assets/campus/lab-informatique.jpg',
-            badge: c.badge || 'Campus & Labs',
-            equipements: c.equipements,
-          }));
+        if (data.campus && Array.isArray(data.campus)) {
+          this.rawCampusList.set(data.campus
+            .filter((c: any) => c.actif !== false)
+            .map((c: any) => ({
+              id: c.id,
+              titre: c.titre,
+              description: c.description,
+              photo: (c.photoUrl || c.photo) ? this.getMediaUrl(c.photoUrl || c.photo) : '',
+              photoUrl: c.photoUrl ? this.getMediaUrl(c.photoUrl) : '',
+              photoUrlMobile: c.photoUrlMobile ? this.getMediaUrl(c.photoUrlMobile) : '',
+              photoAlt: c.photoAlt,
+              badge: c.badge || '',
+              equipements: c.equipements,
+              afficherMobile: Boolean(c.afficherMobile),
+            })));
+        } else {
+          this.rawCampusList.set([]);
         }
 
         if (data.partenaires && data.partenaires.length > 0) {
@@ -1202,6 +1242,12 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initStatsObserver();
     this.initBarresObserver();
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash;
+      if (hash === '#formulaire-orientation' || hash === '#orientation') {
+        setTimeout(() => this.scrollToElement('#formulaire-orientation'), 450);
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -1215,6 +1261,13 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.stopSliderLoop();
     this.stopHeroSliderLoop();
+    if (this.campusMobileQuery && this.campusMobileListener) {
+      if (this.campusMobileQuery.removeEventListener) {
+        this.campusMobileQuery.removeEventListener('change', this.campusMobileListener);
+      } else {
+        (this.campusMobileQuery as any).removeListener(this.campusMobileListener);
+      }
+    }
     if (this.statsObserver) {
       this.statsObserver.disconnect();
     }
@@ -1270,7 +1323,13 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initStatsObserver(): void {
-    if (typeof IntersectionObserver === 'undefined' || !this.statsSection) return;
+    if (typeof IntersectionObserver === 'undefined' || !this.statsSection) {
+      this.laureatsDisplay = this.settings.statsLaureats ?? 1200;
+      this.tauxReussiteDisplay = this.settings.statsTauxReussite ?? 94;
+      this.filieresDisplay = this.settings.statsFilieres ?? 15;
+      this.titresVerifDisplay = this.settings.statsTitresVerif ?? 100;
+      return;
+    }
 
     this.statsObserver = new IntersectionObserver(
       (entries) => {
@@ -1288,12 +1347,23 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private runCountUp(): void {
-    const duration = 1600;
-    const startTime = performance.now();
     const targetLaureats = this.settings.statsLaureats ?? 1200;
     const targetTaux = this.settings.statsTauxReussite ?? 94;
     const targetFilieres = this.settings.statsFilieres ?? 15;
     const targetTitres = this.settings.statsTitresVerif ?? 100;
+
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      this.laureatsDisplay = targetLaureats;
+      this.tauxReussiteDisplay = targetTaux;
+      this.filieresDisplay = targetFilieres;
+      this.titresVerifDisplay = targetTitres;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const duration = 1600;
+    const startTime = performance.now();
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
@@ -1313,6 +1383,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.filieresDisplay = targetFilieres;
         this.titresVerifDisplay = targetTitres;
       }
+      this.cdr.markForCheck();
     };
 
     requestAnimationFrame(animate);
@@ -1347,14 +1418,16 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getHeroImageUrl(): string {
-    return this.formatImageUrl(this.settings.heroImage, 'assets/campus/lab-informatique.jpg');
+    if (!this.settings?.heroImage || this.settings?.heroImageDroitConfirme !== true) {
+      return '';
+    }
+    return this.formatImageUrl(this.settings.heroImage, '');
   }
 
   onHeroImageError(event: Event): void {
     const target = event.target as HTMLImageElement;
-    const fallback = 'assets/campus/lab-informatique.jpg';
-    if (target && target.src !== fallback) {
-      target.src = fallback;
+    if (target) {
+      target.style.display = 'none';
     }
   }
 
@@ -1447,6 +1520,14 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get whatsappVisible(): boolean {
     return this.settings.whatsappActif === true && !!this.whatsappUrl;
+  }
+
+  /** Sanitise une URL de réseau social : ne retourne la valeur que si elle commence par http(s):// */
+  safeSocialUrl(url?: string): string | null {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+    return null;
   }
 
   isScrolled: boolean = false;

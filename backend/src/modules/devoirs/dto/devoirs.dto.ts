@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsDateString, IsUUID, IsNumber, Min } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsUUID, IsNumber, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateDevoirDto {
   @IsString()
@@ -17,8 +18,10 @@ export class CreateDevoirDto {
 }
 
 export class NoterDevoirDto {
-  @IsNumber()
-  @Min(0)
+  @Type(() => Number)
+  @IsNumber({}, { message: 'La note doit être un nombre valide.' })
+  @Min(0, { message: 'La note doit être au moins de 0.' })
+  @Max(20, { message: 'La note ne peut pas dépasser 20.' })
   note!: number;
 
   @IsOptional()

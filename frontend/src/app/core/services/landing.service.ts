@@ -43,13 +43,62 @@ export class LandingService {
     return this.http.post<any>(`${this.url}/newsletter`, { email });
   }
 
+  downloadBrochurePdf(): Observable<Blob> {
+    return this.http.get(`${this.url}/public/brochure-pdf`, {
+      responseType: 'blob',
+    });
+  }
+
+  getBrochurePdfUrl(): string {
+    return `${this.url}/public/brochure-pdf`;
+  }
+
   // --- ADMIN SETTINGS ---
   getSettings(): Observable<LandingPageSettings> {
     return this.http.get<LandingPageSettings>(`${this.url}/settings`);
   }
 
+  getStatsReelles(): Observable<{
+    laureats: number;
+    formationsActives: number;
+    filieres: number;
+    titresVerifiables: number;
+    calculeLe: string;
+  }> {
+    return this.http.get<{
+      laureats: number;
+      formationsActives: number;
+      filieres: number;
+      titresVerifiables: number;
+      calculeLe: string;
+    }>(`${this.url}/admin/stats-reelles`);
+  }
+
   updateSettings(data: Partial<LandingPageSettings>): Observable<LandingPageSettings> {
     return this.http.put<LandingPageSettings>(`${this.url}/settings`, data);
+  }
+
+  /**
+   * Upload de l'image principale du Hero (avec pipeline sharp 1920x1080 et 768x1024).
+   */
+  uploadHeroImage(file: File): Observable<{
+    heroImage: string;
+    heroImageMobile: string;
+    originalName: string;
+    size: number;
+    width: number;
+    height: number;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<{
+      heroImage: string;
+      heroImageMobile: string;
+      originalName: string;
+      size: number;
+      width: number;
+      height: number;
+    }>(`${this.url}/hero/upload-image`, formData);
   }
 
   // --- ADMIN SECTIONS ---
@@ -137,6 +186,29 @@ export class LandingService {
   // --- ADMIN CAMPUS ESPACES ---
   getCampus(): Observable<LandingPageCampus[]> {
     return this.http.get<LandingPageCampus[]>(`${this.url}/campus`);
+  }
+
+  /**
+   * Upload d'une photo d'atelier campus (pipeline Sharp WebP desktop & mobile).
+   */
+  uploadCampusPhoto(file: File): Observable<{
+    photoUrl: string;
+    photoUrlMobile: string;
+    originalName: string;
+    size: number;
+    width: number;
+    height: number;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<{
+      photoUrl: string;
+      photoUrlMobile: string;
+      originalName: string;
+      size: number;
+      width: number;
+      height: number;
+    }>(`${this.url}/campus/upload-photo`, formData);
   }
 
   createCampus(data: Partial<LandingPageCampus>): Observable<LandingPageCampus> {

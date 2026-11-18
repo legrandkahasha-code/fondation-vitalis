@@ -8,6 +8,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { PedagogieService } from './pedagogie.service';
+import { PedagogieAffectationService } from './services/pedagogie-affectation.service';
 import { uploadFileFilter, MAX_UPLOAD_FILE_SIZE } from '../../common/utils/file-upload.util';
 import { StorageService } from '../../common/services/storage.service';
 import {
@@ -17,9 +18,16 @@ import {
   CreateCoursDto,
   CreateEvaluationDto,
   SubmitNoteDto,
+  SubmitNoteBatchDto,
   CreateCategorieFormationDto,
   UpdateCategorieFormationDto,
 } from './dto/pedagogie.dto';
+import {
+  AffecterFormateurDto,
+  UpdateAffectationFormateurDto,
+  CreerHabilitationDto,
+  UpdateHabilitationDto,
+} from './dto/affectation-formateur.dto';
 import {
   UpdateModuleDto,
   UpdateCoursDto,
@@ -32,6 +40,7 @@ import {
 export class PedagogieController {
   constructor(
     private service: PedagogieService,
+    private affectationService: PedagogieAffectationService,
     private storage: StorageService,
   ) {}
 
@@ -73,13 +82,13 @@ export class PedagogieController {
   }
 
   @Post('formations')
-  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   createFormation(@Body() dto: CreateFormationDto, @Req() req: any) {
     return this.service.createFormation(dto, req.user);
   }
 
   @Put('formations/:id')
-  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   updateFormation(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateFormationDto, @Req() req: any) {
     return this.service.updateFormation(id, dto, req.user);
   }
@@ -117,7 +126,7 @@ export class PedagogieController {
   }
 
   @Delete('formations/:id')
-  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   deleteFormation(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.deleteFormation(id, req.user);
   }
@@ -126,7 +135,7 @@ export class PedagogieController {
   // SYLLABUS OFFICIEL (Upload / Suppression)
   // ====================================
   @Post('formations/:id/syllabus')
-  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   @UseInterceptors(
     FileInterceptor('file', {
       fileFilter: uploadFileFilter,
@@ -143,7 +152,7 @@ export class PedagogieController {
   }
 
   @Delete('formations/:id/syllabus')
-  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   deleteSyllabus(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.deleteSyllabus(id, req.user);
   }
@@ -152,7 +161,7 @@ export class PedagogieController {
   // IMAGE DE COUVERTURE FORMATION
   // ====================================
   @Post('formations/upload-image')
-  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   @UseInterceptors(
     FileInterceptor('file', {
       fileFilter: (_req, file, cb) => {
@@ -174,7 +183,7 @@ export class PedagogieController {
   }
 
   @Post('formations/:id/image')
-  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   @UseInterceptors(
     FileInterceptor('file', {
       fileFilter: (_req, file, cb) => {
@@ -200,7 +209,7 @@ export class PedagogieController {
   }
 
   @Delete('formations/:id/image')
-  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   deleteFormationImage(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.deleteImage(id, req.user);
   }
@@ -270,6 +279,18 @@ export class PedagogieController {
     return this.service.getApprenants(req.user);
   }
 
+  @Get('formations/:id/apprenants')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR, Role.PERSONNEL_ADMINISTRATIF)
+  getApprenantsByFormation(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.service.getApprenantsByFormation(id, req.user);
+  }
+
+  @Get('formateur/bootstrap')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  getFormateurBootstrap(@Req() req: any) {
+    return this.service.getFormateurBootstrap(req.user);
+  }
+
   @Post('modules/:moduleId/evaluations')
   @Roles(Role.FORMATEUR, Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   createEvaluation(
@@ -286,6 +307,15 @@ export class PedagogieController {
     return this.service.getEvaluationsByModule(moduleId, req.user);
   }
 
+  @Get('evaluations/:evaluationId/feuille-notes')
+  @Roles(Role.FORMATEUR, Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  getFeuilleNotes(
+    @Param('evaluationId', ParseUUIDPipe) evaluationId: string,
+    @Req() req: any,
+  ) {
+    return this.service.getFeuilleNotes(evaluationId, req.user);
+  }
+
   @Post('evaluations/:evaluationId/notes')
   @Roles(Role.FORMATEUR, Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
   submitNote(
@@ -295,6 +325,17 @@ export class PedagogieController {
   ) {
     const ip = req.ip || req.headers['x-forwarded-for'] || '0.0.0.0';
     return this.service.submitNote(evaluationId, dto.utilisateurId, dto.valeur, req.user, ip);
+  }
+
+  @Post('evaluations/:evaluationId/notes/batch')
+  @Roles(Role.FORMATEUR, Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  submitNotesBatch(
+    @Param('evaluationId', ParseUUIDPipe) evaluationId: string,
+    @Body() dto: SubmitNoteBatchDto,
+    @Req() req: any,
+  ) {
+    const ip = req.ip || req.headers['x-forwarded-for'] || '0.0.0.0';
+    return this.service.submitNotesBatch(evaluationId, dto.notes, req.user, ip);
   }
 
   // ====================================
@@ -368,5 +409,92 @@ export class PedagogieController {
   deleteCategorie(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.deleteCategorie(id, req.user);
   }
+
+  // ====================================
+  // AFFECTATIONS DES FORMATEURS AUX MODULES
+  // ====================================
+  @Post('modules/:moduleId/formateurs')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  affecterFormateur(
+    @Param('moduleId', ParseUUIDPipe) moduleId: string,
+    @Body() dto: AffecterFormateurDto,
+    @Req() req: any,
+  ) {
+    return this.affectationService.affecterFormateur(moduleId, dto, req.user);
+  }
+
+  @Get('modules/:moduleId/formateurs')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  getAffectationsModule(
+    @Param('moduleId', ParseUUIDPipe) moduleId: string,
+    @Req() req: any,
+  ) {
+    return this.affectationService.getAffectationsModule(moduleId, req.user);
+  }
+
+  @Delete('modules/:moduleId/formateurs/:formateurId')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  supprimerAffectation(
+    @Param('moduleId', ParseUUIDPipe) moduleId: string,
+    @Param('formateurId', ParseUUIDPipe) formateurId: string,
+    @Req() req: any,
+  ) {
+    return this.affectationService.supprimerAffectation(moduleId, formateurId, req.user);
+  }
+
+  @Patch('modules/:moduleId/formateurs/:formateurId')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  updateAffectation(
+    @Param('moduleId', ParseUUIDPipe) moduleId: string,
+    @Param('formateurId', ParseUUIDPipe) formateurId: string,
+    @Body() dto: UpdateAffectationFormateurDto,
+    @Req() req: any,
+  ) {
+    return this.affectationService.updateAffectation(moduleId, formateurId, dto, req.user);
+  }
+
+  @Post('formateurs/habilitations')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  creerHabilitation(
+    @Body() dto: CreerHabilitationDto,
+    @Req() req: any,
+  ) {
+    return this.affectationService.creerHabilitation(dto, req.user);
+  }
+
+  @Get('formateurs/:formateurId/habilitations')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  getHabilitationsFormateur(
+    @Param('formateurId', ParseUUIDPipe) formateurId: string,
+    @Req() req: any,
+  ) {
+    return this.affectationService.getHabilitationsFormateur(formateurId, req.user);
+  }
+
+  @Patch('formateurs/habilitations/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  updateHabilitation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateHabilitationDto,
+    @Req() req: any,
+  ) {
+    return this.affectationService.updateHabilitation(id, dto, req.user);
+  }
+
+  @Delete('formateurs/habilitations/:id')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT)
+  supprimerHabilitation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: any,
+  ) {
+    return this.affectationService.supprimerHabilitation(id, req.user);
+  }
+
+  @Get('formations/:id/formateurs')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR, Role.APPRENANT, Role.PERSONNEL_ADMINISTRATIF)
+  getFormateursFormation(@Param('id', ParseUUIDPipe) id: string) {
+    return this.affectationService.getFormateursFormation(id);
+  }
 }
+
 

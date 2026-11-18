@@ -1,7 +1,8 @@
-import { Injectable, OnDestroy, NgZone } from '@angular/core';
+import { Injectable, OnDestroy, NgZone, Injector } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 export type NotificationEventType =
   // ─── Module Apprenant & Pédagogie ──────────────────────────────────────────
@@ -80,9 +81,20 @@ export class NotificationsService implements OnDestroy {
   private reconnectTimer: any = null;
   /** Timer qui déclenche une reconnexion juste avant l'expiration du token actuel */
   private tokenExpiryTimer: any = null;
+  private isRefreshing = false;
   private destroy$ = new Subject<void>();
 
-  constructor(private ngZone: NgZone) {}
+  private authService?: AuthService;
+  constructor(private ngZone: NgZone, private injector: Injector) {}
+
+  private getAuth(): AuthService | null {
+    if (!this.authService) {
+      try {
+        this.authService = this.injector.get(AuthService);
+      } catch {}
+    }
+    return this.authService || null;
+  }
 
   /**
    * Tente d'ouvrir la connexion SSE avec le token courant.
@@ -106,11 +118,20 @@ export class NotificationsService implements OnDestroy {
 
   /** Rafraîchit le token via le refresh token, puis ouvre l'EventSource. */
   private _refreshThenConnect(): void {
+    if (this.isRefreshing) return;
+
     const refreshToken = localStorage.getItem('vitalis_refresh');
     if (!refreshToken) {
-      // Pas de refresh token disponible, on ne peut rien faire
+      const token = localStorage.getItem('vitalis_token');
+      // Ne purger que si le jeton d'accès est réellement expiré
+      if (!token || isTokenExpired(token, 0)) {
+        localStorage.removeItem('vitalis_token');
+        localStorage.removeItem('vitalis_user');
+      }
       return;
     }
+
+    this.isRefreshing = true;
 
     const apiBase = environment.apiUrl.replace(/\/api$/, '');
     fetch(`${environment.apiUrl}/utilisateurs/refresh`, {
@@ -118,15 +139,39 @@ export class NotificationsService implements OnDestroy {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     })
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
+      .then(async (res) => {
+        if (res.ok) {
+          return res.json();
+        }
+        return Promise.reject({ status: res.status });
+      })
       .then((data: { accessToken: string; refreshToken: string }) => {
+        this.isRefreshing = false;
         localStorage.setItem('vitalis_token', data.accessToken);
         localStorage.setItem('vitalis_refresh', data.refreshToken);
         this._openEventSource(data.accessToken);
       })
-      .catch(() => {
-        // Refresh échoué : session expirée définitivement, ne pas boucler
-        console.warn('[NotificationsService] Refresh token invalide ou expiré, SSE non connecté.');
+      .catch((err) => {
+        this.isRefreshing = false;
+        const status = err?.status;
+        const currentToken = localStorage.getItem('vitalis_token');
+        const tokenIsExpired = !currentToken || isTokenExpired(currentToken, 0);
+
+        // Purge STRICTEMENT sur refus 401 ou 403 et seulement si le jeton est expiré
+        if ((status === 401 || status === 403) && tokenIsExpired) {
+          console.warn('[NotificationsService] Refresh token refusé (401/403) et jeton expiré : déconnexion via AuthService.');
+          const auth = this.getAuth();
+          if (auth) {
+            auth.logout();
+          } else {
+            localStorage.removeItem('vitalis_token');
+            localStorage.removeItem('vitalis_refresh');
+            localStorage.removeItem('vitalis_user');
+          }
+        } else {
+          // Erreur réseau, serveur injoignable ou 5xx : pas de purge de session
+          console.warn('[NotificationsService] Échec temporaire de rafraîchissement (réseau ou serveur), session conservée :', err);
+        }
       });
   }
 

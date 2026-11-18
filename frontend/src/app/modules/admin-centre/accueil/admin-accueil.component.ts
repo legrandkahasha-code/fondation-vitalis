@@ -109,16 +109,92 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
               <p class="text-xs text-[#4B5157] mb-4">
                 Conforme aux standards internationaux : texte institutionnel à gauche et composition visuelle humaine avec micro-badges à droite.
               </p>
+
+              <!-- MINI-APERÇU WYSIWYG EN DIRECT (RECOMMANDATION 1) -->
+              <div class="mb-5 rounded-xl overflow-hidden border border-slate-300 shadow-sm bg-[#0F2027]">
+                <div class="px-3.5 py-2 bg-[#124F80] text-white flex items-center justify-between text-xs">
+                  <span class="font-bold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Aperçu Vitrine en Temps Réel (Rendu Visiteur)</span>
+                  </span>
+                  <span class="text-[10px] opacity-75">Actualisé en direct</span>
+                </div>
+
+                <div class="relative p-5 sm:p-6 bg-gradient-to-r from-[#0F2027] via-[#203A43] to-[#2C5364] text-white flex flex-col justify-between overflow-hidden">
+                  <!-- Simulation de l'image de fond -->
+                  <div 
+                    *ngIf="settings.heroImage && settings.heroImageDroitConfirme" 
+                    class="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none"
+                    [style.backgroundImage]="'url(' + getHeroImagePreview() + ')'"
+                  ></div>
+
+                  <!-- Tutelle & Agrément simulés -->
+                  <div class="relative z-10 flex flex-wrap items-center gap-2 mb-2">
+                    <span class="px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-semibold text-white/90">
+                      🏛️ RDC · Ministère de la Formation Professionnelle
+                    </span>
+                    <span *ngIf="settings.heroNumeroAgrement" class="text-[10px] font-mono text-emerald-300">
+                      {{ settings.heroNumeroAgrement }}
+                    </span>
+                  </div>
+
+                  <!-- Titre & Sous-titre réels -->
+                  <div class="relative z-10 max-w-2xl space-y-1.5 my-2">
+                    <h4 class="text-sm sm:text-base font-extrabold text-white leading-snug">
+                      {{ settings.heroTitre || 'Vitalis Center, la formation professionnelle reconnue par l\'État' }}
+                    </h4>
+                    <p class="text-xs text-white/80 line-clamp-3 leading-relaxed">
+                      {{ settings.heroSousTitre || 'Vitalis Center EUP forme les professionnels, cadres et jeunes talents aux métiers d\'avenir...' }}
+                    </p>
+                  </div>
+
+                  <!-- Micro-badges en direct -->
+                  <div *ngIf="settings.heroBadge1Texte || settings.heroBadge2Texte || settings.heroBadge3Texte" class="relative z-10 my-2 flex flex-wrap gap-2">
+                    <span *ngIf="settings.heroBadge1Texte" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-medium text-white">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#F0791E]"></span>
+                      {{ settings.heroBadge1Texte }}
+                    </span>
+                    <span *ngIf="settings.heroBadge2Texte" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-medium text-white">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                      {{ settings.heroBadge2Texte }}
+                    </span>
+                    <span *ngIf="settings.heroBadge3Texte" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-medium text-white">
+                      <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                      {{ settings.heroBadge3Texte }}
+                    </span>
+                  </div>
+
+                  <!-- Boutons CTA en direct -->
+                  <div class="relative z-10 mt-3 flex flex-wrap items-center gap-2.5">
+                    <span class="px-3 py-1.5 rounded bg-[#F0791E] text-white text-xs font-bold shadow-xs">
+                      {{ settings.heroCtaTexte || 'Postuler pour la Session 2026' }}
+                    </span>
+                    <span *ngIf="settings.heroCtaSecondaireTexte" class="px-3 py-1.5 rounded bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold">
+                      {{ settings.heroCtaSecondaireTexte }}
+                    </span>
+                  </div>
+                </div>
+              </div>
               
               <div class="space-y-4">
                 <div class="field">
-                  <label for="heroTitre">Titre Principal du Hero *</label>
-                  <input id="heroTitre" type="text" [(ngModel)]="settings.heroTitre" name="heroTitre" class="font-bold text-[#1B1D1F]" required />
+                  <div class="flex items-center justify-between mb-1">
+                    <label for="heroTitre" class="mb-0 font-bold text-xs text-[#124F80]">Titre Principal du Hero *</label>
+                    <span class="text-[11px] font-mono px-2 py-0.5 rounded border" [ngClass]="getTitreLongueurClass()">
+                      {{ (settings.heroTitre || '').length }} / 80 car. conseillés
+                    </span>
+                  </div>
+                  <input id="heroTitre" type="text" [(ngModel)]="settings.heroTitre" (ngModelChange)="marquerModifie()" name="heroTitre" class="font-bold text-[#1B1D1F]" required />
                 </div>
 
                 <div class="field">
-                  <label for="heroSousTitre">Texte de Présentation / Sous-titre Institutionnel *</label>
-                  <textarea id="heroSousTitre" rows="3" [(ngModel)]="settings.heroSousTitre" name="heroSousTitre" required></textarea>
+                  <div class="flex items-center justify-between mb-1">
+                    <label for="heroSousTitre" class="mb-0 font-bold text-xs text-[#124F80]">Texte de Présentation / Sous-titre Institutionnel *</label>
+                    <span class="text-[11px] font-mono px-2 py-0.5 rounded border" [ngClass]="getSousTitreLongueurClass()">
+                      {{ (settings.heroSousTitre || '').length }} / 250 car. conseillés
+                    </span>
+                  </div>
+                  <textarea id="heroSousTitre" rows="3" [(ngModel)]="settings.heroSousTitre" (ngModelChange)="marquerModifie()" name="heroSousTitre" required></textarea>
                   <div class="hint">Présentation de la mission d'utilité publique, de la tutelle et de l'Approche par Compétences (APC).</div>
                 </div>
 
@@ -158,7 +234,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                       </div>
                     </div>
 
-                    <!-- Contrôles d'upload et URL directe -->
+                    <!-- Contrôles d'upload sécurisé Sharp -->
                     <div class="md:col-span-8 space-y-2.5">
                       <input 
                         id="heroImageFileInput" 
@@ -176,31 +252,43 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                           class="btn btn-primary text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer shadow-xs"
                         >
                           <span>📁</span>
-                          <span>{{ uploadingHeroImage ? 'Téléversement en cours...' : 'Choisir une photo sur votre appareil' }}</span>
+                          <span>{{ uploadingHeroImage ? 'Optimisation Sharp en cours...' : 'Téléverser une photo (Sharp 1920x1080 & 768x1024)' }}</span>
                         </button>
                       </div>
 
-                      <div class="field">
-                        <label for="heroImageUrlInput" class="text-[11px] text-[#4B5157]">Ou coller une URL d'image web directe</label>
-                        <div class="flex items-center gap-2">
+                      <div *ngIf="settings.heroImageMobile" class="text-[11px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-200">
+                        📱 <strong>Version Smartphone générée :</strong> <span class="font-mono text-[10px]">{{ settings.heroImageMobile }}</span>
+                      </div>
+
+                      <!-- Texte alternatif obligatoire pour l'accessibilité et la conformité -->
+                      <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700">Texte alternatif de l'image Hero (Alt) <span class="text-rose-600">*</span></label>
+                        <input 
+                          type="text" 
+                          [(ngModel)]="settings.heroImageAlt" 
+                          name="heroImageAlt" 
+                          placeholder="Ex : Apprenants en atelier pratique au centre Vitalis"
+                          class="w-full text-xs p-2 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <!-- Confirmation Droit à l'image Hero -->
+                      <div class="p-3 bg-amber-50 border border-amber-200 rounded text-xs space-y-1.5">
+                        <label class="flex items-start gap-2 cursor-pointer font-semibold text-amber-900">
                           <input 
-                            id="heroImageUrlInput" 
-                            type="url" 
-                            [(ngModel)]="settings.heroImage" 
-                            name="heroImage" 
-                            placeholder="https://images.unsplash.com/..." 
-                            class="text-xs p-2 bg-white border border-[#D7DBDE] rounded-[2px] flex-1" 
+                            type="checkbox" 
+                            [(ngModel)]="settings.heroImageDroitConfirme" 
+                            name="heroImageDroitConfirme" 
+                            (change)="onHeroDroitImageChange()"
+                            class="mt-0.5 rounded text-amber-600 focus:ring-amber-500"
                           />
-                          <button 
-                            type="button" 
-                            (click)="sauvegarderHeroImageDirecte()"
-                            [disabled]="sauvegardantHeroImageDirecte"
-                            class="btn btn-secondary text-xs py-2 px-3 whitespace-nowrap cursor-pointer flex items-center gap-1 font-semibold text-[#124F80] border-[#124F80]"
-                            title="Enregistrer directement cette URL sans faire défiler la page"
-                          >
-                            <span>💾</span>
-                            <span>{{ sauvegardantHeroImageDirecte ? 'Enregistrement...' : 'Enregistrer' }}</span>
-                          </button>
+                          <span>Attestation des droits à l'image : Je confirme détenir l'autorisation expresse pour afficher cette photographie sur le Hero officiel (obligatoire pour affichage public).</span>
+                        </label>
+                        <div *ngIf="!settings.heroImageDroitConfirme && settings.heroImage" class="text-amber-800 font-medium text-[11px] pl-6">
+                          ⚠️ L'image du Hero est actuellement <strong>masquée en vitrine publique</strong>. Cochez cette case pour l'activer.
+                        </div>
+                        <div *ngIf="settings.heroImageDroitAuteur" class="text-[10px] text-amber-800 font-mono pl-6">
+                          Dernière validation : {{ settings.heroImageDroitAuteur }} ({{ settings.heroImageDroitDate | date:'dd/MM/yyyy HH:mm' }})
                         </div>
                       </div>
                     </div>
@@ -215,15 +303,15 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="field">
                       <label class="text-[11px] text-[#124F80]">Badge 1 (Insertion)</label>
-                      <input type="text" [(ngModel)]="settings.heroBadge1Texte" name="heroBadge1Texte" placeholder="94% Insertion Professionnelle" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroBadge1Texte" (ngModelChange)="marquerModifie()" name="heroBadge1Texte" placeholder="94% Insertion Professionnelle" class="text-xs" />
                     </div>
                     <div class="field">
                       <label class="text-[11px] text-[#276B44]">Badge 2 (Agrément)</label>
-                      <input type="text" [(ngModel)]="settings.heroBadge2Texte" name="heroBadge2Texte" placeholder="Agrément Officiel RDC" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroBadge2Texte" (ngModelChange)="marquerModifie()" name="heroBadge2Texte" placeholder="Agrément Officiel RDC" class="text-xs" />
                     </div>
                     <div class="field">
                       <label class="text-[11px] text-[#F0791E]">Badge 3 (Sécurité)</label>
-                      <input type="text" [(ngModel)]="settings.heroBadge3Texte" name="heroBadge3Texte" placeholder="Certificats Infalsifiables" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroBadge3Texte" (ngModelChange)="marquerModifie()" name="heroBadge3Texte" placeholder="Certificats Infalsifiables" class="text-xs" />
                     </div>
                   </div>
                 </div>
@@ -238,11 +326,31 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                       <div class="font-bold text-[11px] text-[#124F80]">Bouton Principal (Or d'État)</div>
                       <div class="field">
                         <label class="text-[10px] text-[#4B5157]">Texte du Bouton Principal</label>
-                        <input type="text" [(ngModel)]="settings.heroCtaTexte" name="heroCtaTexte" placeholder="Ex : Postuler pour la Session 2026" class="text-xs" />
+                        <input type="text" [(ngModel)]="settings.heroCtaTexte" (ngModelChange)="marquerModifie()" name="heroCtaTexte" placeholder="Ex : Postuler pour la Session 2026" class="text-xs" />
                       </div>
                       <div class="field">
-                        <label class="text-[10px] text-[#4B5157]">Lien de Redirection (URL ou Ancre #)</label>
-                        <input type="text" [(ngModel)]="settings.heroCtaLien" name="heroCtaLien" placeholder="Ex : #formations ou /admission" class="text-xs" />
+                        <div class="flex items-center justify-between">
+                          <label class="text-[10px] text-[#4B5157] mb-0">Lien de Redirection (URL ou Ancre #)</label>
+                          <span *ngIf="settings.heroCtaLien" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                            {{ getLienTypeLabel(settings.heroCtaLien) }}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-1">
+                          <input type="text" [(ngModel)]="settings.heroCtaLien" (ngModelChange)="marquerModifie()" name="heroCtaLien" placeholder="Ex : #formulaire-orientation ou /admission" class="text-xs flex-1" />
+                          <button 
+                            type="button" 
+                            (click)="testerLien(settings.heroCtaLien)"
+                            [disabled]="!settings.heroCtaLien"
+                            class="px-2 py-1 text-[10px] font-semibold rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shrink-0"
+                            title="Tester la redirection dans un nouvel onglet">
+                            Tester ↗
+                          </button>
+                        </div>
+                        <div class="flex items-center gap-1 mt-1.5 flex-wrap">
+                          <span class="text-[9.5px] text-[#4B5157]">Raccourcis :</span>
+                          <button type="button" (click)="settings.heroCtaLien = '#formulaire-orientation'; marquerModifie()" class="px-1.5 py-0.5 text-[9.5px] font-medium rounded bg-[#E7F1FA] text-[#124F80] hover:bg-[#1C75BC] hover:text-white transition-colors cursor-pointer" title="Orienter vers le formulaire de demande d'orientation">#formulaire-orientation (Orientation & Accueil)</button>
+                          <button type="button" (click)="settings.heroCtaLien = '#formations'; marquerModifie()" class="px-1.5 py-0.5 text-[9.5px] font-medium rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer" title="Orienter vers la liste des formations">#formations (Formations)</button>
+                        </div>
                       </div>
                     </div>
 
@@ -250,11 +358,26 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                       <div class="font-bold text-[11px] text-[#2AA9A0]">Bouton Secondaire (Verre Dépoli)</div>
                       <div class="field">
                         <label class="text-[10px] text-[#4B5157]">Texte du Bouton Secondaire</label>
-                        <input type="text" [(ngModel)]="settings.heroCtaSecondaireTexte" name="heroCtaSecondaireTexte" placeholder="Ex : Télécharger la Brochure (PDF)" class="text-xs" />
+                        <input type="text" [(ngModel)]="settings.heroCtaSecondaireTexte" (ngModelChange)="marquerModifie()" name="heroCtaSecondaireTexte" placeholder="Ex : Télécharger la Brochure (PDF)" class="text-xs" />
                       </div>
                       <div class="field">
-                        <label class="text-[10px] text-[#4B5157]">Lien de Redirection ou Action</label>
-                        <input type="text" [(ngModel)]="settings.heroCtaSecondaireLien" name="heroCtaSecondaireLien" placeholder="Ex : action:brochure ou #contact" class="text-xs" />
+                        <div class="flex items-center justify-between">
+                          <label class="text-[10px] text-[#4B5157] mb-0">Lien de Redirection ou Action</label>
+                          <span *ngIf="settings.heroCtaSecondaireLien" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                            {{ getLienTypeLabel(settings.heroCtaSecondaireLien) }}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-1">
+                          <input type="text" [(ngModel)]="settings.heroCtaSecondaireLien" (ngModelChange)="marquerModifie()" name="heroCtaSecondaireLien" placeholder="Ex : action:brochure ou #contact" class="text-xs flex-1" />
+                          <button 
+                            type="button" 
+                            (click)="testerLien(settings.heroCtaSecondaireLien)"
+                            [disabled]="!settings.heroCtaSecondaireLien"
+                            class="px-2 py-1 text-[10px] font-semibold rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shrink-0"
+                            title="Tester la redirection dans un nouvel onglet">
+                            Tester ↗
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -268,18 +391,83 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="field">
                       <label class="text-[11px] text-[#124F80]">Point de Réassurance 1</label>
-                      <input type="text" [(ngModel)]="settings.heroReassurance1" name="heroReassurance1" placeholder="Ex : Certificat officiel infalsifiable (QR Code)" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroReassurance1" (ngModelChange)="marquerModifie()" name="heroReassurance1" placeholder="Ex : Certificat officiel infalsifiable (QR Code)" class="text-xs" />
                     </div>
                     <div class="field">
                       <label class="text-[11px] text-[#2AA9A0]">Point de Réassurance 2</label>
-                      <input type="text" [(ngModel)]="settings.heroReassurance2" name="heroReassurance2" placeholder="Ex : Ateliers pratiques & Équipements réels" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroReassurance2" (ngModelChange)="marquerModifie()" name="heroReassurance2" placeholder="Ex : Ateliers pratiques & Équipements réels" class="text-xs" />
                     </div>
                     <div class="field">
                       <label class="text-[11px] text-[#C8902A]">Point de Réassurance 3</label>
-                      <input type="text" [(ngModel)]="settings.heroReassurance3" name="heroReassurance3" placeholder="Ex : Immersion professionnelle active" class="text-xs" />
+                      <input type="text" [(ngModel)]="settings.heroReassurance3" (ngModelChange)="marquerModifie()" name="heroReassurance3" placeholder="Ex : Immersion professionnelle active" class="text-xs" />
                     </div>
                   </div>
                 </div>
+
+                <!-- Visibilité & Responsive des Composants du Hero -->
+                <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[4px] space-y-3">
+                  <div class="font-bold text-[#124F80] text-xs flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                      <span>🎛️</span> Interrupteurs de Visibilité des Blocs du Hero
+                    </span>
+                    <span class="text-[10px] text-[#4B5157]">Contrôle séparé Desktop / Mobile (&lt; 768px)</span>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <!-- Bloc Tutelle -->
+                    <div class="p-2.5 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#124F80]">🏛️ Tutelle Ministérielle</div>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroTutelleVisible" name="heroTutelleVisible" class="rounded text-[#1C75BC]" />
+                        <span>Visible Desktop</span>
+                      </label>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroTutelleVisibleMobile" name="heroTutelleVisibleMobile" class="rounded text-[#1C75BC]" />
+                        <span>Visible Mobile (&lt;768px)</span>
+                      </label>
+                    </div>
+
+                    <!-- Bloc Statistiques Chiffres -->
+                    <div class="p-2.5 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#276B44]">📊 Bande Statistiques</div>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroStatsVisible" name="heroStatsVisible" class="rounded text-[#276B44]" />
+                        <span>Visible Desktop</span>
+                      </label>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroStatsVisibleMobile" name="heroStatsVisibleMobile" class="rounded text-[#276B44]" />
+                        <span>Visible Mobile (&lt;768px)</span>
+                      </label>
+                    </div>
+
+                    <!-- Bloc Réassurances -->
+                    <div class="p-2.5 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#C8902A]">🛡️ Puces Réassurance</div>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroReassurancesVisible" name="heroReassurancesVisible" class="rounded text-[#C8902A]" />
+                        <span>Visible Desktop</span>
+                      </label>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroReassurancesVisibleMobile" name="heroReassurancesVisibleMobile" class="rounded text-[#C8902A]" />
+                        <span>Visible Mobile (&lt;768px)</span>
+                      </label>
+                    </div>
+
+                    <!-- Bloc Profils Apprenants -->
+                    <div class="p-2.5 bg-white border border-[#D7DBDE] rounded-[2px] space-y-2">
+                      <div class="font-bold text-[11px] text-[#1C75BC]">👥 Profils / Inscrits</div>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroProfilsVisible" name="heroProfilsVisible" class="rounded text-[#1C75BC]" />
+                        <span>Visible Desktop</span>
+                      </label>
+                      <label class="flex items-center gap-2 text-xs cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="settings.heroProfilsVisibleMobile" name="heroProfilsVisibleMobile" class="rounded text-[#1C75BC]" />
+                        <span>Visible Mobile (&lt;768px)</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
 
               </div>
             </div>
@@ -329,6 +517,26 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                 </div>
               </div>
 
+              <!-- Passerelle WhatsApp officielle -->
+              <div class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-[2px] flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">💬</span>
+                  <div class="text-xs">
+                    <strong class="text-emerald-900">Bouton Flottant WhatsApp :</strong>
+                    <span class="ml-1 text-emerald-800">
+                      {{ settings.whatsappActif ? 'Actif sur la vitrine (' + (settings.contactWhatsapp || 'Numéro non renseigné') + ')' : 'Désactivé actuellement' }}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  (click)="activeTab = 'verif_contact'"
+                  class="text-xs font-semibold text-[#1C75BC] hover:underline cursor-pointer"
+                >
+                  Configurer WhatsApp & Coordonnées ↗
+                </button>
+              </div>
+
               <div class="field mt-4">
                 <div class="flex items-center justify-between mb-1">
                   <label class="mb-0">URL d'Intégration Carte Interactive (Google Maps / OpenStreetMap Embed)</label>
@@ -367,6 +575,10 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                     <input type="number" [(ngModel)]="settings.statsTauxReussite" name="statsTauxReussite" min="0" max="100" class="font-bold text-lg text-[#F0791E]" />
                     <div class="hint">Affiché avec « % »</div>
                   </div>
+                  <div class="field mt-2">
+                    <label class="text-[10px] text-[#4B5157]">Source justificative (ex : Promotion 2024-2025)</label>
+                    <input type="text" [(ngModel)]="settings.statsTauxSource" name="statsTauxSource" placeholder="Ex : Registre des diplômés MIN-FP 2024-2025" class="text-xs" />
+                  </div>
                 </div>
 
                 <div class="p-4 bg-[#F5F6F7] border border-[#D7DBDE] rounded-[2px]">
@@ -385,24 +597,58 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- CTA Bannière -->
-            <div class="card border-t-[5px] border-t-[#276B44]">
-              <div class="label">Bannière d'Appel à l'Action (CTA Inscription)</div>
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="field">
-                  <label>Titre de la Bannière d'Inscription</label>
-                  <input type="text" [(ngModel)]="settings.ctaTitre" name="ctaTitre" class="font-bold" />
-                </div>
-                <div class="field">
-                  <label>Période / Sous-titre d'Ouverture des Sessions</label>
-                  <input type="text" [(ngModel)]="settings.ctaSousTitre" name="ctaSousTitre" />
+              <!-- Action de calcul / synchronisation des chiffres clés réels (P3.1) -->
+              <div class="mt-4 pt-3 border-t border-dashed border-[#D7DBDE] flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  (click)="synchroniserStatsReelles()"
+                  [disabled]="syncStatsLoading"
+                  class="btn text-xs py-2 px-4 bg-[#124F80] hover:bg-[#0D3859] text-white font-semibold shadow-2xs cursor-pointer flex items-center gap-2 transition-all"
+                  title="Calculer les valeurs réelles d'après les enregistrements de la base de données"
+                >
+                  <span>{{ syncStatsLoading ? '⏳' : '🔄' }}</span>
+                  <span>{{ syncStatsLoading ? 'Calcul des données réelles...' : 'Calculer d\'après les données réelles' }}</span>
+                </button>
+                <div *ngIf="syncStatsInfo" class="text-[11px] text-[#276B44] font-medium flex items-center gap-1.5">
+                  <span>✓</span>
+                  <span>{{ syncStatsInfo }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- Bouton d'enregistrement -->
+
+            <!-- BARRE DE SAUVEGARDE FLOTTANTE (STICKY BAR - RECOMMANDATION 2) -->
+            <div 
+              *ngIf="formModifie" 
+              class="sticky bottom-4 z-40 bg-white/95 backdrop-blur-md p-3.5 sm:p-4 rounded-xl shadow-2xl border-2 border-[#F0791E] flex flex-wrap items-center justify-between gap-3 animate-fade-in-up"
+            >
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#F0791E] animate-ping shrink-0"></span>
+                <span class="text-xs font-bold text-[#1B1D1F]">
+                  Modifications non enregistrées dans l'onglet Hero & Réseaux
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="annulerModificationsSettings()"
+                  class="btn text-xs py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer rounded border border-slate-300"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  [disabled]="savingSettings"
+                  class="btn text-xs py-2 px-5 bg-[#F0791E] hover:bg-[#d6610b] text-white font-bold cursor-pointer rounded shadow-xs flex items-center gap-1.5"
+                >
+                  <span>{{ savingSettings ? '⏳' : '💾' }}</span>
+                  <span>{{ savingSettings ? 'Enregistrement en cours...' : 'Enregistrer maintenant' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Bouton d'enregistrement statique -->
             <div class="flex justify-end pt-2">
               <button type="submit" [disabled]="savingSettings" class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white border-none font-bold py-3 px-8 shadow-xs hover:scale-102 transition-transform cursor-pointer">
                 {{ savingSettings ? 'Enregistrement en cours...' : '💾 Enregistrer les Paramètres' }}
@@ -704,7 +950,13 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
         <div *ngIf="activeTab === 'campus'" class="space-y-6 animate-fade-in-up">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-[2px] border border-[#D7DBDE] shadow-2xs">
             <div>
-              <div class="label" style="margin-bottom: 2px;">Infrastructures & Espaces Techniques</div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="label" style="margin-bottom: 0;">Infrastructures & Espaces Techniques</span>
+                <span class="text-xs px-2 py-0.5 rounded font-bold border"
+                      [ngClass]="getNombreCampusPublies() > 4 ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-emerald-50 text-emerald-800 border-emerald-300'">
+                  Publiés : {{ getNombreCampusPublies() }} / 4 max
+                </span>
+              </div>
               <h3 class="text-lg font-bold text-[#1B1D1F]">Campus, Ateliers Pratiques & Laboratoires</h3>
               <p class="text-xs text-[#4B5157] mt-0.5">Présentez les installations, plateaux techniques et équipements professionnels du centre.</p>
             </div>
@@ -714,24 +966,73 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
             </button>
           </div>
 
+
+            <!-- Titres & Textes Généraux de la Section Campus (déplacé depuis Tab Hero) -->
+            <div class="card border-t-[5px] border-t-[#124F80] mb-4">
+              <div class="label">🏫 Titres & Textes Généraux de la Section Campus</div>
+              <div class="text-[10px] text-amber-700 font-medium mb-3">⚠️ Si le Titre est vide, la section campus est masquée en vitrine publique</div>
+              <div class="space-y-3">
+                <div class="field">
+                  <label class="text-[11px] text-[#124F80]">Sur-titre (Eyebrow / Surtitre)</label>
+                  <input type="text" [(ngModel)]="settings.campusEyebrow" name="campusEyebrow2" placeholder="Ex : Infrastructures & Espaces Techniques" class="text-xs" />
+                </div>
+                <div class="field">
+                  <label class="text-[11px] text-[#124F80] font-bold">Titre Principal de la Section Campus *</label>
+                  <input type="text" [(ngModel)]="settings.campusTitre" name="campusTitre2" placeholder="Ex : Campus d'Excellence : Ateliers Pratiques & Laboratoires" class="text-xs font-bold" />
+                  <div class="hint">Obligatoire pour afficher la section en page d'accueil. Si vide, la section ne sera pas affichée aux visiteurs.</div>
+                </div>
+                <div class="field">
+                  <label class="text-[11px] text-[#124F80]">Sous-titre explicatif</label>
+                  <textarea [(ngModel)]="settings.campusSousTitre" name="campusSousTitre2" rows="2" placeholder="Ex : Découvrez nos installations aux normes internationales..." class="text-xs"></textarea>
+                </div>
+                <div class="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    (click)="sauvegarderSettings()"
+                    [disabled]="savingSettings"
+                    class="btn text-xs py-2 px-5 bg-[#124F80] hover:bg-[#0D3859] text-white font-semibold shadow-2xs cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>{{ savingSettings ? '⏳ Enregistrement...' : '💾 Enregistrer les titres Campus' }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          <!-- Avertissement si titre Campus vide : section invisible en vitrine -->
+          <div *ngIf="!settings.campusTitre" class="p-3 bg-amber-50 border border-amber-300 rounded text-xs text-amber-900 flex items-center gap-2">
+            <span class="text-base">⚠️</span>
+            <div>
+              <strong>Section Campus masquée en vitrine publique :</strong> Aucun titre principal n'est configuré pour le campus. Renseignez-le ci-dessus et enregistrez pour afficher la section en vitrine.
+            </div>
+          </div>
+
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div *ngFor="let c of campusList" class="card border border-[#D7DBDE] flex flex-col justify-between hover:border-[#1C75BC] transition-all bg-white p-0 overflow-hidden">
               <div class="relative h-40 bg-slate-100">
-                <img 
-                  [src]="getMediaUrl(c.photoUrl || c.photo) || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop'" 
-                  [alt]="c.titre"
-                  class="w-full h-full object-cover"
-                  (error)="onImageError($event, 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop')"
-                />
+                <ng-container *ngIf="c.photoUrl || c.photo; else noCampusPhoto">
+                  <img 
+                    [src]="getMediaUrl(c.photoUrl || c.photo)" 
+                    [alt]="c.titre"
+                    class="w-full h-full object-cover"
+                  />
+                </ng-container>
+                <ng-template #noCampusPhoto>
+                  <div class="w-full h-full flex flex-col items-center justify-center bg-slate-200 text-slate-500 text-xs gap-1">
+                    <span class="text-xl">📷</span>
+                    <span class="font-medium text-[11px]">Aucune photo téléversée</span>
+                  </div>
+                </ng-template>
                 <div class="absolute top-2.5 left-2.5">
                   <span *ngIf="c.badge" class="px-2 py-0.5 text-[10px] font-bold bg-[#1C75BC] text-white uppercase rounded-2xs shadow-xs">
                     {{ c.badge }}
                   </span>
                 </div>
-                <div class="absolute top-2.5 right-2.5">
-                  <span class="tag" [ngClass]="c.actif !== false ? 'valide' : 'attente'">
-                    {{ c.actif !== false ? 'Visible' : 'Masqué' }}
+                <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                  <span class="tag" [ngClass]="c.statut === 'PUBLIE' ? 'valide' : 'attente'">
+                    {{ c.statut === 'PUBLIE' ? 'Publié' : 'Brouillon' }}
                   </span>
+                  <span *ngIf="c.droitImageConfirme" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold" title="Droits à l'image confirmés">✓ Droits</span>
+                  <span *ngIf="!c.droitImageConfirme && (c.photoUrl || c.photo)" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500 text-white font-bold" title="Droits à l'image non confirmés">⚠️ Sans droit</span>
                 </div>
               </div>
 
@@ -744,16 +1045,29 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   </div>
                 </div>
 
-                <div class="pt-3 mt-3 border-t border-[#F5F6F7] flex items-center justify-end gap-1.5">
-                  <button (click)="toggleCampusActif(c)" class="btn btn-ghost text-xs py-1 px-2.5" [title]="c.actif !== false ? 'Masquer' : 'Afficher'">
-                    {{ c.actif !== false ? '👁️' : '✅' }}
-                  </button>
-                  <button (click)="editerCampus(c)" class="btn btn-ghost text-xs py-1 px-2.5" title="Modifier">
-                    ✏️
-                  </button>
-                  <button (click)="supprimerCampus(c.id!)" class="btn btn-ghost text-xs py-1 px-2.5 text-[#ED1C24] border-[#ED1C24]" title="Supprimer">
-                    🗑️
-                  </button>
+                <div class="pt-3 mt-3 border-t border-[#F5F6F7] flex items-center justify-between">
+                  <!-- Contrôle d'Ordre (Monter / Descendre) -->
+                  <div class="flex items-center gap-1 text-[11px] text-[#4B5157]">
+                    <span class="font-mono text-[10px] px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200">#{{ c.ordre || 0 }}</span>
+                    <button type="button" (click)="monterCampus(c)" [disabled]="isPremierCampus(c)" class="btn btn-ghost text-xs p-1 h-7 w-7 flex items-center justify-center cursor-pointer disabled:opacity-30 hover:bg-slate-100 rounded" title="Monter d'un rang">
+                      ▲
+                    </button>
+                    <button type="button" (click)="descendreCampus(c)" [disabled]="isDernierCampus(c)" class="btn btn-ghost text-xs p-1 h-7 w-7 flex items-center justify-center cursor-pointer disabled:opacity-30 hover:bg-slate-100 rounded" title="Descendre d'un rang">
+                      ▼
+                    </button>
+                  </div>
+
+                  <div class="flex items-center gap-1.5">
+                    <button (click)="toggleCampusActif(c)" class="btn btn-ghost text-xs py-1 px-2.5" [title]="c.actif !== false ? 'Masquer' : 'Afficher'">
+                      {{ c.actif !== false ? '👁️' : '✅' }}
+                    </button>
+                    <button (click)="editerCampus(c)" class="btn btn-ghost text-xs py-1 px-2.5" title="Modifier">
+                      ✏️
+                    </button>
+                    <button (click)="supprimerCampus(c.id!)" class="btn btn-ghost text-xs py-1 px-2.5 text-[#ED1C24] border-[#ED1C24]" title="Supprimer">
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1132,6 +1446,22 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
           </div>
 
           <form (ngSubmit)="sauvegarderSettings()" class="space-y-6">
+
+            <!-- Bannière d'Appel à l'Action CTA Inscription (déplacé depuis Tab Hero) -->
+            <div class="card border-t-[5px] border-t-[#276B44]">
+              <div class="label">Bannière d'Appel à l'Action (CTA Inscription)</div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="field">
+                  <label>Titre de la Bannière d'Inscription</label>
+                  <input type="text" [(ngModel)]="settings.ctaTitre" name="ctaTitre2" class="font-bold" />
+                </div>
+                <div class="field">
+                  <label>Période / Sous-titre d'Ouverture des Sessions</label>
+                  <input type="text" [(ngModel)]="settings.ctaSousTitre" name="ctaSousTitre2" />
+                </div>
+              </div>
+            </div>
+
             
             <!-- Section Vérification de Certificats -->
             <div class="card border-t-[5px] border-t-[#124F80]">
@@ -1604,9 +1934,18 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                 <input type="text" [(ngModel)]="campusEnCours.titre" name="titre" required class="font-bold text-sm" placeholder="Ex : Laboratoire Informatique & Cloud" />
               </div>
 
-              <div class="field">
-                <label>Badge descriptif</label>
-                <input type="text" [(ngModel)]="campusEnCours.badge" name="badge" placeholder="Ex : 50 Postes Haute Performance" />
+              <div class="grid grid-cols-2 gap-3">
+                <div class="field">
+                  <label>Statut de publication *</label>
+                  <select [(ngModel)]="campusEnCours.statut" name="statut" class="text-xs p-2 bg-white border border-[#D7DBDE] rounded-[2px] w-full font-bold">
+                    <option value="BROUILLON">Brouillon (Non visible)</option>
+                    <option value="PUBLIE">Publié (Vitrine publique)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Badge descriptif (Eyebrow)</label>
+                  <input type="text" [(ngModel)]="campusEnCours.badge" name="badge" placeholder="Ex : 50 Postes Haute Performance" />
+                </div>
               </div>
 
               <div class="field">
@@ -1621,9 +1960,48 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
 
               <!-- Upload Photo Campus -->
               <div class="p-3 bg-[#F9FAFB] border border-[#D7DBDE] rounded-xs space-y-2">
-                <label class="font-bold text-[#124F80] block">📸 Photo HD de l'Espace</label>
-                <input type="file" accept="image/*" (change)="onCampusPhotoSelected($event)" class="text-xs mb-1" />
-                <input type="url" [(ngModel)]="campusEnCours.photoUrl" name="photoUrl" placeholder="Ou URL directe : https://images.unsplash.com/..." class="w-full bg-white p-1.5 border border-[#D7DBDE] rounded-2xs text-[11px]" />
+                <label class="font-bold text-[#124F80] block">📸 Photographie Technique de l'Espace (Pipeline Sharp)</label>
+                <div *ngIf="campusEnCours.photoUrl" class="grid grid-cols-2 gap-2 mb-2">
+                  <div class="relative h-24 rounded overflow-hidden border border-[#D7DBDE] bg-slate-100">
+                    <img [src]="getMediaUrl(campusEnCours.photoUrl)" alt="Aperçu desktop" class="w-full h-full object-cover" />
+                    <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1 py-0.5 rounded font-mono">Desktop WebP</span>
+                  </div>
+                  <div *ngIf="campusEnCours.photoUrlMobile" class="relative h-24 rounded overflow-hidden border border-[#D7DBDE] bg-slate-100">
+                    <img [src]="getMediaUrl(campusEnCours.photoUrlMobile)" alt="Aperçu mobile" class="w-full h-full object-cover" />
+                    <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1 py-0.5 rounded font-mono">Mobile WebP</span>
+                  </div>
+                </div>
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onCampusPhotoSelected($event)" class="text-xs mb-1" />
+                <p class="text-[10px] text-slate-500">Pipeline Sharp automatique : génération desktop (800x600 WebP) et smartphone (480x360 WebP), purge EXIF.</p>
+              </div>
+
+              <!-- Accessibilité : photoAlt -->
+              <div class="field">
+                <label>Description alternative de l'image (photoAlt) {{ campusEnCours.statut === 'PUBLIE' ? '*' : '(obligatoire à la publication)' }}</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="campusEnCours.photoAlt" 
+                  name="photoAlt" 
+                  placeholder="Ex : Rangées de postes de travail avec ordinateurs professionnels" 
+                  class="text-xs" 
+                />
+                <p class="text-[10px] text-slate-500 mt-0.5">Décrivez précisément la scène pour les personnes déficientes visuelles (au moins 5 caractères, sans « [MIGRATION] »).</p>
+              </div>
+
+              <!-- Droit à l'image -->
+              <div class="p-3 bg-amber-50 border border-amber-200 rounded text-xs space-y-1.5">
+                <label class="flex items-start gap-2 cursor-pointer font-semibold text-amber-900">
+                  <input 
+                    type="checkbox" 
+                    [(ngModel)]="campusEnCours.droitImageConfirme" 
+                    name="droitImageConfirme" 
+                    class="mt-0.5 rounded text-amber-600 focus:ring-amber-500"
+                  />
+                  <span>Attestation des droits à l'image : Je confirme détenir l'autorisation expresse pour diffusion en vitrine officielle (obligatoire pour statut « Publié »).</span>
+                </label>
+                <div *ngIf="campusEnCours.droitImageAuteur" class="text-[10px] text-amber-800 font-mono pl-6">
+                  Dernière confirmation enregistrée par : {{ campusEnCours.droitImageAuteur }} ({{ campusEnCours.droitImageDate | date:'dd/MM/yyyy HH:mm' }})
+                </div>
               </div>
 
               <div class="grid grid-cols-2 gap-3 pt-2">
@@ -1632,8 +2010,8 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                   <input type="number" [(ngModel)]="campusEnCours.ordre" name="ordre" />
                 </div>
                 <div class="flex items-center gap-2 pt-4">
-                  <input type="checkbox" [(ngModel)]="campusEnCours.actif" name="actif" id="campusActif" class="cursor-pointer w-4 h-4" />
-                  <label for="campusActif" class="font-semibold cursor-pointer text-[#1B1D1F]">Visible en vitrine</label>
+                  <input type="checkbox" [(ngModel)]="campusEnCours.afficherLanding" name="afficherLanding" id="campusAfficherLanding" class="cursor-pointer w-4 h-4" />
+                  <label for="campusAfficherLanding" class="font-semibold cursor-pointer text-[#1B1D1F]">Afficher sur la vitrine</label>
                 </div>
               </div>
 
@@ -2075,6 +2453,8 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   loading: boolean = false;
   savingSettings: boolean = false;
   savingWhatsapp: boolean = false;
+  syncStatsLoading: boolean = false;
+  syncStatsInfo: string | null = null;
   activeTab: string = 'settings';
 
   tabs = [
@@ -2107,6 +2487,9 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   contactMessages: ContactMessageItem[] = [];
   selectedMessage: ContactMessageItem | null = null;
   searchMessages: string = '';
+
+  formModifie: boolean = false;
+  private settingsOriginaux: any = null;
 
   // Modals state
   modalSectionVisible: boolean = false;
@@ -2141,7 +2524,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     private notifications: NotificationsService,
     private toast: ToastService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.chargerDonnees();
@@ -2171,6 +2554,8 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     this.landingService.getSettings().subscribe({
       next: (s) => {
         this.settings = s;
+        this.settingsOriginaux = JSON.parse(JSON.stringify(s));
+        this.formModifie = false;
         this.cdr.markForCheck();
       },
       error: () => this.toast.error('Erreur lors du chargement des paramètres.'),
@@ -2239,6 +2624,18 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       heroSousTitre: this.settings.heroSousTitre || '',
       heroNumeroAgrement: this.settings.heroNumeroAgrement || '',
       heroImage: this.settings.heroImage || '',
+      heroTutelleVisible: this.settings.heroTutelleVisible !== false,
+      heroTutelleVisibleMobile: this.settings.heroTutelleVisibleMobile !== false,
+      heroStatsVisible: this.settings.heroStatsVisible !== false,
+      heroStatsVisibleMobile: this.settings.heroStatsVisibleMobile !== false,
+      heroReassurancesVisible: this.settings.heroReassurancesVisible !== false,
+      heroReassurancesVisibleMobile: this.settings.heroReassurancesVisibleMobile !== false,
+      heroProfilsVisible: this.settings.heroProfilsVisible !== false,
+      heroProfilsVisibleMobile: this.settings.heroProfilsVisibleMobile !== false,
+      statsTauxSource: this.settings.statsTauxSource || '',
+      campusEyebrow: this.settings.campusEyebrow || '',
+      campusTitre: this.settings.campusTitre || '',
+      campusSousTitre: this.settings.campusSousTitre || '',
       heroBadge1Texte: this.settings.heroBadge1Texte || '',
       heroBadge2Texte: this.settings.heroBadge2Texte || '',
       heroBadge3Texte: this.settings.heroBadge3Texte || '',
@@ -2249,6 +2646,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       heroReassurance1: this.settings.heroReassurance1 || '',
       heroReassurance2: this.settings.heroReassurance2 || '',
       heroReassurance3: this.settings.heroReassurance3 || '',
+      heroImageAlt: this.settings.heroImageAlt || '',
       topbarTexte: this.settings.topbarTexte || '',
       statsLaureats: Number(this.settings.statsLaureats) || 0,
       statsTauxReussite: Number(this.settings.statsTauxReussite) || 0,
@@ -2297,6 +2695,8 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     this.landingService.updateSettings(payload).subscribe({
       next: (res) => {
         this.settings = res;
+        this.settingsOriginaux = JSON.parse(JSON.stringify(res));
+        this.formModifie = false;
         this.savingSettings = false;
         notifyLandingSettingsChanged();
         this.toast.success('Paramètres enregistrés avec succès !');
@@ -2309,6 +2709,81 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           ? err.error.message.join(', ')
           : err?.error?.message || 'Erreur lors de l\'enregistrement des paramètres.';
         this.toast.error(msg);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  marquerModifie(): void {
+    this.formModifie = true;
+  }
+
+  getTitreLongueurClass(): string {
+    const len = (this.settings.heroTitre || '').length;
+    if (len >= 35 && len <= 85) return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    if (len === 0) return 'bg-slate-100 text-slate-600 border-slate-300';
+    return 'bg-amber-100 text-amber-800 border-amber-300';
+  }
+
+  getSousTitreLongueurClass(): string {
+    const len = (this.settings.heroSousTitre || '').length;
+    if (len >= 90 && len <= 280) return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    if (len === 0) return 'bg-slate-100 text-slate-600 border-slate-300';
+    return 'bg-amber-100 text-amber-800 border-amber-300';
+  }
+
+  getLienTypeLabel(lien?: string): string {
+    if (!lien) return '';
+    const l = lien.trim().toLowerCase();
+    if (l.startsWith('#')) return 'Ancre de section (' + l + ')';
+    if (l.startsWith('http')) return 'Lien externe';
+    if (l.startsWith('action:')) return 'Action spéciale (' + l.replace('action:', '') + ')';
+    if (l.startsWith('/')) return 'Page interne';
+    return 'Lien relatif';
+  }
+
+  testerLien(lien?: string): void {
+    if (!lien) return;
+    const l = lien.trim();
+    if (l.startsWith('http')) {
+      window.open(l, '_blank');
+    } else if (l.startsWith('#')) {
+      window.open('/' + l, '_blank');
+    } else if (l.startsWith('/')) {
+      window.open(l, '_blank');
+    } else {
+      this.toast.info(`Action testée : "${l}"`);
+    }
+  }
+
+  annulerModificationsSettings(): void {
+    if (this.settingsOriginaux) {
+      this.settings = JSON.parse(JSON.stringify(this.settingsOriginaux));
+      this.formModifie = false;
+      this.toast.info('Modifications annulées. Paramètres initiaux restaurés.');
+      this.cdr.markForCheck();
+    }
+  }
+
+  synchroniserStatsReelles(): void {
+    this.syncStatsLoading = true;
+    this.landingService.getStatsReelles().subscribe({
+      next: (stats) => {
+        this.syncStatsLoading = false;
+        if (stats.laureats !== undefined) this.settings.statsLaureats = stats.laureats;
+        if (stats.filieres !== undefined) this.settings.statsFilieres = stats.filieres;
+        if (stats.titresVerifiables !== undefined) this.settings.statsTitresVerif = stats.titresVerifiables;
+        const heure = new Date(stats.calculeLe).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        this.syncStatsInfo = `Données calculées à ${heure} : ${stats.laureats} certificat(s), ${stats.filieres} filière(s), ${stats.formationsActives} formation(s) active(s).`;
+        this.toast.success(
+          `Statistiques réelles chargées : ${stats.laureats} lauréat(s), ${stats.filieres} filière(s). N'oubliez pas d'enregistrer les paramètres.`
+        );
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.syncStatsLoading = false;
+        console.error('Erreur getStatsReelles:', err);
+        this.toast.error('Impossible de calculer les statistiques réelles depuis la base.');
         this.cdr.markForCheck();
       },
     });
@@ -2431,7 +2906,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   rechargerCampus(): void {
     this.landingService.getCampus().subscribe({
       next: (list) => {
-        this.campusList = list;
+        this.campusList = (list || []).sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
         this.cdr.markForCheck();
       },
       error: () => this.toast.error('Erreur lors du chargement des espaces campus.'),
@@ -2445,6 +2920,11 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       badge: '',
       equipements: '',
       photoUrl: '',
+      photoUrlMobile: '',
+      photoAlt: '',
+      statut: 'BROUILLON',
+      droitImageConfirme: false,
+      afficherLanding: true,
       ordre: this.campusList.length + 1,
       actif: true,
     };
@@ -2472,21 +2952,46 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
   onCampusPhotoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      this.landingService.uploadActualiteMedia(input.files[0]).subscribe({
+      const file = input.files[0];
+      this.toast.info('Traitement Sharp et téléversement en cours...');
+      this.landingService.uploadCampusPhoto(file).subscribe({
         next: (res) => {
-          this.campusEnCours.photoUrl = res.url;
-          this.toast.success('Photo du campus téléversée.');
+          this.campusEnCours.photoUrl = res.photoUrl;
+          this.campusEnCours.photoUrlMobile = res.photoUrlMobile;
+          // Règle 10 : réinitialisation du droit à l'image à false lors du changement d'image
+          this.campusEnCours.droitImageConfirme = false;
+          this.toast.success('Photo traitée avec succès (WebP desktop 800x600 et mobile 480x360).');
+          this.toast.info('Attention : le droit à l\'image a été réinitialisé. Veuillez cocher la case d\'attestation avant de publier.');
           this.cdr.markForCheck();
         },
-        error: () => this.toast.error('Erreur lors du téléversement de la photo.'),
+        error: (err) => {
+          const msg = err?.error?.message || 'Erreur lors du téléversement de la photo.';
+          this.toast.error(msg);
+        },
       });
     }
   }
 
   sauvegarderCampusModal(): void {
     if (!this.campusEnCours.titre || !this.campusEnCours.description || !this.campusEnCours.equipements) {
-      this.toast.error('Veuillez remplir les champs obligatoires.');
+      this.toast.error('Veuillez remplir les champs obligatoires (Titre, Description, Équipements).');
       return;
+    }
+
+    const isPublie = this.campusEnCours.statut === 'PUBLIE';
+    if (isPublie) {
+      if (!this.campusEnCours.photoUrl || !this.campusEnCours.photoUrl.startsWith('/uploads/campus/')) {
+        this.toast.error('Pour publier un atelier, une photo téléversée (/uploads/campus/...) est obligatoire.');
+        return;
+      }
+      if (!this.campusEnCours.photoAlt || this.campusEnCours.photoAlt.trim().length < 5 || this.campusEnCours.photoAlt.startsWith('[MIGRATION]')) {
+        this.toast.error('Pour publier un atelier, le texte alternatif (photoAlt) est obligatoire (au moins 5 caractères, sans préfixe [MIGRATION]).');
+        return;
+      }
+      if (!this.campusEnCours.droitImageConfirme) {
+        this.toast.error('Pour publier un atelier, vous devez obligatoirement confirmer la détention des droits à l\'image.');
+        return;
+      }
     }
 
     const payload: Partial<LandingPageCampus> = {
@@ -2495,6 +3000,11 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       badge: this.campusEnCours.badge || '',
       equipements: this.campusEnCours.equipements,
       photoUrl: this.campusEnCours.photoUrl || '',
+      photoUrlMobile: this.campusEnCours.photoUrlMobile || '',
+      photoAlt: this.campusEnCours.photoAlt || '',
+      statut: this.campusEnCours.statut || 'BROUILLON',
+      droitImageConfirme: Boolean(this.campusEnCours.droitImageConfirme),
+      afficherLanding: this.campusEnCours.afficherLanding !== undefined ? Boolean(this.campusEnCours.afficherLanding) : true,
       ordre: Number(this.campusEnCours.ordre) || 0,
       actif: this.campusEnCours.actif !== undefined ? Boolean(this.campusEnCours.actif) : true,
     };
@@ -2506,7 +3016,10 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           this.modalCampusVisible = false;
           this.rechargerCampus();
         },
-        error: () => this.toast.error('Erreur lors de la mise à jour.'),
+        error: (err) => {
+          const msg = err?.error?.message || 'Erreur lors de la mise à jour.';
+          this.toast.error(msg);
+        },
       });
     } else {
       this.landingService.createCampus(payload as any).subscribe({
@@ -2515,7 +3028,10 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
           this.modalCampusVisible = false;
           this.rechargerCampus();
         },
-        error: () => this.toast.error('Erreur lors de la création.'),
+        error: (err) => {
+          const msg = err?.error?.message || 'Erreur lors de la création.';
+          this.toast.error(msg);
+        },
       });
     }
   }
@@ -2528,6 +3044,68 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
         this.rechargerCampus();
       },
       error: () => this.toast.error('Erreur lors de la suppression.'),
+    });
+  }
+
+  getNombreCampusPublies(): number {
+    return (this.campusList || []).filter((c) => c.statut === 'PUBLIE').length;
+  }
+
+  isPremierCampus(c: LandingPageCampus): boolean {
+    if (!this.campusList || this.campusList.length === 0) return true;
+    return this.campusList[0]?.id === c.id;
+  }
+
+  isDernierCampus(c: LandingPageCampus): boolean {
+    if (!this.campusList || this.campusList.length === 0) return true;
+    return this.campusList[this.campusList.length - 1]?.id === c.id;
+  }
+
+  monterCampus(c: LandingPageCampus): void {
+    const idx = this.campusList.findIndex((item) => item.id === c.id);
+    if (idx <= 0) return;
+    const prev = this.campusList[idx - 1];
+    const prevOrdre = prev.ordre ?? idx - 1;
+    const currentOrdre = c.ordre ?? idx;
+
+    const newCurrentOrdre = prevOrdre;
+    const newPrevOrdre = currentOrdre === prevOrdre ? prevOrdre + 1 : currentOrdre;
+
+    this.landingService.updateCampus(c.id!, { ordre: newCurrentOrdre }).subscribe({
+      next: () => {
+        this.landingService.updateCampus(prev.id!, { ordre: newPrevOrdre }).subscribe({
+          next: () => {
+            this.toast.success(`Ordre modifié : « ${c.titre} » déplacé vers le haut.`);
+            this.rechargerCampus();
+          },
+          error: () => this.rechargerCampus(),
+        });
+      },
+      error: () => this.toast.error('Erreur lors du changement d’ordre.'),
+    });
+  }
+
+  descendreCampus(c: LandingPageCampus): void {
+    const idx = this.campusList.findIndex((item) => item.id === c.id);
+    if (idx < 0 || idx >= this.campusList.length - 1) return;
+    const next = this.campusList[idx + 1];
+    const nextOrdre = next.ordre ?? idx + 1;
+    const currentOrdre = c.ordre ?? idx;
+
+    const newCurrentOrdre = nextOrdre;
+    const newNextOrdre = currentOrdre === nextOrdre ? nextOrdre - 1 : currentOrdre;
+
+    this.landingService.updateCampus(c.id!, { ordre: newCurrentOrdre }).subscribe({
+      next: () => {
+        this.landingService.updateCampus(next.id!, { ordre: newNextOrdre }).subscribe({
+          next: () => {
+            this.toast.success(`Ordre modifié : « ${c.titre} » déplacé vers le bas.`);
+            this.rechargerCampus();
+          },
+          error: () => this.rechargerCampus(),
+        });
+      },
+      error: () => this.toast.error('Erreur lors du changement d’ordre.'),
     });
   }
 
@@ -2893,33 +3471,72 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
       const file = input.files[0];
       const fileName = file.name;
       this.uploadingHeroImage = true;
+      this.toast.info('Traitement Sharp du Hero en cours (1920x1080 + mobile 768x1024)...');
       this.cdr.markForCheck();
-      this.landingService.uploadActualiteMedia(file).subscribe({
+      this.landingService.uploadHeroImage(file).subscribe({
         next: (res) => {
-          this.settings.heroImage = res.url;
-          // Sauvegarde automatique et immédiate en base de données PostgreSQL
-          this.landingService.updateSettings({ heroImage: res.url }).subscribe({
+          this.settings.heroImage = res.heroImage;
+          this.settings.heroImageMobile = res.heroImageMobile;
+          // Règle 10 : à chaque changement d'image, le droit à l'image repasse à false
+          this.settings.heroImageDroitConfirme = false;
+
+          // Sauvegarde automatique en base de données
+          this.landingService.updateSettings({
+            heroImage: res.heroImage,
+            heroImageMobile: res.heroImageMobile,
+            heroImageDroitConfirme: false,
+          }).subscribe({
             next: (saved) => {
               this.settings = { ...this.settings, ...saved };
               this.uploadingHeroImage = false;
               notifyLandingSettingsChanged();
-              this.toast.success(`Photo du Hero « ${fileName} » téléversée et enregistrée en direct !`);
+              this.toast.success(`Photo du Hero « ${fileName} » optimisée et enregistrée !`);
+              this.toast.info('Attention : cochez la case d\'attestation des droits à l\'image pour autoriser son affichage sur la vitrine publique.');
               this.cdr.markForCheck();
             },
             error: () => {
               this.uploadingHeroImage = false;
-              this.toast.info('Photo téléversée mais non enregistrée automatiquement. Pensez à cliquer sur « Enregistrer tous les paramètres » en bas.');
+              this.toast.info('Photo téléversée mais non enregistrée automatiquement. Pensez à cliquer sur « Enregistrer tous les paramètres ».');
               this.cdr.markForCheck();
             },
           });
         },
-        error: () => {
+        error: (err) => {
           this.uploadingHeroImage = false;
-          this.toast.error('Erreur lors du téléversement de la photo.');
+          const msg = err?.error?.message || 'Erreur lors du téléversement de la photo.';
+          this.toast.error(msg);
           this.cdr.markForCheck();
         },
       });
     }
+  }
+
+  onHeroDroitImageChange(): void {
+    const confirme = Boolean(this.settings.heroImageDroitConfirme);
+    if (confirme && (!this.settings.heroImageAlt || !this.settings.heroImageAlt.trim())) {
+      this.toast.error('Le texte alternatif (Alt) de l\'image est obligatoire avant de confirmer le droit à l\'image.');
+      this.settings.heroImageDroitConfirme = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.landingService.updateSettings({
+      heroImageDroitConfirme: confirme,
+      heroImageAlt: this.settings.heroImageAlt || '',
+    }).subscribe({
+      next: (saved) => {
+        this.settings = { ...this.settings, ...saved };
+        notifyLandingSettingsChanged();
+        if (confirme) {
+          this.toast.success('Droits à l\'image confirmés : l\'image du Hero est désormais visible en vitrine publique.');
+        } else {
+          this.toast.info('Droits retirés : l\'image du Hero est désormais masquée sur la vitrine publique.');
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.toast.error('Erreur lors de la mise à jour des droits à l\'image.');
+      },
+    });
   }
 
   supprimerHeroImage(): void {

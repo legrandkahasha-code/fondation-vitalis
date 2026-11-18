@@ -10,11 +10,8 @@ for (const envPath of envFiles) {
 }
 
 let migrationUrl = process.env['DIRECT_URL'] || process.env['DATABASE_URL'] || '';
-// Le pooler Supabase sur le port 6543 (Transaction Mode) bloque les verrous pg_advisory_lock de Prisma Migrate.
-// On bascule automatiquement sur le port 5432 (Session Mode) qui supporte nativement les migrations Prisma :
-if (migrationUrl.includes(':6543')) {
-  migrationUrl = migrationUrl.replace(':6543', ':5432');
-}
+// Utilisation directe de DATABASE_URL (supporte le pooler 6543)
+
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',

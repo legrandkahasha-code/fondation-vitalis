@@ -34,6 +34,12 @@ export class DevoirsController {
     return this.service.mesSoumissions(req.user.id);
   }
 
+  @Get('formateur/a-corriger')
+  @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR)
+  getDevoirsACorriger(@Req() req: any) {
+    return this.service.getDevoirsACorriger(req.user);
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN_CENTRE, Role.ADMIN_ETABLISSEMENT, Role.FORMATEUR, Role.APPRENANT)
   findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {

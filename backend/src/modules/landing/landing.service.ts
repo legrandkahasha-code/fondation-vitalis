@@ -22,6 +22,8 @@ import {
   ContactMessageDto,
 } from './dto/landing.dto';
 import { DEFAULT_WHATSAPP_MESSAGE, toWhatsappE164, buildWhatsappUrlLenient, isWhatsappEnabled } from '../../common/utils/whatsapp.util';
+import { StorageService } from '../../common/services/storage.service';
+import { PdfService } from '../../common/services/pdf.service';
 
 interface CachedLandingEntry {
   data: any;
@@ -37,7 +39,9 @@ export class LandingService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
-  ) {}
+    private storage: StorageService,
+    private pdfService: PdfService,
+  ) { }
 
   private get db(): any {
     return this.prisma;
@@ -77,10 +81,98 @@ export class LandingService {
       return LandingService.cachedLandingData.data;
     }
 
-    // 1. Récupérer ou initialiser les paramètres
-    let settings = await this.db.landingPageSettings.findFirst();
+    // 1. Récupérer les paramètres publics avec projection explicite (select restreint)
+    const publicSettingsSelect = {
+      id: true,
+      topbarTexte: true,
+      heroTitre: true,
+      heroSousTitre: true,
+      heroNumeroAgrement: true,
+      heroImage: true,
+      heroImageMobile: true,
+      heroImageAlt: true,
+      heroImageDroitConfirme: true,
+      heroBadge1Texte: true,
+      heroBadge2Texte: true,
+      heroBadge3Texte: true,
+      liveActivityTexte: true,
+      heroCtaTexte: true,
+      heroCtaLien: true,
+      heroCtaSecondaireTexte: true,
+      heroCtaSecondaireLien: true,
+      heroReassurance1: true,
+      heroReassurance2: true,
+      heroReassurance3: true,
+      heroTutelleVisible: true,
+      heroTutelleVisibleMobile: true,
+      heroStatsVisible: true,
+      heroStatsVisibleMobile: true,
+      heroReassurancesVisible: true,
+      heroReassurancesVisibleMobile: true,
+      heroProfilsVisible: true,
+      heroProfilsVisibleMobile: true,
+      statsLaureats: true,
+      statsTauxReussite: true,
+      statsFilieres: true,
+      statsTitresVerif: true,
+      statsTauxSource: true,
+      campusEyebrow: true,
+      campusTitre: true,
+      campusSousTitre: true,
+      ctaTitre: true,
+      ctaSousTitre: true,
+      formationsSurMesureTitre: true,
+      formationsSurMesureDescription: true,
+      verifTitre: true,
+      verifSousTitre: true,
+      verifExempleNumero: true,
+      contactAdresse: true,
+      contactEmail: true,
+      contactTelephone: true,
+      contactHoraires: true,
+      contactWhatsapp: true,
+      whatsappMessage: true,
+      whatsappActif: true,
+      footerDescription: true,
+      footerTutelleTexte: true,
+      footerCopyright: true,
+      footerBarreTexte: true,
+      videoActif: true,
+      videoSousTitre: true,
+      videoTitre: true,
+      videoDescription: true,
+      videoBoutonPrincipal: true,
+      videoBoutonSecondaire: true,
+      videoBoutonSecondaireUrl: true,
+      videoPresentationUrl: true,
+      videoPosterUrl: true,
+      videoBadgeHaut: true,
+      videoBadgeBas: true,
+      videoTitreOverlay: true,
+      videoSousTitreOverlay: true,
+      videoLegende: true,
+      videoDuree: true,
+      socialLinkedin: true,
+      socialFacebook: true,
+      socialYoutube: true,
+      mapEmbedUrl: true,
+      updatedAt: true,
+    };
+
+    let settings = await this.db.landingPageSettings.findFirst({
+      select: publicSettingsSelect,
+    });
     if (!settings) {
-      settings = await this.seedDefaultSettings();
+      await this.seedDefaultSettings();
+      settings = await this.db.landingPageSettings.findFirst({
+        select: publicSettingsSelect,
+      });
+    }
+    if (settings) {
+      if (settings.heroImageDroitConfirme !== true) {
+        settings.heroImage = null;
+        settings.heroImageMobile = null;
+      }
     }
 
     // 2. Récupérer les sections actives classées par ordre
@@ -161,22 +253,28 @@ export class LandingService {
       }
     }
 
-    // 7. Récupérer les Espaces Campus / Ateliers actifs
-    let campus = await this.db.landingPageCampus.findMany({
-      where: { actif: true },
+    // 7. Récupérer les Espaces Campus / Ateliers actifs et publiés (100% contrôlés par l'administrateur)
+    const campus = await this.db.landingPageCampus.findMany({
+      where: {
+        actif: true,
+        statut: 'PUBLIE',
+        afficherLanding: true,
+      },
       orderBy: { ordre: 'asc' },
+      take: 4,
+      select: {
+        id: true,
+        titre: true,
+        description: true,
+        photoUrl: true,
+        photoUrlMobile: true,
+        photoAlt: true,
+        badge: true,
+        equipements: true,
+        ordre: true,
+        afficherMobile: true,
+      },
     });
-
-    if (campus.length === 0) {
-      const countCampus = await this.db.landingPageCampus.count();
-      if (countCampus === 0) {
-        await this.seedDefaultCampus();
-        campus = await this.db.landingPageCampus.findMany({
-          where: { actif: true },
-          orderBy: { ordre: 'asc' },
-        });
-      }
-    }
 
     // 8. Récupérer les Logos Partenaires actifs
     let partenaires = await this.db.landingPagePartenaire.findMany({
@@ -287,8 +385,8 @@ export class LandingService {
         const debouchesDefaut = categorieCode === 'gestion'
           ? 'Manager, Gestionnaire de projets, Auditeur, Responsable Administratif'
           : categorieCode === 'technique'
-          ? 'Technicien Supérieur, Superviseur Technique, Installateur Spécialisé'
-          : 'Développeur d\'Applications, Spécialiste Systèmes & Réseaux, Consultant IT';
+            ? 'Technicien Supérieur, Superviseur Technique, Installateur Spécialisé'
+            : 'Développeur d\'Applications, Spécialiste Systèmes & Réseaux, Consultant IT';
 
         return {
           id: f.id,
@@ -515,8 +613,142 @@ export class LandingService {
     let settings = await this.db.landingPageSettings.findFirst();
     if (!settings) {
       settings = await this.seedDefaultSettings();
+    } else if (settings.heroCtaLien === '#formations' || !settings.heroCtaLien) {
+      try {
+        settings = await this.db.landingPageSettings.update({
+          where: { id: settings.id },
+          data: { heroCtaLien: '#formulaire-orientation' },
+        });
+      } catch {
+        settings.heroCtaLien = '#formulaire-orientation';
+      }
     }
     return settings;
+  }
+
+  /**
+   * P3.1 — Calcul hybride des chiffres clés depuis les données réelles en base.
+   * Retourne les compteurs réels que l'admin peut utiliser pour pré-remplir les stats du hero.
+   */
+  async getStatsReelles() {
+    const [countCertificats, countFormationsActives, countFilieres] = await Promise.all([
+      this.db.certificat.count(),
+      this.db.formation.count({ where: { actif: true } }),
+      this.db.filiere.count(),
+    ]);
+
+    return {
+      laureats: countCertificats,
+      formationsActives: countFormationsActives,
+      filieres: countFilieres,
+      titresVerifiables: 100, // 100% des certificats émis sont vérifiables par QR
+      calculeLe: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Génération de la Brochure Officielle des Formations 2026 (Catalogue dynamique PDF)
+   */
+  async generateBrochurePdf(origin?: string): Promise<Buffer> {
+    const [settings, formationsDb, categories] = await Promise.all([
+      this.getSettings(),
+      this.prisma.formation.findMany({
+        where: {
+          actif: true,
+          publieSurLanding: true,
+        },
+        include: {
+          _count: {
+            select: { modules: true },
+          },
+          modules: {
+            orderBy: [{ ordre: 'asc' }, { titre: 'asc' }],
+          },
+          formationReferentiel: {
+            include: {
+              filiere: true,
+              niveau: true,
+            },
+          },
+        },
+        orderBy: [
+          { aLaUne: 'desc' },
+          { ordre: 'asc' },
+          { createdAt: 'desc' },
+        ],
+      }),
+      this.prisma.categorieFormation.findMany({
+        where: { actif: true },
+        orderBy: [{ ordre: 'asc' }, { libelle: 'asc' }],
+      }),
+    ]);
+
+    const catMap = new Map<string, { libelle: string; couleur?: string }>();
+    categories.forEach((c: any) => {
+      catMap.set(c.code, { libelle: c.libelle, couleur: c.couleur });
+    });
+
+    const defaultColors: { [key: string]: string } = {
+      tech: '#1C75BC',
+      gestion: '#F0791E',
+      technique: '#276B44',
+      sante: '#0D9488',
+      btp: '#D97706',
+    };
+
+    const formations = formationsDb.map((f: any) => {
+      const ref = f.formationReferentiel;
+      const catCode = f.categorie || 'tech';
+      const catObj = catMap.get(catCode);
+      const catNom = catObj?.libelle || f.categorieNom || 'Formation Certifiante';
+      const catCouleur = catObj?.couleur || defaultColors[catCode] || '#1C75BC';
+
+      const modules = f.modules || ref?.modules || [];
+      const dureeStr = f.duree || (ref?.dureeHeures ? `${ref.dureeHeures} heures` : '3 à 6 mois (120h)');
+      const debouchesStr = f.debouches || ref?.debouches || 'Insertion professionnelle en entreprise & indépendance';
+
+      return {
+        id: f.id,
+        code: f.code || ref?.code || undefined,
+        titre: f.titre || ref?.titre,
+        categorieNom: catNom,
+        categorieCouleur: catCouleur,
+        description: f.description || ref?.description || '',
+        duree: dureeStr,
+        modulesCount: modules.length > 0 ? modules.length : (f.modulesCount || 4),
+        debouches: debouchesStr,
+        prochaineSession: f.prochaineSession || f.badgeTexte || 'Session 2026 · Inscriptions ouvertes',
+        aLaUne: !!f.aLaUne,
+        imageUrl: f.imageUrl || null,
+        modulesDetails: modules.map((m: any) => ({
+          titre: m.titre,
+          dureeHeures: m.dureeHeures,
+        })),
+      };
+    });
+
+    const qrUrl = origin
+      ? `${origin.replace(/\/$/, '')}/#formulaire-orientation`
+      : 'https://vitalis-center.cd/#formulaire-orientation';
+
+    return this.pdfService.generateBrochureCataloguePdf({
+      anneeSession: '2026',
+      agrementNumero: settings?.heroNumeroAgrement || 'N° CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026',
+      topbarTexte: settings?.topbarTexte,
+      contactAdresse: settings?.contactAdresse,
+      contactEmail: settings?.contactEmail,
+      contactTelephone: settings?.contactTelephone,
+      contactWhatsapp: settings?.contactWhatsapp,
+      contactHoraires: settings?.contactHoraires,
+      qrOrientationUrl: qrUrl,
+      formations,
+      stats: {
+        laureats: settings?.statsLaureats || 1200,
+        tauxReussite: settings?.statsTauxReussite || 94,
+        filieres: settings?.statsFilieres || 15,
+        titresVerif: settings?.statsTitresVerif || 100,
+      },
+    });
   }
 
   async getWhatsappWidget() {
@@ -528,10 +760,10 @@ export class LandingService {
     return { actif, url: url || '', numero: settings?.contactWhatsapp || null };
   }
 
-  async updateSettings(dto: UpdateLandingSettingsDto | any) {
+  async updateSettings(dto: UpdateLandingSettingsDto | any, user?: any) {
     const existing = await this.getSettings();
     const { id, createdAt, updatedAt, ...cleanData } = dto || {};
-    
+
     if (cleanData.statsLaureats !== undefined) cleanData.statsLaureats = Number(cleanData.statsLaureats);
     if (cleanData.statsTauxReussite !== undefined) cleanData.statsTauxReussite = Number(cleanData.statsTauxReussite);
     if (cleanData.statsFilieres !== undefined) cleanData.statsFilieres = Number(cleanData.statsFilieres);
@@ -542,6 +774,52 @@ export class LandingService {
 
     if (cleanData.videoActif !== undefined) {
       cleanData.videoActif = cleanData.videoActif === true || cleanData.videoActif === 'true';
+    }
+
+    // Sécurité et traçabilité de l'image Hero
+    if (cleanData.heroImage !== undefined) {
+      if (cleanData.heroImage) {
+        if (!cleanData.heroImage.startsWith('/uploads/hero/')) {
+          throw new BadRequestException('L\'image Hero doit être téléversée localement sous /uploads/hero/.');
+        }
+        if (cleanData.heroImage.includes('..') || cleanData.heroImage.includes('\0')) {
+          throw new BadRequestException('Chemin de fichier Hero non autorisé.');
+        }
+        const fileExists = await this.storage.validateUploadPath(cleanData.heroImage, '/uploads/hero/');
+        if (!fileExists) {
+          throw new BadRequestException('Le fichier image Hero spécifié est introuvable sur le disque.');
+        }
+      }
+      if (cleanData.heroImage !== existing?.heroImage) {
+        if (existing?.heroImage) await this.storage.deleteLocalUpload(existing.heroImage);
+        if (existing?.heroImageMobile) await this.storage.deleteLocalUpload(existing.heroImageMobile);
+        cleanData.heroImageDroitConfirme = false;
+        cleanData.heroImageDroitDate = null;
+        cleanData.heroImageDroitAuteur = null;
+      }
+    }
+
+    // Gestion rigoureuse du droit à l'image et du texte alternatif (P1.1)
+    const droitVoulu = cleanData.heroImageDroitConfirme === true || cleanData.heroImageDroitConfirme === 'true';
+    if (cleanData.heroImageDroitConfirme !== undefined && droitVoulu) {
+      const alt = (cleanData.heroImageAlt !== undefined ? cleanData.heroImageAlt : existing?.heroImageAlt) || '';
+      if (!String(alt).trim()) {
+        throw new BadRequestException('Un texte alternatif (heroImageAlt) est obligatoire pour confirmer le droit à l\'image.');
+      }
+      if (!existing?.heroImageDroitConfirme) {
+        cleanData.heroImageDroitDate = new Date();
+        cleanData.heroImageDroitAuteur = user?.email || user?.id || 'admin';
+      }
+      cleanData.heroImageDroitConfirme = true;
+    } else if (cleanData.heroImageDroitConfirme !== undefined && !droitVoulu) {
+      cleanData.heroImageDroitConfirme = false;
+      cleanData.heroImageDroitDate = null;
+      cleanData.heroImageDroitAuteur = null;
+    } else if (cleanData.heroImageAlt !== undefined && !String(cleanData.heroImageAlt).trim() && existing?.heroImageDroitConfirme) {
+      // Révocation implicite de sécurité : l'alt est vidé alors que le droit était confirmé
+      cleanData.heroImageDroitConfirme = false;
+      cleanData.heroImageDroitDate = null;
+      cleanData.heroImageDroitAuteur = null;
     }
 
     if (cleanData.videoPresentationUrl !== undefined) {
@@ -675,7 +953,7 @@ export class LandingService {
         message: `Nouvelle actualité publiée : ${created.titre}`,
         data: created,
       });
-    } catch (e) {}
+    } catch (e) { }
 
     return created;
   }
@@ -702,7 +980,7 @@ export class LandingService {
         message: `Actualité mise à jour : ${updated.titre}`,
         data: updated,
       });
-    } catch (e) {}
+    } catch (e) { }
 
     return updated;
   }
@@ -719,7 +997,7 @@ export class LandingService {
         type: 'ACTUALITE_UPDATE',
         message: `Actualité supprimée : ${actualite.titre}`,
       });
-    } catch (e) {}
+    } catch (e) { }
 
     return res;
   }
@@ -833,42 +1111,149 @@ export class LandingService {
     });
   }
 
-  async createCampus(dto: CreateLandingCampusDto | any) {
+  private validateNoXss(str?: string, fieldName = 'champ') {
+    if (!str || typeof str !== 'string') return;
+    if (/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi.test(str) || /<[^>]+(on\w+=|javascript:)/i.test(str) || str.includes('<script') || str.includes('</script>')) {
+      throw new BadRequestException(`Le ${fieldName} contient des balises non autorisées (XSS détecté).`);
+    }
+  }
+
+  async createCampus(dto: CreateLandingCampusDto | any, user?: any) {
     this.invalidateLandingCache();
     const { id, createdAt, updatedAt, ...cleanData } = dto || {};
+
+    this.validateNoXss(cleanData.titre, 'titre');
+    this.validateNoXss(cleanData.description, 'description');
+    this.validateNoXss(cleanData.equipements, 'equipements');
+
+    if (cleanData.photoUrl) {
+      if (cleanData.photoUrl.includes('..') || cleanData.photoUrl.includes('\0')) {
+        throw new BadRequestException('Chemin de photo invalide.');
+      }
+      if (/^https?:\/\//i.test(cleanData.photoUrl)) {
+        throw new BadRequestException('Les URLs de photos externes sont interdites.');
+      }
+    }
+
+    if (cleanData.ordre !== undefined) cleanData.ordre = Number(cleanData.ordre);
+    if (cleanData.actif !== undefined) cleanData.actif = Boolean(cleanData.actif);
+    if (cleanData.afficherMobile !== undefined) cleanData.afficherMobile = Boolean(cleanData.afficherMobile);
+    if (cleanData.afficherLanding !== undefined) cleanData.afficherLanding = Boolean(cleanData.afficherLanding);
+    if (cleanData.droitImageConfirme !== undefined) cleanData.droitImageConfirme = Boolean(cleanData.droitImageConfirme);
+
+    if (cleanData.droitImageConfirme) {
+      cleanData.droitImageDate = new Date();
+      cleanData.droitImageAuteur = user?.email || user?.id || 'admin';
+    } else {
+      cleanData.droitImageDate = null;
+      cleanData.droitImageAuteur = null;
+    }
+
+    if (cleanData.statut === 'PUBLIE') {
+      if (!cleanData.photoUrl || !cleanData.photoUrl.startsWith('/uploads/campus/')) {
+        throw new BadRequestException('La publication requiert une photo téléversée localement sous /uploads/campus/.');
+      }
+      if (!cleanData.photoUrlMobile || !cleanData.photoUrlMobile.startsWith('/uploads/campus/')) {
+        throw new BadRequestException('La version mobile de la photo est obligatoire pour la publication.');
+      }
+      const photoOk = await this.storage.validateUploadPath(cleanData.photoUrl, '/uploads/campus/');
+      const photoMobileOk = await this.storage.validateUploadPath(cleanData.photoUrlMobile, '/uploads/campus/');
+      if (!photoOk || !photoMobileOk) {
+        throw new BadRequestException('Le fichier de photo spécifié est introuvable sur le disque.');
+      }
+      if (!cleanData.photoAlt || typeof cleanData.photoAlt !== 'string' || cleanData.photoAlt.trim() === '' || cleanData.photoAlt.startsWith('[MIGRATION]')) {
+        throw new BadRequestException('La publication requiert un texte alternatif (photoAlt) descriptif et non temporaire.');
+      }
+      if (!cleanData.droitImageConfirme) {
+        throw new BadRequestException('La publication requiert la confirmation formelle du droit à l\'image.');
+      }
+    }
+
     return this.db.landingPageCampus.create({
-      data: {
-        titre: cleanData.titre,
-        description: cleanData.description,
-        photoUrl: cleanData.photoUrl || cleanData.photo || null,
-        badge: cleanData.badge || null,
-        equipements: cleanData.equipements,
-        ordre: cleanData.ordre !== undefined ? Number(cleanData.ordre) : 0,
-        actif: cleanData.actif !== undefined ? Boolean(cleanData.actif) : true,
-      },
+      data: cleanData,
     });
   }
 
-  async updateCampus(id: string, dto: UpdateLandingCampusDto | any) {
+  async updateCampus(id: string, dto: UpdateLandingCampusDto | any, user?: any) {
     this.invalidateLandingCache();
     const campus = await this.db.landingPageCampus.findUnique({ where: { id } });
     if (!campus) throw new NotFoundException('Espace campus introuvable.');
 
     const { id: _, createdAt, updatedAt, ...cleanData } = dto || {};
+    this.validateNoXss(cleanData.titre, 'titre');
+    this.validateNoXss(cleanData.description, 'description');
+    this.validateNoXss(cleanData.equipements, 'equipements');
+
+    if (cleanData.photoUrl) {
+      if (cleanData.photoUrl.includes('..') || cleanData.photoUrl.includes('\0')) {
+        throw new BadRequestException('Chemin de photo invalide.');
+      }
+      if (/^https?:\/\//i.test(cleanData.photoUrl)) {
+        throw new BadRequestException('Les URLs de photos externes sont interdites.');
+      }
+    }
+
     if (cleanData.ordre !== undefined) cleanData.ordre = Number(cleanData.ordre);
     if (cleanData.actif !== undefined) cleanData.actif = Boolean(cleanData.actif);
-    if (cleanData.photo && !cleanData.photoUrl) cleanData.photoUrl = cleanData.photo;
+    if (cleanData.afficherMobile !== undefined) cleanData.afficherMobile = Boolean(cleanData.afficherMobile);
+    if (cleanData.afficherLanding !== undefined) cleanData.afficherLanding = Boolean(cleanData.afficherLanding);
 
-    return this.db.landingPageCampus.update({
+    if (cleanData.photoUrl !== undefined && cleanData.photoUrl !== campus.photoUrl) {
+      if (campus.photoUrl) await this.storage.deleteLocalUpload(campus.photoUrl);
+      if (campus.photoUrlMobile) await this.storage.deleteLocalUpload(campus.photoUrlMobile);
+      cleanData.droitImageConfirme = false;
+      cleanData.droitImageDate = null;
+      cleanData.droitImageAuteur = null;
+    }
+
+    if (cleanData.droitImageConfirme !== undefined) {
+      cleanData.droitImageConfirme = Boolean(cleanData.droitImageConfirme);
+      if (cleanData.droitImageConfirme && !campus.droitImageConfirme) {
+        cleanData.droitImageDate = new Date();
+        cleanData.droitImageAuteur = user?.email || user?.id || 'admin';
+      } else if (!cleanData.droitImageConfirme) {
+        cleanData.droitImageDate = null;
+        cleanData.droitImageAuteur = null;
+      }
+    }
+
+    const targetState = { ...campus, ...cleanData };
+
+    if (targetState.statut === 'PUBLIE') {
+      if (!targetState.photoUrl || !targetState.photoUrl.startsWith('/uploads/campus/')) {
+        throw new BadRequestException('La publication requiert une photo téléversée localement sous /uploads/campus/.');
+      }
+      if (!targetState.photoUrlMobile || !targetState.photoUrlMobile.startsWith('/uploads/campus/')) {
+        throw new BadRequestException('La version mobile de la photo est obligatoire pour la publication.');
+      }
+      const photoOk = await this.storage.validateUploadPath(targetState.photoUrl, '/uploads/campus/');
+      const photoMobileOk = await this.storage.validateUploadPath(targetState.photoUrlMobile, '/uploads/campus/');
+      if (!photoOk || !photoMobileOk) {
+        throw new BadRequestException('Le fichier de photo spécifié est introuvable sur le disque.');
+      }
+      if (!targetState.photoAlt || typeof targetState.photoAlt !== 'string' || targetState.photoAlt.trim() === '' || targetState.photoAlt.startsWith('[MIGRATION]')) {
+        throw new BadRequestException('La publication requiert un texte alternatif (photoAlt) descriptif et non temporaire.');
+      }
+      if (!targetState.droitImageConfirme) {
+        throw new BadRequestException('La publication requiert la confirmation formelle du droit à l\'image.');
+      }
+    }
+
+    const updated = await this.db.landingPageCampus.update({
       where: { id },
       data: cleanData,
     });
+    this.invalidateLandingCache();
+    return updated;
   }
 
   async deleteCampus(id: string) {
     this.invalidateLandingCache();
     const campus = await this.db.landingPageCampus.findUnique({ where: { id } });
     if (!campus) throw new NotFoundException('Espace campus introuvable.');
+
+    if (campus.photoUrl) await this.storage.deleteLocalUpload(campus.photoUrl);
+    if (campus.photoUrlMobile) await this.storage.deleteLocalUpload(campus.photoUrlMobile);
 
     return this.db.landingPageCampus.delete({ where: { id } });
   }
@@ -953,7 +1338,7 @@ export class LandingService {
         message: `Nouvel abonné aux alertes de session : ${email}`,
         data: abonne,
       });
-    } catch {}
+    } catch { }
 
     return {
       success: true,
@@ -1038,7 +1423,7 @@ export class LandingService {
         heroBadge2Texte: 'Agrément Officiel RDC',
         heroBadge3Texte: 'Certificats Infalsifiables',
         heroCtaTexte: 'Postuler pour la Session 2026',
-        heroCtaLien: '#formations',
+        heroCtaLien: '#formulaire-orientation',
         heroCtaSecondaireTexte: 'Télécharger la Brochure (PDF)',
         heroCtaSecondaireLien: 'action:brochure',
         heroReassurance1: 'Certificat officiel infalsifiable (QR Code)',
@@ -1064,23 +1449,23 @@ export class LandingService {
         whatsappMessage: DEFAULT_WHATSAPP_MESSAGE,
         whatsappActif: true,
         videoActif: true,
-        videoSousTitre: 'Vidéo Institutionnelle',
-        videoTitre: 'Découvrez Vitalis Center en Action',
-        videoDescription: 'Visionnez la présentation officielle de notre établissement d\'utilité publique : témoignages de formateurs, immersion en atelier et parcours des diplômés.',
-        videoBoutonPrincipal: 'Lancer la présentation (3 min)',
-        videoBoutonSecondaire: 'Prendre rendez-vous sur place',
-        videoBoutonSecondaireUrl: '#contact',
-        videoPresentationUrl: 'https://www.youtube-nocookie.com/embed/9No-FiEInLA?rel=0',
-        videoPosterUrl: 'assets/actualites/actu-lms-deploiement.jpg',
-        videoBadgeHaut: 'VITALIS CENTER EUP',
-        videoBadgeBas: 'INNOVATION NATIONALE',
-        videoTitreOverlay: 'Déploiement National du Système Numérique & Registre Sécurisé',
-        videoSousTitreOverlay: 'Centre de Formation Professionnelle Agréé · Kinshasa, RDC',
-        videoLegende: 'Reportage Ministère de la Formation Professionnelle',
-        videoDuree: '03:15',
-        socialLinkedin: 'https://linkedin.com',
-        socialFacebook: 'https://facebook.com',
-        socialYoutube: 'https://youtube.com',
+        videoSousTitre: null,
+        videoTitre: null,
+        videoDescription: null,
+        videoBoutonPrincipal: null,
+        videoBoutonSecondaire: null,
+        videoBoutonSecondaireUrl: null,
+        videoPresentationUrl: null,
+        videoPosterUrl: null,
+        videoBadgeHaut: null,
+        videoBadgeBas: null,
+        videoTitreOverlay: null,
+        videoSousTitreOverlay: null,
+        videoLegende: null,
+        videoDuree: null,
+        socialLinkedin: null,
+        socialFacebook: null,
+        socialYoutube: null,
         mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3978.8!2d15.3!3d-4.3!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNMKwMTgnMDAuMCJTIDE1wrAxOCcwMC4wIkU!5e0!3m2!1sfr!2scd!4v1',
         liveActivityTexte: 'Session d\'admission 2026 en cours · 15 filières d\'excellence ouvertes',
         footerDescription: 'Vitalis Center EUP (Établissement d\'Utilité Publique) · Centre de formation professionnelle et technique agréé par le Ministère de la Formation Professionnelle de la RDC.',
@@ -1404,47 +1789,6 @@ export class LandingService {
 
     for (const f of defaultFormateurs) {
       await this.createFormateur(f);
-    }
-  }
-
-  private async seedDefaultCampus() {
-    const defaultCampus = [
-      {
-        titre: 'Laboratoire Systèmes & Développement Cloud',
-        description: 'Équipé de serveurs dédiés, postes haute performance et environnement d\'intégration continue pour l\'apprentissage pratique du code et de l\'administration réseau.',
-        photoUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop',
-        badge: 'Tech & Télécoms',
-        equipements: '35 postes connectés · Racks Cisco · Fibre dédiée',
-        ordre: 1,
-      },
-      {
-        titre: 'Atelier Électrotechnique & Énergie Solaire',
-        description: 'Bancs d\'essais réels, onduleurs industriels, simulateurs de réseau et kits photovoltaïques aux normes de sécurité électrique.',
-        photoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=1200&auto=format&fit=crop',
-        badge: 'Génie & Énergie',
-        equipements: 'Bancs Schneider Electric · Panneaux solaires · Outillage pro',
-        ordre: 2,
-      },
-      {
-        titre: 'Espace Collaboratif & Études de Cas',
-        description: 'Salles modulaires dédiées au management agile, simulations d\'entreprises, analyse financière et revues de projets d\'affaires.',
-        photoUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop',
-        badge: 'Management',
-        equipements: 'Vidéoprojection HD · Tableaux interactifs · Coworking',
-        ordre: 3,
-      },
-      {
-        titre: 'Centre d\'Examen Agréé & Registre Officiel',
-        description: 'Postes sécurisés pour les évaluations formelles, commissions de délibération et délivrance certifiée des attestations sous supervision ministérielle.',
-        photoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1200&auto=format&fit=crop',
-        badge: 'Accréditation',
-        equipements: 'Postes d\'évaluation isolés · Supervision APC · Registre',
-        ordre: 4,
-      },
-    ];
-
-    for (const c of defaultCampus) {
-      await this.createCampus(c);
     }
   }
 
