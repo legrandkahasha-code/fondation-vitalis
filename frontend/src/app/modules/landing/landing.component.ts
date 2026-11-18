@@ -127,6 +127,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   activeStep: number = 1;
   submittingContact: boolean = false;
   whatsappWidget = { actif: false, url: '' };
+  liveActivityDismissed: boolean = false;
 
   contactForm = {
     nom: '',
@@ -147,6 +148,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     heroBadge1Texte: '94% Insertion Professionnelle',
     heroBadge2Texte: 'Agrément Officiel RDC',
     heroBadge3Texte: 'Certificats Infalsifiables',
+    liveActivityTexte: '',
     statsLaureats: 1200,
     statsTauxReussite: 94,
     statsFilieres: 15,

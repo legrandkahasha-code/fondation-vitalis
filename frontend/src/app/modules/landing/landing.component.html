@@ -2084,5 +2084,29 @@
       </div>
       }
 
+      <!-- NOTIFICATION FLOTTANTE DISCRÈTE : ACTIVITÉ EN DIRECT / ACTUALITÉ OFFICIELLE -->
+      @if (settings?.liveActivityTexte && !liveActivityDismissed) {
+        <aside 
+          class="fixed bottom-5 left-5 z-40 max-w-sm sm:max-w-md bg-[#124F80]/95 text-white p-3.5 rounded-xl shadow-2xl border border-white/20 backdrop-blur-md flex items-center gap-3 animate-fade-in-up"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="w-8 h-8 rounded-full bg-[#00A859]/20 border border-[#00A859] flex items-center justify-center shrink-0">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#00A859] animate-ping"></span>
+          </div>
+          <div class="flex-1 text-xs sm:text-[13px] font-medium leading-snug">
+            {{ settings.liveActivityTexte }}
+          </div>
+          <button 
+            type="button"
+            (click)="liveActivityDismissed = true"
+            class="text-white/70 hover:text-white p-1 rounded-lg transition-colors cursor-pointer text-xs"
+            aria-label="Fermer la notification d'activité"
+          >
+            ✕
+          </button>
+        </aside>
+      }
+
 </div>
 </div>

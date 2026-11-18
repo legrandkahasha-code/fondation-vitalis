@@ -39,7 +39,7 @@ export class LandingService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private storage: StorageService,
-  ) {}
+  ) { }
 
   private get db(): any {
     return this.prisma;
@@ -90,6 +90,10 @@ export class LandingService {
       heroImageMobile: true,
       heroImageAlt: true,
       heroImageDroitConfirme: true,
+      heroBadge1Texte: true,
+      heroBadge2Texte: true,
+      heroBadge3Texte: true,
+      liveActivityTexte: true,
       heroCtaTexte: true,
       heroCtaLien: true,
       heroCtaSecondaireTexte: true,
@@ -379,8 +383,8 @@ export class LandingService {
         const debouchesDefaut = categorieCode === 'gestion'
           ? 'Manager, Gestionnaire de projets, Auditeur, Responsable Administratif'
           : categorieCode === 'technique'
-          ? 'Technicien Supérieur, Superviseur Technique, Installateur Spécialisé'
-          : 'Développeur d\'Applications, Spécialiste Systèmes & Réseaux, Consultant IT';
+            ? 'Technicien Supérieur, Superviseur Technique, Installateur Spécialisé'
+            : 'Développeur d\'Applications, Spécialiste Systèmes & Réseaux, Consultant IT';
 
         return {
           id: f.id,
@@ -623,7 +627,7 @@ export class LandingService {
   async updateSettings(dto: UpdateLandingSettingsDto | any, user?: any) {
     const existing = await this.getSettings();
     const { id, createdAt, updatedAt, ...cleanData } = dto || {};
-    
+
     if (cleanData.statsLaureats !== undefined) cleanData.statsLaureats = Number(cleanData.statsLaureats);
     if (cleanData.statsTauxReussite !== undefined) cleanData.statsTauxReussite = Number(cleanData.statsTauxReussite);
     if (cleanData.statsFilieres !== undefined) cleanData.statsFilieres = Number(cleanData.statsFilieres);
@@ -659,11 +663,18 @@ export class LandingService {
       }
     }
 
+    // Révocation de sécurité : si le texte alternatif est effacé/vide, le droit à l'image ne peut pas être maintenu
+    if (cleanData.heroImageAlt !== undefined && !String(cleanData.heroImageAlt).trim()) {
+      cleanData.heroImageDroitConfirme = false;
+      cleanData.heroImageDroitDate = null;
+      cleanData.heroImageDroitAuteur = null;
+    }
+
     if (cleanData.heroImageDroitConfirme !== undefined) {
       cleanData.heroImageDroitConfirme = cleanData.heroImageDroitConfirme === true || cleanData.heroImageDroitConfirme === 'true';
       if (cleanData.heroImageDroitConfirme) {
         const alt = (cleanData.heroImageAlt !== undefined ? cleanData.heroImageAlt : existing?.heroImageAlt) || '';
-        if (!alt.trim()) {
+        if (!String(alt).trim()) {
           throw new BadRequestException('Un texte alternatif (heroImageAlt) est obligatoire pour confirmer le droit à l\'image.');
         }
         if (!existing?.heroImageDroitConfirme) {
@@ -807,7 +818,7 @@ export class LandingService {
         message: `Nouvelle actualité publiée : ${created.titre}`,
         data: created,
       });
-    } catch (e) {}
+    } catch (e) { }
 
     return created;
   }
@@ -834,7 +845,7 @@ export class LandingService {
         message: `Actualité mise à jour : ${updated.titre}`,
         data: updated,
       });
-    } catch (e) {}
+    } catch (e) { }
 
     return updated;
   }
@@ -851,7 +862,7 @@ export class LandingService {
         type: 'ACTUALITE_UPDATE',
         message: `Actualité supprimée : ${actualite.titre}`,
       });
-    } catch (e) {}
+    } catch (e) { }
 
     return res;
   }
@@ -1192,7 +1203,7 @@ export class LandingService {
         message: `Nouvel abonné aux alertes de session : ${email}`,
         data: abonne,
       });
-    } catch {}
+    } catch { }
 
     return {
       success: true,

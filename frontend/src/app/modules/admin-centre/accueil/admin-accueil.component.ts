@@ -2333,7 +2333,7 @@ export class AdminAccueilComponent implements OnInit, OnDestroy {
     private notifications: NotificationsService,
     private toast: ToastService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.chargerDonnees();
