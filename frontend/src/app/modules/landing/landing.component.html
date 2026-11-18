@@ -228,6 +228,7 @@
     <app-landing-hero [heroSlides]="heroSlides" [heroNumeroAgrement]="settings.heroNumeroAgrement || ''"
       [defaultHeroImage]="getHeroImageUrl()" [reassurances]="heroReassurances" [settings]="settings"
       [hasCampusSection]="!!(settings.campusTitre && settings.campusTitre.trim() && displayedCampusList().length > 0)"
+      [isDownloadingBrochure]="isDownloadingBrochure"
       (openCredentials)="openCredentialsModal()" (openVideo)="openVideoModal()" (ctaClick)="handleHeroCtaClick($event)"
       (downloadBrochure)="telechargerBrochure()"></app-landing-hero>
 
@@ -466,6 +467,19 @@
             <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold eyebrow">Offre de Formation</div>
             <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Formations Certifiantes</h2>
             <div class="barre mt-2"></div>
+            <button type="button" (click)="telechargerBrochure()" [disabled]="isDownloadingBrochure"
+              class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-[#1C75BC] hover:text-[#124F80] font-bold transition-colors cursor-pointer group disabled:opacity-60"
+              title="Télécharger l'intégralité du catalogue des formations officielles en format PDF">
+              @if (isDownloadingBrochure) {
+                <span class="w-3.5 h-3.5 border-2 border-[#1C75BC]/30 border-t-[#1C75BC] rounded-full animate-spin"></span>
+                <span>Génération du catalogue PDF en cours...</span>
+              } @else {
+                <svg class="w-3.5 h-3.5 text-[#F0791E] group-hover:scale-110 transition-transform shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span class="underline underline-offset-2">Télécharger le catalogue officiel en PDF</span>
+              }
+            </button>
           </div>
 
           <!-- Barre de Recherche Textuelle & Filtres par catégorie avec défilement tactile horizontal -->
@@ -1803,8 +1817,9 @@
       </div>
     </section>
 
-    <!-- 14. SECTION CONTACT & LOCALISATION -->
-    <section id="contact" class="py-14 px-4 sm:px-6 bg-white border-b border-[#D7DBDE]">
+    <!-- 14. SECTION CONTACT & ORIENTATION -->
+    <section id="contact" class="py-14 px-4 sm:px-6 bg-white border-b border-[#D7DBDE] relative scroll-mt-24">
+      <div id="orientation" class="absolute -top-24 pointer-events-none"></div>
       <div class="max-w-7xl mx-auto">
 
         <div class="grid lg:grid-cols-12 gap-8 items-start">
@@ -1860,8 +1875,8 @@
             </div>
           </div>
 
-          <!-- Formulaire de contact -->
-          <div class="lg:col-span-7 card bg-[#F5F6F7] border border-[#D7DBDE] shadow-xs">
+          <!-- Formulaire de contact / Demande d'orientation -->
+          <div id="formulaire-orientation" class="lg:col-span-7 card bg-[#F5F6F7] border border-[#D7DBDE] shadow-xs scroll-mt-28 transition-all duration-300">
             <h3 class="text-sm font-bold text-[#1B1D1F] mb-3">Formulaire de Demande d'Orientation</h3>
 
             <form (ngSubmit)="envoyerContact()" class="space-y-3 text-xs">

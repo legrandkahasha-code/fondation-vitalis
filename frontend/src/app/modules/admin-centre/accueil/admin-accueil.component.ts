@@ -336,7 +336,7 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                           </span>
                         </div>
                         <div class="flex items-center gap-1.5 mt-1">
-                          <input type="text" [(ngModel)]="settings.heroCtaLien" (ngModelChange)="marquerModifie()" name="heroCtaLien" placeholder="Ex : #formations ou /admission" class="text-xs flex-1" />
+                          <input type="text" [(ngModel)]="settings.heroCtaLien" (ngModelChange)="marquerModifie()" name="heroCtaLien" placeholder="Ex : #formulaire-orientation ou /admission" class="text-xs flex-1" />
                           <button 
                             type="button" 
                             (click)="testerLien(settings.heroCtaLien)"
@@ -345,6 +345,11 @@ import { buildWhatsappUrl, notifyLandingSettingsChanged, isWhatsappEnabled } fro
                             title="Tester la redirection dans un nouvel onglet">
                             Tester ↗
                           </button>
+                        </div>
+                        <div class="flex items-center gap-1 mt-1.5 flex-wrap">
+                          <span class="text-[9.5px] text-[#4B5157]">Raccourcis :</span>
+                          <button type="button" (click)="settings.heroCtaLien = '#formulaire-orientation'; marquerModifie()" class="px-1.5 py-0.5 text-[9.5px] font-medium rounded bg-[#E7F1FA] text-[#124F80] hover:bg-[#1C75BC] hover:text-white transition-colors cursor-pointer" title="Orienter vers le formulaire de demande d'orientation">#formulaire-orientation (Orientation & Accueil)</button>
+                          <button type="button" (click)="settings.heroCtaLien = '#formations'; marquerModifie()" class="px-1.5 py-0.5 text-[9.5px] font-medium rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer" title="Orienter vers la liste des formations">#formations (Formations)</button>
                         </div>
                       </div>
                     </div>

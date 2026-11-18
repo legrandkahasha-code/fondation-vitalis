@@ -130,7 +130,7 @@
           <!-- Bouton 1 : CTA Primaire (Texte Navy sur Or) -->
           <a 
             [href]="currentHeroSlide.ctaLien" 
-            (click)="handleCta(currentHeroSlide.ctaLien)"
+            (click)="handleCta(currentHeroSlide.ctaLien, $event)"
             class="w-full sm:w-auto px-7 py-3.5 bg-[var(--or)] hover:bg-[var(--or)]/90 text-[var(--navy)] font-extrabold text-sm rounded-xl shadow-lg hover:shadow-[var(--or)]/25 transition-all duration-200 inline-flex items-center justify-center gap-2.5 cursor-pointer text-center"
           >
             <span>{{ currentHeroSlide.ctaTexte }}</span>
@@ -143,13 +143,19 @@
           @if (currentHeroSlide.ctaSecondaireTexte && currentHeroSlide.ctaSecondaireLien) {
             <button 
               type="button"
-              (click)="handleCta(currentHeroSlide.ctaSecondaireLien)"
-              class="w-full sm:w-auto px-6 py-3.5 bg-transparent hover:bg-white/10 text-white border border-white/30 hover:border-white/60 font-semibold text-sm rounded-xl shadow-xs transition-all duration-200 inline-flex items-center justify-center gap-2 cursor-pointer text-center"
+              (click)="handleCta(currentHeroSlide.ctaSecondaireLien, $event)"
+              [disabled]="isDownloadingBrochure"
+              class="w-full sm:w-auto px-6 py-3.5 bg-transparent hover:bg-white/10 text-white border border-white/30 hover:border-white/60 font-semibold text-sm rounded-xl shadow-xs transition-all duration-200 inline-flex items-center justify-center gap-2 cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <svg class="w-4 h-4 shrink-0 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>{{ currentHeroSlide.ctaSecondaireTexte }}</span>
+              @if (isDownloadingBrochure && currentHeroSlide.ctaSecondaireLien === 'action:brochure') {
+                <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span>Génération du PDF...</span>
+              } @else {
+                <svg class="w-4 h-4 shrink-0 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>{{ currentHeroSlide.ctaSecondaireTexte }}</span>
+              }
             </button>
           }
 
@@ -428,7 +434,7 @@
   <div class="sm:hidden fixed inset-x-3 hero-floating-cta z-40 animate-fade-in-up">
     <a 
       [href]="currentHeroSlide.ctaLien" 
-      (click)="handleCta(currentHeroSlide.ctaLien)"
+      (click)="handleCta(currentHeroSlide.ctaLien, $event)"
       class="w-full py-3 px-4 bg-[var(--or)] hover:bg-[var(--or)]/90 text-[var(--navy)] font-extrabold text-sm rounded-xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] flex items-center justify-between border border-[var(--or)]/60 active:scale-98 transition-all duration-200 cursor-pointer"
       aria-label="Postuler à la session 2026 - Vitalis Center"
     >

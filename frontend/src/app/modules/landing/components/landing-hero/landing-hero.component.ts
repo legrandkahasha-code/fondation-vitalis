@@ -28,6 +28,7 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
   @Input() reassurances: string[] = [];
   @Input() settings: any = {};
   @Input() hasCampusSection?: boolean;
+  @Input() isDownloadingBrochure: boolean = false;
 
   get isCampusSectionVisible(): boolean {
     if (this.hasCampusSection !== undefined) {
@@ -147,7 +148,7 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
         sousTitre: 'Formation par compétences pratiques et certificats officiels infalsifiables.',
         imageUrl: this.settings?.heroImageDroitConfirme ? (this.defaultHeroImage || this.settings?.heroImage || '') : '',
         ctaTexte: 'Postuler pour la Session 2026',
-        ctaLien: '#formations',
+        ctaLien: '#formulaire-orientation',
         ctaSecondaireTexte: 'Télécharger la Brochure (PDF)',
         ctaSecondaireLien: 'action:brochure',
       };
@@ -294,7 +295,10 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     }
   }
 
-  handleCta(lien: string): void {
+  handleCta(lien: string, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+    }
     if (lien === 'action:brochure') {
       this.downloadBrochure.emit();
       return;

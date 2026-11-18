@@ -109,6 +109,19 @@ export class LandingController {
     return this.service.getWhatsappWidget();
   }
 
+  @Get('public/brochure-pdf')
+  @Public()
+  async downloadBrochurePdf(@Req() req: any, @Res() res: any) {
+    const origin = req.headers?.origin || req.headers?.referer || `${req.protocol}://${req.get('host')}`;
+    const pdfBuffer = await this.service.generateBrochurePdf(origin);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('Content-Disposition', 'attachment; filename="Brochure-Officielle-Formations-2026-Vitalis-Center.pdf"');
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.end(pdfBuffer);
+  }
+
   @Get('public/events')
   @Public()
   @Sse()

@@ -148,6 +148,8 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     heroBadge1Texte: '94% Insertion Professionnelle',
     heroBadge2Texte: 'Agrément Officiel RDC',
     heroBadge3Texte: 'Certificats Infalsifiables',
+    heroCtaTexte: 'Postuler pour la Session 2026',
+    heroCtaLien: '#formulaire-orientation',
     liveActivityTexte: '',
     statsLaureats: 1200,
     statsTauxReussite: 94,
@@ -301,7 +303,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         sousTitre: this.settings.heroSousTitre || 'Vitalis Center EUP forme les professionnels, cadres et jeunes talents aux métiers d\'avenir sous la tutelle du Ministère de la Formation Professionnelle. Validation par compétences pratiques, encadrement expert et délivrance de certificats officiels infalsifiables.',
         imageUrl: this.getHeroImageUrl(),
         ctaTexte: this.settings.heroCtaTexte || 'Postuler pour la Session 2026',
-        ctaLien: this.settings.heroCtaLien || '#formations',
+        ctaLien: this.getHeroCtaLien(),
         ctaSecondaireTexte: this.settings.heroCtaSecondaireTexte || 'Télécharger la Brochure (PDF)',
         ctaSecondaireLien: this.settings.heroCtaSecondaireLien || 'action:brochure',
         sessionStatut: 'Session 2026 · Inscriptions Ouvertes',
@@ -379,12 +381,50 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isHeroSliderPaused = false;
   }
 
+  isDownloadingBrochure: boolean = false;
+
   telechargerBrochure(): void {
-    this.toast.info('Ouverture de la brochure officielle Vitalis Center 2026...');
-    const formationsEl = document.querySelector('#formations');
-    if (formationsEl) {
-      formationsEl.scrollIntoView({ behavior: 'smooth' });
+    if (this.isDownloadingBrochure) return;
+    this.isDownloadingBrochure = true;
+    this.toast.info('Génération et téléchargement de la brochure officielle en cours...');
+
+    this.landingService.downloadBrochurePdf().subscribe({
+      next: (blob: Blob) => {
+        this.isDownloadingBrochure = false;
+        try {
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.style.display = 'none';
+          link.href = blobUrl;
+          link.setAttribute('download', 'Brochure-Officielle-Formations-2026-Vitalis-Center.pdf');
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+          }, 400);
+          this.toast.success('La brochure officielle 2026 a été téléchargée avec succès.');
+        } catch (e) {
+          console.error('Erreur lors du déclenchement du téléchargement:', e);
+          this.toast.error('Erreur lors de l\'enregistrement de la brochure sur votre appareil.');
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isDownloadingBrochure = false;
+        console.error('Erreur téléchargement brochure PDF:', err);
+        this.toast.error('Impossible de télécharger la brochure. Assurez-vous que le serveur backend a bien été relancé.');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  getHeroCtaLien(): string {
+    const raw = this.settings.heroCtaLien?.trim();
+    if (!raw || raw === '#formations') {
+      return '#formulaire-orientation';
     }
+    return raw;
   }
 
   handleHeroCtaClick(lien: string): void {
@@ -401,13 +441,38 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     if (lien.startsWith('#')) {
-      const el = document.querySelector(lien);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
+      // Redirection fluide et ciblée vers le formulaire d'orientation
+      const targetSelector = (lien === '#formations' || lien === '#orientation' || lien === '#formulaire-orientation')
+        ? '#formulaire-orientation'
+        : lien;
+      this.scrollToElement(targetSelector);
       return;
     }
     window.location.href = lien;
+  }
+
+  scrollToElement(selector: string): void {
+    if (!selector) return;
+    let el = document.querySelector(selector) as HTMLElement | null;
+    if (!el && selector === '#formulaire-orientation') {
+      el = document.querySelector('#contact') as HTMLElement | null;
+    }
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (selector === '#formulaire-orientation') {
+        el.classList.add('ring-2', 'ring-[#1C75BC]', 'ring-offset-2');
+        setTimeout(() => {
+          el?.classList.remove('ring-2', 'ring-[#1C75BC]', 'ring-offset-2');
+        }, 2200);
+
+        const inputNom = el.querySelector('input[name="nom"]') as HTMLInputElement | null;
+        if (inputNom) {
+          setTimeout(() => {
+            inputNom.focus({ preventScroll: true });
+          }, 600);
+        }
+      }
+    }
   }
 
   // --- ÉTAT DU SLIDER D'ACTUALITÉS ANIMÉ (HARVARD / UNESCO STYLE) ---
@@ -1177,6 +1242,12 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initStatsObserver();
     this.initBarresObserver();
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash;
+      if (hash === '#formulaire-orientation' || hash === '#orientation') {
+        setTimeout(() => this.scrollToElement('#formulaire-orientation'), 450);
+      }
+    }
   }
 
   ngOnDestroy(): void {

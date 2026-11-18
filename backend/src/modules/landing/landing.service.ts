@@ -23,6 +23,7 @@ import {
 } from './dto/landing.dto';
 import { DEFAULT_WHATSAPP_MESSAGE, toWhatsappE164, buildWhatsappUrlLenient, isWhatsappEnabled } from '../../common/utils/whatsapp.util';
 import { StorageService } from '../../common/services/storage.service';
+import { PdfService } from '../../common/services/pdf.service';
 
 interface CachedLandingEntry {
   data: any;
@@ -39,6 +40,7 @@ export class LandingService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private storage: StorageService,
+    private pdfService: PdfService,
   ) { }
 
   private get db(): any {
@@ -611,6 +613,15 @@ export class LandingService {
     let settings = await this.db.landingPageSettings.findFirst();
     if (!settings) {
       settings = await this.seedDefaultSettings();
+    } else if (settings.heroCtaLien === '#formations' || !settings.heroCtaLien) {
+      try {
+        settings = await this.db.landingPageSettings.update({
+          where: { id: settings.id },
+          data: { heroCtaLien: '#formulaire-orientation' },
+        });
+      } catch {
+        settings.heroCtaLien = '#formulaire-orientation';
+      }
     }
     return settings;
   }
@@ -633,6 +644,111 @@ export class LandingService {
       titresVerifiables: 100, // 100% des certificats émis sont vérifiables par QR
       calculeLe: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Génération de la Brochure Officielle des Formations 2026 (Catalogue dynamique PDF)
+   */
+  async generateBrochurePdf(origin?: string): Promise<Buffer> {
+    const [settings, formationsDb, categories] = await Promise.all([
+      this.getSettings(),
+      this.prisma.formation.findMany({
+        where: {
+          actif: true,
+          publieSurLanding: true,
+        },
+        include: {
+          _count: {
+            select: { modules: true },
+          },
+          modules: {
+            orderBy: [{ ordre: 'asc' }, { titre: 'asc' }],
+          },
+          formationReferentiel: {
+            include: {
+              filiere: true,
+              niveau: true,
+            },
+          },
+        },
+        orderBy: [
+          { aLaUne: 'desc' },
+          { ordre: 'asc' },
+          { createdAt: 'desc' },
+        ],
+      }),
+      this.prisma.categorieFormation.findMany({
+        where: { actif: true },
+        orderBy: [{ ordre: 'asc' }, { libelle: 'asc' }],
+      }),
+    ]);
+
+    const catMap = new Map<string, { libelle: string; couleur?: string }>();
+    categories.forEach((c: any) => {
+      catMap.set(c.code, { libelle: c.libelle, couleur: c.couleur });
+    });
+
+    const defaultColors: { [key: string]: string } = {
+      tech: '#1C75BC',
+      gestion: '#F0791E',
+      technique: '#276B44',
+      sante: '#0D9488',
+      btp: '#D97706',
+    };
+
+    const formations = formationsDb.map((f: any) => {
+      const ref = f.formationReferentiel;
+      const catCode = f.categorie || 'tech';
+      const catObj = catMap.get(catCode);
+      const catNom = catObj?.libelle || f.categorieNom || 'Formation Certifiante';
+      const catCouleur = catObj?.couleur || defaultColors[catCode] || '#1C75BC';
+
+      const modules = f.modules || ref?.modules || [];
+      const dureeStr = f.duree || (ref?.dureeHeures ? `${ref.dureeHeures} heures` : '3 à 6 mois (120h)');
+      const debouchesStr = f.debouches || ref?.debouches || 'Insertion professionnelle en entreprise & indépendance';
+
+      return {
+        id: f.id,
+        code: f.code || ref?.code || undefined,
+        titre: f.titre || ref?.titre,
+        categorieNom: catNom,
+        categorieCouleur: catCouleur,
+        description: f.description || ref?.description || '',
+        duree: dureeStr,
+        modulesCount: modules.length > 0 ? modules.length : (f.modulesCount || 4),
+        debouches: debouchesStr,
+        prochaineSession: f.prochaineSession || f.badgeTexte || 'Session 2026 · Inscriptions ouvertes',
+        aLaUne: !!f.aLaUne,
+        imageUrl: f.imageUrl || null,
+        modulesDetails: modules.map((m: any) => ({
+          titre: m.titre,
+          dureeHeures: m.dureeHeures,
+        })),
+      };
+    });
+
+    const qrUrl = origin
+      ? `${origin.replace(/\/$/, '')}/#formulaire-orientation`
+      : 'https://vitalis-center.cd/#formulaire-orientation';
+
+    return this.pdfService.generateBrochureCataloguePdf({
+      anneeSession: '2026',
+      agrementNumero: settings?.heroNumeroAgrement || 'N° CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026',
+      topbarTexte: settings?.topbarTexte,
+      contactAdresse: settings?.contactAdresse,
+      contactEmail: settings?.contactEmail,
+      contactTelephone: settings?.contactTelephone,
+      contactWhatsapp: settings?.contactWhatsapp,
+      contactHoraires: settings?.contactHoraires,
+      qrOrientationUrl: qrUrl,
+      formations,
+      stats: {
+        laureats: settings?.statsLaureats || 1200,
+        tauxReussite: settings?.statsTauxReussite || 94,
+        filieres: settings?.statsFilieres || 15,
+        titresVerif: settings?.statsTitresVerif || 100,
+      },
+    });
   }
 
   async getWhatsappWidget() {
@@ -1307,7 +1423,7 @@ export class LandingService {
         heroBadge2Texte: 'Agrément Officiel RDC',
         heroBadge3Texte: 'Certificats Infalsifiables',
         heroCtaTexte: 'Postuler pour la Session 2026',
-        heroCtaLien: '#formations',
+        heroCtaLien: '#formulaire-orientation',
         heroCtaSecondaireTexte: 'Télécharger la Brochure (PDF)',
         heroCtaSecondaireLien: 'action:brochure',
         heroReassurance1: 'Certificat officiel infalsifiable (QR Code)',

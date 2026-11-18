@@ -43,6 +43,16 @@ export class LandingService {
     return this.http.post<any>(`${this.url}/newsletter`, { email });
   }
 
+  downloadBrochurePdf(): Observable<Blob> {
+    return this.http.get(`${this.url}/public/brochure-pdf`, {
+      responseType: 'blob',
+    });
+  }
+
+  getBrochurePdfUrl(): string {
+    return `${this.url}/public/brochure-pdf`;
+  }
+
   // --- ADMIN SETTINGS ---
   getSettings(): Observable<LandingPageSettings> {
     return this.http.get<LandingPageSettings>(`${this.url}/settings`);
