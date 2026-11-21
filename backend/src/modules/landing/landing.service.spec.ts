@@ -3,6 +3,7 @@ import { LandingService } from './landing.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { StorageService } from '../../common/services/storage.service';
+import { PdfService } from '../../common/services/pdf.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('LandingService', () => {
@@ -22,13 +23,21 @@ describe('LandingService', () => {
         heroSousTitre: 'Description',
         heroImageAlt: 'Étudiants en atelier',
         heroImageDroitConfirme: true,
+        heroCtaLien: '#formulaire-orientation',
         statsLaureats: 1200,
         statsTauxReussite: 94,
         statsFilieres: 15,
         statsTitresVerif: 100,
+        whatsappActif: false,
       }),
       create: jest.fn(),
-      update: jest.fn(),
+      update: jest.fn().mockImplementation((args: any) =>
+        Promise.resolve({
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          heroCtaLien: '#formulaire-orientation',
+          ...args?.data,
+        }),
+      ),
     },
     landingPageSection: {
       findMany: jest.fn().mockResolvedValue([
@@ -122,6 +131,11 @@ describe('LandingService', () => {
     isLocalUploadExists: jest.fn().mockReturnValue(true),
   };
 
+  const mockPdfService = {
+    generateBrochureCataloguePdf: jest.fn().mockResolvedValue(Buffer.from('%PDF-1.4 mock brochure')),
+    generateCertificatPdf: jest.fn().mockResolvedValue(Buffer.from('%PDF-1.4 mock certificat')),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -137,6 +151,10 @@ describe('LandingService', () => {
         {
           provide: StorageService,
           useValue: mockStorageService,
+        },
+        {
+          provide: PdfService,
+          useValue: mockPdfService,
         },
       ],
     }).compile();
@@ -201,6 +219,7 @@ describe('LandingService', () => {
       whatsappActif: true,
       contactWhatsapp: '+243843010337',
       whatsappMessage: 'Bonjour',
+      heroCtaLien: '#formulaire-orientation',
     });
     const widget = await service.getWhatsappWidget();
     expect(widget.actif).toBe(true);
@@ -225,12 +244,14 @@ describe('LandingService', () => {
         heroImage: '/uploads/hero/test.jpg',
         heroImageAlt: 'Ancien texte alternatif',
         heroImageDroitConfirme: true,
+        heroCtaLien: '#formulaire-orientation',
       });
 
       mockPrismaService.landingPageSettings.update.mockResolvedValue({
         id: '123e4567-e89b-12d3-a456-426614174000',
         heroImageAlt: '',
         heroImageDroitConfirme: false,
+        heroCtaLien: '#formulaire-orientation',
       });
 
       await service.updateSettings({ heroImageAlt: '' });
@@ -252,6 +273,7 @@ describe('LandingService', () => {
         heroImage: '/uploads/hero/test.jpg',
         heroImageAlt: '',
         heroImageDroitConfirme: false,
+        heroCtaLien: '#formulaire-orientation',
       });
 
       await expect(
