@@ -207,6 +207,23 @@ export class StorageService {
   }
 
   /**
+   * Vérifie si une URL est une URL Supabase CDN valide pour un dossier donné (hero, campus, etc.)
+   */
+  isSupabaseCdnUrl(url: string, folder: string): boolean {
+    if (!url || !this.supabaseUrl) return false;
+    const prefix = `${this.supabaseUrl}/storage/v1/object/public/${this.supabaseBucket}/${folder}/`;
+    return url.startsWith(prefix);
+  }
+
+  /**
+   * Vérifie si une URL est un chemin local ou une URL Supabase CDN valide pour un préfixe donné.
+   */
+  isValidImageUrl(url: string, folder: 'hero' | 'campus'): boolean {
+    if (!url) return false;
+    return url.startsWith(`/uploads/${folder}/`) || this.isSupabaseCdnUrl(url, folder);
+  }
+
+  /**
    * Pipeline d'upload sécurisé pour les ateliers du Campus :
    * Validation signature binaire, refus strict SVG, limite 8 Mo,
    * Sharp avec limitInputPixels (50 Mpx), dimension minimale (640x480), suppression GPS/EXIF (.rotate()),
@@ -261,6 +278,7 @@ export class StorageService {
       .webp({ quality: 80, effort: 4 })
       .toBuffer();
 
+    // 1. Sauvegarde locale de secours
     const campusDirs = [
       path.join(this.localDir, 'campus'),
       path.join(process.cwd(), 'uploads', 'campus'),
@@ -272,9 +290,55 @@ export class StorageService {
       fs.writeFileSync(path.join(d, mobileFilename), mobileBuffer);
     }
 
+    // 2. Upload vers Supabase CDN pour persistance en production
+    let desktopUrl = `/uploads/campus/${desktopFilename}`;
+    let mobileUrl = `/uploads/campus/${mobileFilename}`;
+
+    if (this.supabaseUrl && this.supabaseKey) {
+      try {
+        const desktopKey = `campus/${desktopFilename}`;
+        const mobileKey = `campus/${mobileFilename}`;
+
+        const [desktopResp, mobileResp] = await Promise.all([
+          fetch(`${this.supabaseUrl}/storage/v1/object/${this.supabaseBucket}/${desktopKey}`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${this.supabaseKey}`,
+              apikey: this.supabaseKey,
+              'Content-Type': 'image/webp',
+              'x-upsert': 'true',
+            },
+            body: new Uint8Array(desktopBuffer) as any,
+          }),
+          fetch(`${this.supabaseUrl}/storage/v1/object/${this.supabaseBucket}/${mobileKey}`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${this.supabaseKey}`,
+              apikey: this.supabaseKey,
+              'Content-Type': 'image/webp',
+              'x-upsert': 'true',
+            },
+            body: new Uint8Array(mobileBuffer) as any,
+          }),
+        ]);
+
+        if (desktopResp.ok && mobileResp.ok) {
+          desktopUrl = `${this.supabaseUrl}/storage/v1/object/public/${this.supabaseBucket}/${desktopKey}`;
+          mobileUrl = `${this.supabaseUrl}/storage/v1/object/public/${this.supabaseBucket}/${mobileKey}`;
+          this.logger.log(`Photos campus uploadées sur Supabase CDN: ${desktopUrl}`);
+        } else {
+          const errDesktop = !desktopResp.ok ? await desktopResp.text() : '';
+          const errMobile = !mobileResp.ok ? await mobileResp.text() : '';
+          this.logger.warn(`Échec upload campus Supabase: desktop=${desktopResp.status} ${errDesktop}, mobile=${mobileResp.status} ${errMobile}. Repli local.`);
+        }
+      } catch (err: any) {
+        this.logger.warn(`Erreur réseau Supabase campus: ${err?.message}. Repli local.`);
+      }
+    }
+
     return {
-      photoUrl: `/uploads/campus/${desktopFilename}`,
-      photoUrlMobile: `/uploads/campus/${mobileFilename}`,
+      photoUrl: desktopUrl,
+      photoUrlMobile: mobileUrl,
       desktopSize: desktopBuffer.length,
       mobileSize: mobileBuffer.length,
     };
@@ -334,6 +398,7 @@ export class StorageService {
       .webp({ quality: 80, effort: 4 })
       .toBuffer();
 
+    // 1. Sauvegarde locale de secours
     const heroDirs = [
       path.join(this.localDir, 'hero'),
       path.join(process.cwd(), 'uploads', 'hero'),
@@ -345,9 +410,55 @@ export class StorageService {
       fs.writeFileSync(path.join(d, mobileFilename), mobileBuffer);
     }
 
+    // 2. Upload vers Supabase CDN pour persistance en production
+    let desktopUrl = `/uploads/hero/${desktopFilename}`;
+    let mobileUrl = `/uploads/hero/${mobileFilename}`;
+
+    if (this.supabaseUrl && this.supabaseKey) {
+      try {
+        const desktopKey = `hero/${desktopFilename}`;
+        const mobileKey = `hero/${mobileFilename}`;
+
+        const [desktopResp, mobileResp] = await Promise.all([
+          fetch(`${this.supabaseUrl}/storage/v1/object/${this.supabaseBucket}/${desktopKey}`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${this.supabaseKey}`,
+              apikey: this.supabaseKey,
+              'Content-Type': 'image/webp',
+              'x-upsert': 'true',
+            },
+            body: new Uint8Array(desktopBuffer) as any,
+          }),
+          fetch(`${this.supabaseUrl}/storage/v1/object/${this.supabaseBucket}/${mobileKey}`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${this.supabaseKey}`,
+              apikey: this.supabaseKey,
+              'Content-Type': 'image/webp',
+              'x-upsert': 'true',
+            },
+            body: new Uint8Array(mobileBuffer) as any,
+          }),
+        ]);
+
+        if (desktopResp.ok && mobileResp.ok) {
+          desktopUrl = `${this.supabaseUrl}/storage/v1/object/public/${this.supabaseBucket}/${desktopKey}`;
+          mobileUrl = `${this.supabaseUrl}/storage/v1/object/public/${this.supabaseBucket}/${mobileKey}`;
+          this.logger.log(`Images hero uploadées sur Supabase CDN: ${desktopUrl}`);
+        } else {
+          const errDesktop = !desktopResp.ok ? await desktopResp.text() : '';
+          const errMobile = !mobileResp.ok ? await mobileResp.text() : '';
+          this.logger.warn(`Échec upload hero Supabase: desktop=${desktopResp.status} ${errDesktop}, mobile=${mobileResp.status} ${errMobile}. Repli local.`);
+        }
+      } catch (err: any) {
+        this.logger.warn(`Erreur réseau Supabase hero: ${err?.message}. Repli local.`);
+      }
+    }
+
     return {
-      heroImage: `/uploads/hero/${desktopFilename}`,
-      heroImageMobile: `/uploads/hero/${mobileFilename}`,
+      heroImage: desktopUrl,
+      heroImageMobile: mobileUrl,
       desktopSize: desktopBuffer.length,
       mobileSize: mobileBuffer.length,
     };
@@ -383,7 +494,17 @@ export class StorageService {
    * ne contient aucune évasion de répertoire (..), et existe physiquement sur le disque.
    */
   async validateUploadPath(url: string | null | undefined, prefix: '/uploads/campus/' | '/uploads/hero/'): Promise<boolean> {
-    if (!url || typeof url !== 'string' || !url.startsWith(prefix)) {
+    if (!url || typeof url !== 'string') {
+      return false;
+    }
+
+    // Les URLs Supabase CDN sont toujours considérées comme valides (fichier persisté sur le cloud)
+    const folder = prefix === '/uploads/hero/' ? 'hero' : 'campus';
+    if (this.isSupabaseCdnUrl(url, folder)) {
+      return true;
+    }
+
+    if (!url.startsWith(prefix)) {
       return false;
     }
     if (url.includes('..') || url.includes('\0')) {

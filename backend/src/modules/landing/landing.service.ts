@@ -779,15 +779,15 @@ export class LandingService {
     // Sécurité et traçabilité de l'image Hero
     if (cleanData.heroImage !== undefined) {
       if (cleanData.heroImage) {
-        if (!cleanData.heroImage.startsWith('/uploads/hero/')) {
-          throw new BadRequestException('L\'image Hero doit être téléversée localement sous /uploads/hero/.');
+        if (!this.storage.isValidImageUrl(cleanData.heroImage, 'hero')) {
+          throw new BadRequestException('L\'image Hero doit être téléversée via /uploads/hero/ ou le CDN Supabase.');
         }
         if (cleanData.heroImage.includes('..') || cleanData.heroImage.includes('\0')) {
           throw new BadRequestException('Chemin de fichier Hero non autorisé.');
         }
         const fileExists = await this.storage.validateUploadPath(cleanData.heroImage, '/uploads/hero/');
         if (!fileExists) {
-          throw new BadRequestException('Le fichier image Hero spécifié est introuvable sur le disque.');
+          throw new BadRequestException('Le fichier image Hero spécifié est introuvable.');
         }
       }
       if (cleanData.heroImage !== existing?.heroImage) {
@@ -1130,7 +1130,7 @@ export class LandingService {
       if (cleanData.photoUrl.includes('..') || cleanData.photoUrl.includes('\0')) {
         throw new BadRequestException('Chemin de photo invalide.');
       }
-      if (/^https?:\/\//i.test(cleanData.photoUrl)) {
+      if (/^https?:\/\//i.test(cleanData.photoUrl) && !this.storage.isSupabaseCdnUrl(cleanData.photoUrl, 'campus')) {
         throw new BadRequestException('Les URLs de photos externes sont interdites.');
       }
     }
@@ -1150,16 +1150,16 @@ export class LandingService {
     }
 
     if (cleanData.statut === 'PUBLIE') {
-      if (!cleanData.photoUrl || !cleanData.photoUrl.startsWith('/uploads/campus/')) {
-        throw new BadRequestException('La publication requiert une photo téléversée localement sous /uploads/campus/.');
+      if (!cleanData.photoUrl || !this.storage.isValidImageUrl(cleanData.photoUrl, 'campus')) {
+        throw new BadRequestException('La publication requiert une photo téléversée via /uploads/campus/ ou le CDN Supabase.');
       }
-      if (!cleanData.photoUrlMobile || !cleanData.photoUrlMobile.startsWith('/uploads/campus/')) {
+      if (!cleanData.photoUrlMobile || !this.storage.isValidImageUrl(cleanData.photoUrlMobile, 'campus')) {
         throw new BadRequestException('La version mobile de la photo est obligatoire pour la publication.');
       }
       const photoOk = await this.storage.validateUploadPath(cleanData.photoUrl, '/uploads/campus/');
       const photoMobileOk = await this.storage.validateUploadPath(cleanData.photoUrlMobile, '/uploads/campus/');
       if (!photoOk || !photoMobileOk) {
-        throw new BadRequestException('Le fichier de photo spécifié est introuvable sur le disque.');
+        throw new BadRequestException('Le fichier de photo spécifié est introuvable.');
       }
       if (!cleanData.photoAlt || typeof cleanData.photoAlt !== 'string' || cleanData.photoAlt.trim() === '' || cleanData.photoAlt.startsWith('[MIGRATION]')) {
         throw new BadRequestException('La publication requiert un texte alternatif (photoAlt) descriptif et non temporaire.');
@@ -1188,7 +1188,7 @@ export class LandingService {
       if (cleanData.photoUrl.includes('..') || cleanData.photoUrl.includes('\0')) {
         throw new BadRequestException('Chemin de photo invalide.');
       }
-      if (/^https?:\/\//i.test(cleanData.photoUrl)) {
+      if (/^https?:\/\//i.test(cleanData.photoUrl) && !this.storage.isSupabaseCdnUrl(cleanData.photoUrl, 'campus')) {
         throw new BadRequestException('Les URLs de photos externes sont interdites.');
       }
     }
@@ -1220,16 +1220,16 @@ export class LandingService {
     const targetState = { ...campus, ...cleanData };
 
     if (targetState.statut === 'PUBLIE') {
-      if (!targetState.photoUrl || !targetState.photoUrl.startsWith('/uploads/campus/')) {
-        throw new BadRequestException('La publication requiert une photo téléversée localement sous /uploads/campus/.');
+      if (!targetState.photoUrl || !this.storage.isValidImageUrl(targetState.photoUrl, 'campus')) {
+        throw new BadRequestException('La publication requiert une photo téléversée via /uploads/campus/ ou le CDN Supabase.');
       }
-      if (!targetState.photoUrlMobile || !targetState.photoUrlMobile.startsWith('/uploads/campus/')) {
+      if (!targetState.photoUrlMobile || !this.storage.isValidImageUrl(targetState.photoUrlMobile, 'campus')) {
         throw new BadRequestException('La version mobile de la photo est obligatoire pour la publication.');
       }
       const photoOk = await this.storage.validateUploadPath(targetState.photoUrl, '/uploads/campus/');
       const photoMobileOk = await this.storage.validateUploadPath(targetState.photoUrlMobile, '/uploads/campus/');
       if (!photoOk || !photoMobileOk) {
-        throw new BadRequestException('Le fichier de photo spécifié est introuvable sur le disque.');
+        throw new BadRequestException('Le fichier de photo spécifié est introuvable.');
       }
       if (!targetState.photoAlt || typeof targetState.photoAlt !== 'string' || targetState.photoAlt.trim() === '' || targetState.photoAlt.startsWith('[MIGRATION]')) {
         throw new BadRequestException('La publication requiert un texte alternatif (photoAlt) descriptif et non temporaire.');
