@@ -690,17 +690,20 @@ export class LandingService {
 
     const defaultColors: { [key: string]: string } = {
       tech: '#1C75BC',
+      tic: '#1C75BC',
       gestion: '#F0791E',
       technique: '#276B44',
+      'technique-electronique': '#D97706',
       sante: '#0D9488',
-      btp: '#D97706',
+      btp: '#276B44',
+      arts: '#E11D48',
     };
 
     const formations = formationsDb.map((f: any) => {
       const ref = f.formationReferentiel;
       const catCode = f.categorie || 'tech';
       const catObj = catMap.get(catCode);
-      const catNom = catObj?.libelle || f.categorieNom || 'Formation Certifiante';
+      const catNom = catObj?.libelle || f.categorieNom || (catCode === 'tic' ? 'Technologies de l\'Information' : 'Formation Certifiante');
       const catCouleur = catObj?.couleur || defaultColors[catCode] || '#1C75BC';
 
       const modules = f.modules || ref?.modules || [];
@@ -727,26 +730,47 @@ export class LandingService {
       };
     });
 
-    const qrUrl = origin
-      ? `${origin.replace(/\/$/, '')}/#formulaire-orientation`
-      : 'https://vitalis-center.cd/#formulaire-orientation';
+    // Pôles dynamiques issus des catégories réelles en base
+    const poles = categories.length > 0
+      ? categories.slice(0, 3).map((c: any) => ({
+          code: (c.code || 'POLE').toUpperCase().slice(0, 6),
+          couleur: c.couleur || defaultColors[c.code] || '#1C75BC',
+          titre: `Pôle ${c.libelle}`,
+          desc: c.description || 'Programmes pratiques animés par des experts sous agrément ministériel.',
+        }))
+      : [
+          { code: 'TECH', couleur: '#1C75BC', titre: 'Pôle Technologies & Numérique', desc: 'Développement Web & Mobile, Réseaux Informatiques, Cybersécurité, Intelligence Artificielle & Cloud.' },
+          { code: 'GEST', couleur: '#F0791E', titre: 'Pôle Gestion, Comptabilité & Management', desc: 'Comptabilité OHADA, Gestion Financière, Secrétariat de Direction, Ressources Humaines & Bureautique.' },
+          { code: 'BTP', couleur: '#276B44', titre: 'Pôle Énergie, Électrotechnique & Métiers Urbains', desc: 'Énergie Solaire Photovoltaïque, Électricité Bâtiment & Industrielle, Coupe & Confection Professionnelle.' },
+        ];
+
+    // Détermination de l'URL publique de référence
+    const publicSiteUrl = origin && !origin.includes('localhost') && !origin.includes('127.0.0.1') && !origin.includes('api.vitaliseup.org')
+      ? origin.replace(/\/$/, '')
+      : 'https://vitaliseup.org';
+
+    const qrUrl = `${publicSiteUrl}/#formulaire-orientation`;
 
     return this.pdfService.generateBrochureCataloguePdf({
       anneeSession: '2026',
       agrementNumero: settings?.heroNumeroAgrement || 'N° CFP 00095/MIN-FP/DG-FP/KMG/JPU/2026',
       topbarTexte: settings?.topbarTexte,
-      contactAdresse: settings?.contactAdresse,
-      contactEmail: settings?.contactEmail,
-      contactTelephone: settings?.contactTelephone,
-      contactWhatsapp: settings?.contactWhatsapp,
-      contactHoraires: settings?.contactHoraires,
+      contactAdresse: settings?.contactAdresse || 'Kinshasa / Gombe, Av. Kauka (Réf. Maïcha Park), RD Congo',
+      contactEmail: settings?.contactEmail || 'vitaliseup@vitaliseup.org',
+      contactTelephone: settings?.contactTelephone || '+243 843 010 337',
+      contactWhatsapp: settings?.contactWhatsapp || '+243843010337',
+      contactHoraires: settings?.contactHoraires || '07h30 – 16h30',
       qrOrientationUrl: qrUrl,
+      siteUrl: publicSiteUrl,
+      formationsSurMesureTitre: settings?.formationsSurMesureTitre,
+      formationsSurMesureDesc: settings?.formationsSurMesureDescription,
+      poles,
       formations,
       stats: {
-        laureats: settings?.statsLaureats || 1200,
-        tauxReussite: settings?.statsTauxReussite || 94,
-        filieres: settings?.statsFilieres || 15,
-        titresVerif: settings?.statsTitresVerif || 100,
+        laureats: settings?.statsLaureats ?? 200,
+        tauxReussite: settings?.statsTauxReussite ?? 100,
+        filieres: settings?.statsFilieres ?? 15,
+        titresVerif: settings?.statsTitresVerif ?? 100,
       },
     });
   }

@@ -39,6 +39,13 @@ export interface BrochureFormationItem {
   modulesDetails?: Array<{ titre: string; dureeHeures?: number }>;
 }
 
+export interface BrochurePoleItem {
+  code: string;
+  couleur?: string;
+  titre: string;
+  desc: string;
+}
+
 export interface BrochureCataloguePdfData {
   anneeSession?: string;
   agrementNumero?: string;
@@ -49,6 +56,10 @@ export interface BrochureCataloguePdfData {
   contactWhatsapp?: string;
   contactHoraires?: string;
   qrOrientationUrl: string;
+  siteUrl?: string;
+  formationsSurMesureTitre?: string;
+  formationsSurMesureDesc?: string;
+  poles?: BrochurePoleItem[];
   formations: BrochureFormationItem[];
   stats?: {
     laureats?: number;
@@ -310,11 +321,10 @@ export class PdfService {
       path.resolve(process.cwd(), 'frontend/public/assets', filename),
       path.resolve(process.cwd(), 'backend/assets', filename),
       path.resolve(process.cwd(), 'assets', filename),
+      path.resolve(__dirname, '../../../../frontend/public/assets', filename),
       path.resolve(__dirname, '../../../../assets', filename),
       path.resolve(__dirname, '../../../assets', filename),
       path.resolve(__dirname, '../../assets', filename),
-      path.resolve('d:/Vitalis centeur/frontend/public/assets', filename),
-      path.resolve('d:/Vitalis centeur/backend/assets', filename),
     ];
     for (const c of candidates) {
       if (fs.existsSync(c)) return c;
@@ -322,10 +332,61 @@ export class PdfService {
     return null;
   }
 
-  private resolveFormationImagePath(imageUrl?: string | null, category?: string, title?: string): string | null {
-    const campusDir = path.resolve('d:/Vitalis centeur/frontend/public/assets/campus');
-    const actuDir = path.resolve('d:/Vitalis centeur/frontend/public/assets/actualites');
-    const uploadsDir = path.resolve('d:/Vitalis centeur/backend/uploads/formations/images');
+  private async resolveImageBuffer(imageUrl?: string | null, category?: string, title?: string): Promise<Buffer | null> {
+    const sharp = require('sharp');
+
+    // 1. Image distante (Supabase Cloud Storage ou HTTPS)
+    if (imageUrl && /^https?:\/\//i.test(imageUrl.trim())) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4500);
+        const resp = await fetch(imageUrl.trim(), { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const ab = await resp.arrayBuffer();
+          const raw = Buffer.from(ab);
+          return await sharp(raw)
+            .resize(400, 300, { fit: 'cover', withoutEnlargement: false })
+            .jpeg({ quality: 85 })
+            .toBuffer();
+        }
+      } catch (err: any) {
+        // En cas d'échec réseau, repli local
+      }
+    }
+
+    // 2. Image locale relative (/uploads/...)
+    if (imageUrl && imageUrl.trim()) {
+      const clean = imageUrl.trim().replace(/^\/?uploads\//, '');
+      const candidates = [
+        path.resolve(process.cwd(), clean),
+        path.resolve(process.cwd(), 'uploads', clean),
+        path.resolve(process.cwd(), 'backend/uploads', clean),
+        path.resolve(process.cwd(), 'backend/uploads/formations/images', path.basename(clean)),
+        path.resolve(process.cwd(), 'uploads/formations/images', path.basename(clean)),
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          try {
+            const raw = fs.readFileSync(p);
+            return await sharp(raw)
+              .resize(400, 300, { fit: 'cover' })
+              .jpeg({ quality: 85 })
+              .toBuffer();
+          } catch (e) {}
+        }
+      }
+    }
+
+    // 3. Repli visuel contextuel parmi les actifs du campus
+    const assetsDir = fs.existsSync(path.resolve(process.cwd(), 'frontend/public/assets'))
+      ? path.resolve(process.cwd(), 'frontend/public/assets')
+      : path.resolve(__dirname, '../../../../frontend/public/assets');
+
+    const campusDir = path.join(assetsDir, 'campus');
+    const actuDir = path.join(assetsDir, 'actualites');
+    const uploadsDir = path.resolve(process.cwd(), 'backend/uploads/formations/images');
 
     const labInfo = path.join(campusDir, 'lab-informatique.jpg');
     const atelierEnergie = path.join(campusDir, 'atelier-energie.jpg');
@@ -333,48 +394,40 @@ export class PdfService {
     const actuApc = path.join(actuDir, 'actu-atelier-apc.jpg');
     const salleConf = path.join(campusDir, 'salle-conferences.jpg');
 
-    if (imageUrl && imageUrl.trim()) {
-      const clean = imageUrl.trim().replace(/^\/?uploads\//, '');
-      const p1 = path.resolve('d:/Vitalis centeur/backend/uploads', clean);
-      if (fs.existsSync(p1)) return p1;
-      const p2 = path.join(uploadsDir, path.basename(clean));
-      if (fs.existsSync(p2)) return p2;
-      if (fs.existsSync(imageUrl)) return imageUrl;
-    }
-
     const t = (title || '').toLowerCase();
     const c = (category || '').toLowerCase();
 
-    if (t.includes('couture') || t.includes('artisanat') || t.includes('mode')) {
-      if (fs.existsSync(actuApc)) return actuApc;
-    }
-    if (t.includes('électricité') || t.includes('bâtiment') || t.includes('énergie') || t.includes('solaire')) {
-      if (fs.existsSync(atelierEnergie)) return atelierEnergie;
-    }
-    if (t.includes('bureautique') || t.includes('gestion') || t.includes('comptabilité')) {
-      if (fs.existsSync(centreExamen)) return centreExamen;
-    }
-    if (t.includes('agentique')) {
+    let candidatePath: string | null = null;
+    if (t.includes('couture') || t.includes('artisanat') || t.includes('mode') || c.includes('arts')) {
+      candidatePath = actuApc;
+    } else if (t.includes('électricité') || t.includes('bâtiment') || t.includes('énergie') || t.includes('solaire') || c.includes('technique') || c.includes('btp')) {
+      candidatePath = atelierEnergie;
+    } else if (t.includes('bureautique') || t.includes('gestion') || t.includes('comptabilité')) {
+      candidatePath = centreExamen;
+    } else if (t.includes('agentique')) {
       const p = path.join(uploadsDir, 'bdb9b613-e2d4-4949-9044-40c4c7e9c4f2-gpt-image-2_genere_moi_l_afficher_Informatique_Technologies_.jpg');
-      if (fs.existsSync(p)) return p;
-    }
-    if (t.includes('réseaux')) {
+      candidatePath = fs.existsSync(p) ? p : labInfo;
+    } else if (t.includes('réseaux')) {
       const p = path.join(uploadsDir, '0392e5b9-3ca2-45cc-92cc-fc97b9a5358e-gpt-image-2_g_n_rer_moi_l_image_D_ploiement_National_du_Syst.jpg');
-      if (fs.existsSync(p)) return p;
+      candidatePath = fs.existsSync(p) ? p : labInfo;
+    } else {
+      candidatePath = labInfo;
     }
 
-    if (c.includes('tech') || c.includes('information')) {
-      if (fs.existsSync(labInfo)) return labInfo;
-    }
-    if (c.includes('artisanat')) {
-      if (fs.existsSync(actuApc)) return actuApc;
-    }
-    if (c.includes('technique') || c.includes('btp')) {
-      if (fs.existsSync(atelierEnergie)) return atelierEnergie;
+    if (!fs.existsSync(candidatePath)) {
+      candidatePath = fs.existsSync(salleConf) ? salleConf : null;
     }
 
-    if (fs.existsSync(labInfo)) return labInfo;
-    if (fs.existsSync(salleConf)) return salleConf;
+    if (candidatePath && fs.existsSync(candidatePath)) {
+      try {
+        const raw = fs.readFileSync(candidatePath);
+        return await sharp(raw)
+          .resize(400, 300, { fit: 'cover' })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+      } catch (e) {}
+    }
+
     return null;
   }
 
@@ -383,7 +436,10 @@ export class PdfService {
    * Mise en page institutionnelle de prestige aux normes de l'État et des institutions d'excellence.
    */
   async generateBrochureCataloguePdf(data: BrochureCataloguePdfData): Promise<Buffer> {
-    const qrDataUrl = await QRCode.toDataURL(data.qrOrientationUrl || 'https://vitalis-center.cd/#formulaire-orientation', {
+    const defaultSiteUrl = data.siteUrl || 'https://vitaliseup.org';
+    const orientationUrl = data.qrOrientationUrl || `${defaultSiteUrl}/#formulaire-orientation`;
+
+    const qrDataUrl = await QRCode.toDataURL(orientationUrl, {
       width: 140,
       margin: 1,
       color: { dark: '#124F80', light: '#FFFFFF' },
@@ -391,6 +447,15 @@ export class PdfService {
 
     const logoVitalisPath = this.resolveAsset('logo-vitalis.png');
     const logoMinisterePath = this.resolveAsset('logo-ministere.png');
+
+    const formationsList = data.formations && data.formations.length > 0
+      ? data.formations
+      : [];
+
+    // Préchargement asynchrone sécurisé de toutes les images des formations (Supabase CDN + sharp)
+    const imageBuffers: Array<Buffer | null> = await Promise.all(
+      formationsList.map((f) => this.resolveImageBuffer(f.imageUrl, f.categorieNom, f.titre))
+    );
 
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ size: 'A4', margin: 40, bufferPages: true, autoFirstPage: true });
@@ -483,15 +548,15 @@ export class PdfService {
           { width: 515, align: 'justify' }
         );
 
-      // 4 Cartes de Chiffres Clés
+      // 4 Cartes de Chiffres Clés (Données en temps réel de la plateforme)
       const statsY = 308;
       const colWidth = 122;
       const colGap = 9;
       const statCards = [
-        { val: `${data.stats?.tauxReussite || 94}%`, label: 'Taux d\'Insertion', sub: 'Emploi & Entrepreneuriat', color: '#1C75BC' },
-        { val: `${data.stats?.laureats || 1200}+`, label: 'Lauréats Certifiés', sub: 'Cadres & Techniciens', color: '#F0791E' },
-        { val: `${data.stats?.filieres || 15}+`, label: 'Filières Métiers', sub: 'Tech, Gestion, Énergie, BTP', color: '#276B44' },
-        { val: '100%', label: 'Titres Vérifiables', sub: 'QR Code & Registre Public', color: '#0F2942' },
+        { val: `${data.stats?.tauxReussite ?? 100}%`, label: 'Taux d\'Insertion', sub: 'Emploi & Entrepreneuriat', color: '#1C75BC' },
+        { val: `${data.stats?.laureats ?? 200}+`, label: 'Lauréats Certifiés', sub: 'Cadres & Techniciens', color: '#F0791E' },
+        { val: `${data.stats?.filieres ?? 15}+`, label: 'Filières Métiers', sub: 'Tech, Gestion, Énergie, BTP', color: '#276B44' },
+        { val: `${data.stats?.titresVerif ?? 100}%`, label: 'Titres Vérifiables', sub: 'QR Code & Registre Public', color: '#0F2942' },
       ];
 
       statCards.forEach((c, idx) => {
@@ -525,27 +590,31 @@ export class PdfService {
         ptY += 16;
       });
 
-      // Les 3 Grands Pôles d'Excellence
+      // Les Grands Pôles d'Excellence (Dynamiques)
       const summY = 494;
       doc.fontSize(10.5).font('Helvetica-Bold').fillColor('#0F2942')
         .text('GRANDES FILIÈRES DISPONIBLES EN FORMATION CONTINUE & INITIALE', 40, summY);
       doc.rect(40, summY + 14, 50, 2).fill('#C8902A');
 
-      const poles = [
-        { code: 'TECH', couleur: '#1C75BC', titre: 'Pôle Technologies & Numérique', desc: 'Développement Web & Mobile, Réseaux Informatiques, Cybersécurité, Intelligence Artificielle & Cloud.' },
-        { code: 'GEST', couleur: '#F0791E', titre: 'Pôle Gestion, Comptabilité & Management', desc: 'Comptabilité OHADA, Gestion Financière, Secrétariat de Direction, Ressources Humaines & Bureautique.' },
-        { code: 'BTP', couleur: '#276B44', titre: 'Pôle Énergie, Électrotechnique & Métiers Urbains', desc: 'Énergie Solaire Photovoltaïque, Électricité Bâtiment & Industrielle, Coupe & Confection Professionnelle.' },
-      ];
+      const polesToRender = data.poles && data.poles.length > 0
+        ? data.poles.slice(0, 3)
+        : [
+            { code: 'TECH', couleur: '#1C75BC', titre: 'Pôle Technologies & Numérique', desc: 'Développement Web & Mobile, Réseaux Informatiques, Cybersécurité, Intelligence Artificielle & Cloud.' },
+            { code: 'GEST', couleur: '#F0791E', titre: 'Pôle Gestion, Comptabilité & Management', desc: 'Comptabilité OHADA, Gestion Financière, Secrétariat de Direction, Ressources Humaines & Bureautique.' },
+            { code: 'BTP', couleur: '#276B44', titre: 'Pôle Énergie, Électrotechnique & Métiers Urbains', desc: 'Énergie Solaire Photovoltaïque, Électricité Bâtiment & Industrielle, Coupe & Confection Professionnelle.' },
+          ];
+
       let plY = summY + 23;
-      poles.forEach((p) => {
+      polesToRender.forEach((p) => {
+        const pColor = p.couleur || '#1C75BC';
         doc.rect(40, plY, 515, 28).fill('#F8FAFC').stroke('#E2E8F0');
-        doc.rect(40, plY, 4, 28).fill(p.couleur);
+        doc.rect(40, plY, 4, 28).fill(pColor);
 
-        doc.rect(48, plY + 5, 36, 18).fill(p.couleur + '18');
-        doc.fontSize(7.5).font('Helvetica-Bold').fillColor(p.couleur).text(p.code, 48, plY + 9, { width: 36, align: 'center' });
+        doc.rect(48, plY + 5, 38, 18).fill(pColor + '18');
+        doc.fontSize(7).font('Helvetica-Bold').fillColor(pColor).text(p.code, 48, plY + 9, { width: 38, align: 'center' });
 
-        doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#0F172A').text(p.titre, 92, plY + 4);
-        doc.fontSize(7.5).font('Helvetica').fillColor('#475569').text(p.desc, 92, plY + 15, { width: 450 });
+        doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#0F172A').text(p.titre, 94, plY + 4);
+        doc.fontSize(7.5).font('Helvetica').fillColor('#475569').text(p.desc, 94, plY + 15, { width: 450, height: 11, ellipsis: true });
         plY += 34;
       });
 
@@ -569,10 +638,6 @@ export class PdfService {
       // =========================================================================
       // PAGES 2 ET SUIVANTES : FICHES DÉTAILLÉES (3 PAR PAGE EXACTEMENT)
       // =========================================================================
-      const formationsList = data.formations && data.formations.length > 0
-        ? data.formations
-        : [];
-
       const cardHeight = 228;
       const cardGap = 16;
       const cardsPerPage = 3;
@@ -591,6 +656,7 @@ export class PdfService {
         const slice = formationsList.slice(pageIdx * cardsPerPage, (pageIdx + 1) * cardsPerPage);
 
         slice.forEach((f, idx) => {
+          const globalIdx = pageIdx * cardsPerPage + idx;
           const cardY = 58 + idx * (cardHeight + cardGap);
           const cardW = 515;
           const couleur = f.categorieCouleur || '#1C75BC';
@@ -605,14 +671,14 @@ export class PdfService {
           const imgW = 152;
           const imgH = 114;
 
-          const imgPath = this.resolveFormationImagePath(f.imageUrl, f.categorieNom, f.titre);
-          if (imgPath && fs.existsSync(imgPath)) {
+          const imgBuf = imageBuffers[globalIdx];
+          if (imgBuf) {
             try {
               doc.save();
               doc.roundedRect(imgX, imgY, imgW, imgH, 5).clip();
-              doc.image(imgPath, imgX, imgY, { width: imgW, height: imgH, cover: [imgW, imgH], align: 'center', valign: 'center' });
+              doc.image(imgBuf, imgX, imgY, { width: imgW, height: imgH });
               doc.restore();
-              doc.roundedRect(imgX, imgY, imgW, imgH, 5).stroke('#CBD5E1');
+              doc.roundedRect(imgX, imgY, imgW, imgH, 5).lineWidth(1).stroke('#CBD5E1');
             } catch (e) {
               doc.rect(imgX, imgY, imgW, imgH).fill('#F1F5F9');
             }
@@ -630,7 +696,7 @@ export class PdfService {
           // Code Officiel Candidature
           const codeY = badgeY + 25;
           doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#64748B')
-            .text('Réf. Candidature : #' + (f.code || `VIT-${pageIdx * 3 + idx + 1}`), imgX, codeY, { width: imgW, align: 'center' });
+            .text('Réf. Candidature : #' + (f.code || `VIT-${globalIdx + 1}`), imgX, codeY, { width: imgW, align: 'center' });
 
           // Sceau Diplôme d'État Homologué
           const sealY = codeY + 16;
@@ -645,29 +711,29 @@ export class PdfService {
           const contentX = 213;
           const contentW = 332;
 
-          // 1. Pilule Catégorie & Badge À la une
+          // 1. Pilule Catégorie & Badge À la une (Hauteur stricte pour zéro chevauchement)
           const catNom = this.sanitizeText(f.categorieNom || 'Formation Certifiante').toUpperCase();
           doc.fontSize(7).font('Helvetica-Bold').fillColor(couleur)
-            .text(catNom, contentX, cardY + 9, { width: 220 });
+            .text(catNom, contentX, cardY + 8, { width: 220, height: 11, ellipsis: true });
 
           if (f.aLaUne) {
-            doc.rect(contentX + 220, cardY + 6, 110, 15).fill('#FEF9C3').stroke('#FDE047');
+            doc.rect(contentX + 225, cardY + 5, 105, 14).fill('#FEF9C3').stroke('#FDE047');
             doc.fontSize(6.5).font('Helvetica-Bold').fillColor('#854D0E')
-              .text('★ FORMATION À LA UNE', contentX + 220, cardY + 9, { width: 110, align: 'center' });
+              .text('★ FORMATION À LA UNE', contentX + 225, cardY + 8, { width: 105, align: 'center' });
           }
 
-          // 2. Titre de la Formation
+          // 2. Titre de la Formation (démarre proprement à cardY + 21 sans collision avec la catégorie)
           const titreNet = this.sanitizeText(f.titre);
-          doc.fontSize(12).font('Helvetica-Bold').fillColor('#0F172A')
-            .text(titreNet, contentX, cardY + 23, { width: contentW, height: 26, ellipsis: true });
+          doc.fontSize(11).font('Helvetica-Bold').fillColor('#0F172A')
+            .text(titreNet, contentX, cardY + 21, { width: contentW, height: 26, ellipsis: true, lineGap: 1 });
 
           // 3. Description synthétique
           const descNet = this.sanitizeText(f.description) || 'Formation technique certifiante axée sur la pratique en atelier et la maîtrise des compétences du référentiel.';
-          doc.fontSize(7.5).font('Helvetica').fillColor('#334155').lineGap(2)
-            .text(descNet, contentX, cardY + 50, { width: contentW, height: 32, ellipsis: true });
+          doc.fontSize(7.5).font('Helvetica').fillColor('#334155').lineGap(1.5)
+            .text(descNet, contentX, cardY + 49, { width: contentW, height: 32, ellipsis: true });
 
           // 4. Grille des Caractéristiques (3 blocs)
-          const gridY = cardY + 86;
+          const gridY = cardY + 84;
           const gridH = 36;
           doc.rect(contentX, gridY, contentW, gridH).fill('#F8FAFC').stroke('#E2E8F0');
 
@@ -681,14 +747,14 @@ export class PdfService {
           doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#15803D').text('Certificat Métier Officiel', contentX + 215, gridY + 18, { width: 110 });
 
           // 5. Débouchés Professionnels
-          const debY = gridY + gridH + 8;
+          const debY = gridY + gridH + 6;
           doc.fontSize(7).font('Helvetica-Bold').fillColor('#0F2942').text('DÉBOUCHÉS PROFESSIONNELS :', contentX, debY);
-          const debNet = this.sanitizeText(f.debouches) || 'Insertion professionnelle immédiate en entreprise ou création d\'activité indépendante.';
-          doc.fontSize(7.5).font('Helvetica').fillColor('#276B44').lineGap(1.5)
-            .text(debNet, contentX, debY + 10, { width: contentW, height: 22, ellipsis: true });
+          const debNet = this.sanitizeText(f.debouches) || 'Insertion professionnelle en entreprise ou activité indépendante.';
+          doc.fontSize(7.5).font('Helvetica').fillColor('#276B44').lineGap(1.2)
+            .text(debNet, contentX, debY + 9, { width: contentW, height: 20, ellipsis: true });
 
           // 6. Modules Phares
-          const modY = debY + 34;
+          const modY = debY + 31;
           doc.fontSize(7).font('Helvetica-Bold').fillColor('#0F2942').text('MODULES & COMPÉTENCES CLÉS DU RÉFÉRENTIEL :', contentX, modY);
           
           const details = f.modulesDetails && f.modulesDetails.length > 0
@@ -704,7 +770,7 @@ export class PdfService {
 
           // 7. Bas de carte
           doc.fontSize(6.5).font('Helvetica-Oblique').fillColor('#94A3B8')
-            .text('Demande d\'admission ouverte · Remplir le formulaire d\'orientation via le QR Code officiel.', contentX, cardY + cardHeight - 14, { width: contentW });
+            .text('Demande d\'admission ouverte · Remplir le formulaire d\'orientation via le QR Code officiel.', contentX, cardY + cardHeight - 12, { width: contentW });
         });
       }
 
@@ -786,15 +852,15 @@ export class PdfService {
       doc.rect(qrTextX, qrBoxY + 80, 345, 26).fill('#1E3A5F');
       doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#F59E0B')
         .text('Formulaire en ligne accessible 24h/24 :', qrTextX + 10, qrBoxY + 84);
-      doc.fontSize(8).font('Courier-Bold').fillColor('#FFFFFF')
-        .text('https://vitalis-center.cd/#formulaire-orientation', qrTextX + 10, qrBoxY + 95);
+      doc.fontSize(7.5).font('Courier-Bold').fillColor('#FFFFFF')
+        .text(orientationUrl, qrTextX + 10, qrBoxY + 95, { width: 325, ellipsis: true });
 
       doc.fontSize(7.5).font('Helvetica-Oblique').fillColor('#94A3B8')
         .text('Traitement prioritaire de votre dossier sous 24 à 48 heures ouvrables par un conseiller agréé.', qrTextX, qrBoxY + 118, { width: 345 });
 
       curY += qrBoxH + 18;
 
-      // Coordonnées Institutionnelles
+      // Coordonnées Institutionnelles Réelles
       doc.fontSize(11).font('Helvetica-Bold').fillColor('#0F2942')
         .text('COORDONNÉES INSTITUTIONNELLES & CAMPUS DE KINSHASA', 40, curY);
       doc.rect(40, curY + 14, 60, 2.5).fill('#F0791E');
@@ -819,23 +885,28 @@ export class PdfService {
       const contactGridY2 = contactGridY + cBoxH + 8;
       doc.rect(40, contactGridY2, cBoxW, cBoxH).fill('#F8FAFC').stroke('#E2E8F0');
       doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#D97706').text('HORAIRES D\'ACCUEIL & ATELIERS', 50, contactGridY2 + 8);
-      doc.fontSize(8).font('Helvetica').fillColor('#0F172A').text(data.contactHoraires || 'Lundi – Vendredi : 08h00 – 16h30', 50, contactGridY2 + 22);
+      doc.fontSize(8).font('Helvetica').fillColor('#0F172A').text(data.contactHoraires || '07h30 – 16h30', 50, contactGridY2 + 22);
       doc.fontSize(7.5).font('Helvetica').fillColor('#64748B').text('Samedi : 08h30 – 12h30 (Permanence inscriptions)', 50, contactGridY2 + 34);
 
-      // Box 4 : Courriel
+      // Box 4 : Courriel & Site Officiel Réel
+      const publicHost = defaultSiteUrl.replace(/^https?:\/\//, '');
       doc.rect(40 + cBoxW + 11, contactGridY2, cBoxW, cBoxH).fill('#F8FAFC').stroke('#E2E8F0');
       doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#0F2942').text('COURRIEL INSTITUTIONNEL', 40 + cBoxW + 21, contactGridY2 + 8);
       doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#1C75BC').text(data.contactEmail || 'vitaliseup@vitaliseup.org', 40 + cBoxW + 21, contactGridY2 + 22);
-      doc.fontSize(7.5).font('Helvetica').fillColor('#64748B').text('Site officiel : vitalis-center.cd', 40 + cBoxW + 21, contactGridY2 + 34);
+      doc.fontSize(7.5).font('Helvetica').fillColor('#64748B').text(`Site officiel : ${publicHost}`, 40 + cBoxW + 21, contactGridY2 + 34);
 
       curY = contactGridY2 + cBoxH + 14;
 
-      // Note Entreprises & Organisations
-      doc.rect(40, curY, 515, 36).fill('#F0FDF4').stroke('#BBF7D0');
+      // Note Entreprises & Organisations (Informations réelles sans données mock)
+      const surMesureTitre = this.sanitizeText(data.formationsSurMesureTitre) || 'POUR LES ENTREPRISES, MINISTÈRES & ORGANISATIONS PUBLIQUES / PRIVÉES';
+      const surMesureDesc = this.sanitizeText(data.formationsSurMesureDesc) || 'Vitalis Center conçoit des programmes sur mesure et des sessions de perfectionnement technique en intra-entreprise pour renforcer la productivité de vos équipes.';
+      const contactNote = `Contact : ${data.contactEmail || 'vitaliseup@vitaliseup.org'} | Tél / WhatsApp : ${data.contactWhatsapp || data.contactTelephone || '+243 843 010 337'}`;
+
+      doc.rect(40, curY, 515, 38).fill('#F0FDF4').stroke('#BBF7D0');
       doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#166534')
-        .text('POUR LES ENTREPRISES, MINISTÈRES & ORGANISATIONS PUBLIQUES / PRIVÉES', 50, curY + 6);
+        .text(surMesureTitre.toUpperCase(), 50, curY + 6, { width: 495, ellipsis: true });
       doc.fontSize(7).font('Helvetica').fillColor('#15803D')
-        .text('Vitalis Center EUP conçoit des programmes sur mesure et des sessions de perfectionnement technique en intra-entreprise pour renforcer la productivité de vos équipes. Contact : entreprises@vitalis-center.cd', 50, curY + 18, { width: 495 });
+        .text(`${surMesureDesc} ${contactNote}`, 50, curY + 18, { width: 495, height: 18, ellipsis: true });
 
       doc.end();
     });
