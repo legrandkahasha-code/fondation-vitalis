@@ -475,6 +475,23 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * Oriente immédiatement le candidat vers le formulaire officiel d'orientation
+   * en pré-sélectionnant la formation choisie.
+   */
+  postulerFormation(formation: any, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+    }
+    if (formation?.titre) {
+      this.contactForm.filiere = formation.titre;
+      if (!this.contactForm.message || this.contactForm.message.startsWith('Bonjour, je souhaite postuler pour la formation')) {
+        this.contactForm.message = `Bonjour, je souhaite postuler pour la formation « ${formation.titre} » (Session 2026). Merci de me recontacter pour les modalités d'admission.`;
+      }
+    }
+    this.scrollToElement('#formulaire-orientation');
+  }
+
   // --- ÉTAT DU SLIDER D'ACTUALITÉS ANIMÉ (HARVARD / UNESCO STYLE) ---
   currentSlideIndex: number = 0;
   sliderProgress: number = 0; // 0 to 100%

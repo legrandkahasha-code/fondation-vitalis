@@ -631,10 +631,11 @@
             </div>
 
             <div class="p-5 pt-0 bg-white">
-              <a routerLink="/login" [queryParams]="{ formation: formation.id }"
-                class="w-full btn btn-secondary text-xs py-2 px-4 shadow-2xs text-center block hover:bg-[#1C75BC] hover:text-white transition-colors cursor-pointer">
+              <button type="button" (click)="postulerFormation(formation, $event)"
+                class="w-full btn btn-secondary text-xs py-2 px-4 shadow-2xs text-center block hover:bg-[#1C75BC] hover:text-white transition-colors cursor-pointer"
+                [attr.aria-label]="'Postuler à la session de ' + formation.titre">
                 Postuler à cette session
-              </a>
+              </button>
             </div>
           </div>
           }
