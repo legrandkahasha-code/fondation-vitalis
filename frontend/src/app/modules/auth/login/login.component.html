@@ -1,83 +1,141 @@
-<section class="min-h-screen flex items-center justify-center bg-vc-bg">
-  <div class="w-full max-w-md px-4">
-    <!-- Logo officiel / En-tête -->
-    <div class="text-center mb-8 animate-fade-in">
-      <a routerLink="/" class="inline-block transition-transform hover:scale-105 duration-200" title="Retour au portail d'accueil Vitalis Center">
-        <div class="inline-flex items-center justify-center p-3.5 rounded-2xl bg-white shadow-sm border border-[#D7DBDE] mb-3.5">
-          <img
-            src="assets/logo-vitalis.png"
-            alt="Logo officiel Vitalis Center EUP"
-            class="h-16 sm:h-20 w-auto object-contain"
-          />
-        </div>
-      </a>
-      <div class="flex items-center justify-center gap-2">
-        <h1 class="text-2xl sm:text-3xl font-bold text-[#124F80] font-heading tracking-tight">
-          Vitalis Center
-        </h1>
-        <span class="px-1.5 py-0.5 bg-[#FDECDD] text-[#F0791E] font-extrabold text-[10px] rounded tracking-wide border border-[#F0791E]/30">
-          EUP
-        </span>
-      </div>
-      <p class="mt-1 text-[#4B5157] text-xs sm:text-sm font-medium">
-        Plateforme E-Learning & Certification · RDC
-      </p>
+<section class="min-h-screen flex flex-col justify-between bg-[#071527] text-white relative overflow-hidden font-['Public_Sans',sans-serif]">
+  <!-- Halos d'ambiance institutionnelle -->
+  <div class="absolute -top-32 -left-32 w-96 h-96 bg-[#C8902A]/10 rounded-full blur-3xl pointer-events-none"></div>
+  <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-[#1C75BC]/15 rounded-full blur-3xl pointer-events-none"></div>
+
+  <!-- Barre supérieure d'autorité & Retour au portail -->
+  <header class="relative z-10 px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between border-b border-white/10 backdrop-blur-xs">
+    <a routerLink="/" class="inline-flex items-center gap-2 text-xs sm:text-sm text-slate-300 hover:text-white transition-colors group">
+      <svg class="w-4 h-4 text-[#C8902A] transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      <span class="font-medium">Retour au portail d'accueil</span>
+    </a>
+    <div class="hidden sm:flex items-center gap-2 text-xs text-slate-400">
+      <span class="w-1.5 h-1.5 rounded-full bg-[#276B44]"></span>
+      <span>Portail Officiel Sécurisé · RDC</span>
     </div>
+  </header>
 
-    <!-- Notification visible -->
-    <!-- Inline notification removed: using global ToastService/ToastComponent instead -->
+  <!-- Zone Centrale / Carte de Connexion Prestigieuse -->
+  <main class="flex-1 flex items-center justify-center p-4 sm:p-6 relative z-10 my-4">
+    <div class="w-full max-w-md">
 
-    <!-- Carte de connexion -->
-    <div class="card animate-fade-in">
-      <h2 class="text-xl mb-6 text-vc-text text-center font-heading font-bold">
-        Connexion
-      </h2>
+      <!-- Carte de connexion blanche haut de gamme -->
+      <div class="bg-white text-[#1B1D1F] rounded-2xl shadow-2xl border-t-4 border-[#C8902A] p-6 sm:p-8 animate-fade-in relative overflow-hidden">
+        
+        <!-- En-tête de la carte avec Logo & Sceau -->
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center justify-center p-3 rounded-xl bg-slate-50 border border-[#D7DBDE] mb-3">
+            <img
+              src="assets/logo-vitalis.png"
+              alt="Logo officiel Vitalis Center EUP"
+              class="h-12 sm:h-14 w-auto object-contain"
+            />
+          </div>
 
-      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-        <div class="mb-4">
-          <label class="form-label" for="email">Adresse e-mail</label>
-          <input
-            id="email"
-            class="form-input"
-            type="email"
-            name="email"
-            [(ngModel)]="email"
-            required
-            placeholder="votre@email.com"
-          />
+          <div class="flex items-center justify-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-bold text-[#124F80] font-['Playfair_Display',serif] tracking-tight">
+              Vitalis Center
+            </h1>
+            <span class="px-1.5 py-0.5 bg-[#F9F0DC] text-[#C8902A] font-bold text-[9px] rounded-md tracking-wider border border-[#C8902A]/30">
+              EUP
+            </span>
+          </div>
+
+          <p class="mt-1 text-[#4B5157] text-xs font-medium">
+            Portail Officiel d'Enrôlement & de Certification
+          </p>
+
+          <div class="w-12 h-[2.5px] bg-[#C8902A] rounded-full mx-auto mt-3"></div>
         </div>
 
-        <div class="mb-6">
-          <label class="form-label" for="password">Mot de passe</label>
-          <input
-            id="password"
-            class="form-input"
-            type="password"
-            name="password"
-            [(ngModel)]="password"
-            required
-            placeholder="••••••••"
-          />
+        <h2 class="text-lg font-bold text-center text-[#1B1D1F] mb-5 font-['Public_Sans',sans-serif]">
+          Connexion à l'Espace Sécurisé
+        </h2>
+
+        <!-- Formulaire de Connexion -->
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-[#1B1D1F] mb-1.5" for="email">
+              Identifiant / Adresse e-mail
+            </label>
+            <div class="relative">
+              <input
+                id="email"
+                class="form-input text-xs sm:text-sm pl-10"
+                type="email"
+                name="email"
+                [(ngModel)]="email"
+                required
+                placeholder="nom.prenom@vitalis-center.cd"
+                autocomplete="username"
+              />
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
+              </svg>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[#1B1D1F] mb-1.5" for="password">
+              Mot de passe confidentiel
+            </label>
+            <div class="relative">
+              <input
+                id="password"
+                class="form-input text-xs sm:text-sm pl-10"
+                type="password"
+                name="password"
+                [(ngModel)]="password"
+                required
+                placeholder="••••••••••••"
+                autocomplete="current-password"
+              />
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full h-11 text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-2"
+            [disabled]="loading || loginForm.invalid">
+            <svg *ngIf="!loading" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            <span *ngIf="loading">Vérification des accès...</span>
+            <span *ngIf="!loading">Se connecter à mon espace</span>
+          </button>
+        </form>
+
+        <!-- Information d'accueil / Secrétariat -->
+        <div class="mt-5 p-3.5 bg-[#E7F1FA] border-l-3 border-[#1C75BC] rounded-r-lg text-[11.5px] text-[#124F80] leading-relaxed">
+          <div class="font-bold flex items-center gap-1.5 mb-0.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#1C75BC]"></span>
+            <span>Première connexion ?</span>
+          </div>
+          <p class="text-[#4B5157]">
+            L'ouverture de session et l'attribution des identifiants sont assurées par votre établissement agréé ou par la Direction des Admissions.
+          </p>
         </div>
 
-        <button
-          type="submit"
-          class="btn btn-primary w-full h-12 text-base font-semibold"
-          [disabled]="loading || loginForm.invalid">
-          <span *ngIf="loading">Connexion en cours...</span>
-          <span *ngIf="!loading">Se connecter</span>
-        </button>
-      </form>
-      <div class="mt-5 p-3.5 bg-[#E7F1FA] border-l-4 border-[#1C75BC] rounded-r-xs text-xs text-[#124F80] leading-relaxed">
-        <strong>💡 Nouvel apprenant ?</strong>
-        <p class="mt-1 text-[#4B5157]">
-          L'enrôlement et l'ouverture de compte sont assurés directement par votre établissement de formation agréé ou par l'Administration Centrale. Veuillez contacter votre secrétariat pour obtenir vos identifiants d'accès.
-        </p>
+        <!-- Badge de Conformité SSI / Chiffrement -->
+        <div class="mt-4 pt-3 border-t border-[#F5F6F7] flex items-center justify-center gap-1.5 text-[10.5px] text-slate-400">
+          <svg class="w-3.5 h-3.5 text-[#276B44]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span>Chiffrement SSL/TLS 256 bits · Protection ANSSI & RGPD</span>
+        </div>
+
       </div>
-    </div>
 
-    <p class="text-center mt-6 text-xs text-slate-500">
-      © {{ year }} Vitalis Center EUP — Tous droits réservés
-    </p>
-  </div>
+    </div>
+  </main>
+
+  <!-- Pied de page officiel solennel -->
+  <footer class="relative z-10 px-4 py-4 text-center text-xs text-slate-400 border-t border-white/10">
+    <p>© {{ year }} Vitalis Center EUP · Tous droits réservés · Établissement d'Utilité Publique agréé par l'État congolais</p>
+  </footer>
 </section>

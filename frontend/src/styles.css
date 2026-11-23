@@ -12,10 +12,12 @@
   --color-bleu: #1C75BC;
   --color-bleu-fonce: #124F80;
   --color-bleu-clair: #E7F1FA;
-  --color-or: #F0791E;
-  --color-or-clair: #FDECDD;
-  --color-or-africain: #C8902A;       /* Or Kinshasa — identité africaine */
-  --color-or-africain-clair: #F9F0DC; /* Fond gold doux */
+  --color-or: #C8902A;                /* Or Kinshasa unifié — identité d'excellence */
+  --color-or-clair: #F9F0DC;          /* Fond gold doux */
+  --color-or-africain: #C8902A;       /* Or Kinshasa */
+  --color-or-africain-clair: #F9F0DC;
+  --color-ambre: #F0791E;             /* Ambre / Orange réservé aux alertes et statuts en attente */
+  --color-ambre-clair: #FDECDD;
   --color-teal: #2AA9A0;
   --color-vert: #276B44;
   --color-vert-clair: #E7F1EA;
@@ -31,8 +33,8 @@
   --color-vc-primary: #1C75BC;
   --color-vc-primary-dark: #124F80;
   --color-vc-primary-light: #E7F1FA;
-  --color-vc-secondary: #F0791E;
-  --color-vc-secondary-light: #FDECDD;
+  --color-vc-secondary: #C8902A;
+  --color-vc-secondary-light: #F9F0DC;
   --color-vc-gold: #C8902A;
   --color-vc-text: #1B1D1F;
   --color-vc-text-muted: #4B5157;
@@ -295,14 +297,14 @@ td,
 }
 
 /* ====================================
- * Barre d'accent signature — Animée à l'entrée
+ * Barre d'accent signature — Liseré Or Statutaire
  * ==================================== */
 .barre {
   width: 56px;
-  height: 5px;
-  background: var(--or);
+  height: 3px;
+  background: var(--or-africain, #C8902A);
   margin-top: 14px;
-  border-radius: 0;
+  border-radius: 9999px;
   transform-origin: left center;
   transform: scaleX(0);
   transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
@@ -314,7 +316,8 @@ td,
 
 .barre.grande {
   width: 72px;
-  height: 6px;
+  height: 3.5px;
+  border-radius: 9999px;
 }
 
 /* Barre centree (mx-auto) : transform-origin centré */
@@ -386,7 +389,7 @@ td,
   font-size: 14.5px;
   font-weight: 600;
   padding: 11px 20px;
-  border-radius: 2px;
+  border-radius: 6px;
   border: 2px solid transparent;
   display: inline-flex;
   align-items: center;
@@ -439,7 +442,7 @@ td,
   background: var(--blanc);
   border: 1px solid var(--gris-bordure);
   padding: 22px;
-  border-radius: 2px;
+  border-radius: 12px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -465,18 +468,18 @@ td,
   width: 100%;
   font-size: 15px;
   padding: 10px 12px;
-  border: 2px solid var(--gris-bordure-forte);
-  border-radius: 2px;
+  border: 1.5px solid var(--gris-bordure);
+  border-radius: 6px;
   font-family: 'Public Sans', sans-serif;
   color: var(--texte);
   background-color: var(--blanc);
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .field input:focus, .form-input:focus, .field select:focus, .field textarea:focus {
   outline: none;
-  border-color: var(--or-attente);
-  box-shadow: 0 0 0 3px rgba(240, 121, 30, 0.12);
+  border-color: var(--or-africain, #C8902A);
+  box-shadow: 0 0 0 3px rgba(200, 144, 42, 0.15);
 }
 
 .field .hint {
@@ -490,7 +493,7 @@ td,
   font-size: 12.5px;
   font-weight: 600;
   padding: 4px 10px;
-  border-radius: 2px;
+  border-radius: 9999px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -852,28 +855,13 @@ td,
   animation-play-state: paused;
 }
 
-/* Shimmer overlay — badge EUP uniquement */
+/* Shimmer neutralisé — rendu institutionnel sobre et épuré */
 .shimmer-badge {
   position: relative;
-  overflow: hidden;
 }
 
 .shimmer-badge::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    60deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.45) 50%,
-    transparent 65%
-  );
-  transform: translateX(-100%) rotate(25deg);
-  animation: shimmerEffect 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  pointer-events: none;
+  display: none;
 }
 
 /* Scanner laser d'authenticité */

@@ -34,7 +34,7 @@
         </div>
         <div class="flex items-center gap-2 sm:gap-3 text-[#C6D2E3] shrink-0 text-[10.5px] sm:text-[11px]">
           <a href="#verifier" class="hover:text-white transition-colors flex items-center gap-1 font-medium group">
-            <svg class="w-3.5 h-3.5 text-[#F0791E] shrink-0 transition-transform group-hover:scale-110" fill="none"
+            <svg class="w-3.5 h-3.5 text-[#C8902A] shrink-0 transition-transform group-hover:scale-110" fill="none"
               viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -69,7 +69,7 @@
                   Vitalis Center
                 </span>
                 <span
-                  class="px-1 py-0.2 bg-[#FDECDD] text-[#F0791E] font-extrabold text-[8.5px] xs:text-[9px] sm:text-[10px] rounded tracking-wide border border-[#F0791E]/30 shimmer-badge">
+                  class="px-1 py-0.2 bg-[#F9F0DC] text-[#C8902A] font-extrabold text-[8.5px] xs:text-[9px] sm:text-[10px] rounded tracking-wide border border-[#C8902A]/30 ">
                   EUP
                 </span>
               </div>
@@ -364,18 +364,18 @@
           </div>
 
           <div
-            class="p-6 bg-white border border-[#D7DBDE] rounded-md shadow-xs hover:border-[#F0791E] hover:shadow-md transition-all">
+            class="p-6 bg-white border border-[#D7DBDE] rounded-md shadow-xs hover:border-[#C8902A] hover:shadow-md transition-all">
             <div class="flex items-center justify-between mb-3">
-              <div class="w-11 h-11 rounded-lg bg-[#FDF0E6] text-[#F0791E] flex items-center justify-center">
+              <div class="w-11 h-11 rounded-lg bg-[#F9F0DC] text-[#C8902A] flex items-center justify-center">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
-              <span class="text-[10px] font-bold text-[#F0791E] bg-[#FDF0E6] px-2 py-0.5 rounded-full">Méthode
+              <span class="text-[10px] font-bold text-[#C8902A] bg-[#F9F0DC] px-2 py-0.5 rounded-full">Méthode
                 APC</span>
             </div>
-            <div class="text-3xl sm:text-4xl font-extrabold text-[#F0791E] tabular-nums">
+            <div class="text-3xl sm:text-4xl font-extrabold text-[#C8902A] tabular-nums">
               {{ tauxReussiteDisplay }} %
             </div>
             <div class="text-sm font-bold text-[#1B1D1F] mt-1">Taux de Réussite</div>
@@ -434,7 +434,7 @@
         <div class="text-center mb-10">
           <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold eyebrow">Garanties d'Excellence
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Pourquoi choisir Vitalis Center
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">Pourquoi choisir Vitalis Center
             EUP ?</h2>
           <div class="barre grande mx-auto mt-3"></div>
         </div>
@@ -465,7 +465,7 @@
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
             <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold eyebrow">Offre de Formation</div>
-            <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Formations Certifiantes</h2>
+            <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">Formations Certifiantes</h2>
             <div class="barre mt-2"></div>
             <button type="button" (click)="telechargerBrochure()" [disabled]="isDownloadingBrochure"
               class="mt-2.5 inline-flex items-center gap-1.5 text-xs text-[#1C75BC] hover:text-[#124F80] font-bold transition-colors cursor-pointer group disabled:opacity-60"
@@ -474,7 +474,7 @@
                 <span class="w-3.5 h-3.5 border-2 border-[#1C75BC]/30 border-t-[#1C75BC] rounded-full animate-spin"></span>
                 <span>Génération du catalogue PDF en cours...</span>
               } @else {
-                <svg class="w-3.5 h-3.5 text-[#F0791E] group-hover:scale-110 transition-transform shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-3.5 h-3.5 text-[#C8902A] group-hover:scale-110 transition-transform shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span class="underline underline-offset-2">Télécharger le catalogue officiel en PDF</span>
@@ -593,7 +593,7 @@
 
                 @if (formation.aLaUne) {
                 <div
-                  class="mb-2 text-[10px] font-extrabold bg-[#FDECDD] text-[#F0791E] border border-[#F0791E]/30 px-2 py-0.5 rounded flex items-center gap-1">
+                  class="mb-2 text-[10px] font-extrabold bg-[#F9F0DC] text-[#C8902A] border border-[#C8902A]/30 px-2 py-0.5 rounded flex items-center gap-1">
                   <span>⭐</span> Formation Vedette Recommandée
                 </div>
                 }
@@ -662,7 +662,7 @@
         <div class="text-center mb-10">
           <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold eyebrow">Excellence Pédagogique
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">L'Approche par Compétences (APC)
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">L'Approche par Compétences (APC)
           </h2>
           <div class="barre grande mx-auto mt-3"></div>
           <p class="text-xs sm:text-sm text-[#4B5157] max-w-2xl mx-auto mt-3">
@@ -699,7 +699,7 @@
       <div class="max-w-7xl mx-auto">
         <div class="text-center mb-10">
           <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold eyebrow">Corps Enseignant</div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Nos Formateurs Experts de Terrain
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">Nos Formateurs Experts de Terrain
           </h2>
           <div class="barre grande mx-auto mt-3"></div>
           <p class="text-xs sm:text-sm text-[#4B5157] max-w-xl mx-auto mt-3">
@@ -737,7 +737,7 @@
           <div class="text-sm uppercase tracking-widest text-[var(--or)] font-bold eyebrow">{{ settings.campusEyebrow }}
           </div>
           }
-          <h2 class="text-2xl sm:text-3xl font-bold text-white mt-1 font-heading">{{ settings.campusTitre }}</h2>
+          <h2 class="text-2xl sm:text-3xl font-bold text-white mt-1 font-['Playfair_Display',serif] tracking-tight">{{ settings.campusTitre }}</h2>
           <div class="w-14 sm:w-20 h-[3px] bg-[var(--or)] rounded-full mx-auto mt-3"></div>
           @if (settings.campusSousTitre) {
           <p class="text-sm sm:text-base text-[var(--ardoise)] max-w-2xl mx-auto mt-3">
@@ -929,7 +929,7 @@
         <div class="text-center mb-10">
           <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold eyebrow">Parcours d'Inscription
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Processus d'Admission en 4 Étapes
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">Processus d'Admission en 4 Étapes
           </h2>
           <div class="barre grande mx-auto mt-3"></div>
         </div>
@@ -968,7 +968,7 @@
         <div class="text-center mb-8">
           <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold eyebrow">Écosystème & Insertion
             Professionnelle</div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Secteurs Métiers & Partenaires
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">Secteurs Métiers & Partenaires
             Économiques</h2>
           <div class="barre grande mx-auto mt-3"></div>
           <p class="text-xs sm:text-sm text-[#4B5157] mt-3 max-w-2xl mx-auto leading-relaxed">
@@ -990,7 +990,7 @@
               </svg>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-[11px] uppercase tracking-wider font-bold text-[#F0791E]">{{ sec.sousTitre }}</div>
+              <div class="text-[11px] uppercase tracking-wider font-bold text-[#C8902A]">{{ sec.sousTitre }}</div>
               <h3 class="text-sm font-bold text-[#1B1D1F] mt-0.5 truncate">{{ sec.titre }}</h3>
               <p class="text-xs text-[#4B5157] mt-1 leading-relaxed line-clamp-2">
                 {{ sec.description }}
@@ -1063,7 +1063,7 @@
       <div class="max-w-7xl mx-auto">
         <div class="text-center mb-10">
           <div class="text-xs uppercase tracking-widest text-[#C8902A] font-bold eyebrow">Paroles de Nos Lauréats</div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Ce qu'ils disent de Vitalis Center
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">Ce qu'ils disent de Vitalis Center
           </h2>
           <div class="barre grande gold mx-auto mt-3"></div>
           <p class="text-xs sm:text-sm text-[#4B5157] max-w-xl mx-auto mt-3">
@@ -1120,7 +1120,7 @@
             </svg>
             <span>Vie Institutionnelle & Événements</span>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Actualités & Vie du Centre Vitalis
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">Actualités & Vie du Centre Vitalis
           </h2>
           <p class="text-xs sm:text-sm text-[#4B5157] max-w-2xl mx-auto mt-2">
             Découvrez les dernières innovations pédagogiques, cérémonies officielles, partenariats stratégiques et
@@ -1141,25 +1141,25 @@
           <div class="marquee-container flex-1 overflow-hidden">
             <div class="marquee-content flex items-center gap-8 text-xs font-semibold">
               @for (act of actualitesActives; track 'flash1-' + act.id) {
-              <div class="flex items-center gap-2 shrink-0 cursor-pointer hover:text-[#F0791E] transition-colors"
+              <div class="flex items-center gap-2 shrink-0 cursor-pointer hover:text-[#C8902A] transition-colors"
                 (click)="openArticleModal(act)">
                 <span class="px-1.5 py-0.5 rounded-2xs text-[10px] uppercase font-bold text-white shadow-xs"
                   [style.background-color]="getCategorieBadgeColor(act.categorie, act.badgeCouleur)">{{
                   getCategorieLabel(act.categorie) }}</span>
                 <span class="text-white hover:underline">{{ act.titre }}</span>
-                <span class="text-[#F0791E] text-[10px]">· {{ act.datePublication | date:'dd/MM' }}</span>
+                <span class="text-[#C8902A] text-[10px]">· {{ act.datePublication | date:'dd/MM' }}</span>
                 <span class="text-slate-400">·</span>
               </div>
               }
               <!-- Duplication pour défilement infini sans coupure -->
               @for (act of actualitesActives; track 'flash2-' + act.id) {
-              <div class="flex items-center gap-2 shrink-0 cursor-pointer hover:text-[#F0791E] transition-colors"
+              <div class="flex items-center gap-2 shrink-0 cursor-pointer hover:text-[#C8902A] transition-colors"
                 (click)="openArticleModal(act)" aria-hidden="true">
                 <span class="px-1.5 py-0.5 rounded-2xs text-[10px] uppercase font-bold text-white shadow-xs"
                   [style.background-color]="getCategorieBadgeColor(act.categorie, act.badgeCouleur)">{{
                   getCategorieLabel(act.categorie) }}</span>
                 <span class="text-white hover:underline">{{ act.titre }}</span>
-                <span class="text-[#F0791E] text-[10px]">· {{ act.datePublication | date:'dd/MM' }}</span>
+                <span class="text-[#C8902A] text-[10px]">· {{ act.datePublication | date:'dd/MM' }}</span>
                 <span class="text-slate-400">·</span>
               </div>
               }
@@ -1208,7 +1208,7 @@
               @if (activeSlide.videoUrl) {
               <div
                 class="absolute top-4 right-4 px-3 py-1 bg-black/70 backdrop-blur-xs text-white text-[11px] font-bold rounded-2xs flex items-center gap-1.5 shadow-md">
-                <svg class="w-3.5 h-3.5 text-[#F0791E]" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-3.5 h-3.5 text-[#C8902A]" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
                 </svg>
@@ -1236,7 +1236,7 @@
                   </span>
                 </div>
                 <h3
-                  class="text-base sm:text-xl font-extrabold text-white leading-tight hover:text-[#F0791E] transition-colors cursor-pointer drop-shadow-md line-clamp-2"
+                  class="text-base sm:text-xl font-extrabold text-white leading-tight hover:text-[#C8902A] transition-colors cursor-pointer drop-shadow-md line-clamp-2"
                   (click)="openArticleModal(activeSlide)">
                   {{ activeSlide.titre }}
                 </h3>
@@ -1307,7 +1307,7 @@
                   Dépêches & Articles Récents
                 </h4>
               </div>
-              <span class="text-[11px] font-bold text-[#F0791E] bg-[#FDECDD] px-2 py-0.5 rounded-2xs">
+              <span class="text-[11px] font-bold text-[#C8902A] bg-[#F9F0DC] px-2 py-0.5 rounded-2xs">
                 {{ actualitesActives.length }} actualités
               </span>
             </div>
@@ -1350,7 +1350,7 @@
                   <!-- Barre de progression linéaire sur l'élément actif -->
                   @if (idx === (currentSlideIndex % actualitesActives.length)) {
                   <div class="w-full bg-slate-200 h-1 rounded-full mt-2 overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-[#1C75BC] to-[#F0791E] news-progress-bar"
+                    <div class="h-full bg-gradient-to-r from-[#1C75BC] to-[#C8902A] news-progress-bar"
                       [style.width.%]="sliderProgress"></div>
                   </div>
                   }
@@ -1572,7 +1572,7 @@
                   <span class="w-2 h-2 rounded-full bg-[#ED1C24] animate-ping"></span>
                   <span>Reportage & Document Vidéo Officiel</span>
                 </span>
-                <span class="text-[10px] uppercase font-mono text-[#F0791E] font-bold">
+                <span class="text-[10px] uppercase font-mono text-[#C8902A] font-bold">
                   {{ isVideoLocal(selectedArticle.videoUrl) ? 'Lecteur Local HD' : 'Lecteur Intégré' }}
                 </span>
               </div>
@@ -1674,11 +1674,11 @@
       <div class="max-w-4xl mx-auto text-center relative z-10">
 
         <div
-          class="inline-block px-3.5 py-1 bg-[#F0791E] text-white text-xs font-bold uppercase tracking-wider mb-3 shadow-xs rounded-2xs shimmer-badge animate-pulse-glow-or">
+          class="inline-block px-3.5 py-1 bg-[#C8902A] text-white text-xs font-bold uppercase tracking-wider mb-3 shadow-xs rounded-2xs  animate-pulse-glow-or">
           Vérification Publique
         </div>
 
-        <h2 class="text-2xl sm:text-3xl font-extrabold mb-2 font-heading">{{ settings.verifTitre }}</h2>
+        <h2 class="text-2xl sm:text-3xl font-extrabold mb-2 font-['Playfair_Display',serif] tracking-tight">{{ settings.verifTitre }}</h2>
 
         <p class="text-xs sm:text-sm text-[#C6D2E3] max-w-xl mx-auto mb-6">
           {{ settings.verifSousTitre }}
@@ -1696,12 +1696,12 @@
               <input type="text" id="searchCertNumero" [(ngModel)]="searchCertNumero" name="searchCertNumero"
                 [placeholder]="'Exemple : ' + (settings.verifExempleNumero || 'CERT-2026-00001')"
                 aria-label="Numéro de certificat à vérifier"
-                class="w-full px-4 py-3 bg-white text-[#1B1D1F] text-xs sm:text-sm rounded-xs focus:outline-none focus:ring-2 focus:ring-[#F0791E] placeholder:text-[#9AA1A8] shadow-md transition-all font-mono"
+                class="w-full px-4 py-3 bg-white text-[#1B1D1F] text-xs sm:text-sm rounded-xs focus:outline-none focus:ring-2 focus:ring-[#C8902A] placeholder:text-[#9AA1A8] shadow-md transition-all font-mono"
                 required />
             </div>
 
             <button type="submit" [disabled]="isScanning"
-              class="btn bg-[#F0791E] hover:bg-[#d6610b] disabled:opacity-75 text-white border-none py-3 px-6 text-xs sm:text-sm font-semibold shadow-md cursor-pointer flex items-center justify-center gap-2 hover:scale-102 transition-transform">
+              class="btn bg-[#C8902A] hover:bg-[#A67420] disabled:opacity-75 text-white border-none py-3 px-6 text-xs sm:text-sm font-semibold shadow-md cursor-pointer flex items-center justify-center gap-2 hover:scale-102 transition-transform">
               @if (!isScanning) {
               <span>Vérifier l'authenticité</span>
               } @else {
@@ -1718,7 +1718,7 @@
         <div class="mt-4 text-xs text-[#C6D2E3] flex items-center justify-center gap-1.5">
           <span>Exemple de certificat de test :</span>
           <button (click)="demoCert(settings.verifExempleNumero || 'CERT-2026-00001')"
-            class="underline hover:text-white font-mono font-medium text-[#FDECDD] ml-1 cursor-pointer">
+            class="underline hover:text-white font-mono font-medium text-[#F9F0DC] ml-1 cursor-pointer">
             {{ settings.verifExempleNumero || 'CERT-2026-00001' }}
           </button>
         </div>
@@ -1731,7 +1731,7 @@
 
         <div class="text-center mb-8">
           <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold eyebrow">Aide & Réponses</div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-heading">Questions Fréquentes</h2>
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">Questions Fréquentes</h2>
           <div class="barre grande mx-auto mt-3"></div>
           <p class="text-xs sm:text-sm text-[#4B5157] max-w-xl mx-auto mt-3">
             Retrouvez toutes les réponses officielles sur les admissions, nos programmes APC, la reconnaissance d'État
@@ -1807,7 +1807,7 @@
         </div>
         <div class="flex flex-wrap gap-3 shrink-0">
           <a routerLink="/login"
-            class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white py-2.5 px-5 font-bold text-xs sm:text-sm shadow-sm hover:scale-102 transition-transform">
+            class="btn bg-[#C8902A] hover:bg-[#A67420] text-white py-2.5 px-5 font-bold text-xs sm:text-sm shadow-sm hover:scale-102 transition-transform">
             Accéder au portail d'admission
           </a>
           <a href="#contact"
@@ -1829,7 +1829,7 @@
             <div>
               <div class="text-xs uppercase tracking-widest text-[#4B5157] font-semibold eyebrow">Orientation & Accueil
               </div>
-              <h2 class="text-2xl font-bold text-[#1B1D1F] mt-1 font-heading">Contactez Vitalis Center EUP</h2>
+              <h2 class="text-2xl font-bold text-[#1B1D1F] mt-1 font-['Playfair_Display',serif] tracking-tight">Contactez Vitalis Center EUP</h2>
               <div class="barre mt-2"></div>
               <p class="text-xs text-[#4B5157] mt-3 leading-relaxed">
                 Nos conseillers pédagogiques sont à votre disposition pour vous guider dans le choix de votre parcours
@@ -1947,7 +1947,7 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <div class="font-bold text-sm sm:text-base flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-[#F0791E]"></span>
+              <span class="w-2 h-2 rounded-full bg-[#C8902A]"></span>
               Restez informé des ouvertures de sessions & bourses d'État
             </div>
             <p class="text-xs text-[#C6D2E3] mt-0.5">
@@ -1957,17 +1957,17 @@
           <form (ngSubmit)="inscrireNewsletter()" class="flex flex-col sm:flex-row w-full md:w-auto max-w-md gap-2">
             <input type="email" [(ngModel)]="newsletterEmail" name="newsletterEmail"
               placeholder="Votre adresse email..." required
-              class="bg-white/10 text-white placeholder-white/60 border border-white/20 rounded-md px-3 py-2 text-xs focus:outline-hidden focus:bg-white/20 focus:border-[#F0791E] flex-1 min-w-0 w-full"
+              class="bg-white/10 text-white placeholder-white/60 border border-white/20 rounded-md px-3 py-2 text-xs focus:outline-hidden focus:bg-white/20 focus:border-[#C8902A] flex-1 min-w-0 w-full"
               aria-label="Adresse email pour les alertes d'admission" />
             <button type="submit" [disabled]="submittingNewsletter"
-              class="btn bg-[#F0791E] hover:bg-[#d6610b] text-white text-xs px-4 py-2 font-bold rounded-md shrink-0 transition-transform active:scale-95 cursor-pointer w-full sm:w-auto text-center justify-center">
+              class="btn bg-[#C8902A] hover:bg-[#A67420] text-white text-xs px-4 py-2 font-bold rounded-md shrink-0 transition-transform active:scale-95 cursor-pointer w-full sm:w-auto text-center justify-center">
               {{ submittingNewsletter ? 'Envoi...' : 'S\'abonner' }}
             </button>
           </form>
         </div>
       </div>
 
-      <div class="border-t-4 border-[#F0791E] bg-[#F5F6F7] py-8 px-4 sm:px-6">
+      <div class="border-t-4 border-[#C8902A] bg-[#F5F6F7] py-8 px-4 sm:px-6">
         <div class="max-w-7xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-xs text-[#4B5157]">
 
           <!-- Col 1 : Marque & Agrément -->
