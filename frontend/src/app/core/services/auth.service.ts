@@ -8,7 +8,7 @@ import { Utilisateur } from '../models';
 export interface AuthResponse {
   success: boolean;
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string; // Désormais transmis via cookie HttpOnly, absent du body JSON
   utilisateur: Utilisateur;
 }
 
@@ -58,8 +58,15 @@ export class AuthService {
     return localStorage.getItem('vitalis_token');
   }
 
+  /**
+   * Le refreshToken est désormais stocké dans un cookie HttpOnly (non lisible côté JS).
+   * Ce getter retourne un marqueur booléen basé sur la présence d'un accessToken actif,
+   * ce qui indique qu'un refresh cookie est probablement disponible côté serveur.
+   */
   get refreshTokenValue(): string | null {
-    return localStorage.getItem('vitalis_refresh');
+    // Retourner un marqueur non-null si l'utilisateur est authentifié,
+    // car le cookie HttpOnly existe mais n'est pas lisible en JS.
+    return this.isAuthenticated ? '__httponly_cookie__' : null;
   }
 
   get isAdminCentre(): boolean {
@@ -94,7 +101,7 @@ export class AuthService {
       catchError((err) => {
         const statusText = err?.status ? `HTTP ${err.status}` : 'serveur injoignable / hors ligne';
         console.warn(`[AuthService] loadMe() non-bloquant (${statusText}) — session active via cache local`);
-        if (err?.status === 401 && !localStorage.getItem('vitalis_refresh')) {
+        if (err?.status === 401 && !this.isAuthenticated) {
           this.clearSession();
         }
         return of(this.currentUserSubject.value);
@@ -103,7 +110,11 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password }).pipe(
+    return this.http.post<AuthResponse>(
+      `${this.apiUrl}/login`,
+      { email, password },
+      { withCredentials: true }, // Nécessaire pour recevoir le cookie HttpOnly
+    ).pipe(
       tap((res) => this.storeSession(res)),
     );
   }
@@ -128,15 +139,15 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/enroler`, data);
   }
 
-  doRefreshToken(): Observable<{ accessToken: string; refreshToken: string }> {
-    const refresh = localStorage.getItem('vitalis_refresh');
-    return this.http.post<{ accessToken: string; refreshToken: string }>(
+  doRefreshToken(): Observable<{ accessToken: string }> {
+    // Le refreshToken est envoyé automatiquement via le cookie HttpOnly
+    return this.http.post<{ accessToken: string }>(
       `${this.apiUrl}/refresh`,
-      { refreshToken: refresh }
+      {},
+      { withCredentials: true },
     ).pipe(
       tap((res) => {
         localStorage.setItem('vitalis_token', res.accessToken);
-        localStorage.setItem('vitalis_refresh', res.refreshToken);
       }),
     );
   }
@@ -158,26 +169,24 @@ export class AuthService {
 
   private storeSession(res: AuthResponse): void {
     localStorage.setItem('vitalis_token', res.accessToken);
-    localStorage.setItem('vitalis_refresh', res.refreshToken);
+    // Le refreshToken est désormais dans un cookie HttpOnly — plus stocké en localStorage
     localStorage.setItem('vitalis_user', JSON.stringify(res.utilisateur));
     this.currentUserSubject.next(res.utilisateur);
     this.isReadySubject.next(true);
   }
 
   logout(): void {
-    const refresh = localStorage.getItem('vitalis_refresh');
-    if (refresh) {
-      this.http.post(`${this.apiUrl}/logout`, { refreshToken: refresh }).subscribe({
-        error: () => {}, // silencieux si hors ligne
-      });
-    }
+    // Le serveur lira le refreshToken depuis le cookie HttpOnly
+    this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
+      error: () => {}, // silencieux si hors ligne
+    });
     this.clearSession();
     this.router.navigate(['/login']);
   }
 
   private clearSession(): void {
     localStorage.removeItem('vitalis_token');
-    localStorage.removeItem('vitalis_refresh');
+    // vitalis_refresh n'est plus stocké en localStorage (cookie HttpOnly côté serveur)
     localStorage.removeItem('vitalis_user');
     this.currentUserSubject.next(null);
   }

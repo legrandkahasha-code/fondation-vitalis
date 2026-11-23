@@ -198,8 +198,13 @@ export class CertificationService {
           mode: 'insensitive',
         },
       },
-      include: {
-        utilisateur: { select: { nom: true, prenom: true, email: true } },
+      select: {
+        id: true,
+        numeroSerie: true,
+        dateEmission: true,
+        moyenneGenerale: true,
+        hashVerification: true,
+        utilisateur: { select: { nom: true, prenom: true } },
         formation: { select: { titre: true, etablissement: { select: { nom: true } } } },
       },
     });

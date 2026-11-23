@@ -1,8 +1,9 @@
 import {
-  Controller, Post, Get, Put, Delete, Body, Param, Req, HttpCode, HttpStatus,
+  Controller, Post, Get, Put, Delete, Body, Param, Req, Res, HttpCode, HttpStatus,
   UseGuards, ForbiddenException, ParseUUIDPipe, UseInterceptors, UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { EtablissementGuard } from '../../common/guards/etablissement.guard';
@@ -15,6 +16,15 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { uploadFileFilter, MAX_UPLOAD_FILE_SIZE } from '../../common/utils/file-upload.util';
+
+// Options du cookie HttpOnly pour le refreshToken — sécurité anti-XSS (OWASP/ANSSI)
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  path: '/api/utilisateurs',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+};
 
 @Controller('utilisateurs')
 export class UtilisateursController {
@@ -45,22 +55,34 @@ export class UtilisateursController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto, @Req() req: any) {
+  async login(@Body() dto: LoginDto, @Req() req: any, @Res({ passthrough: true }) res: Response) {
     const ip = req.ip || req.headers['x-forwarded-for'] || '0.0.0.0';
-    return this.utilisateursService.login(dto, ip);
+    const result = await this.utilisateursService.login(dto, ip);
+    // Stocker le refreshToken dans un cookie HttpOnly (jamais accessible via JS côté client)
+    res.cookie('vitalis_refresh', result.refreshToken, REFRESH_COOKIE_OPTIONS);
+    const { refreshToken, ...safeResult } = result;
+    return safeResult;
   }
 
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  refresh(@Body() dto: RefreshTokenDto) {
-    return this.utilisateursService.refreshToken(dto.refreshToken);
+  async refresh(@Body() dto: RefreshTokenDto, @Req() req: any, @Res({ passthrough: true }) res: Response) {
+    // Compatibilité : accepter le token depuis le cookie OU le body (période de transition)
+    const token = req.cookies?.vitalis_refresh || dto.refreshToken;
+    const result = await this.utilisateursService.refreshToken(token);
+    res.cookie('vitalis_refresh', result.refreshToken, REFRESH_COOKIE_OPTIONS);
+    const { refreshToken, ...safeResult } = result;
+    return safeResult;
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  logout(@Body() dto: RefreshTokenDto) {
-    return this.utilisateursService.revokeRefreshToken(dto.refreshToken);
+  async logout(@Body() dto: RefreshTokenDto, @Req() req: any, @Res({ passthrough: true }) res: Response) {
+    // Compatibilité : accepter le token depuis le cookie OU le body
+    const token = req.cookies?.vitalis_refresh || dto.refreshToken;
+    res.clearCookie('vitalis_refresh', { ...REFRESH_COOKIE_OPTIONS, maxAge: 0 });
+    return this.utilisateursService.revokeRefreshToken(token);
   }
 
   @Get('me')

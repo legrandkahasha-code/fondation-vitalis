@@ -11,7 +11,9 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import { swaggerProtect } from './common/middleware/swagger-protect.middleware';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { AppModule } from './app.module';
 
 // Polyfill pour sérialiser les BigInt en JSON sans erreur
@@ -24,6 +26,7 @@ async function bootstrap() {
 
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
+  app.use(cookieParser());
 
   const healthPayload = () =>
     JSON.stringify({
@@ -84,6 +87,7 @@ async function bootstrap() {
   );
 
   app.setGlobalPrefix('api');
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   const isProd = process.env.NODE_ENV === 'production';
   const rawCorsOrigin = process.env.CORS_ORIGIN || '';

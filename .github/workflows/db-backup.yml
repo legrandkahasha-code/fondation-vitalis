@@ -34,14 +34,25 @@ jobs:
           node backend/scripts/backup-db.js
 
       - name: Compress and Encrypt Backup Archive
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_KEY || secrets.JWT_SECRET }}
         run: |
           cd backend/backups
-          tar -czvf latest_backup.tar.gz *.sql *.sha256
+          tar -czf raw_backup.tar.gz *.sql *.sha256
+          if [ -n "$BACKUP_PASSPHRASE" ]; then
+            echo "Chiffrement AES-256-CBC de l'archive de sauvegarde..."
+            openssl enc -aes-256-cbc -salt -pbkdf2 -in raw_backup.tar.gz -out latest_backup.tar.gz.enc -pass env:BACKUP_PASSPHRASE
+            rm -f raw_backup.tar.gz *.sql
+          else
+            echo "AVERTISSEMENT: BACKUP_ENCRYPTION_KEY non configurée. Archive non chiffrée."
+            mv raw_backup.tar.gz latest_backup.tar.gz
+            rm -f *.sql
+          fi
 
       - name: Upload Backup Artifact (30 Days Retention)
         uses: actions/upload-artifact@v4
         with:
           name: database-backup-${{ github.run_id }}
-          path: backend/backups/latest_backup.tar.gz
+          path: backend/backups/latest_backup.tar.gz*
           retention-days: 30
           if-no-files-found: error

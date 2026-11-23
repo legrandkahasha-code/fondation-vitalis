@@ -30,3 +30,12 @@ backend/backups/
 *.dump
 *.tar.gz
 
+# Documentation & reports (local only - not tracked on GitHub)
+README.md
+backend/README.md
+frontend/README.md
+SECURITY_CHECKLIST.md
+docs/
+*.md
+
+

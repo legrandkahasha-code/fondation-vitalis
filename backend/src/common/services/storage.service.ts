@@ -183,22 +183,25 @@ export class StorageService {
   }
 
   getLocalPath(relativeUrl: string): string | null {
-    if (!relativeUrl.startsWith('/uploads/')) return null;
+    if (!relativeUrl || !relativeUrl.startsWith('/uploads/')) return null;
     const cleanSubpath = relativeUrl.replace(/^\/uploads\//, '');
 
-    // Vérifie d'abord dans this.localDir
-    const primaryPath = path.join(this.localDir, cleanSubpath);
-    if (fs.existsSync(primaryPath)) return primaryPath;
+    const candidates = [
+      path.resolve(this.localDir),
+      path.resolve(process.cwd(), 'backend', 'uploads'),
+      path.resolve(process.cwd(), 'uploads'),
+    ];
 
-    // Vérifie dans backend/uploads
-    const backendPath = path.join(process.cwd(), 'backend', 'uploads', cleanSubpath);
-    if (fs.existsSync(backendPath)) return backendPath;
+    for (const baseDir of candidates) {
+      const resolved = path.resolve(baseDir, cleanSubpath);
+      // Défense en profondeur contre le Path Traversal : le chemin résolu doit être strictement contenu dans baseDir
+      if (resolved.startsWith(baseDir) && fs.existsSync(resolved)) {
+        return resolved;
+      }
+    }
 
-    // Vérifie dans uploads à la racine
-    const rootPath = path.join(process.cwd(), 'uploads', cleanSubpath);
-    if (fs.existsSync(rootPath)) return rootPath;
-
-    return primaryPath;
+    const defaultResolved = path.resolve(this.localDir, cleanSubpath);
+    return defaultResolved.startsWith(path.resolve(this.localDir)) ? defaultResolved : null;
   }
 
   resolveUrl(fileUrl: string): string {

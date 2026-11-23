@@ -17,18 +17,16 @@ export const errorInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, n
       console.log(`[ErrorInterceptor] HTTP ${err.status} on ${req.url}`, isLoginOrRegister ? '(auth endpoint, skip refresh)' : '');
 
       if (err.status === 401 && !isLoginOrRegister && !req.url.includes('/landing/public')) {
-        const refreshToken = auth.refreshTokenValue;
-
-        // If we have a refresh token and are not already refreshing, attempt token refresh
-        if (refreshToken && !isRefreshing) {
+        // Le refreshToken est dans un cookie HttpOnly (non lisible en JS).
+        // On tente le refresh si l'utilisateur est authentifié (accessToken présent).
+        if (auth.isAuthenticated && !isRefreshing) {
           isRefreshing = true;
-          console.log('[ErrorInterceptor] 401 detected — attempting token refresh...');
+          console.log('[ErrorInterceptor] 401 detected — attempting token refresh via HttpOnly cookie...');
 
           return auth.doRefreshToken().pipe(
             switchMap((res) => {
               isRefreshing = false;
               console.log('[ErrorInterceptor] Token refreshed successfully, retrying:', req.url);
-              // Retry the original request with the new access token
               const retried = req.clone({
                 setHeaders: { Authorization: `Bearer ${res.accessToken}` },
               });
@@ -42,8 +40,8 @@ export const errorInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, n
               return throwError(() => refreshErr);
             }),
           );
-        } else if (!refreshToken) {
-          console.warn('[ErrorInterceptor] No refresh token available — logging out');
+        } else if (!auth.isAuthenticated) {
+          console.warn('[ErrorInterceptor] No active session — logging out');
           auth.logout();
           router.navigate(['/login']);
         }

@@ -42,9 +42,9 @@ export class LoginDto {
 }
 
 export class RefreshTokenDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 export class SetActifDto {
