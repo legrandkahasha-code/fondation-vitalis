@@ -717,6 +717,7 @@ export class LandingService {
         categorieNom: catNom,
         categorieCouleur: catCouleur,
         description: f.description || ref?.description || '',
+        objectifs: f.objectifs || ref?.objectifs || '',
         duree: dureeStr,
         modulesCount: modules.length > 0 ? modules.length : (f.modulesCount || 4),
         debouches: debouchesStr,

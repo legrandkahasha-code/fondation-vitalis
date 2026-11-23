@@ -676,7 +676,7 @@ export class PdfService {
             try {
               doc.save();
               doc.roundedRect(imgX, imgY, imgW, imgH, 5).clip();
-              doc.image(imgBuf, imgX, imgY, { width: imgW, height: imgH });
+              doc.image(imgBuf, imgX, imgY, { cover: [imgW, imgH], align: 'center', valign: 'center' });
               doc.restore();
               doc.roundedRect(imgX, imgY, imgW, imgH, 5).lineWidth(1).stroke('#CBD5E1');
             } catch (e) {
@@ -711,10 +711,12 @@ export class PdfService {
           const contentX = 213;
           const contentW = 332;
 
-          // 1. Pilule Catégorie & Badge À la une (Hauteur stricte pour zéro chevauchement)
-          const catNom = this.sanitizeText(f.categorieNom || 'Formation Certifiante').toUpperCase();
-          doc.fontSize(7).font('Helvetica-Bold').fillColor(couleur)
-            .text(catNom, contentX, cardY + 8, { width: 220, height: 11, ellipsis: true });
+          // 1. Pilule Catégorie & Badge À la une (Hauteur stricte et sans caractère ellipsis glitch)
+          const catRaw = this.sanitizeText(f.categorieNom || 'Formation Certifiante').toUpperCase();
+          const maxCatLen = f.aLaUne ? 32 : 48;
+          const catNom = catRaw.length > maxCatLen ? catRaw.slice(0, maxCatLen - 3) + '...' : catRaw;
+          doc.fontSize(6.5).font('Helvetica-Bold').fillColor(couleur)
+            .text(catNom, contentX, cardY + 8, { width: f.aLaUne ? 220 : 330, lineBreak: false });
 
           if (f.aLaUne) {
             doc.rect(contentX + 225, cardY + 5, 105, 14).fill('#FEF9C3').stroke('#FDE047');
@@ -753,18 +755,16 @@ export class PdfService {
           doc.fontSize(7.5).font('Helvetica').fillColor('#276B44').lineGap(1.2)
             .text(debNet, contentX, debY + 9, { width: contentW, height: 20, ellipsis: true });
 
-          // 6. Modules Phares
+          // 6. Modules & Compétences Phares dynamiques du référentiel
           const modY = debY + 31;
           doc.fontSize(7).font('Helvetica-Bold').fillColor('#0F2942').text('MODULES & COMPÉTENCES CLÉS DU RÉFÉRENTIEL :', contentX, modY);
           
-          const details = f.modulesDetails && f.modulesDetails.length > 0
-            ? f.modulesDetails.slice(0, 3)
-            : [{ titre: 'Fondamentaux & Pratique en atelier' }, { titre: 'Maîtrise technique opérationnelle' }, { titre: 'Validation & Projet professionnel' }];
+          const realSkills = this.extractFormationSkills(f);
 
           let myY = modY + 10;
-          details.forEach((m) => {
+          realSkills.forEach((skillText) => {
             doc.circle(contentX + 3, myY + 4, 1.8).fill(couleur);
-            doc.fontSize(7).font('Helvetica').fillColor('#334155').text(this.sanitizeText(m.titre), contentX + 9, myY, { width: contentW - 12, height: 11, ellipsis: true });
+            doc.fontSize(7).font('Helvetica').fillColor('#334155').text(skillText, contentX + 9, myY, { width: contentW - 12, height: 11, ellipsis: true });
             myY += 12;
           });
 
@@ -898,17 +898,77 @@ export class PdfService {
       curY = contactGridY2 + cBoxH + 14;
 
       // Note Entreprises & Organisations (Informations réelles sans données mock)
-      const surMesureTitre = this.sanitizeText(data.formationsSurMesureTitre) || 'POUR LES ENTREPRISES, MINISTÈRES & ORGANISATIONS PUBLIQUES / PRIVÉES';
+      const surMesureTitre = this.sanitizeText(data.formationsSurMesureTitre) || 'POUR LES ENTREPRISES, MINISTÈRES & ORGANISATIONS : PROGRAMMES SUR MESURE';
       const surMesureDesc = this.sanitizeText(data.formationsSurMesureDesc) || 'Vitalis Center conçoit des programmes sur mesure et des sessions de perfectionnement technique en intra-entreprise pour renforcer la productivité de vos équipes.';
-      const contactNote = `Contact : ${data.contactEmail || 'vitaliseup@vitaliseup.org'} | Tél / WhatsApp : ${data.contactWhatsapp || data.contactTelephone || '+243 843 010 337'}`;
+      const contactEmail = data.contactEmail || 'vitaliseup@vitaliseup.org';
+      const contactTel = data.contactTelephone || data.contactWhatsapp || '+243 843 010 337';
 
-      doc.rect(40, curY, 515, 38).fill('#F0FDF4').stroke('#BBF7D0');
+      const boxH = 46;
+      doc.rect(40, curY, 515, boxH).fill('#F0FDF4').stroke('#BBF7D0');
       doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#166534')
-        .text(surMesureTitre.toUpperCase(), 50, curY + 6, { width: 495, ellipsis: true });
+        .text(surMesureTitre.toUpperCase(), 50, curY + 6, { width: 495 });
       doc.fontSize(7).font('Helvetica').fillColor('#15803D')
-        .text(`${surMesureDesc} ${contactNote}`, 50, curY + 18, { width: 495, height: 18, ellipsis: true });
+        .text(surMesureDesc, 50, curY + 18, { width: 495, height: 14 });
+      doc.fontSize(7.5).font('Helvetica-Bold').fillColor('#14532D')
+        .text(`Pôle Partenariats & Formation Continue : ${contactEmail}   •   Tél / WhatsApp : ${contactTel}`, 50, curY + 31, { width: 495 });
 
       doc.end();
     });
+  }
+
+  /**
+   * Extraction dynamique et intelligente des compétences clés réelles de la formation
+   * (évite tout affichage de données mock génériques)
+   */
+  private extractFormationSkills(f: any): string[] {
+    if (f.modulesDetails && f.modulesDetails.length > 0) {
+      return f.modulesDetails.slice(0, 3).map((m: any) => this.sanitizeText(m.titre || m.nom));
+    }
+    const text = (f.description || '') + '\n' + (f.objectifs || '');
+    const lines = text.split('\n').map((l: string) => l.trim()).filter(Boolean);
+
+    const extracted: string[] = [];
+    let inProgramme = false;
+    for (const line of lines) {
+      const clean = line.replace(/^[📌💡🎯\-\*\•\d\.\)]\s*/, '').trim();
+      if (/au programme/i.test(line) || /compétences clés/i.test(line)) {
+        inProgramme = true;
+        if (line.includes(':')) {
+          const after = line.split(':')[1]?.trim();
+          if (after && after.length > 5) {
+            after.split(/[,;]/).forEach((p: string) => {
+              const pClean = p.replace(/^[📌💡🎯\-\*\•\d\.\)]\s*/, '').trim();
+              if (pClean && pClean.length > 5 && extracted.length < 3) extracted.push(pClean);
+            });
+          }
+        }
+        continue;
+      }
+      if (inProgramme && clean && clean.length > 5) {
+        if (/pourquoi|débouchés|prérequis|durée/i.test(clean)) {
+          inProgramme = false;
+          continue;
+        }
+        extracted.push(clean);
+        if (extracted.length >= 3) break;
+      }
+      if (!inProgramme && (line.startsWith('-') || line.startsWith('•')) && clean.length > 8) {
+        extracted.push(clean);
+        if (extracted.length >= 3) break;
+      }
+    }
+
+    if (extracted.length === 0) {
+      const sentences = (f.description || '').split(/[.\n]/).map((s: string) => s.trim()).filter((s: string) => s.length > 10);
+      extracted.push(...sentences.slice(0, 3));
+    }
+
+    if (extracted.length === 0) {
+      extracted.push('Maîtrise pratique et immersion en atelier technique');
+      extracted.push('Réalisation de projets réels sous encadrement expert');
+      extracted.push('Validation des compétences selon le référentiel national');
+    }
+
+    return extracted.slice(0, 3).map((s: string) => this.sanitizeText(s));
   }
 }
